@@ -231,19 +231,25 @@ Der Starter arbeitet in diesen Schritten:
 | `POST /claude/launch` | Starter, vor dem Start | Tab-Kennung, Fall, angegebene Kennung, aktueller Ordner | Tab-Name, neue Session-Kennung (nur Fall „neu“), Pfad zur Hook-Datei |
 | `POST /claude/started` | Starter, direkt nach dem Start | Tab-Kennung, Prozess-ID von Claude | leer |
 | `POST /claude/exit` | Starter, nach dem Ende | Tab-Kennung, Session-Kennung, Exit-Code | leer |
-| `POST /hooks/<Ereignis>` | Claude Code (HTTP-Hooks) | Hook-Nutzdaten | immer sofort leerer Erfolg |
+| `POST /hooks/<Ereignis>` | Claude Code (HTTP-Hooks; `SessionStart` über `curl.exe`, siehe unten) | Hook-Nutzdaten | immer sofort leerer Erfolg mit leerem Inhalt |
 
 - Die **Hook-Datei** erzeugt TermHub bei jedem Start neu im eigenen Datenordner:
-  - Sie enthält ausschliesslich Hooks vom Typ `http` auf `/hooks/<Ereignis>`, mit den Kopfzeilen `X-TermHub-Tab: $TERMHUB_TAB_ID` und `X-TermHub-Token: $TERMHUB_TOKEN`. Beide Variablen stehen in `allowedEnvVars`.
-  - Die Timeouts sind kurz (wenige Sekunden).
-  - Registrierte Ereignisse: `SessionStart`, `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `StopFailure`, `Notification`.
+  - Hooks vom Typ `http` auf `/hooks/<Ereignis>`, mit den Kopfzeilen `X-TermHub-Tab: $TERMHUB_TAB_ID` und `X-TermHub-Token: $TERMHUB_TOKEN`. Beide Variablen stehen in `allowedEnvVars`. Timeout 2 Sekunden.
+  - Registrierte Ereignisse per HTTP: `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `Stop`, `StopFailure`, `Notification`.
+  - **`SessionStart` unterstützt keine HTTP-Hooks** (Claude überspringt sie still). Dafür gibt es einen Befehls-Hook ohne Shell (Exec-Form), der die Nutzdaten mit dem `curl.exe` von Windows an `/hooks/SessionStart` weiterleitet. curl liest Tab-Kennung und Token selbst aus der Umgebung (`--variable %VAR` mit `--expand-header`), mit `--connect-timeout 1 -m 2` und Hook-Timeout 3 Sekunden. Die Antwort muss leer sein, weil die Ausgabe dieses Hooks in Claudes Kontext landet. Fehlt `curl.exe`, entfällt der Eintrag; die Zuordnung läuft dann über die Ersatzregel „neue Kennung in einem anderen Ereignis“ (siehe Zustandsautomat).
+  - Eine geprüfte Vorlage liegt in `spikes/claude-hooks/empfohlene-hook-datei.json`.
 - Relevante Felder der Nutzdaten:
-  - alle Ereignisse: `session_id`, `cwd`, `transcript_path`;
-  - `SessionStart.source`: `startup`, `resume`, `clear`, `compact`, `fork`;
-  - `SessionEnd.reason`: `clear`, `resume`, `logout`, `prompt_input_exit`, `other`;
-  - `Notification.notification_type`: unter anderem `permission_prompt`, `idle_prompt`, `elicitation_dialog`.
-  - Vor der Umsetzung gegen die aktuelle Hook-Dokumentation prüfen: https://code.claude.com/docs/en/hooks
+  - alle Ereignisse: `session_id`, `cwd` (kann ein 8.3-Kurzpfad sein, wird normalisiert), `transcript_path`;
+  - `SessionStart.source`: `startup`, `resume`, `clear` (geprüft), `compact`, `fork` (laut Doku);
+  - `SessionEnd.reason`: `prompt_input_exit` (auch nach zweimal `Ctrl+C`), `clear`, `other` (geprüft), `resume`, `logout` (laut Doku);
+  - `Notification.notification_type`: `permission_prompt` (kommt erst etwa 6 Sekunden nach der Rückfrage), `idle_prompt` (etwa 60 Sekunden nach `Stop`);
+  - `PermissionRequest` kommt sofort, auch bei Rückfragen von `AskUserQuestion`;
+  - `Stop.background_tasks` ist immer vorhanden. Endet eine Hintergrund-Aufgabe, schickt Claude ein `UserPromptSubmit` (Prompt beginnt mit `<task-notification>`) und danach wieder `Stop`.
+  - Beispiel-Nutzdaten und alle Befunde: `docs/spikes/claude-hooks.md`, `spikes/claude-hooks/samples/`.
 - Der Empfänger antwortet **immer sofort mit einem leeren Erfolg** und gibt nie Entscheidungsfelder zurück. TermHub beeinflusst Claudes Verhalten also nie, es hört nur zu.
+- Ereignisse werden in der Reihenfolge ihres Eintreffens verarbeitet (`PreToolUse` kommt vor `PermissionRequest`).
+- In einem noch nicht vertrauten Ordner laufen keine Hooks, bis der Nutzer den Vertrauensdialog von Claude bestätigt.
+- Ist der Empfänger nicht erreichbar, zeigt Claude bei jedem Hook eine Fehlerzeile im Terminal; hängt er, verzögert er jedes Ereignis bis zum Timeout. Deshalb antwortet der Empfänger immer sofort.
 - Die globale Claude-Konfiguration (`~/.claude/settings.json`) wird nicht angefasst. Die Hooks gelten nur für Sessions, die über den Ersatz in TermHub-Terminals gestartet werden. Claude führt `--settings`-Hooks zusätzlich zu denen des Nutzers aus. Weil `--settings` beim Fortsetzen nicht erhalten bleibt, gibt der Starter es bei jedem Aufruf mit.
 - Eine zweite Instanz (siehe „App-Verhalten“) startet keinen Server und schreibt keine Hook-Datei.
 
@@ -265,15 +271,19 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 | Start gemeldet, Fall „mit Kennung“ | wie oben, mit der angegebenen Kennung |
 | Start gemeldet, Fall „ohne Kennung“ | Claude-Tab ohne Kennung; erst `SessionStart` liefert sie |
 | Prozess-ID gemeldet | wird für die Prozess-Regeln gemerkt |
-| `SessionStart` (alle Quellen) | Kennung und Ordner (`cwd`) aus dem Ereignis übernehmen, bestätigt; bei neuer Kennung „hatte Prompt“ zurücksetzen; Zustand „ruht“ |
+| `SessionStart` (alle Quellen) | Kennung und Ordner (`cwd`, normalisiert) aus dem Ereignis übernehmen, bestätigt; bei neuer Kennung „hatte Prompt“ zurücksetzen; Zustand „ruht“ |
+| Ein anderes Ereignis (ausser `SessionEnd`) mit einer anderen `session_id` als der gespeicherten | wird wie `SessionStart` behandelt (Ersatz, falls `SessionStart` nicht ankam), danach normal verarbeitet |
 | `UserPromptSubmit` | Zustand „arbeitet“, „hatte Prompt“ setzen, Prozess-Grundbestand neu erfassen (siehe unten) |
 | `PreToolUse`, `PostToolUse`, `PostToolUseFailure` | Zustand „arbeitet“ (beendet auch „wartet“) |
-| `Notification` mit Typ `permission_prompt` oder `elicitation_dialog` | Zustand „wartet auf dich“ |
-| `Notification` mit Typ `idle_prompt` | Zustand „ruht“. Fängt Unterbrechungen mit Esc auf, nach denen kein `Stop` kommt; bis dahin bleibt der alte Zustand stehen |
+| `PermissionRequest` | Zustand „wartet auf dich“, sofort |
+| `Notification` mit Typ `permission_prompt` oder `elicitation_dialog` | Zustand „wartet auf dich“, aber nur als Rückfallebene: wenn der Tab noch „arbeitet“ und seit dem letzten `PreToolUse` weder `PermissionRequest` noch `PostToolUse` kam. Das Ereignis kommt etwa 6 Sekunden verzögert und darf einen inzwischen weiterarbeitenden oder ruhenden Tab nicht zurücksetzen |
+| `Notification` mit Typ `idle_prompt` | keine Änderung |
+| Nutzer drückt Esc in einem Claude-Tab, der „arbeitet“ oder „wartet“, und innerhalb von etwa 1,5 Sekunden kommt kein Hook-Ereignis | Zustand „ruht“, ohne „fertig, noch nicht angeschaut“. Nach einer Unterbrechung oder einer abgelehnten Rückfrage schickt Claude kein Ereignis |
+| Andere Eingabe des Nutzers in einem Claude-Tab, der „wartet“ | Zustand „arbeitet“. Nach einer Bestätigung kommt bis `PostToolUse` kein Ereignis; ein langer bestätigter Befehl bliebe sonst orange |
 | `Stop`, `StopFailure` | Zustand „ruht“; war der Tab dabei nicht sichtbar (nicht aktiv oder Fenster nicht im Vordergrund), „fertig, noch nicht angeschaut“ setzen |
 | `SessionEnd` mit Grund `clear` oder `resume` | keine Änderung (ein `SessionStart` mit neuer Kennung folgt) |
-| `SessionEnd` mit anderem Grund; Ende-Meldung des Starters; Ende der Shell | Tab wird normales Terminal, Claude-Zuordnung entfällt |
-| Ende-Meldung **ohne** vorheriges `SessionStart` und mit Exit-Code ≠ 0 nach einem von TermHub gestarteten Fortsetzen | zusätzlich Hinweis im Terminal „Claude-Session konnte nicht fortgesetzt werden“ |
+| `SessionEnd` mit anderem Grund; Ende-Meldung des Starters; Ende der Shell | Tab wird normales Terminal, Claude-Zuordnung entfällt. Ausnahme: Nach einem von TermHub gestarteten Fortsetzen ohne vorheriges `SessionStart` entscheidet erst die Ende-Meldung des Starters (ein fehlgeschlagenes Fortsetzen schickt `SessionEnd` mit Grund `other` etwa 1,5 Sekunden vor dem Prozessende) |
+| Ende-Meldung **ohne** vorheriges `SessionStart` und mit Exit-Code ≠ 0 nach einem von TermHub gestarteten Fortsetzen | zusätzlich Hinweis im Terminal „Claude-Session konnte nicht fortgesetzt werden“. Exit-Code ≠ 0 heisst Fehlstart; `/exit` und zweimal `Ctrl+C` enden mit 0 |
 | Tab wird angezeigt bzw. Fenster kommt mit diesem Tab in den Vordergrund | „fertig, noch nicht angeschaut“ löschen; Hinweise zu diesem Tab verschwinden |
 | **TermHub beendet selbst** (App beenden, Tab schliessen, Windows-Abmeldung oder -Neustart) | Claude-Zuordnung wird **eingefroren**: Ereignisse danach (`SessionEnd`, Ende-Meldung, Ende der Shell) ändern den gespeicherten Zustand und die Liste der geschlossenen Tabs nicht mehr |
 
@@ -431,7 +441,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Rückfrage beim Schliessen:** in Abhängigkeit von den eigentlichen Merkmalen (arbeitet, wartet, Prozesse laufen), nicht vom angezeigten Symbol.
   - **Geschlossene Tabs:** Verlauf der letzten zehn und Wiederöffnen, auch über einen Neustart.
   - **Zuletzt benutzte Ordner.**
-  - **Claude-Zuordnung:** alle drei Fälle beim Start, Ende-Meldung, Sicherheitsnetz ohne jedes Hook-Ereignis, der komplette Zustandsautomat inklusive `/clear`, `idle_prompt` nach Unterbrechung und Vorrang der angezeigten Zustände.
+  - **Claude-Zuordnung:** alle drei Fälle beim Start, Ende-Meldung, Sicherheitsnetz ohne jedes Hook-Ereignis, der komplette Zustandsautomat inklusive `/clear`, `PermissionRequest`, Esc ohne folgendes Ereignis, Eingabe nach einer Rückfrage, Ersatzregel für fehlendes `SessionStart`, verspätetes `SessionEnd(other)` bei fehlgeschlagenem Fortsetzen und Vorrang der angezeigten Zustände.
   - **Einfrieren:** Beenden bzw. Schliessen, danach Ende der Shell und `SessionEnd` mit Grund `other` → nach dem Neustart bzw. beim Wiederöffnen wird trotzdem fortgesetzt.
   - **Prozess-Regeln** mit konkreten Prozessbäumen: Git-Bash-Startkette, kurzlebige Prompt-Helfer, MCP-Server unter Claude, Dev-Server, der nach der Antwort weiterläuft.
   - **Schnittstelle:** Abweisung ohne gültiges Token; Hook-Antworten sind leer und kommen sofort.
@@ -492,7 +502,12 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - `--settings`: Hooks werden zu denen des Nutzers hinzugefügt, nicht ersetzt, und beim Fortsetzen nicht übernommen;
   - HTTP-Hooks mit Umgebungsvariablen in Kopfzeilen (`allowedEnvVars`);
   - nicht erreichbare HTTP-Hooks sind für Claude nur ein nicht blockierender Fehler;
-  - `Stop` läuft nicht, wenn der Nutzer mit Esc unterbricht.
+  - `Stop` läuft nicht, wenn der Nutzer mit Esc unterbricht; auch `idle_prompt` kommt dann nicht;
+  - `SessionStart` unterstützt keine HTTP-Hooks;
+  - gibt der Nutzer ein eigenes `--settings` an, gilt nur das letzte `--settings` (kein Zusammenführen);
+  - `--resume <Kennung>` aus einem anderen Ordner lässt Claude im aktuellen Ordner laufen, deshalb startet TermHub die Shell im Ordner der Session;
+  - `"disableAllHooks": true` in den Projekt-Einstellungen schaltet auch die TermHub-Hooks ab; `--session-id` wirkt weiter, das Sicherheitsnetz hält (Story 38, im Spike geprüft).
+  - Alle Befunde: `docs/spikes/claude-hooks.md`.
 - **Offen zu prüfen:** Ob von Administratoren verwaltete Einstellungen mit `allowManagedHooksOnly` auch Hooks aus `--settings` sperren, ist nicht dokumentiert. Das Sicherheitsnetz (selbst vergebene Session-Kennung) deckt diesen Fall für das Fortsetzen ab; nur die Statusanzeige fehlt dann.
 - **README aktualisieren:** Die „Offenen Punkte“ im README sind mit dieser Spezifikation beantwortet und werden bei der Umsetzung durch eine Beschreibung des neuen Verhaltens ersetzt.
 
@@ -504,7 +519,7 @@ Diese Punkte wurden nach der Befragung bei einem Review ergänzt oder geschärft
 2. **Ende-Meldung des Starters:** `claude` beendet sich → der Tab wird ein normales Terminal, auch ohne `SessionEnd`, also auch nach einem Absturz von Claude. Nach einem fehlgeschlagenen Fortsetzen erscheint ein Hinweis.
 3. **Drei Fälle beim Start:** neu, mit Kennung, ohne Kennung. Durchgereichte Aufrufe fragen TermHub gar nicht erst an. Gibt der Nutzer selbst `--settings` an, laufen keine TermHub-Hooks.
 4. **Kein Fortsetzen ohne Gespräch:** Eine per Hook bestätigte Session, in der nie ein Prompt geschrieben wurde, wird nach einem Neustart nicht fortgesetzt; der Tab kommt als normales Terminal zurück. Die zuvor angedachte Suche nach Gesprächsprotokollen in Claudes Dateien entfällt.
-5. **Unterbrechung mit Esc:** `idle_prompt` setzt „arbeitet“ bzw. „wartet“ auf „ruht“, weil `Stop` dann nicht kommt. Bis dahin bleibt der alte Zustand stehen.
+5. **Unterbrechung mit Esc:** Nach dem Spike korrigiert: `idle_prompt` kommt nach einer Unterbrechung nicht. Stattdessen setzt TermHub den Zustand auf „ruht“, wenn der Nutzer in einem arbeitenden oder wartenden Claude-Tab Esc drückt und danach etwa 1,5 Sekunden kein Hook-Ereignis kommt. Eine andere Eingabe in einem wartenden Tab setzt ihn auf „arbeitet“.
 6. **Prozess-Regeln:** zwei Abfragen bis zum Zählen, Startketten und Konsolenprozesse ignoriert. Bei Claude-Tabs zählen nur Prozesse, die seit dem letzten Prompt neu sind (MCP-Server zählen nicht). WSL zeigt nie Blau. `background_tasks` aus `Stop` wird nicht verwendet.
 7. **Rückfrage beim Schliessen** hängt an den eigentlichen Merkmalen, nicht am angezeigten Symbol: Ein grüner Tab mit laufendem Dev-Server fragt nach.
 8. **„Wartet“-Hinweis** verschwindet auch, wenn Claude wieder arbeitet; höchstens ein Hinweis pro Tab.

@@ -8,9 +8,12 @@ Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Status-Zeilen, „P
 ## Was gebaut wird
 
 - **Status-Zeilen des Zustandsautomaten:**
-  - „arbeitet“: `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`
-  - „wartet auf dich“: `Notification` mit `permission_prompt` oder `elicitation_dialog`
-  - „ruht“: `Stop`, `StopFailure`, sowie `Notification` mit `idle_prompt`. Dieser Fall fängt Unterbrechungen mit Esc auf, nach denen kein `Stop` kommt.
+  - „arbeitet“: `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`; ausserdem jede Eingabe des Nutzers (ausser Esc) in einem wartenden Claude-Tab, weil nach einer Bestätigung bis `PostToolUse` kein Ereignis kommt
+  - „wartet auf dich“: `PermissionRequest` (sofort); `Notification` mit `permission_prompt` oder `elicitation_dialog` nur als Rückfallebene (kommt etwa 6 Sekunden später)
+  - „ruht“: `Stop`, `StopFailure`; ausserdem Esc in einem arbeitenden oder wartenden Claude-Tab, wenn danach etwa 1,5 Sekunden kein Hook-Ereignis kommt (ohne grünes „fertig“), weil Claude nach einer Unterbrechung oder Ablehnung nichts meldet
+  - `Notification` mit `idle_prompt` ändert nichts
+  - Ereignisse in der Reihenfolge ihres Eintreffens verarbeiten (`PreToolUse` kommt vor `PermissionRequest`)
+  - Ende einer Hintergrund-Aufgabe: Claude schickt `UserPromptSubmit` (Prompt beginnt mit `<task-notification>`) und danach `Stop`; das ergibt kurz „arbeitet“, dann „ruht“ bzw. „fertig“
 - **„Fertig, noch nicht angeschaut“:** Das Merkmal wird gesetzt, wenn `Stop` eintrifft, während der Tab nicht sichtbar ist (nicht aktiv oder Fenster nicht im Vordergrund). Es wird gelöscht, sobald der Tab angezeigt wird oder das Fenster mit diesem Tab in den Vordergrund kommt. Der Renderer meldet dem Kern dafür, ob das Fenster im Vordergrund ist.
 - **Prozess-Sonde (Windows):**
   - eine Abfrage des Prozessbaums für alle Tabs etwa alle 1,5 Sekunden, ohne pro Abfrage einen Prozess zu starten, zum Beispiel mit `@vscode/windows-process-tree` oder einem Toolhelp32-Schnappschuss;
@@ -27,8 +30,9 @@ Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Status-Zeilen, „P
 ## Akzeptanzkriterien
 
 - [ ] Kern-Tests mit echten HTTP-Hook-Ereignissen und steuerbarer Prozess-Sonde:
-  - Prompt → arbeitet; Berechtigungsfrage → wartet; danach `PreToolUse` → arbeitet;
-  - Unterbrechung ohne `Stop`, dann `idle_prompt` → ruht;
+  - Prompt → arbeitet; `PreToolUse`, dann `PermissionRequest` → wartet; Eingabe des Nutzers → arbeitet; `PostToolUse` → arbeitet;
+  - Esc während „arbeitet“, danach kein Ereignis → nach 1,5 Sekunden (steuerbare Uhr) ruht, ohne grün; Esc mit folgendem `Stop` → normal über `Stop`;
+  - `idle_prompt` ändert nichts; verspätetes `permission_prompt` nach `PostToolUse` setzt nicht wieder auf „wartet“, wenn der Tab inzwischen arbeitet oder ruht;
   - `Stop` im sichtbaren Tab → ruht; im nicht sichtbaren Tab bzw. bei Fenster im Hintergrund → grün, bis der Tab angezeigt wird oder das Fenster mit ihm in den Vordergrund kommt;
   - normaler Tab: Prozess nur in einer Abfrage → nichts; in zwei Abfragen → blau; nach seinem Ende → nichts;
   - Git-Bash-Startkette allein → nichts;
