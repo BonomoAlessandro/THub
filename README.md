@@ -9,6 +9,7 @@ Desktop-App für Windows: mehrere benannte Terminal-Sessions in einem Fenster, d
 | Teil | Technik |
 |---|---|
 | App-Hülle | [Electron](https://www.electronjs.org/) |
+| Oberfläche | [React](https://react.dev/) mit TypeScript, normales CSS mit Design-Variablen (hell/dunkel) |
 | Terminal-Darstellung | [xterm.js](https://xtermjs.org/) (`@xterm/xterm`, `@xterm/addon-fit`) |
 | Shell-Prozesse | [node-pty](https://github.com/microsoft/node-pty) über Windows ConPTY |
 | Build | esbuild (Bundling), TypeScript (nur Typecheck), electron-builder (NSIS-Installer) |
@@ -42,13 +43,19 @@ src/
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
   main/shells.ts            Feste Shell-Liste (pwsh, powershell, cmd), bis die Shell-Erkennung kommt
   preload/preload.ts        Stellt dem Renderer die API `window.termhub` bereit
-  renderer/index.html       Fenster-Layout: Sidebar mit Tabs + Terminal-Bereich
-  renderer/renderer.ts      Anzeige: Schnappschuss und Ereignisse des Kerns, Befehle, Tastenkürzel
-  renderer/terminalView.ts  Ein xterm.js-Terminal pro Tab, meldet „Ansicht bereit“
-  renderer/styles.css
+  renderer/                 React-Oberfläche: zeigt an und schickt Befehle, die Tab-Logik liegt im Kern
+    main.tsx                Einstieg; übernimmt das Design von Windows (hell/dunkel)
+    App.tsx                 Fenster: Tab-Leiste und Terminal-Fläche, Tastenkürzel
+    useWorkspace.ts         Schnappschuss und Ereignisse des Kerns
+    shortcuts.ts            Zuordnung der Tastenkürzel (alles andere geht ans Terminal)
+    tabs/                   Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf
+    terminal/               Ein xterm.js pro Tab, inaktive ausgeblendet; meldet „Ansicht bereit“
+    styles/tokens.css       Design-Variablen und Terminal-Farbschemata aus dem Prototyp
+    styles/app.css
 test/
   support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
   workspace/                Kern-Tests (Teststelle 1)
+  renderer/                 Zuordnung der Tastenkürzel
 build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
 
@@ -72,10 +79,13 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
 
 ## Was das Grundgerüst kann
 
-- Mehrere Terminals (PowerShell) öffnen, in der Sidebar auflisten und zwischen ihnen wechseln
-- Sessions umbenennen (Doppelklick auf den Namen oder `F2`)
-- Beim Beenden werden alle Sessions gespeichert und beim nächsten Start in ihrem Verzeichnis neu gestartet; die zuletzt aktive Session wird wieder angezeigt
-- Standardverzeichnis unten in der Sidebar wählbar; neue Terminals starten dort
+- Mehrere Terminals (PowerShell) als Tabs in einer Tab-Leiste oben; neue Tabs erscheinen rechts neben dem aktiven
+- Bei vielen Tabs werden die Tabs schmaler und die Leiste scrollbar (auch mit dem Mausrad)
+- Tooltip mit Name, Ordner und Shell; Schliessen mit `×` oder der mittleren Maustaste
+- Tabs umbenennen (Doppelklick auf den Tab oder `F2`; Enter übernimmt, Escape bricht ab)
+- Beim Beenden werden alle Tabs gespeichert und beim nächsten Start in ihrem Verzeichnis neu gestartet; der zuletzt aktive Tab wird wieder angezeigt
+- Hell oder dunkel nach dem Design von Windows beim Start, auch die Terminalfläche
+- Der Standardordner lässt sich vorübergehend nicht einstellen; er kommt mit dem Einstellungsdialog zurück
 - Beendete Shell (z.B. `exit`): Hinweis im Terminal, beliebige Taste startet sie neu
 - Kopieren/Einfügen: Rechtsklick (mit Auswahl kopieren, sonst einfügen), `Ctrl+Shift+C` / `Ctrl+Shift+V`
 - Das Fenster öffnet mit gespeicherter Grösse, Position und Maximiert-Zustand; beim allerersten Start maximiert. Liegt es ausserhalb aller Bildschirme (etwa nach dem Abziehen eines Monitors), öffnet es zentriert auf dem Hauptbildschirm.
@@ -86,12 +96,14 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
 | Kürzel | Aktion |
 |---|---|
 | `Ctrl+Shift+T` | Neues Terminal |
-| `Ctrl+Shift+W` | Aktive Session schliessen |
-| `Ctrl+Tab` / `Ctrl+Shift+Tab` | Nächste / vorherige Session |
-| `Ctrl+PageDown` / `Ctrl+PageUp` | Nächste / vorherige Session |
-| `Ctrl+1` … `Ctrl+9` | Zur n-ten Session springen |
-| `F2` | Aktive Session umbenennen |
+| `Ctrl+Shift+W` | Aktiven Tab schliessen |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` | Nächster / vorheriger Tab |
+| `Ctrl+PageDown` / `Ctrl+PageUp` | Nächster / vorheriger Tab |
+| `Ctrl+1` … `Ctrl+9` | Zum n-ten Tab springen |
+| `F2` | Aktiven Tab umbenennen |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Kopieren / Einfügen |
+
+`Ctrl+K` und alle anderen Tasten gehen unverändert an die Shell.
 
 ## Offene Punkte (zum Ausspezifizieren)
 
