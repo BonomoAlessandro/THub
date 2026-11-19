@@ -1235,7 +1235,7 @@ function renderProto() {
       'dark',
     )}</div>
     <h5>Fenster</h5>
-    <div class="proto-row">${chip('Mica', !b.contains('no-mica'), 'mica')}${chip('Terminal als Karte', !b.contains('edge'), 'edge')}${chip(
+    <div class="proto-row">${chip('Terminal als Karte', !b.contains('edge'), 'edge')}${chip(
       'Maximiert',
       b.contains('maximized'),
       'max',

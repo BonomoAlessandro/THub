@@ -237,6 +237,12 @@ body.no-mica .window {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+/* Kein Mica: auch Menüs, Palette und Hinweise deckend. */
+body.no-mica .menu, body.no-mica .palette, body.no-mica .toast {
+  background: var(--dialog-bg);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 
 /* ---------- Titelleiste ---------- */
 .titlebar {
