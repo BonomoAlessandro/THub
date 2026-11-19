@@ -34,15 +34,26 @@ const WC_ICONS = {
   close: '<svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0 0 10"/></svg>',
 };
 
-function statusHtml(s) {
-  const inner =
-    s === 'working'
-      ? '<span class="st-ring"></span>'
-      : s === 'paused'
-        ? '<svg viewBox="0 0 10 10"><rect x="1.5" y="1" width="2.6" height="8" rx="0.8"/><rect x="5.9" y="1" width="2.6" height="8" rx="0.8"/></svg>'
-        : '<span class="st-dot"></span>';
-  return `<span class="st" data-s="${s}">${inner}</span>`;
+const SPARK = '<svg class="spark" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg>';
+const TYPE_TERMINAL = '<svg class="ty" viewBox="0 0 24 24"><path d="m5 16 5-4-5-4"/><path d="M12 17h7"/></svg>';
+
+/** Status-Symbol. Im Ruhezustand zeigt es den Typ des Tabs (Terminal oder Claude). */
+function statusHtml(s, claude = false) {
+  let inner;
+  if (s === 'idle') inner = claude ? SPARK : TYPE_TERMINAL;
+  else if (s === 'working')
+    inner =
+      state.workAnim === 'dots'
+        ? '<span class="st-dots"><i></i><i></i><i></i></span>'
+        : state.workAnim === 'arc'
+          ? '<span class="st-arc"></span>'
+          : SPARK;
+  else if (s === 'paused')
+    inner = '<svg viewBox="0 0 10 10"><rect x="1.5" y="1" width="2.6" height="8" rx="0.8"/><rect x="5.9" y="1" width="2.6" height="8" rx="0.8"/></svg>';
+  else inner = '<span class="st-dot"></span>';
+  return `<span class="st" data-s="${s}" data-v="${state.workAnim}">${inner}</span>`;
 }
+const tabIcon = (tab) => statusHtml(tab.status, tab.claude);
 
 // ---------- Modell ----------
 const HOME = 'C:\\Users\\dev';
@@ -70,6 +81,7 @@ const mkTab = (o) => ({ id: `t${nextId++}`, custom: false, status: 'idle', claud
 
 const state = {
   theme: 'system',
+  workAnim: 'spark',
   accent: 'indigo',
   fontSize: 14,
   toasts: true,
@@ -310,7 +322,7 @@ function renderTab(tab) {
   el.draggable = renaming !== tab.id;
 
   if (renaming === tab.id) {
-    el.innerHTML = `${statusHtml(tab.status)}<input class="tab-rename" value="${esc(tab.name)}" spellcheck="false" />`;
+    el.innerHTML = `${tabIcon(tab)}<input class="tab-rename" value="${esc(tab.name)}" spellcheck="false" />`;
     const input = $('input', el);
     queueMicrotask(() => {
       input.focus();
@@ -338,7 +350,7 @@ function renderTab(tab) {
     return el;
   }
 
-  el.innerHTML = `${statusHtml(tab.status)}<span class="tab-name">${esc(tab.name)}</span><button class="tab-close" aria-label="Tab schliessen">${icon('x')}</button>`;
+  el.innerHTML = `${tabIcon(tab)}<span class="tab-name">${esc(tab.name)}</span><button class="tab-close" aria-label="Tab schliessen">${icon('x')}</button>`;
   $('.tab-close', el).addEventListener('click', (e) => {
     e.stopPropagation();
     requestClose([tab.id]);
@@ -914,7 +926,7 @@ function paletteEntries(mode) {
     return [
       {
         group: 'Zuletzt geschlossen',
-        items: state.closed.map((e) => ({ status: e.tab.claude ? 'paused' : 'idle', label: e.tab.name, sub: e.tab.folder, run: () => reopenClosed(e) })),
+        items: state.closed.map((e) => ({ tab: { ...e.tab, status: 'idle' }, label: e.tab.name, sub: e.tab.folder, run: () => reopenClosed(e) })),
       },
     ];
   }
@@ -922,7 +934,7 @@ function paletteEntries(mode) {
   return [
     {
       group: 'Tabs',
-      items: state.tabs.map((tab) => ({ status: tab.status, label: tab.name, sub: tab.folder, isTab: true, run: () => activate(tab.id) })),
+      items: state.tabs.map((tab) => ({ tab, label: tab.name, sub: tab.folder, isTab: true, run: () => activate(tab.id) })),
     },
     {
       group: 'Befehle',
@@ -970,7 +982,7 @@ function openPalette(initialMode = 'root') {
       parts.push(`<div class="pal-group">${esc(g.group)}</div>`);
       for (const { it } of items) {
         const i = flat.push(it) - 1;
-        const lead = it.status !== undefined ? `<span class="mi-ic">${it.status === 'idle' ? icon('terminal') : statusHtml(it.status)}</span>` : `<span class="mi-ic">${icon(it.icon)}</span>`;
+        const lead = `<span class="mi-ic">${it.tab ? tabIcon(it.tab) : icon(it.icon)}</span>`;
         parts.push(
           `<div class="pal-item ${i === sel ? 'sel' : ''}" data-i="${i}">${lead}<span class="pal-main">${esc(it.label)}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</span>${
             it.kbd ? `<span class="mi-kbd">${esc(it.kbd)}</span>` : it.mode ? `<span class="mi-kbd">›</span>` : ''
@@ -1189,6 +1201,13 @@ function renderProto() {
       'accent',
       'mono',
     )}</div>
+    <h5>Animation „arbeitet“</h5>
+    <div class="proto-row">${chip('Claude-Stern', state.workAnim === 'spark', 'anim', 'spark')}${chip('Drei Punkte', state.workAnim === 'dots', 'anim', 'dots')}${chip(
+      'Bogen',
+      state.workAnim === 'arc',
+      'anim',
+      'arc',
+    )}</div>
     <h5>Fenster</h5>
     <div class="proto-row">${chip('Mica', !b.contains('no-mica'), 'mica')}${chip('Terminal als Karte', !b.contains('edge'), 'edge')}${chip(
       'Maximiert',
@@ -1226,6 +1245,10 @@ $('#proto-body').addEventListener('click', (e) => {
     case 'accent':
       state.accent = v;
       applyTheme();
+      break;
+    case 'anim':
+      state.workAnim = v;
+      renderTabs();
       break;
     case 'mica':
       b.toggle('no-mica');
