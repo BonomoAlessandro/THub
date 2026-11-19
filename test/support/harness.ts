@@ -1,9 +1,18 @@
 // Test-Gerüst für Teststelle 1: ein Workspace-Kern mit nachgemachten Ports, so wie ihn die App
 // beim Start erzeugt, und ein simulierter Neustart auf demselben gespeicherten Zustand.
+// Mit `startWorkspaceWithApi` läuft dazu die echte lokale Schnittstelle auf 127.0.0.1, mit Hook-Datei
+// in einem Temp-Datenordner, so wie beim Start der App.
 
+import * as path from 'node:path';
+import { afterEach } from 'vitest';
+import { HOOK_FILE_NAME, writeHookFile } from '../../src/main/hookFile';
+import { LocalApiServer } from '../../src/main/localApi';
+import type { LocalApiInfo } from '../../src/main/workspace/claude';
 import type { ShellInfo, StateStorage } from '../../src/main/workspace/ports';
+import type { PersistedState, PersistedTab } from '../../src/main/workspace/schema';
 import { createWorkspace, type Workspace } from '../../src/main/workspace/workspace';
 import type { TabSnapshot, WorkspaceEvent, WorkspaceSnapshot } from '../../src/shared/types';
+import { ApiClient } from './apiClient';
 import {
   FakeClock,
   FakeProcessProbe,
@@ -12,6 +21,36 @@ import {
   MemoryStorage,
   type FakeSystemOptions,
 } from './fakes';
+import { makeTempDir } from './tempDir';
+
+/** Laufende lokale Schnittstellen; nach jedem Test geschlossen. */
+const openApis = new Set<LocalApiServer>();
+
+afterEach(async () => {
+  const apis = [...openApis];
+  openApis.clear();
+  await Promise.all(apis.map((api) => api.close()));
+});
+
+/** Eine laufende lokale Schnittstelle mit ihrer Hook-Datei. */
+export interface RunningApi {
+  server: LocalApiServer;
+  info: LocalApiInfo;
+}
+
+/** Startet die Schnittstelle und schreibt die Hook-Datei in den Datenordner, wie main.ts beim Start. */
+async function startApi(dataDir: string): Promise<RunningApi> {
+  const server = await LocalApiServer.start();
+  openApis.add(server);
+  const hookFile = path.join(dataDir, HOOK_FILE_NAME);
+  writeHookFile(hookFile, server.url);
+  return { server, info: { url: server.url, token: server.token, hookFile } };
+}
+
+async function stopApi(api: RunningApi): Promise<void> {
+  openApis.delete(api.server);
+  await api.server.close();
+}
 
 export const TEST_SHELLS: ShellInfo[] = [
   { id: 'pwsh', name: 'PowerShell 7', file: 'pwsh.exe', args: [], capturesClaude: true },
@@ -31,6 +70,7 @@ interface Instance {
   workspace: Workspace;
   terminal: FakeTerminalBackend;
   events: WorkspaceEvent[];
+  api: RunningApi | null;
 }
 
 export class TestWorkspace {
@@ -41,11 +81,12 @@ export class TestWorkspace {
   private readonly shells: ShellInfo[];
   private current: Instance;
 
-  constructor(options: TestWorkspaceOptions = {}) {
+  /** @param api bereits laufende lokale Schnittstelle; ohne sie läuft der Kern wie ohne Server */
+  constructor(options: TestWorkspaceOptions = {}, api: RunningApi | null = null) {
     this.storage = options.storage ?? new MemoryStorage(options.state ?? null);
     this.system = new FakeSystem(options);
     this.shells = options.shells ?? TEST_SHELLS;
-    this.current = this.boot();
+    this.current = this.boot(api);
   }
 
   /** Der laufende Kern; nach `restart()` ein neuer. */
@@ -64,12 +105,33 @@ export class TestWorkspace {
   }
 
   /**
+   * Die lokale Schnittstelle des laufenden Kerns: Adresse, Token, Hook-Datei.
+   * Nach einem Neustart eine neue, mit neuem Port und neuem Token.
+   */
+  get localApi(): LocalApiInfo {
+    if (!this.current.api) throw new Error('Dieser Kern läuft ohne lokale Schnittstelle (startWorkspaceWithApi)');
+    return this.current.api.info;
+  }
+
+  /** Schickt echte HTTP-Anfragen mit dem gültigen Token an die lokale Schnittstelle. */
+  get api(): ApiClient {
+    return new ApiClient(this.localApi.url, this.localApi.token);
+  }
+
+  /**
    * Simuliert einen Neustart der App: Der Kern wird geordnet beendet, danach entsteht ein neuer
-   * Kern auf demselben gespeicherten Zustand, mit frischem Terminal-Backend.
+   * Kern auf demselben gespeicherten Zustand, mit frischem Terminal-Backend und, falls vorhanden,
+   * neuer lokaler Schnittstelle samt neu geschriebener Hook-Datei.
    */
   async restart(): Promise<void> {
-    await this.current.workspace.shutdown();
-    this.current = this.boot();
+    const { workspace, api } = this.current;
+    await workspace.shutdown();
+    let nextApi: RunningApi | null = null;
+    if (api) {
+      await stopApi(api);
+      nextApi = await startApi(path.dirname(api.info.hookFile));
+    }
+    this.current = this.boot(nextApi);
   }
 
   snapshot(): WorkspaceSnapshot {
@@ -100,18 +162,35 @@ export class TestWorkspace {
     return this.events.filter((e): e is Extract<WorkspaceEvent, { type: T }> => e.type === type);
   }
 
-  private boot(): Instance {
+  /** Was im Speicher „auf der Platte“ liegt; nur mit dem Speicher im Arbeitsspeicher. */
+  storedState(): PersistedState {
+    if (!(this.storage instanceof MemoryStorage)) throw new Error('storedState braucht den MemoryStorage');
+    return structuredClone(this.storage.stored) as PersistedState;
+  }
+
+  /** Ein Tab, wie er gespeichert ist, mit seiner Claude-Zuordnung. */
+  storedTab(tabId: string): PersistedTab | undefined {
+    return this.storedState().tabs.find((t) => t.id === tabId);
+  }
+
+  private boot(api: RunningApi | null): Instance {
     const terminal = new FakeTerminalBackend();
     const events: WorkspaceEvent[] = [];
     const workspace = createWorkspace(
       { terminal, storage: this.storage, clock: this.clock, processes: this.processes, system: this.system },
-      { shells: this.shells },
+      { shells: this.shells, localApi: api?.info },
     );
+    api?.server.connect(workspace);
     workspace.subscribe((event) => events.push(event));
-    return { workspace, terminal, events };
+    return { workspace, terminal, events, api };
   }
 }
 
 export function startWorkspace(options?: TestWorkspaceOptions): TestWorkspace {
   return new TestWorkspace(options);
+}
+
+/** Wie `startWorkspace`, dazu die echte lokale Schnittstelle auf 127.0.0.1 mit Hook-Datei. */
+export async function startWorkspaceWithApi(options?: TestWorkspaceOptions): Promise<TestWorkspace> {
+  return new TestWorkspace(options, await startApi(makeTempDir()));
 }
