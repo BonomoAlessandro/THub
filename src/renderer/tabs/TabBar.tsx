@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
 import type { TabSnapshot } from '../../shared/types';
-import { PlusIcon } from '../icons';
+import { ChevronIcon, GearIcon, PlusIcon } from '../icons';
 import { focusTerminal } from '../terminal/terminalViews';
 import { Tab } from './Tab';
 import { Tooltip } from './Tooltip';
@@ -26,8 +26,10 @@ type TooltipContent = { kind: 'tab'; tabId: string } | { kind: 'text'; text: str
 type TooltipState = TooltipContent & { anchor: DOMRect };
 
 /**
- * Tab-Leiste oben, gestaltet wie im Prototyp. Bei vielen Tabs werden die Tabs schmaler und die
- * Leiste scrollbar. Die Leiste zeigt nur an und schickt Befehle; die Tab-Logik liegt im Kern.
+ * Titelleiste mit der Tab-Leiste, gestaltet wie im Prototyp: Tabs, `+` mit Pfeil, freie Fläche zum
+ * Verschieben des Fensters, Zahnrad; rechts daneben liegen die nativen Fensterknöpfe. Bei vielen Tabs
+ * werden die Tabs schmaler und die Leiste scrollbar. Die Leiste zeigt nur an und schickt Befehle;
+ * die Tab-Logik liegt im Kern.
  */
 export function TabBar({ tabs, activeTabId, renamingId, onStartRename, onFinishRename }: TabBarProps) {
   const stripRef = useRef<HTMLDivElement>(null);
@@ -128,9 +130,18 @@ export function TabBar({ tabs, activeTabId, renamingId, onStartRename, onFinishR
         >
           <PlusIcon />
         </button>
+        {/* Pfeil-Menü mit Shells und Ordnern folgt mit Ticket 05; bis dahin ohne Funktion. */}
+        <button className="icon-btn chevron" aria-label="Shell oder Ordner wählen" disabled>
+          <ChevronIcon />
+        </button>
       </div>
-      {/* Freie Fläche rechts; ab Ticket 04 zum Verschieben des Fensters. */}
+      {/* Freie Fläche zum Verschieben des Fensters; Doppelklick maximiert. Sie bleibt mindestens
+          56 px breit, auch wenn die Tab-Leiste überläuft. */}
       <div className="titlebar-space" />
+      {/* Einstellungsdialog folgt mit Ticket 05; bis dahin ohne Funktion. */}
+      <button className="icon-btn" aria-label="Einstellungen" disabled>
+        <GearIcon />
+      </button>
 
       {tip?.kind === 'text' && <Tooltip anchor={tip.anchor}>{tip.text}</Tooltip>}
       {tip && tipTab && (
