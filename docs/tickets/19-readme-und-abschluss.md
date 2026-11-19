@@ -21,6 +21,8 @@ Spezifikation: „Weitere Hinweise“
 
 ## Abnahme von Hand
 
+- [ ] Die Prüflisten „Abnahme von Hand“ aller Tickets 01 bis 18 sind durchgeklickt; Abweichungen sind als neue Tickets erfasst.
+
 - [ ] Auf dem frischen Rechner bzw. Benutzer, mit installiertem Claude Code:
   - Installation ohne Einrichtung oder Rückfrage, die Claude betrifft;
   - die erkannten Shells stimmen, PowerShell 7 ist Standard, falls vorhanden;

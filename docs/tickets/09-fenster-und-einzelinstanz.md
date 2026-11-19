@@ -1,6 +1,6 @@
 # 09 – Fenster merken und nur eine Instanz
 
-Status: `erledigt` (2026-11-19, Abnahme von Hand offen) · Typ: AFK
+Status: `erledigt` (2026-11-19, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 01
 User Stories: 67, 68
 Spezifikation: „App-Verhalten“, „Gespeicherter Zustand“ (Fenster)
