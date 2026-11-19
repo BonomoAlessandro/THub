@@ -15,14 +15,15 @@ Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Status-Zeilen, „P
   - Ereignisse in der Reihenfolge ihres Eintreffens verarbeiten (`PreToolUse` kommt vor `PermissionRequest`)
   - Ende einer Hintergrund-Aufgabe: Claude schickt `UserPromptSubmit` (Prompt beginnt mit `<task-notification>`) und danach `Stop`; das ergibt kurz „arbeitet“, dann „ruht“ bzw. „fertig“
 - **„Fertig, noch nicht angeschaut“:** Das Merkmal wird gesetzt, wenn `Stop` eintrifft, während der Tab nicht sichtbar ist (nicht aktiv oder Fenster nicht im Vordergrund). Es wird gelöscht, sobald der Tab angezeigt wird oder das Fenster mit diesem Tab in den Vordergrund kommt. Der Renderer meldet dem Kern dafür, ob das Fenster im Vordergrund ist.
-- **Prozess-Sonde (Windows):**
-  - eine Abfrage des Prozessbaums für alle Tabs etwa alle 1,5 Sekunden, ohne pro Abfrage einen Prozess zu starten, zum Beispiel mit `@vscode/windows-process-tree` oder einem Toolhelp32-Schnappschuss;
-  - ein natives Modul liegt im Paket ausserhalb des asar-Archivs und passt zur Konfiguration `npmRebuild: false`.
-- **Prozess-Regeln:**
-  - Ein Prozess zählt erst ab der zweiten Abfrage.
-  - Nie gezählt werden `conhost.exe`, `OpenConsole.exe`, die Startkette der Shell (bei Git Bash `bin\bash.exe` → `usr\bin\bash.exe`) und der Starter.
-  - Normale Tabs: jeder verbleibende Nachfahre zählt.
-  - Claude-Tabs: nur Nachfahren des Claude-Prozesses (Prozess-ID aus der Meldung `started`), die beim letzten `UserPromptSubmit` noch nicht liefen, und nur, solange Claude ruht.
+- **Prozess-Sonde (Windows)** nach dem Spike `docs/spikes/prozess-sonde.md`: `koffi` 3.3.8 (exakt), ein asynchroner Aufruf von `NtQuerySystemInformation(SystemProcessInformation)` pro Abfrage, alle Tabs zusammen etwa alle 1,5 Sekunden; liefert Prozess-ID, Eltern-ID, Name und Startzeit. Referenz: `spikes/prozess-sonde/probes/ntqsi.js`.
+  - Paket: `asarUnpack` um `node_modules/@koromix/koffi-win32-*/**` ergänzen, `koffi` in esbuild als `external`, nie `--omit=optional`.
+- **Prozess-Regeln** (genau nach der Spezifikation, Abschnitt „Prozesse laufen“):
+  - Identität (Prozess-ID, Startzeit); Eltern-Beziehung nur, wenn das Kind nicht älter ist als der Eltern-Prozess.
+  - Innerste Shell: Wurzel von node-pty; bei Git Bash genau eine Ebene tiefer, einmal bestimmt und fest.
+  - Ein Prozess zählt erst ab der zweiten Abfrage; `conhost.exe` und `OpenConsole.exe` nie.
+  - Git Bash: verwaiste MSYS-Programme mit dem Konsolen-Host des Tabs zählen als Nachfahren.
+  - Normale Tabs: jeder Nachfahre der innersten Shell zählt.
+  - Claude-Tabs: nur Nachfahren des Claude-Prozesses (Prozess-ID aus `started`), die nach dem letzten `UserPromptSubmit` gestartet sind, und nur, solange Claude ruht.
   - WSL-Tabs: nie blau.
 - **Angezeigter Status** mit Vorrang: pausiert → wartet → arbeitet → fertig (grün) → Prozesse laufen (blau) → nichts.
 - **Symbole an den Tabs** wie im Prototyp: violett animiert, orange pulsierend, blau, grün, grau pausiert (das letzte aus Ticket 12).
@@ -35,8 +36,9 @@ Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Status-Zeilen, „P
   - `idle_prompt` ändert nichts; verspätetes `permission_prompt` nach `PostToolUse` setzt nicht wieder auf „wartet“, wenn der Tab inzwischen arbeitet oder ruht;
   - `Stop` im sichtbaren Tab → ruht; im nicht sichtbaren Tab bzw. bei Fenster im Hintergrund → grün, bis der Tab angezeigt wird oder das Fenster mit ihm in den Vordergrund kommt;
   - normaler Tab: Prozess nur in einer Abfrage → nichts; in zwei Abfragen → blau; nach seinem Ende → nichts;
-  - Git-Bash-Startkette allein → nichts;
-  - Claude-Tab mit MCP-Server-Kindern, die vor dem Prompt liefen → nach `Stop` nichts; ein während der Antwort gestarteter Kindprozess, der weiterläuft → nach `Stop` blau, nach seinem Ende nichts;
+  - Git-Bash-Startkette allein → nichts; `ssh` als verwaister MSYS-Prozess mit dem Konsolen-Host des Tabs → blau;
+  - wiederverwendete Prozess-ID (Kind älter als „Eltern“) zählt nicht als Nachfahre;
+  - Claude-Tab mit MCP-Server-Kindern, die vor dem Prompt gestartet sind → nach `Stop` nichts; ein nach dem Prompt gestarteter Kindprozess, der weiterläuft → nach `Stop` blau, nach seinem Ende nichts;
   - Vorrang bei gleichzeitigen Zuständen, etwa grün plus blau → grün.
 
 ## Abnahme von Hand (mit echtem Claude Code)

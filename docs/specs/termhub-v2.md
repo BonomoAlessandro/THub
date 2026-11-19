@@ -151,7 +151,7 @@ TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessio
   - **Terminal-Backend**: Shell starten (Programm, Argumente, Ordner, Umgebung, Grösse), schreiben, Grösse ändern, beenden; meldet die rohe Ausgabe in Stücken, das Ende und die Prozess-ID.
   - **Speicher**: Zustand laden und speichern, Verlauf pro Tab laden, speichern und löschen.
   - **Uhr**: Zeitstempel und Zeitgeber (Countdown der Hinweise, periodisches Sichern, Abfrage der Prozess-Sonde).
-  - **Prozess-Sonde**: liefert in **einer** Abfrage den Prozessbaum (Prozess-ID, Eltern-ID, Programmname) für alle Shells.
+  - **Prozess-Sonde**: liefert in **einer** Abfrage alle Prozesse mit Prozess-ID, Eltern-ID, Programmname und Startzeit (und für verwaiste Git-Bash-Prozesse den Konsolen-Host).
   - **System**: ob ein Ordner existiert, Benutzerordner und Benutzername, angeschlossene Bildschirme.
 - **Eingänge** in den Kern: Befehle aus dem Renderer (darunter „Ansicht des Tabs bereit“ mit Spalten und Zeilen, angezeigter Tab, Fenster im Vordergrund ja/nein), Ausgabe und Ende aus dem Terminal-Backend (der Kern erkennt darin die Ordner-Meldungen der Shell), Meldungen des `claude`-Starters, Claude-Hook-Ereignisse und Prozess-Schnappschüsse.
 - **Ausgänge**: der Zustand an den Renderer (vollständiger Schnappschuss beim Laden, danach Änderungsereignisse: Tabs, Status, Hinweise, Einstellungen), Startaufträge an das Terminal-Backend, Verlauf zum Wiederherstellen.
@@ -273,7 +273,7 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 | Prozess-ID gemeldet | wird für die Prozess-Regeln gemerkt |
 | `SessionStart` (alle Quellen) | Kennung und Ordner (`cwd`, normalisiert) aus dem Ereignis übernehmen, bestätigt; bei neuer Kennung „hatte Prompt“ zurücksetzen; Zustand „ruht“ |
 | Ein anderes Ereignis (ausser `SessionEnd`) mit einer anderen `session_id` als der gespeicherten | wird wie `SessionStart` behandelt (Ersatz, falls `SessionStart` nicht ankam), danach normal verarbeitet |
-| `UserPromptSubmit` | Zustand „arbeitet“, „hatte Prompt“ setzen, Prozess-Grundbestand neu erfassen (siehe unten) |
+| `UserPromptSubmit` | Zustand „arbeitet“, „hatte Prompt“ setzen, Zeitpunkt merken (für die Prozess-Regeln, siehe unten) |
 | `PreToolUse`, `PostToolUse`, `PostToolUseFailure` | Zustand „arbeitet“ (beendet auch „wartet“) |
 | `PermissionRequest` | Zustand „wartet auf dich“, sofort |
 | `Notification` mit Typ `permission_prompt` oder `elicitation_dialog` | Zustand „wartet auf dich“, aber nur als Rückfallebene: wenn der Tab noch „arbeitet“ und seit dem letzten `PreToolUse` weder `PermissionRequest` noch `PostToolUse` kam. Das Ereignis kommt etwa 6 Sekunden verzögert und darf einen inzwischen weiterarbeitenden oder ruhenden Tab nicht zurücksetzen |
@@ -288,12 +288,19 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 | **TermHub beendet selbst** (App beenden, Tab schliessen, Windows-Abmeldung oder -Neustart) | Claude-Zuordnung wird **eingefroren**: Ereignisse danach (`SessionEnd`, Ende-Meldung, Ende der Shell) ändern den gespeicherten Zustand und die Liste der geschlossenen Tabs nicht mehr |
 
 **„Prozesse laufen“ (blau):**
-- Die Prozess-Sonde wird für alle Tabs zusammen etwa alle 1,5 Sekunden abgefragt, **ohne pro Abfrage einen neuen Prozess zu starten**, zum Beispiel über das native Modul `@vscode/windows-process-tree` oder einen Toolhelp32-Schnappschuss. Native Module liegen im Paket ausserhalb des asar-Archivs.
-- Ein Prozess zählt erst, wenn er in zwei aufeinanderfolgenden Abfragen vorkommt. Das filtert kurzlebige Prompt-Helfer wie `git.exe` von posh-git oder oh-my-posh.
-- Nie gezählt werden: `conhost.exe`, `OpenConsole.exe`, die Startkette der Shell (bei Git Bash startet `bin\bash.exe` das eigentliche `usr\bin\bash.exe`; die innerste Shell gilt als Shell) und der Starter selbst.
-- **Normale Tabs:** Jeder verbleibende Nachfahre der Shell zählt.
-- **Claude-Tabs:** Es zählen nur Nachfahren des Claude-Prozesses, die beim letzten `UserPromptSubmit` noch nicht liefen, und nur, solange Claude ruht. Dauerhafte Helfer wie MCP-Server zählen also nicht; ein während der Antwort gestarteter Dev-Server, der danach weiterläuft, zählt, bis er endet.
+- **Technik** (aus dem Spike, `docs/spikes/prozess-sonde.md`): `koffi` in exakt Version 3.3.8 mit **einem asynchronen Aufruf von `NtQuerySystemInformation(SystemProcessInformation)`** pro Abfrage, etwa alle 1,5 Sekunden für alle Tabs zusammen. Kostet rund 7,5 ms auf einem Hilfs-Thread (etwa 0,5 % eines Kerns), unabhängig von der Zahl der Tabs. Es wird kein Prozess gestartet und kein Prozess-Handle geöffnet. Referenzcode: `spikes/prozess-sonde/probes/ntqsi.js`.
+  - Installation ohne Build-Werkzeuge: koffi bringt sein Binärmodul als optionales Paket `@koromix/koffi-win32-x64` mit; niemals mit `--omit=optional` installieren.
+  - Paket: `build.asarUnpack` um `node_modules/@koromix/koffi-win32-*/**` ergänzen; `koffi` ist in esbuild `external`; `npmRebuild: false` bleibt richtig.
+  - Verworfen: `@vscode/windows-process-tree` (braucht Build-Werkzeuge, schneidet nach 1024 Prozessen ab, keine Startzeiten) und PowerShell/CIM (zu viel CPU).
+- **Identität:** Ein Prozess ist (Prozess-ID, Startzeit). Eine Eltern-Beziehung zählt nur, wenn das Kind nicht vor dem Eltern-Prozess gestartet ist; Prozess-IDs werden unter Windows wiederverwendet.
+- **Innerste Shell:** Wurzel ist die Prozess-ID von node-pty. Bei PowerShell 7, Windows PowerShell und cmd ist das die Shell selbst (auch PowerShell 7 über den WindowsApps-Alias). Bei Git Bash ist die Wurzel der Starter `bin\bash.exe`; die eigentliche Shell ist genau eine Ebene darunter das `bash.exe`-Kind, einmal bestimmt und dann fest. Bis es erscheint, zählt nichts. Tiefere `bash.exe` sind Fork-Kinder von Befehlen und zählen als Nachfahren.
+- Ein Prozess zählt erst, wenn er in zwei aufeinanderfolgenden Abfragen vorkommt. Das filtert kurzlebige Prompt-Helfer (posh-git startet pro Prompt ein `git.exe`, der Git-Bash-Prompt eine Kaskade von Forks).
+- `conhost.exe` und `OpenConsole.exe` zählen nie. Der ConPTY-Host eines Tabs liegt neben der Shell, nicht darunter; unter Nachfahren mit eigener Konsole kommen sie trotzdem vor.
+- **Git Bash, verwaiste MSYS-Programme:** `sleep`, `ssh`, `vim`, `less` usw. verlieren unter Git Bash ihren Eltern-Prozess. Sie zählen trotzdem als Nachfahren, wenn ihr Konsolen-Host der Host des Tabs ist (Abfrage nur für Waisen, etwa 0,15 ms).
+- **Normale Tabs:** Jeder Nachfahre der innersten Shell zählt.
+- **Claude-Tabs:** Es zählen nur Nachfahren des Claude-Prozesses (Prozess-ID aus der Meldung `started`), die **nach dem letzten `UserPromptSubmit` gestartet** sind, und nur, solange Claude ruht. Dauerhafte Helfer wie MCP-Server zählen also nicht; ein während der Antwort gestarteter Dev-Server, der danach weiterläuft, zählt, bis er endet.
 - **WSL-Tabs** zeigen nie „Prozesse laufen“, weil die Linux-Prozesse für Windows unsichtbar sind.
+- **Bekannte Grenzen:** Aus der Shell oder von Claude geöffnete GUI-Programme halten den Tab blau, solange sie offen sind. Ein Prompt, der länger als 1,5 Sekunden braucht, kann kurz blau aufblitzen. Vollständig abgekoppelte Prozesse lassen sich keinem Tab zuordnen.
 
 **Angezeigter Status**, mit Vorrang von oben nach unten:
 1. pausiert
@@ -463,7 +470,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Zuletzt benutzte Ordner.**
   - **Claude-Zuordnung:** alle drei Fälle beim Start, Ende-Meldung, Sicherheitsnetz ohne jedes Hook-Ereignis, der komplette Zustandsautomat inklusive `/clear`, `PermissionRequest`, Esc ohne folgendes Ereignis, Eingabe nach einer Rückfrage, Ersatzregel für fehlendes `SessionStart`, verspätetes `SessionEnd(other)` bei fehlgeschlagenem Fortsetzen und Vorrang der angezeigten Zustände.
   - **Einfrieren:** Beenden bzw. Schliessen, danach Ende der Shell und `SessionEnd` mit Grund `other` → nach dem Neustart bzw. beim Wiederöffnen wird trotzdem fortgesetzt.
-  - **Prozess-Regeln** mit konkreten Prozessbäumen: Git-Bash-Startkette, kurzlebige Prompt-Helfer, MCP-Server unter Claude, Dev-Server, der nach der Antwort weiterläuft.
+  - **Prozess-Regeln** mit konkreten Prozessbäumen (Vorlagen in `spikes/prozess-sonde/ergebnisse/`): Git-Bash-Startkette, verwaiste MSYS-Programme mit Konsolen-Host, kurzlebige Prompt-Helfer, wiederverwendete Prozess-IDs, MCP-Server unter Claude, Dev-Server, der nach der Antwort weiterläuft.
   - **Schnittstelle:** Abweisung ohne gültiges Token; Hook-Antworten sind leer und kommen sofort.
   - **Hinweise:** nur für nicht sichtbare Tabs, Countdown nur im Vordergrund, höchstens einer pro Tab, abgeschaltet heisst keine Hinweise.
   - **Wiederherstellen:** alle Fälle aus dem Abschnitt „Wiederherstellen“.

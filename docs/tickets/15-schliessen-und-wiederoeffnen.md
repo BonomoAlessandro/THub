@@ -12,6 +12,7 @@ Spezifikation: „Wiederherstellen“ (geschlossene Tabs, Beenden), „Gespeiche
   - Ein ruhender Tab, auch ein ruhender Claude-Tab, schliesst sofort.
   - Der Kern entscheidet, der Renderer zeigt den Dialog wie im Prototyp.
 - **Mehrere Tabs schliessen** („Andere Tabs schliessen“): im Kern umgesetzt, im Menü ab Ticket 16. Höchstens eine gemeinsame Rückfrage, die die betroffenen Tabs nennt.
+- **Beim Schliessen eines Tabs** werden die Shell und alle ihre Nachfahren beendet. Prozesse mit eigener Konsole (etwa per `Start-Process` gestartet) überleben `pty.kill()` laut Spike; sie werden über den Prozessbaum der Sonde gezielt beendet. Dasselbe gilt beim Beenden der App.
 - **Fenster schliessen bzw. App beenden** fragt nie nach.
 - **Zuletzt geschlossene Tabs:**
   - Beim Schliessen wird der Tab eingefroren und wandert mit allen Angaben (Name, Shell, Ordner, Verlauf bzw. Claude-Zuordnung) in eine Liste der letzten zehn, die einen Neustart übersteht.
