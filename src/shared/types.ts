@@ -55,7 +55,14 @@ export type WorkspaceEvent =
   /** Die Shell eines Tabs hat sich beendet. */
   | { type: 'exit'; tabId: string; exitCode: number }
   /** Hinweis im Terminal eines Tabs (z.B. Shell liess sich nicht starten). */
-  | { type: 'notice'; tabId: string; level: 'info' | 'error'; text: string };
+  | { type: 'notice'; tabId: string; level: 'info' | 'error'; text: string }
+  /**
+   * Gesicherter Verlauf eines Tabs zum Wiederherstellen. Kommt nach „Ansicht bereit“, aber vor dem
+   * Startauftrag, und damit vor der ersten Ausgabe der Shell. `savedAt`: Zeitpunkt der Sicherung.
+   */
+  | { type: 'restoreHistory'; tabId: string; content: string; savedAt: number }
+  /** Der Kern möchte den aktuellen Verlauf dieser Tabs; der Renderer antwortet je Tab mit `saveHistory`. */
+  | { type: 'requestHistory'; tabIds: string[] };
 
 /** Befehle vom Renderer an den Kern. */
 export type WorkspaceCommand =
@@ -73,6 +80,8 @@ export type WorkspaceCommand =
   | { type: 'writeToTab'; tabId: string; data: string }
   /** Beendete Shell neu starten (beliebige Taste im Terminal). */
   | { type: 'restartTab'; tabId: string }
+  /** Antwort auf `requestHistory`: der serialisierte Inhalt des Terminals eines Tabs. */
+  | { type: 'saveHistory'; tabId: string; content: string }
   | { type: 'updateSettings'; patch: Partial<Settings> };
 
 export type Unsubscribe = () => void;

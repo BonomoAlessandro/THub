@@ -40,7 +40,15 @@ export interface TerminalBackend {
 
 // ---------- Speicher ----------
 
-/** Lädt und speichert den Zustand. Der Verlauf pro Tab kommt mit Ticket 08 dazu. */
+/** Der gesicherte Inhalt eines Terminals. */
+export interface TabHistory {
+  /** Serialisierter Terminal-Inhalt: Text mit Escape-Sequenzen, so wie ihn der Renderer liefert. */
+  content: string;
+  /** Wann gesichert wurde, in Millisekunden seit 1970. */
+  savedAt: number;
+}
+
+/** Lädt und speichert den Zustand und den Verlauf pro Tab. */
 export interface StateStorage {
   /**
    * Liest den gespeicherten Zustand roh, also noch nicht übernommen oder geprüft.
@@ -51,6 +59,13 @@ export interface StateStorage {
   saveState(state: PersistedState): void;
   /** Schreibt vorgemerkten Zustand sofort. */
   flush(): void;
+
+  /** Liest den Verlauf eines Tabs; `null`, wenn es keinen (lesbaren) gibt. */
+  loadHistory(tabId: string): TabHistory | null;
+  /** Schreibt den Verlauf eines Tabs sofort und ersetzt den bisherigen. */
+  saveHistory(tabId: string, history: TabHistory): void;
+  /** Löscht den Verlauf eines Tabs; gibt es keinen, passiert nichts. */
+  deleteHistory(tabId: string): void;
 }
 
 // ---------- Uhr ----------

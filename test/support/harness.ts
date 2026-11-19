@@ -1,7 +1,7 @@
 // Test-Gerüst für Teststelle 1: ein Workspace-Kern mit nachgemachten Ports, so wie ihn die App
 // beim Start erzeugt, und ein simulierter Neustart auf demselben gespeicherten Zustand.
 
-import type { ShellInfo, StateStorage } from '../../src/main/workspace/ports';
+import type { ShellInfo, StateStorage, TabHistory } from '../../src/main/workspace/ports';
 import { createWorkspace, type Workspace } from '../../src/main/workspace/workspace';
 import type { TabSnapshot, WorkspaceEvent, WorkspaceSnapshot } from '../../src/shared/types';
 import {
@@ -27,9 +27,42 @@ export interface TestWorkspaceOptions extends FakeSystemOptions {
   shells?: ShellInfo[];
 }
 
+/**
+ * Die Oberfläche, soweit die Kern-Tests sie brauchen: Sie zeigt pro Tab den wiederhergestellten Verlauf
+ * und die Ausgabe der Shell an und liefert diesen Inhalt, wenn der Kern den Verlauf anfordert. Sie
+ * antwortet sofort; mit `answersHistory = false` spielt sie einen Renderer, der nicht mehr antwortet.
+ */
+export class TestRenderer {
+  answersHistory = true;
+  private readonly screens = new Map<string, string>();
+
+  constructor(private readonly workspace: Workspace) {}
+
+  /** Was im Terminal des Tabs steht. */
+  screen(tabId: string): string {
+    return this.screens.get(tabId) ?? '';
+  }
+
+  handle(event: WorkspaceEvent): void {
+    switch (event.type) {
+      case 'restoreHistory':
+        this.screens.set(event.tabId, event.content);
+        return;
+      case 'output':
+        this.screens.set(event.tabId, this.screen(event.tabId) + event.data);
+        return;
+      case 'requestHistory':
+        if (!this.answersHistory) return;
+        for (const tabId of event.tabIds) this.workspace.saveHistory(tabId, this.screen(tabId));
+        return;
+    }
+  }
+}
+
 interface Instance {
   workspace: Workspace;
   terminal: FakeTerminalBackend;
+  renderer: TestRenderer;
   events: WorkspaceEvent[];
 }
 
@@ -63,6 +96,11 @@ export class TestWorkspace {
     return this.current.events;
   }
 
+  /** Die Oberfläche des laufenden Kerns; nach einem Neustart eine neue mit leeren Terminals. */
+  get renderer(): TestRenderer {
+    return this.current.renderer;
+  }
+
   /**
    * Simuliert einen Neustart der App: Der Kern wird geordnet beendet, danach entsteht ein neuer
    * Kern auf demselben gespeicherten Zustand, mit frischem Terminal-Backend.
@@ -83,6 +121,11 @@ export class TestWorkspace {
   activeTab(): TabSnapshot | undefined {
     const { tabs, activeTabId } = this.snapshot();
     return tabs.find((t) => t.id === activeTabId);
+  }
+
+  /** Der gesicherte Verlauf eines Tabs, so wie er im Speicher liegt. */
+  storedHistory(tabId: string): TabHistory | null {
+    return this.storage.loadHistory(tabId);
   }
 
   tabNamed(name: string): TabSnapshot {
@@ -107,8 +150,12 @@ export class TestWorkspace {
       { terminal, storage: this.storage, clock: this.clock, processes: this.processes, system: this.system },
       { shells: this.shells },
     );
-    workspace.subscribe((event) => events.push(event));
-    return { workspace, terminal, events };
+    const renderer = new TestRenderer(workspace);
+    workspace.subscribe((event) => {
+      events.push(event);
+      renderer.handle(event);
+    });
+    return { workspace, terminal, renderer, events };
   }
 }
 
