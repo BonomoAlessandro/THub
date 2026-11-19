@@ -10,11 +10,21 @@ import type {
   WorkspaceEvent,
   WorkspaceSnapshot,
 } from '../../shared/types';
-import type { ShellInfo, StartOrder, WorkspacePorts } from './ports';
-import { normalizeSettings, readPersistedState, type PersistedState, type PersistedTab } from './schema';
+import type { CancelTimer, ShellInfo, StartOrder, WorkspacePorts } from './ports';
+import {
+  normalizeSettings,
+  normalizeWindow,
+  readPersistedState,
+  type PersistedState,
+  type PersistedTab,
+  type WindowState,
+} from './schema';
+import { placeWindow } from './windowPlacement';
 
 /** So lange wartet das Beenden höchstens auf die Shells. */
 const SHUTDOWN_TIMEOUT_MS = 3000;
+/** Fensterangaben werden gespeichert, sobald das Fenster so lange nicht mehr verändert wurde. */
+const WINDOW_SAVE_DELAY_MS = 500;
 
 export interface WorkspaceOptions {
   /** Shells, die der Kern starten kann. Bis zur Shell-Erkennung (Ticket 06) eine feste Liste. */
@@ -44,6 +54,18 @@ export interface Workspace {
 
   updateSettings(patch: Partial<Settings>): void;
 
+  /**
+   * Wie das Fenster öffnen soll: gespeicherte Grösse, Position und Maximiert-Zustand, geprüft gegen die
+   * angeschlossenen Bildschirme. Ohne gespeicherte Angaben maximiert auf dem Hauptbildschirm.
+   */
+  windowState(): WindowState;
+  /**
+   * Das Fenster wurde verschoben, in der Grösse geändert, maximiert oder wiederhergestellt.
+   * `bounds` ist die normale Grösse und Position, auch im maximierten Zustand.
+   * Gespeichert wird entprellt und spätestens beim Beenden.
+   */
+  windowChanged(state: WindowState): void;
+
   /** Sichert den Zustand und beendet alle Shells. Danach nimmt der Kern keine Befehle mehr an. */
   shutdown(): Promise<void>;
 }
@@ -67,6 +89,8 @@ class WorkspaceCore implements Workspace {
   private readonly runtimes = new Map<string, TabRuntime>();
   private readonly listeners = new Set<(event: WorkspaceEvent) => void>();
   private stopping: Promise<void> | null = null;
+  /** Vorgemerktes Speichern geänderter Fensterangaben; `null`, wenn nichts aussteht. */
+  private cancelWindowSave: CancelTimer | null = null;
 
   constructor(
     private readonly ports: WorkspacePorts,
@@ -264,6 +288,24 @@ class WorkspaceCore implements Workspace {
     this.emit({ type: 'settings', settings: structuredClone(next) });
   }
 
+  // ---------- Fenster ----------
+
+  windowState(): WindowState {
+    return placeWindow(this.state.window, this.ports.system.displays());
+  }
+
+  windowChanged(state: WindowState): void {
+    const next = normalizeWindow(state);
+    if (this.stopping || !next || JSON.stringify(next) === JSON.stringify(this.state.window)) return;
+    this.state.window = next;
+    // Beim Ziehen kommen viele Meldungen kurz nacheinander; gespeichert wird erst, wenn das Fenster ruht.
+    this.cancelWindowSave?.();
+    this.cancelWindowSave = this.ports.clock.schedule(WINDOW_SAVE_DELAY_MS, () => {
+      this.cancelWindowSave = null;
+      this.save();
+    });
+  }
+
   // ---------- Beenden ----------
 
   shutdown(): Promise<void> {
@@ -271,6 +313,7 @@ class WorkspaceCore implements Workspace {
       // Die Shells werden auch dann beendet, wenn das Sichern scheitert; der Fehler kommt danach.
       let saveError: unknown = null;
       try {
+        this.saveWindowNow();
         this.ports.storage.flush();
       } catch (err) {
         saveError = err;
@@ -314,6 +357,14 @@ class WorkspaceCore implements Workspace {
 
   private save(): void {
     this.ports.storage.saveState(structuredClone(this.state));
+  }
+
+  /** Merkt noch nicht gespeicherte Fensterangaben sofort zum Speichern vor. */
+  private saveWindowNow(): void {
+    if (!this.cancelWindowSave) return;
+    this.cancelWindowSave();
+    this.cancelWindowSave = null;
+    this.save();
   }
 
   private emitTabs(): void {

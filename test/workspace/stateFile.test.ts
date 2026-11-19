@@ -57,6 +57,17 @@ describe('Zustandsdatei', () => {
     expect(h.activeTab()?.name).toBe('Gerade eben');
   });
 
+  it('sichert die Fensterangaben beim Beenden in die Datei und liest sie beim Start wieder', async () => {
+    const { h, file } = startWithStateFile();
+    const window = { bounds: { x: 120, y: 80, width: 1000, height: 700 }, maximized: true };
+    h.workspace.windowChanged(window);
+
+    await h.restart();
+
+    expect(JSON.parse(fs.readFileSync(file, 'utf8'))).toMatchObject({ window });
+    expect(h.workspace.windowState()).toEqual(window);
+  });
+
   it('übernimmt eine Datei aus Version 0.1.0 und schreibt sie als Version 2 zurück', async () => {
     const v1 = {
       version: 1,
