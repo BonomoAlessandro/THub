@@ -1,6 +1,6 @@
 # 10 – Lokale Schnittstelle, Hook-Datei und Claude-Zuordnung
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `erledigt` (2026-11-19, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 01, 09
 User Stories: 31, 32, 36, 38 (Grundlage)
 Spezifikation: „Hook-Empfänger und lokale Schnittstelle“, „Claude-Status: Zustandsautomat pro Tab“ (Claude-Zuordnung, Einfrieren), „Testentscheidungen → Teststelle 1“
