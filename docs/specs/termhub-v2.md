@@ -376,7 +376,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Erster Start maximiert:** Ohne gespeicherte Fensterangaben öffnet TermHub maximiert.
   - **Tabs:** Jeder Tab ist eine eigene, abgerundete Fläche mit feinem Rand und etwas Abstand zum Nachbarn; der aktive Tab hebt sich mit stärkerem Rand, fettem Namen und neutralem Balken darunter ab; der Schliessen-Knopf erscheint beim aktiven Tab und beim Überfahren.
   - **Umbenennen:** Der Tab selbst wird zum Eingabefeld, in gleicher Grösse und Schrift, nur mit feinem Rahmen; kein separates Textfeld.
-  - **Hinweise:** Die ganze Karte ist anklickbar und öffnet den Tab; es gibt keinen „Öffnen“-Button. Das × zum Wegklicken erscheint beim Überfahren.
+  - **Hinweise:** 320 px breit, Titel 14 px, Text 13 px. Die ganze Karte ist anklickbar und öffnet den Tab; es gibt keinen „Öffnen“-Button. Eine dezente Zeile „Zum Tab wechseln →“ zeigt, dass man klicken kann, und wird beim Überfahren hell. Das × zum Wegklicken erscheint beim Überfahren.
   - **Symbol-Platz links vom Tab-Namen:** Im Ruhezustand zeigt er gedämpft den Typ des Tabs (`>_` für ein normales Terminal, ein Stern für einen Claude-Tab), sonst den Status.
   - **Status-Animationen:** „arbeitet“ = violetter Claude-Stern, der rotiert und pulsiert; „wartet auf dich“ = oranger Punkt mit Ping-Ring; „Prozesse laufen“ = blauer, ruhig atmender Punkt; „fertig“ = grüner Punkt; „pausiert“ = graues Pause-Symbol. Bei reduzierter Bewegung (Windows-Einstellung) laufen die Animationen stark verlangsamt.
 - **Tastenkürzel:**

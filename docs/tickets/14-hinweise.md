@@ -10,7 +10,7 @@ Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Hinweise im Fenster
 - **Auslöser:** Der Kern löst einen Hinweis aus, wenn ein **nicht sichtbarer** Tab in „wartet auf dich“ wechselt oder fertig wird. Pro Tab gibt es höchstens einen Hinweis; ein neuer ersetzt den alten.
 - **Darstellung** unten rechts im Fenster wie im Prototyp, gestapelt:
   - Tab-Name und Text, etwa „Claude wartet auf deine Bestätigung“ bzw. „Claude ist fertig“;
-  - die ganze Karte ist anklickbar und springt in den Tab (kein „Öffnen“-Button); das × zum Wegklicken erscheint beim Überfahren;
+  - die ganze Karte ist anklickbar und springt in den Tab (kein „Öffnen“-Button); eine dezente Zeile „Zum Tab wechseln →“ zeigt das an; das × zum Wegklicken erscheint beim Überfahren;
   - Hinweise nehmen dem Terminal nie den Fokus, Eingaben im aktiven Terminal gehen weiter.
 - **„Fertig“** verschwindet nach etwa 6 Sekunden Vordergrundzeit oder beim Anzeigen des Tabs. Der Countdown pausiert, solange das Fenster im Hintergrund ist.
 - **„Wartet auf dich“** verschwindet beim Anzeigen des Tabs oder wenn der Tab wieder arbeitet.

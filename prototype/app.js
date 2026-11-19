@@ -24,6 +24,7 @@ const ICON_PATHS = {
   closeOthers: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="m15 9-6 6M9 9l6 6"/>',
   palette: '<path d="M4 6h16M4 12h10M4 18h7"/>',
   sliders: '<path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+  arrowRight: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
 };
 const icon = (name) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name]}</svg>`;
 
@@ -1102,7 +1103,7 @@ function pushToast(tab, kind) {
   el.title = `„${tab.name}“ öffnen`;
   el.innerHTML = `${statusHtml(kind === 'waiting' ? 'waiting' : 'finished')}<div class="t-body"><div class="t-title">${esc(tab.name)}</div><div class="t-msg">${
     kind === 'waiting' ? 'Claude wartet auf deine Bestätigung.' : 'Claude ist fertig.'
-  }</div></div><button class="t-close" aria-label="Hinweis schliessen">${icon('x')}</button>${kind === 'finished' ? '<div class="t-progress"></div>' : ''}`;
+  }</div><div class="t-hint">Zum Tab wechseln ${icon('arrowRight')}</div></div><button class="t-close" aria-label="Hinweis schliessen">${icon('x')}</button>${kind === 'finished' ? '<div class="t-progress"></div>' : ''}`;
   // Die ganze Karte öffnet den Tab; das × schliesst nur den Hinweis.
   el.addEventListener('click', () => activate(tab.id));
   el.addEventListener('keydown', (e) => {
