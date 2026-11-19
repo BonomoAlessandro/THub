@@ -13,27 +13,27 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 
 ## Übersicht
 
-| Nr. | Ticket | Typ | Blockiert durch |
-|---|---|---|---|
-| 01 | [Workspace-Kern mit Tests](01-workspace-kern-mit-tests.md) | AFK | – |
-| 02 | [Klickbarer Design-Prototyp](02-design-prototyp.md) | HITL | – |
-| 03 | [React-Oberfläche mit Tab-Leiste](03-react-tab-leiste.md) | AFK | 01, 02 |
-| 04 | [Titelleiste und Design hell/dunkel](04-titelleiste-design.md) | AFK | 03 |
-| 05 | [Ordner, Tab-Namen und Einstellungsdialog](05-ordner-und-einstellungen.md) | AFK | 04 |
-| 06 | [Shells erkennen und pro Tab wählen](06-shells.md) | AFK | 05 |
-| 07 | [Shell-Integration: Profil, aktueller Ordner, Startbefehl](07-shell-integration.md) | AFK | 06 |
-| 08 | [Verlauf normaler Tabs sichern und wiederherstellen](08-verlauf.md) | AFK | 03 |
-| 09 | [Fenster merken und nur eine Instanz](09-fenster-und-einzelinstanz.md) | AFK | 01 |
-| 10 | [Lokale Schnittstelle, Hook-Datei und Claude-Zuordnung](10-schnittstelle-und-zuordnung.md) | AFK | 01, 09 |
-| 11 | [Starter und `claude`-Ersatz](11-starter-und-ersatz.md) | AFK | 07, 10 |
-| 12 | [Claude-Sessions nach einem Neustart fortsetzen](12-claude-fortsetzen.md) | AFK | 08, 11 |
-| 13 | [Claude-Status und Prozess-Status am Tab](13-status-am-tab.md) | AFK | 11 |
-| 14 | [Hinweise im Fenster](14-hinweise.md) | AFK | 13 |
-| 15 | [Tabs schliessen mit Rückfrage und wieder öffnen](15-schliessen-und-wiederoeffnen.md) | AFK | 12, 13 |
-| 16 | [Rechtsklick-Menü und Umsortieren per Ziehen](16-rechtsklick-und-ziehen.md) | AFK | 15 |
-| 17 | [Befehlspalette](17-befehlspalette.md) | AFK | 15 |
-| 18 | [Design-Wahl und Schriftgrösse](18-design-und-schrift.md) | AFK | 05 |
-| 19 | [README und Abschluss-Prüfung auf einem frischen Rechner](19-readme-und-abschluss.md) | HITL | alle |
+| Nr. | Ticket | Typ | Blockiert durch | Stand |
+|---|---|---|---|---|
+| 01 | [Workspace-Kern mit Tests](01-workspace-kern-mit-tests.md) | AFK | – | erledigt |
+| 02 | [Klickbarer Design-Prototyp](02-design-prototyp.md) | HITL | – | erledigt |
+| 03 | [React-Oberfläche mit Tab-Leiste](03-react-tab-leiste.md) | AFK | 01, 02 | in Arbeit |
+| 04 | [Titelleiste und Design hell/dunkel](04-titelleiste-design.md) | AFK | 03 | offen |
+| 05 | [Ordner, Tab-Namen und Einstellungsdialog](05-ordner-und-einstellungen.md) | AFK | 04 | offen |
+| 06 | [Shells erkennen und pro Tab wählen](06-shells.md) | AFK | 05 | offen |
+| 07 | [Shell-Integration: Profil, aktueller Ordner, Startbefehl](07-shell-integration.md) | AFK | 06 | offen |
+| 08 | [Verlauf normaler Tabs sichern und wiederherstellen](08-verlauf.md) | AFK | 03 | offen |
+| 09 | [Fenster merken und nur eine Instanz](09-fenster-und-einzelinstanz.md) | AFK | 01 | erledigt |
+| 10 | [Lokale Schnittstelle, Hook-Datei und Claude-Zuordnung](10-schnittstelle-und-zuordnung.md) | AFK | 01, 09 | in Arbeit |
+| 11 | [Starter und `claude`-Ersatz](11-starter-und-ersatz.md) | AFK | 07, 10 | offen |
+| 12 | [Claude-Sessions nach einem Neustart fortsetzen](12-claude-fortsetzen.md) | AFK | 08, 11 | offen |
+| 13 | [Claude-Status und Prozess-Status am Tab](13-status-am-tab.md) | AFK | 11 | offen |
+| 14 | [Hinweise im Fenster](14-hinweise.md) | AFK | 13 | offen |
+| 15 | [Tabs schliessen mit Rückfrage und wieder öffnen](15-schliessen-und-wiederoeffnen.md) | AFK | 12, 13 | offen |
+| 16 | [Rechtsklick-Menü und Umsortieren per Ziehen](16-rechtsklick-und-ziehen.md) | AFK | 15 | offen |
+| 17 | [Befehlspalette](17-befehlspalette.md) | AFK | 15 | offen |
+| 18 | [Design-Wahl und Schriftgrösse](18-design-und-schrift.md) | AFK | 05 | offen |
+| 19 | [README und Abschluss-Prüfung auf einem frischen Rechner](19-readme-und-abschluss.md) | HITL | alle | offen |
 
 ```mermaid
 flowchart LR

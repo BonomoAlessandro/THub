@@ -1,6 +1,6 @@
 # 01 – Workspace-Kern mit Tests
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `erledigt` (2026-11-19, Abnahme von Hand offen) · Typ: AFK
 Blockiert durch: –
 User Stories: Grundlage für alle; teilweise 56
 Spezifikation: „Architektur im Überblick“ (inklusive Vertrag zwischen Renderer und Kern), „Gespeicherter Zustand (Schema Version 2)“, „Testentscheidungen“ (guter Test, Teststelle 1)

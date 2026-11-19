@@ -1,6 +1,6 @@
 # 02 – Klickbarer Design-Prototyp
 
-Status: `ready-for-human` · Typ: HITL
+Status: `erledigt` (2026-11-19, Look vom Nutzer freigegeben) · Typ: HITL
 Blockiert durch: –
 User Stories: 17, 18, 41–55, 69–71, 75–78
 Spezifikation: „Oberfläche (Renderer)“, „Weitere Hinweise → Ablauf“
@@ -24,9 +24,9 @@ Ablauf: Der Prototyp wird dir gezeigt, du gibst Rückmeldung, er wird angepasst,
 
 ## Akzeptanzkriterien
 
-- [ ] Der Prototyp lässt sich lokal im Browser öffnen. Alle oben genannten Zustände sind erreichbar, etwa über eine kleine Steuerleiste zum Durchschalten der Status.
-- [ ] Hell und dunkel lassen sich umschalten und folgen standardmässig dem System.
-- [ ] Die Entscheidungen sind in der Spezifikation nachgetragen:
+- [x] Der Prototyp lässt sich lokal im Browser öffnen. Alle oben genannten Zustände sind erreichbar, etwa über eine kleine Steuerleiste zum Durchschalten der Status.
+- [x] Hell und dunkel lassen sich umschalten und folgen standardmässig dem System.
+- [x] Die Entscheidungen sind in der Spezifikation nachgetragen:
   - Design-Variablen: Farben (ohne Akzentfarbe, neutral), Status-Farben, Radien, Abstände, Schriftgrössen
   - beide Terminal-Farbschemata
   - Gestaltung der Menüs, Hinweise und Animationen
@@ -34,7 +34,7 @@ Ablauf: Der Prototyp wird dir gezeigt, du gibst Rückmeldung, er wird angepasst,
 
 ## Abnahme von Hand
 
-- [ ] Du hast den Look freigegeben.
+- [x] Du hast den Look freigegeben.
 
 ## Hinweise
 

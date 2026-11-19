@@ -389,6 +389,26 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Hinweise:** 320 px breit, Titel 14 px, Text 13 px. Die ganze Karte ist anklickbar und öffnet den Tab; es gibt keinen „Öffnen“-Button. Eine dezente Zeile „Zum Tab wechseln →“ zeigt, dass man klicken kann, und wird beim Überfahren hell. Das × zum Wegklicken erscheint beim Überfahren.
   - **Symbol-Platz links vom Tab-Namen:** Im Ruhezustand zeigt er gedämpft den Typ des Tabs (`>_` für ein normales Terminal, ein Stern für einen Claude-Tab), sonst den Status.
   - **Status-Animationen:** „arbeitet“ = violetter Claude-Stern, der rotiert und pulsiert; „wartet auf dich“ = oranger Punkt mit Ping-Ring; „Prozesse laufen“ = blauer, ruhig atmender Punkt; „fertig“ = grüner Punkt; „pausiert“ = graues Pause-Symbol. Bei reduzierter Bewegung (Windows-Einstellung) laufen die Animationen stark verlangsamt.
+- **Design-Variablen** (vom Nutzer am 2026-11-19 freigegeben; vollständige Liste mit allen Werten in `prototype/styles.css`):
+
+| Zweck | Variable | Dunkel | Hell |
+|---|---|---|---|
+| Fenster und Titelleiste (deckend) | `--win-solid` | `#1d1d22` | `#f3f3f6` |
+| Text / gedämpft / schwach | `--text`, `--text-muted`, `--text-faint` | `#ececf1`, `#a1a1ad`, `#71717c` | `#1b1b1f`, `#5b5b66`, `#8a8a95` |
+| Tab-Fläche / Rand / Überfahren | `--tab-bg`, `--tab-border`, `--tab-hover` | Weiss mit 4 %, 7 %, 7,5 % Deckkraft | Schwarz mit 3,5 %, 7 %, 6,5 % Deckkraft |
+| Aktiver Tab | `--tab-active-bg`, `--tab-active-shadow` | Weiss 10 %, Rand Weiss 16 % | `#ffffff`, Rand Schwarz 12 % |
+| Neutrale Hervorhebung (kein Akzent) | `--accent`, `--on-accent` | `#f4f4f5` auf `#111114` | `#18181b` auf `#ffffff` |
+| Dialoge, Menüs, Hinweise | `--dialog-bg` | `#25252b` | `#ffffff` |
+| Gefahr (Schliessen-Bestätigung) | `--danger` | `#f2555a` | `#dc2626` |
+| Status arbeitet / wartet / Prozesse | `--st-working`, `--st-waiting`, `--st-processes` | `#a78bfa`, `#fb923c`, `#60a5fa` | `#7c3aed`, `#ea580c`, `#2563eb` |
+| Status fertig / pausiert | `--st-finished`, `--st-paused` | `#4ade80`, `#8b8b96` | `#16a34a`, `#9090a0` |
+| Terminal Hintergrund / Text | `--term-bg`, `--term-fg` | `#141417`, `#d4d4dc` | `#ffffff`, `#24242b` |
+| Terminal Rot / Grün / Gelb / Blau | `--a-red` … `--a-blue` | `#f87171`, `#4ade80`, `#facc15`, `#60a5fa` | `#c62828`, `#1a7f37`, `#9a6700`, `#0550ae` |
+| Terminal Magenta / Cyan / Gedämpft | `--a-magenta`, `--a-cyan`, `--a-dim` | `#c084fc`, `#22d3ee`, `#6e6e7a` | `#8250df`, `#0e7490`, `#8a8a95` |
+
+- **Masse:** Titelleiste 44 px; Tabs 30 px hoch, 200 px breit, mindestens 112 px, 5 px Abstand; Radien 4 / 6 / 8 / 12 px, Terminal-Karte 10 px mit 7 px Rand zum Fenster; Status-Feld 14 px mit 8-px-Punkten; Hinweise 320 px breit.
+- **Schriften:** Oberfläche Segoe UI Variable (Text 13 px, Tabs 12,5 px, Dialog-Titel 16 px), Terminal Cascadia Mono (Standard 14 px).
+- **Bewegung:** kurze Übergänge 120 ms, Standard 180 ms, Ease `cubic-bezier(0.2, 0.8, 0.2, 1)`; Claude-Stern 1,6 s, Ping 1,4 s, Atmen 2,2 s.
 - **Tastenkürzel:**
 
 | Kürzel | Aktion |
