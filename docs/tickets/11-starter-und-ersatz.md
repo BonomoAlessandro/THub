@@ -7,6 +7,7 @@ Spezifikation: „Shell-Integration“ (Punkt 2, Bekannte Grenzen), „Hook-Empf
 
 ## Was gebaut wird
 
+- **Ausgangspunkt:** Der Starter-Spike hat Starter, Ersatz und Tests bereits gebaut und in allen vier Shells grün getestet (`resources/shell/`, `test/shells/`, 333 Tests; Befunde in `docs/spikes/starter.md`). Dieses Ticket bindet sie in die App ein: Terminal-Backend startet die Shells wie `buildLaunch`, setzt `THUB_STARTER`, prüft beim Start die Execution Policy, und der Starter spricht die echte lokale Schnittstelle aus Ticket 10 an. Die Regeln unten gelten weiter.
 - **`claude`-Ersatz** in allen vier Windows-Shells:
   - PowerShell-Funktion (7 und 5), Bash-Funktion in Git Bash, doskey-Makro in cmd.
   - Das Makro ruft `powershell.exe` direkt auf, ohne Batch-Datei, damit `Ctrl+C` keine Rückfrage „Batchvorgang abbrechen?“ auslöst.
@@ -27,7 +28,7 @@ Spezifikation: „Shell-Integration“ (Punkt 2, Bekannte Grenzen), „Hook-Empf
 - [ ] Integrationstests (Teststelle 2) mit nachgemachtem `claude`, einmal als `.exe` und einmal als `.cmd`, und einer aufzeichnenden Testattrappe der Schnittstelle, in allen vier Windows-Shells:
   - **Gleichheit der Argumente** gegenüber dem direkten Aufruf für: eingebettete Anführungszeichen, leeres Argument, `%PATH%`, `^`, `&`, `!`, Umlaute, führender `/`, Prompt mit Leerzeichen als Positionsargument.
   - `claude` erhält `--settings`, `--session-id` und `-n <Tab-Name>` (auch mit Leerzeichen und Umlauten im Namen).
-  - `--resume x`, `-c` und `-n eigener` erhalten nur `--settings`; ein eigenes `--settings` bleibt allein.
+  - `--resume x` und `-c` erhalten nur `--settings`; `-n eigener` erhält `--settings` und `--session-id`, aber kein zweites `-n`; ein eigenes `--settings` bekommt kein zweites `--settings`, im Fall „neu“ aber `--session-id` und `-n`.
   - `-p "…"`, `mcp list`, `--version` und `--model opus mcp list` werden ohne Anfrage durchgereicht.
   - `launch`, `started` und `exit` kommen an, `exit` auch nach `Ctrl+C` und bei Exit-Code ≠ 0; der Exit-Code kommt in der Shell an.
   - Ohne erreichbare Schnittstelle startet `claude` unverändert; ohne `claude` im PATH kommt eine verständliche Meldung mit Exit-Code 1.

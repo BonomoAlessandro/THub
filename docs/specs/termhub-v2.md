@@ -177,7 +177,8 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 THub startet jede Windows-Shell mit einer mitgelieferten Integration. Sie lädt **zuerst das normale Profil des Nutzers** und richtet dann drei Dinge ein.
 
 **Robust laden:**
-- PowerShell bekommt den Integrationscode per `-EncodedCommand`, nicht als Skriptdatei, damit eine restriktive Execution Policy ihn nicht blockiert. cmd lädt seine Integration per `/k`, Git Bash über eine eigene Startdatei, die zuerst `~/.bashrc` lädt.
+- PowerShell bekommt den Integrationscode per `-EncodedCommand`, nicht als Skriptdatei, damit eine restriktive Execution Policy ihn nicht blockiert. cmd lädt seine Integration per `/k`. Git Bash lädt über eine eigene Startdatei, was auch eine Login-Shell von Git Bash lädt (`/etc/profile`, dann `~/.bash_profile`, `~/.bash_login` oder `~/.profile`, sonst `~/.bashrc`), und danach die Integration.
+- Fertige, geprüfte Skripte aus dem Spike: `resources/shell/` (`starter.ps1`, `integration.ps1`, `integration.cmd`, `integration.bash`); wie das Terminal-Backend jede Shell startet, zeigt `buildLaunch` in `test/shells/harness.ts`. Befunde: `docs/spikes/starter.md`. Die Skripte liegen im Paket ausserhalb des asar-Archivs (`extraResources`).
 - Mitgelieferte Skripte sind reines ASCII oder UTF-8 mit BOM, weil Windows PowerShell 5 UTF-8 ohne BOM falsch liest.
 - Scheitert die Integration (Gruppenrichtlinie, Constrained Language Mode), startet die Shell trotzdem normal, nur ohne Integration.
 
@@ -189,30 +190,34 @@ THub startet jede Windows-Shell mit einer mitgelieferten Integration. Sie lädt 
 
 **2. `claude`-Ersatz:**
 - In der Shell wird `claude` durch einen Ersatz überdeckt: PowerShell-Funktion, Bash-Funktion, doskey-Makro in cmd.
-- Alle Varianten rufen **denselben mitgelieferten Starter** auf, ein Windows-PowerShell-5-Skript, das überall vorhanden ist. Das doskey-Makro ruft `powershell.exe` direkt auf, ohne Batch-Datei, damit `Ctrl+C` keine Rückfrage „Batchvorgang abbrechen?“ auslöst.
+- Alle Varianten rufen **denselben mitgelieferten Starter** auf, ein Windows-PowerShell-5-Skript, das überall vorhanden ist: `powershell.exe -NoProfile -NoLogo -ExecutionPolicy Bypass -File <starter.ps1> <Argumente wie getippt>`. Das doskey-Makro ruft `powershell.exe` direkt auf, ohne Batch-Datei, damit `Ctrl+C` keine Rückfrage „Batchvorgang abbrechen?“ auslöst.
+- **Der Starter liest seine rohe Befehlszeile** (`[Environment]::CommandLine`, alles nach dem Skriptpfad), nicht die zerlegte Argumentliste. Weil `powershell.exe` selbst ein Programm ist, baut jede Shell diese Befehlszeile genau so, wie sie sie für `claude.exe` bauen würde, einschliesslich der Eigenheiten von PowerShell 5.1, cmd und der Pfadumwandlung von Git Bash. Nur so gilt der folgende Grundsatz in allen vier Shells.
+- Der Ersatz wird nur eingerichtet, wenn die Umgebungsvariable `THUB_STARTER` (voller Pfad zu `starter.ps1`) gesetzt ist. So kann THub den Ersatz abschalten, etwa wenn eine Gruppenrichtlinie `-File` blockieren würde.
 - Grundsatz: Ein Aufruf über den Ersatz kommt beim echten `claude` mit **genau denselben Argumenten an wie ein direkter Aufruf in derselben Shell**, plus den ergänzten Optionen. Das gilt auch für Anführungszeichen, leere Argumente, Sonderzeichen und Umlaute.
 
 Der Starter arbeitet in diesen Schritten:
 
-1. **Echtes `claude` finden:** im PATH, ohne THubs eigene Ordner; `claude.exe` vor `claude.cmd`, `claude.ps1` nie. Findet er keines, gibt er „claude wurde nicht gefunden“ aus und endet mit Exit-Code 1.
+1. **Echtes `claude` finden:** die PATH-Ordner in ihrer Reihenfolge, ohne THubs eigene Ordner und ohne den aktuellen Ordner; pro Ordner `claude.exe` vor `claude.cmd`, `claude.ps1` nie. Findet er keines, gibt er „claude wurde nicht gefunden“ aus und endet mit Exit-Code 1.
 2. **Aufruf einordnen**, bevor irgendetwas angefragt wird:
-   - **Durchreichen:** Der Aufruf geht unverändert und ohne Anfrage an THub an `claude`, wenn `-p`/`--print`, `-v`/`--version` oder `-h`/`--help` vorkommt oder wenn das erste Argument, das kein Optionswert ist und nicht mit `-` beginnt, ein bekannter Unterbefehl ist. Bekannte Unterbefehle, Stand Claude Code 2.1.328 (bei Updates nachziehen): `agents`, `attach`, `auth`, `auto-mode`, `doctor`, `gateway`, `import`, `install`, `logs`, `mcp`, `plugin`, `plugins`, `purge`, `respawn`, `rm`, `setup-token`, `stop`, `kill`, `ultrareview`, `update`, `upgrade`. Für das Überspringen von Optionswerten gilt die Liste der Optionen mit Wert aus `claude --help`.
+   - **Durchreichen:** Der Aufruf geht unverändert und ohne Anfrage an THub an `claude`, wenn `-p`/`--print`, `-v`/`--version` oder `-h`/`--help` vorkommt oder wenn das erste Argument, das kein Optionswert ist und nicht mit `-` beginnt, ein bekannter Unterbefehl ist. Bekannte Unterbefehle, Stand Claude Code 2.1.328 (bei Updates nachziehen): `agents`, `attach`, `auth`, `auto-mode`, `doctor`, `gateway`, `import`, `install`, `logs`, `mcp`, `plugin`, `plugins`, `purge`, `respawn`, `rm`, `setup-token`, `stop`, `kill`, `ultrareview`, `update`, `upgrade`. `--bg`/`--background`, `--desktop` und `--cloud` werden ebenfalls durchgereicht, weil die Session dann nicht in diesem Terminal läuft. Optionswerte werden übersprungen wie in commander (die Bibliothek, mit der `claude` seine Optionen liest): `<x>` genau ein Wert, `<x...>` alle Werte bis zur nächsten Option, `[x]` der nächste Wert, falls er nicht mit `-` beginnt; dazu `--opt=wert`, `-rWERT` und gebündelte Kurzformen. Folge: `claude --debug mcp list` ist interaktiv, weil `--debug` den Wert `mcp` verbraucht.
    - Sonst ist es ein interaktiver Aufruf, und zwar einer von drei **Fällen**:
      - **neu:** keine der Optionen `--resume`/`-r`, `--continue`/`-c`, `--session-id`;
      - **mit Kennung:** `--resume <Kennung>` / `-r <Kennung>` oder `--session-id <Kennung>`;
-     - **ohne Kennung:** `--continue`/`-c` oder `--resume` ohne Wert, also Claudes Auswahlliste.
+     - **ohne Kennung:** `--continue`/`-c`, `--resume` ohne Wert (Claudes Auswahlliste), `--from-pr`, `--teleport` sowie `--fork-session` zusammen mit `--resume` (die neue Session bekommt eine eigene Kennung).
+     - `--remote-control` ändert den Fall nicht.
 3. **Startparameter holen:** Anfrage an THub mit Tab-Kennung, Fall, angegebener Kennung und aktuellem Ordner, ohne Proxy und mit etwa 1 Sekunde Zeitlimit. Antwort: aktueller Tab-Name, im Fall „neu“ eine neue Session-Kennung, Pfad zur Hook-Datei. Ist THub nicht erreichbar, startet `claude` unverändert.
 4. **Optionen ergänzen:**
    - `--settings <Hook-Datei>`, ausser der Nutzer gibt selbst `--settings` an; dann laufen keine THub-Hooks, das Sicherheitsnetz gilt aber weiter.
-   - Im Fall „neu“ `--session-id <neue Kennung>`.
+   - Im Fall „neu“ `--session-id <neue Kennung>`, auch wenn der Nutzer `-n` oder ein eigenes `--settings` angibt (sonst fehlte das Sicherheitsnetz).
    - Im Fall „neu“ ohne eigenes `-n`/`--name` auch `-n <Tab-Name>`.
-5. **Starten:** Der Starter baut die Befehlszeile selbst nach den Regeln von `CommandLineToArgvW` (für `claude.cmd` über `cmd.exe /d /s /c` mit cmd-Quoting) und startet den Prozess direkt mit geerbter Konsole, nicht über PowerShells eigene Argumentübergabe an native Programme (in 5.1 fehlerhaft). Direkt nach dem Start meldet er die Prozess-ID von Claude an THub. Er wartet und gibt den Exit-Code weiter.
+5. **Starten:** Bei `claude.exe` reicht der Starter den Rest seiner rohen Befehlszeile **unverändert** durch und setzt nur die ergänzten Optionen davor. Bei `claude.cmd` quotet er die Argumente neu für `cmd.exe /d /v:off /s /c` (jedes Argument in Anführungszeichen, `&|<>^()` ausserhalb von cmd-Anführungszeichen mit drei Caret, `%` als `%%cd:~,%`, weil cmd die Zeile zweimal auswertet). Er startet den Prozess direkt mit geerbter Konsole (`System.Diagnostics.Process`, ohne ShellExecute), nicht über PowerShells eigene Argumentübergabe an native Programme. Direkt nach dem Start meldet er die Prozess-ID (bei `claude.cmd` die des `cmd.exe`; node ist ein Nachfahre). Er wartet und gibt den Exit-Code weiter; alles nach dem Start läuft in `try`/`finally`, damit `Ctrl+C` die Ende-Meldung nicht verhindert.
 6. **Ende melden:** Nach dem Ende von `claude` meldet der Starter Tab-Kennung, Session-Kennung (falls bekannt) und Exit-Code an THub, auch nach `Ctrl+C` und bei Exit-Code ungleich 0.
 
-**3. Startbefehl einmalig ausführen:** Die Integration kann einen von THub mitgegebenen Befehl genau einmal ausführen, sobald die Shell bereit ist; es werden keine Tastendrücke simuliert. THub setzt damit Claude-Sessions fort. Der Startbefehl ruft den Starter direkt auf (mit `--resume <Kennung>`), nicht das Wort `claude`, weil doskey-Makros in cmd in Skripten nicht wirken.
+**3. Startbefehl einmalig ausführen:** Die Integration kann einen von THub mitgegebenen Befehl genau einmal ausführen, sobald die Shell bereit ist; es werden keine Tastendrücke simuliert. THub setzt damit Claude-Sessions fort. Der Startbefehl ruft den Starter direkt auf (mit `--resume <Kennung>`), nicht das Wort `claude`, weil doskey-Makros in cmd in Skripten nicht wirken. Übergabe: In PowerShell und Git Bash über die Umgebungsvariable `THUB_START_CMD`, die die Integration vor dem Ausführen entfernt (so läuft er genau einmal, auch nicht in verschachtelten Shells); in cmd in der `/k`-Zeile hinter der Integration, nicht in der Integrationsdatei, sonst fragt cmd nach `Ctrl+C` „Batchvorgang abbrechen?“.
 
 **Umgebung jedes Terminals:**
-- `THUB_TAB_ID` (Tab-Kennung), `THUB_API` (Adresse der lokalen Schnittstelle) und `THUB_TOKEN` (pro App-Start zufällig).
+- `THUB_TAB_ID` (Tab-Kennung), `THUB_API` (Adresse der lokalen Schnittstelle), `THUB_TOKEN` (pro App-Start zufällig) und `THUB_STARTER` (Pfad zum Starter).
+- **Execution Policy:** THub prüft einmal beim Start die Richtlinien-Ebenen (`Get-ExecutionPolicy -Scope MachinePolicy` und `UserPolicy`). Steht dort `AllSigned` oder `Restricted`, lässt THub `THUB_STARTER` weg: `claude` läuft dann direkt, ohne Erfassung, aber ohne Fehler.
 - `NO_PROXY` wird um `127.0.0.1,localhost` ergänzt, damit Claudes HTTP-Hooks nicht über einen Firmen-Proxy laufen.
 - `THUB_*`-Variablen aus der eigenen Umgebung von THub (etwa wenn es aus einem THub-Tab gestartet wurde) werden vorher entfernt.
 
@@ -222,6 +227,13 @@ Der Starter arbeitet in diesen Schritten:
 - In cmd wird `claude` nur am Anfang einer getippten Zeile erfasst, nicht in `cd x && claude`.
 - Claude über den vollen Pfad oder per `npx` wird nicht erfasst.
 - Claude in WSL wird nicht erfasst.
+- Ein Argument, das nur aus `-` besteht oder mit `-:` beginnt, lässt `powershell.exe -File` abbrechen, bevor der Starter läuft.
+- `claude --% …` (Stop-Parsing in PowerShell) wirkt über die Ersatz-Funktion anders als direkt.
+- Ein Pfad zum Starter mit `$` funktioniert in cmd nicht (doskey).
+- Zeilenumbrüche in Argumenten erreichen `claude.cmd` nicht.
+- In Git Bash wandelt MSYS auch Prompts um, die mit `/` beginnen (etwa `/review`), genau wie bei einem direkten Aufruf.
+- Läuft der Starter selbst im Constrained Language Mode (WDAC/AppLocker), scheitert er; ein Rückfall ist nicht vorgesehen.
+- Jeder Start über den Ersatz kostet rund 0,5 Sekunden.
 
 ### Hook-Empfänger und lokale Schnittstelle
 
@@ -484,7 +496,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - Im PATH liegt vor dem Rest ein **nachgemachtes `claude`** (als `.exe`, und in einem zweiten Durchlauf als `.cmd`), das seine Argumente und Umgebung in eine Datei schreibt. Die lokale Schnittstelle läuft als einfache Testattrappe, die Anfragen aufzeichnet.
 - Geprüft wird:
   - **Gleichheit der Argumente:** Für eine Liste von Testaufrufen kommt über den Ersatz genau dasselbe an wie beim direkten Aufruf des nachgemachten Programms in derselben Shell, plus den ergänzten Optionen. Testfälle: eingebettete Anführungszeichen, leeres Argument, `%PATH%`, `^`, `&`, `!`, Umlaute, führender `/`, ein Prompt mit Leerzeichen als Positionsargument.
-  - **Ergänzen:** Fall „neu“ ergänzt `--settings`, `--session-id` und `-n <Tab-Name>`. `--resume x`, `-c`, `-n eigener` erhalten nur `--settings`. Ein eigenes `--settings` bleibt allein.
+  - **Ergänzen:** Fall „neu“ ergänzt `--settings`, `--session-id` und `-n <Tab-Name>`. `--resume x` und `-c` erhalten nur `--settings`. `-n eigener` erhält `--settings` und `--session-id`, aber kein zweites `-n`. Ein eigenes `--settings` bekommt kein zweites `--settings`, im Fall „neu“ aber `--session-id` und `-n`.
   - **Durchreichen:** `-p "…"`, `mcp list`, `--version` und `--model opus mcp list` werden ohne Anfrage durchgereicht.
   - **Meldungen:** Start-, Prozess-ID- und Ende-Meldung kommen an, die Ende-Meldung auch nach `Ctrl+C` und bei Exit-Code ≠ 0. Der Exit-Code kommt in der Shell an.
   - **Ohne THub:** Ohne erreichbare Schnittstelle startet `claude` unverändert. Ohne `claude` im PATH kommt eine verständliche Meldung mit Exit-Code 1.
