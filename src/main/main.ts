@@ -7,6 +7,10 @@ import { StateStore } from './store';
 import { hostSystem, noProcessProbe, systemClock } from './system';
 import { createWorkspace, type Workspace } from './workspace/workspace';
 
+// Unpaketiert (npm start) eigener Datenordner, damit die Entwicklung die installierte App nie berührt.
+// Muss vor dem ersten Zugriff auf userData und vor dem ready-Ereignis passieren.
+if (!app.isPackaged) app.setPath('userData', path.join(app.getPath('appData'), 'TermHub-dev'));
+
 let mainWindow: BrowserWindow | null = null;
 let workspace: Workspace | null = null;
 
