@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="de" data-theme="dark" data-accent="indigo">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TermHub Prototyp</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="panel-open">
+    <!-- Das nachgebaute TermHub-Fenster. Alles ausserhalb davon gehört zum Prototyp, nicht zur App. -->
+    <div class="window" id="win">
+      <header class="titlebar">
+        <div class="tabstrip" id="tabstrip" role="tablist" aria-label="Terminals"></div>
+        <div class="newtab">
+          <button class="icon-btn" id="btn-new" data-tip="Neues Terminal (Ctrl+Shift+T)" aria-label="Neues Terminal"></button>
+          <button class="icon-btn chevron" id="btn-newmenu" data-tip="Shell oder Ordner wählen" aria-label="Shell oder Ordner wählen"></button>
+        </div>
+        <div class="drag-space" id="drag-space" title=""></div>
+        <button class="icon-btn" id="btn-settings" data-tip="Einstellungen" aria-label="Einstellungen"></button>
+        <div class="winctl" aria-hidden="true">
+          <button class="wc" id="wc-min"></button>
+          <button class="wc" id="wc-max"></button>
+          <button class="wc close" id="wc-close"></button>
+        </div>
+      </header>
+      <main class="term-wrap">
+        <div class="term" id="term" tabindex="0"></div>
+      </main>
+      <div class="toasts" id="toasts" aria-live="polite"></div>
+      <div id="layer"></div>
+    </div>
+
+    <!-- Steuerleiste des Prototyps: nicht Teil des Designs. -->
+    <aside class="proto" id="proto">
+      <header class="proto-head">
+        <span>Prototyp-Steuerung</span>
+        <button class="proto-toggle" id="proto-toggle" aria-label="Ein-/ausklappen">–</button>
+      </header>
+      <div class="proto-body" id="proto-body"></div>
+    </aside>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
