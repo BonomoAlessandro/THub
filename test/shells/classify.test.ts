@@ -1,5 +1,5 @@
 // Einordnung des Starters (durchreichen / neu / mit Kennung / ohne Kennung) ohne Shell:
-// powershell.exe -File starter.ps1 mit einer roh uebergebenen Befehlszeile, TERMHUB_STARTER_DRYRUN.
+// powershell.exe -File starter.ps1 mit einer roh uebergebenen Befehlszeile, THUB_STARTER_DRYRUN.
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
@@ -13,7 +13,7 @@ const STARTER = path.join(REPO, 'resources', 'shell', 'starter.ps1');
 let dir: string;
 
 beforeAll(() => {
-  dir = mkdtempSync(path.join(os.tmpdir(), 'termhub-classify-'));
+  dir = mkdtempSync(path.join(os.tmpdir(), 'thub-classify-'));
   writeFileSync(path.join(dir, 'claude.exe'), ''); // nur zum Finden, wird nicht gestartet
 });
 
@@ -23,10 +23,10 @@ afterAll(() => {
 
 function classify(tail: string): any {
   const env: Record<string, string> = {};
-  for (const [k, v] of Object.entries(process.env)) if (v !== undefined && !/^TERMHUB_/i.test(k)) env[k] = v;
+  for (const [k, v] of Object.entries(process.env)) if (v !== undefined && !/^THUB_/i.test(k)) env[k] = v;
   delete env.Path;
   env.PATH = `${dir};${path.dirname(POWERSHELL)}`;
-  env.TERMHUB_STARTER_DRYRUN = '1';
+  env.THUB_STARTER_DRYRUN = '1';
   const r = spawnSync(POWERSHELL, [`-NoProfile -NoLogo -ExecutionPolicy Bypass -File "${STARTER}" ${tail}`], {
     windowsVerbatimArguments: true,
     env,

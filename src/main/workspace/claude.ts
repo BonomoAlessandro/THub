@@ -8,7 +8,7 @@ import type { PersistedClaudeLink } from './schema';
 
 /**
  * Die drei Fälle eines interaktiven Aufrufs, wie sie der Starter einordnet:
- * - `new`: ohne `--resume`, `--continue`, `--session-id`; TermHub vergibt die Kennung;
+ * - `new`: ohne `--resume`, `--continue`, `--session-id`; THub vergibt die Kennung;
  * - `withId`: `--resume <Kennung>` bzw. `-r <Kennung>` oder `--session-id <Kennung>`;
  * - `withoutId`: `--continue`/`-c` oder `--resume` ohne Wert; erst Claude meldet die Kennung.
  */
@@ -53,9 +53,9 @@ export interface ClaudeReceiver {
 
 /** Die laufende lokale Schnittstelle, wie der Kern sie an Terminals und Starter weitergibt. */
 export interface LocalApiInfo {
-  /** Adresse, z.B. "http://127.0.0.1:51234"; kommt als TERMHUB_API in jedes Terminal. */
+  /** Adresse, z.B. "http://127.0.0.1:51234"; kommt als THUB_API in jedes Terminal. */
   url: string;
-  /** Pro App-Start zufällig; kommt als TERMHUB_TOKEN in jedes Terminal. */
+  /** Pro App-Start zufällig; kommt als THUB_TOKEN in jedes Terminal. */
   token: string;
   /** Die bei diesem Start geschriebene Hook-Datei. */
   hookFile: string;
@@ -98,7 +98,7 @@ export function linkAfterHook(
   normalizeCwd: (raw: string) => string,
 ): PersistedClaudeLink | undefined {
   if (hook.event === 'SessionEnd') {
-    // Ticket 12 ergänzt die Ausnahme nach einem von TermHub gestarteten Fortsetzen ohne SessionStart.
+    // Ticket 12 ergänzt die Ausnahme nach einem von THub gestarteten Fortsetzen ohne SessionStart.
     return hook.reason !== undefined && SESSION_END_CONTINUES.has(hook.reason) ? link : undefined;
   }
 

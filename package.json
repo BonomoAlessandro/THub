@@ -1,6 +1,6 @@
 {
-  "name": "termhub",
-  "productName": "TermHub",
+  "name": "thub",
+  "productName": "THub",
   "version": "0.1.0",
   "description": "Mehrere benannte Terminal-Sessions in einem Fenster, die beim Neustart wiederhergestellt werden.",
   "main": "dist/main/main.js",
@@ -15,8 +15,8 @@
     "dist": "node build.mjs && electron-builder --win"
   },
   "build": {
-    "appId": "ch.custom.termhub",
-    "productName": "TermHub",
+    "appId": "ch.custom.thub",
+    "productName": "THub",
     "directories": {
       "output": "release"
     },

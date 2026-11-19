@@ -120,7 +120,7 @@ describe('Claude-Zuordnung', () => {
     });
 
     it('behält „hatte Prompt“, wenn dieselbe Session erneut gestartet wird, bei einer anderen nicht', async () => {
-      // Etwa wenn TermHub eine Session nach einem Neustart mit `--resume <Kennung>` fortsetzt (Ticket 12).
+      // Etwa wenn THub eine Session nach einem Neustart mit `--resume <Kennung>` fortsetzt (Ticket 12).
       const tab = {
         id: 't1',
         name: 'Claude',
@@ -371,7 +371,7 @@ describe('Claude-Zuordnung', () => {
       await hook(h, tabId, 'UserPromptSubmit', { session_id: id, cwd: 'C:\\proj' });
       const frozen = h.storedTab(tabId)?.claude;
 
-      // Beenden holt erst den Verlauf und beendet dann die Shells; ihr Ende kommt, während TermHub noch
+      // Beenden holt erst den Verlauf und beendet dann die Shells; ihr Ende kommt, während THub noch
       // Meldungen annimmt. Eingefroren ist ab dem Aufruf von shutdown().
       const shutdown = h.workspace.shutdown();
       await vi.waitFor(() => expect(h.terminal.isRunning(tabId)).toBe(false));

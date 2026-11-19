@@ -202,7 +202,7 @@ describe('Lokale Schnittstelle', () => {
       h.showAllViews();
 
       expect(h.terminal.starts.map((s) => s.order.env)).toEqual(
-        h.tabs().map((t) => ({ TERMHUB_TAB_ID: t.id, TERMHUB_API: h.localApi.url, TERMHUB_TOKEN: h.localApi.token })),
+        h.tabs().map((t) => ({ THUB_TAB_ID: t.id, THUB_API: h.localApi.url, THUB_TOKEN: h.localApi.token })),
       );
     });
 
@@ -215,8 +215,8 @@ describe('Lokale Schnittstelle', () => {
 
       expect(h.localApi.token).not.toBe(before.token);
       expect(h.terminal.starts[0].order.env).toMatchObject({
-        TERMHUB_API: h.localApi.url,
-        TERMHUB_TOKEN: h.localApi.token,
+        THUB_API: h.localApi.url,
+        THUB_TOKEN: h.localApi.token,
       });
     });
 
@@ -225,7 +225,7 @@ describe('Lokale Schnittstelle', () => {
 
       h.showAllViews();
 
-      expect(h.terminal.starts[0].order.env).toEqual({ TERMHUB_TAB_ID: h.activeTab()!.id });
+      expect(h.terminal.starts[0].order.env).toEqual({ THUB_TAB_ID: h.activeTab()!.id });
     });
 
     it('mit dieser Umgebung erreicht ein Programm im Terminal seinen Tab', async () => {
@@ -234,8 +234,8 @@ describe('Lokale Schnittstelle', () => {
       h.showAllViews();
       const { env } = h.terminal.startsFor(second)[0].order;
 
-      const client = new ApiClient(env.TERMHUB_API, env.TERMHUB_TOKEN);
-      const res = await client.launch({ tabId: env.TERMHUB_TAB_ID, case: 'new', cwd: 'C:\\proj' });
+      const client = new ApiClient(env.THUB_API, env.THUB_TOKEN);
+      const res = await client.launch({ tabId: env.THUB_TAB_ID, case: 'new', cwd: 'C:\\proj' });
 
       expect(res.status).toBe(200);
       expect(h.storedTab(second)?.claude).toMatchObject({ sessionId: JSON.parse(res.body).sessionId });
@@ -254,8 +254,8 @@ describe('Lokale Schnittstelle', () => {
       // Wie Claude Code: Exec-Form ohne Shell, Nutzdaten auf stdin, nur die nötige Umgebung.
       const result = await run(command, args, JSON.stringify(payload), {
         SystemRoot: process.env.SystemRoot ?? 'C:\\Windows',
-        TERMHUB_TAB_ID: tabId,
-        TERMHUB_TOKEN: h.localApi.token,
+        THUB_TAB_ID: tabId,
+        THUB_TOKEN: h.localApi.token,
       });
 
       expect(result).toEqual({ code: 0, stdout: '', stderr: '' });
@@ -284,8 +284,8 @@ function startSlowHook(
     headers: {
       'Content-Type': 'application/json',
       'Content-Length': Buffer.byteLength(text),
-      'X-TermHub-Tab': tabId,
-      'X-TermHub-Token': api.token ?? '',
+      'X-THub-Tab': tabId,
+      'X-THub-Token': api.token ?? '',
     },
   });
   const started = performance.now();

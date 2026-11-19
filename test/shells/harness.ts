@@ -36,7 +36,7 @@ export interface Workspace {
 }
 
 export function createWorkspace(shell: ShellId): Workspace {
-  const root = mkdtempSync(path.join(os.tmpdir(), `termhub-shells-${shell}-`));
+  const root = mkdtempSync(path.join(os.tmpdir(), `thub-shells-${shell}-`));
   const shellDir = path.join(root, 'Ordner mit Leerzeichen äöü', 'resources', 'shell');
   mkdirSync(shellDir, { recursive: true });
   cpSync(path.join(REPO, 'resources', 'shell'), shellDir, { recursive: true });
@@ -56,7 +56,7 @@ export function createWorkspace(shell: ShellId): Workspace {
   mkdirSync(home);
   const hookDir = path.join(root, 'Hook Ordner');
   mkdirSync(hookDir);
-  const hookFile = path.join(hookDir, 'termhub-hooks.json');
+  const hookFile = path.join(hookDir, 'thub-hooks.json');
   writeFileSync(hookFile, '{}');
 
   return {
@@ -148,7 +148,7 @@ export interface LaunchResponse {
   hookFile: string;
 }
 
-export class FakeTermHub {
+export class FakeTHub {
   readonly token = randomUUID();
   readonly requests: RecordedRequest[] = [];
   mode: 'ok' | 'hang' = 'ok';
@@ -174,7 +174,7 @@ export class FakeTermHub {
         } catch {
           // roh behalten
         }
-        this.requests.push({ path: req.url ?? '', token: req.headers['x-termhub-token'] as string | undefined, body, at: Date.now() });
+        this.requests.push({ path: req.url ?? '', token: req.headers['x-thub-token'] as string | undefined, body, at: Date.now() });
         if (this.mode === 'hang') return; // nie antworten
         if (req.url === '/claude/launch') {
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -287,7 +287,7 @@ function findGitBash(): string | null {
 
 const psMark = (nonce: string) => `Set-Content -LiteralPath $env:TH_MARK -Value ('${nonce} ' + [int]$LASTEXITCODE)`;
 const psStart = (args: string) =>
-  `& "$env:SystemRoot\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -NoLogo -ExecutionPolicy Bypass -File $env:TERMHUB_STARTER ${args}`;
+  `& "$env:SystemRoot\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -NoLogo -ExecutionPolicy Bypass -File $env:THUB_STARTER ${args}`;
 
 export const SHELLS: Record<ShellId, ShellDef> = {
   pwsh: {
@@ -311,19 +311,19 @@ export const SHELLS: Record<ShellId, ShellDef> = {
     markSuffix: (n) => ` & (call echo ${n} %^ERRORLEVEL%)> "%TH_MARK%"`,
     markLine: (n) => `(call echo ${n} %^ERRORLEVEL%)> "%TH_MARK%"`,
     startCommand: (args) =>
-      `"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -NoLogo -ExecutionPolicy Bypass -File "%TERMHUB_STARTER%" ${args}`,
+      `"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -NoLogo -ExecutionPolicy Bypass -File "%THUB_STARTER%" ${args}`,
   },
   gitbash: {
     id: 'gitbash',
     exe: findGitBash(),
     markSuffix: (n) => `; echo "${n} $?" > "$TH_MARK"`,
     markLine: (n) => `echo "${n} $?" > "$TH_MARK"`,
-    startCommand: (args) => `__termhub_starter ${args}`,
+    startCommand: (args) => `__thub_starter ${args}`,
   },
 };
 
 // ---------------------------------------------------------------------------------------------
-// Start einer Shell mit Integration (Referenz fuer TermHubs Terminal-Backend)
+// Start einer Shell mit Integration (Referenz fuer THubs Terminal-Backend)
 
 export interface LaunchOptions {
   /** Ordner im PATH vor den Systemordnern (z.B. das nachgemachte claude); null = keiner */
@@ -344,11 +344,11 @@ export interface Launch {
 export function buildLaunch(def: ShellDef, ws: Workspace, opts: LaunchOptions): Launch {
   if (!def.exe) throw new Error(`${def.id} ist nicht installiert`);
 
-  // Umgebung ausdruecklich setzen: geerbte TERMHUB_*-Variablen und npm-/Node-Interna entfernen.
+  // Umgebung ausdruecklich setzen: geerbte THUB_*-Variablen und npm-/Node-Interna entfernen.
   const env: Record<string, string> = {};
   for (const [k, v] of Object.entries(process.env)) {
     if (v === undefined) continue;
-    if (/^(TERMHUB_|npm_|NODE_|VITEST|ELECTRON_)/i.test(k)) continue;
+    if (/^(THUB_|npm_|NODE_|VITEST|ELECTRON_)/i.test(k)) continue;
     env[k] = v;
   }
   // PATH ohne die Ordner des Nutzers: so wird nie ein echtes claude gefunden.
@@ -362,10 +362,10 @@ export function buildLaunch(def: ShellDef, ws: Workspace, opts: LaunchOptions): 
   env.PATH = [...(opts.claudeDir ? [opts.claudeDir] : []), ...sysPath].join(';');
   env.HOME = ws.home;
   env.NO_PROXY = [env.NO_PROXY, '127.0.0.1', 'localhost'].filter(Boolean).join(',');
-  env.TERMHUB_TAB_ID = opts.tabId;
-  env.TERMHUB_TOKEN = opts.token;
-  if (opts.api) env.TERMHUB_API = opts.api;
-  env.TERMHUB_STARTER = ws.starter;
+  env.THUB_TAB_ID = opts.tabId;
+  env.THUB_TOKEN = opts.token;
+  if (opts.api) env.THUB_API = opts.api;
+  env.THUB_STARTER = ws.starter;
   env.STUB_OUT = ws.stubOut;
   env.STUB_CONFIG = ws.stubConfig;
   env.TH_MARK = ws.mark;
@@ -385,8 +385,8 @@ export function buildLaunch(def: ShellDef, ws: Workspace, opts: LaunchOptions): 
           "function global:prompt { 'TH-PROMPT> ' }",
         ].join('\r\n'),
       );
-      env.TERMHUB_TEST_PROFILE = profile;
-      if (opts.startCommand) env.TERMHUB_START_CMD = opts.startCommand;
+      env.THUB_TEST_PROFILE = profile;
+      if (opts.startCommand) env.THUB_START_CMD = opts.startCommand;
       const code = readFileSync(path.join(ws.shellDir, 'integration.ps1'), 'utf8');
       const encoded = Buffer.from(code, 'utf16le').toString('base64');
       return { file: def.exe, args: ['-NoLogo', '-NoProfile', '-NoExit', '-EncodedCommand', encoded], env };
@@ -403,7 +403,7 @@ export function buildLaunch(def: ShellDef, ws: Workspace, opts: LaunchOptions): 
         ['# Testprofil', 'echo ja > "$TH_PROFILE_LOADED"', "PS1='TH-PROMPT> '", 'HISTFILE=/dev/null', ''].join('\n'),
       );
       writeFileSync(path.join(ws.home, '.bash_profile'), 'test -f ~/.bashrc && . ~/.bashrc\n');
-      if (opts.startCommand) env.TERMHUB_START_CMD = opts.startCommand;
+      if (opts.startCommand) env.THUB_START_CMD = opts.startCommand;
       const rc = path.join(ws.shellDir, 'integration.bash').replace(/\\/g, '/');
       return { file: def.exe, args: ['--rcfile', rc, '-i'], env };
     }

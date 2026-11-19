@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MemoryStorage } from '../support/fakes';
 import { startWorkspace } from '../support/harness';
 
-/** Eine Zustandsdatei, wie sie TermHub 0.1.0 geschrieben hat. */
+/** Eine Zustandsdatei, wie sie die App in Version 0.1.0 geschrieben hat. */
 function v1State(overrides: { defaultCwd?: string; shell?: string; activeSessionId?: string } = {}) {
   return {
     version: 1,

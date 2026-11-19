@@ -1,7 +1,7 @@
-import type { TermHubApi } from '../shared/types';
+import type { THubApi } from '../shared/types';
 
 declare global {
   interface Window {
-    termhub: TermHubApi;
+    thub: THubApi;
   }
 }

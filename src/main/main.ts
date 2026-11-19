@@ -14,7 +14,7 @@ import { createWorkspace, type Workspace } from './workspace/workspace';
 // Unpaketiert (npm start) eigener Datenordner, damit die Entwicklung die installierte App nie berührt.
 // Muss vor dem ersten Zugriff auf userData und vor dem ready-Ereignis passieren, und vor der
 // Einzelinstanz-Sperre: Die hängt am Datenordner, so hat die Entwicklung ihre eigene.
-if (!app.isPackaged) app.setPath('userData', path.join(app.getPath('appData'), 'TermHub-dev'));
+if (!app.isPackaged) app.setPath('userData', path.join(app.getPath('appData'), 'THub-dev'));
 
 let mainWindow: BrowserWindow | null = null;
 let workspace: Workspace | null = null;
@@ -63,7 +63,7 @@ async function start(): Promise<void> {
 
 /**
  * Startet die lokale Schnittstelle und schreibt die Hook-Datei für diesen Start neu (Adresse und Port ändern
- * sich bei jedem Start). Scheitert das, läuft TermHub ohne Claude-Erkennung: Der Starter erreicht TermHub
+ * sich bei jedem Start). Scheitert das, läuft THub ohne Claude-Erkennung: Der Starter erreicht THub
  * nicht und startet claude unverändert.
  */
 async function startLocalApi(): Promise<{ server: LocalApiServer; info: LocalApiInfo } | null> {
@@ -182,7 +182,7 @@ function createWindow(ws: Workspace, theme: ThemeSource): void {
     // Deckende Fensterfarbe des Designs (--win-solid), damit beim Öffnen nichts aufblitzt, und die
     // Farben der Fensterknöpfe. Kein Mica, keine Transparenz.
     ...windowChrome(theme.current()),
-    title: 'TermHub',
+    title: 'THub',
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
       contextIsolation: true,

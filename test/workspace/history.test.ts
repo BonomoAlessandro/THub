@@ -365,7 +365,7 @@ describe('Verlauf', () => {
       expect(h.storedHistory(id)?.content).toBe('gesichert\r\n');
     });
 
-    it('lässt TermHub weiterlaufen, falls Windows die Abmeldung doch abbricht', () => {
+    it('lässt THub weiterlaufen, falls Windows die Abmeldung doch abbricht', () => {
       const h = startWorkspace();
       const id = h.activeTab()!.id;
       h.showAllViews();

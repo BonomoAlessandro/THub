@@ -1,6 +1,6 @@
 // Läuft vor jeder Testdatei.
-// Geerbte TERMHUB_*-Variablen entfernen, damit Tests nie eine laufende TermHub-Instanz ansprechen,
-// auch wenn der Testlauf selbst in einem TermHub-Tab läuft.
+// Geerbte THUB_*-Variablen entfernen, damit Tests nie eine laufende THub-Instanz ansprechen,
+// auch wenn der Testlauf selbst in einem THub-Tab läuft.
 for (const key of Object.keys(process.env)) {
-  if (key.toUpperCase().startsWith('TERMHUB_')) delete process.env[key];
+  if (key.toUpperCase().startsWith('THUB_')) delete process.env[key];
 }

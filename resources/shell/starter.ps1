@@ -1,4 +1,4 @@
-# TermHub-Starter fuer `claude` (Windows PowerShell 5.1, reines ASCII).
+# THub-Starter fuer `claude` (Windows PowerShell 5.1, reines ASCII).
 #
 # Aufruf nur ueber die Ersatz-Varianten (PowerShell-Funktion, Bash-Funktion, doskey-Makro)
 # und den Startbefehl:
@@ -17,7 +17,7 @@
 #   5. Befehlszeile selbst bauen und mit geerbter Konsole starten; POST /claude/started
 #   6. warten, POST /claude/exit, Exit-Code weitergeben
 #
-# Umgebung: TERMHUB_TAB_ID, TERMHUB_API (z.B. http://127.0.0.1:1234), TERMHUB_TOKEN.
+# Umgebung: THUB_TAB_ID, THUB_API (z.B. http://127.0.0.1:1234), THUB_TOKEN.
 
 Set-StrictMode -Off
 $ErrorActionPreference = 'Stop'
@@ -270,19 +270,19 @@ function Get-Classification([string[]]$Argv) {
     return $c
 }
 
-# --- Schritt 3 und 6: TermHub anfragen -----------------------------------------------------------
+# --- Schritt 3 und 6: THub anfragen --------------------------------------------------------------
 
 [System.Net.ServicePointManager]::Expect100Continue = $false
 
-function Invoke-TermHub([string]$Path, [hashtable]$Body) {
-    $req = [System.Net.HttpWebRequest]::Create($env:TERMHUB_API.TrimEnd('/') + $Path)
+function Invoke-THub([string]$Path, [hashtable]$Body) {
+    $req = [System.Net.HttpWebRequest]::Create($env:THUB_API.TrimEnd('/') + $Path)
     $req.Method = 'POST'
     $req.Proxy = $null
     $req.Timeout = 1000
     $req.ReadWriteTimeout = 1000
     $req.KeepAlive = $false
     $req.ContentType = 'application/json; charset=utf-8'
-    $req.Headers.Add('X-TermHub-Token', [string]$env:TERMHUB_TOKEN)
+    $req.Headers.Add('X-THub-Token', [string]$env:THUB_TOKEN)
     $bytes = [System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -InputObject $Body -Compress))
     $req.ContentLength = $bytes.Length
     $stream = $req.GetRequestStream()
@@ -302,14 +302,14 @@ function Invoke-TermHub([string]$Path, [hashtable]$Body) {
 # Meldung ohne PowerShell-Befehle (nur .NET-Aufrufe), damit sie auch im finally nach Ctrl+C laeuft.
 function Send-Report([string]$Path, [string]$Json) {
     try {
-        $req = [System.Net.HttpWebRequest]::Create($env:TERMHUB_API.TrimEnd('/') + $Path)
+        $req = [System.Net.HttpWebRequest]::Create($env:THUB_API.TrimEnd('/') + $Path)
         $req.Method = 'POST'
         $req.Proxy = $null
         $req.Timeout = 1000
         $req.ReadWriteTimeout = 1000
         $req.KeepAlive = $false
         $req.ContentType = 'application/json; charset=utf-8'
-        $req.Headers.Add('X-TermHub-Token', [string]$env:TERMHUB_TOKEN)
+        $req.Headers.Add('X-THub-Token', [string]$env:THUB_TOKEN)
         $bytes = [System.Text.Encoding]::UTF8.GetBytes($Json)
         $req.ContentLength = $bytes.Length
         $stream = $req.GetRequestStream()
@@ -351,7 +351,7 @@ foreach ($t in (Split-CommandLine $tail $false)) { $argv += , [string]$t.Value }
 $class = Get-Classification $argv
 
 # Nur Einordnung ausgeben, nichts anfragen und nichts starten (Fehlersuche, Tests)
-if ($env:TERMHUB_STARTER_DRYRUN) {
+if ($env:THUB_STARTER_DRYRUN) {
     $class['Claude'] = $claude
     $class['Argv'] = $argv
     [Console]::Out.WriteLine((ConvertTo-Json -InputObject $class -Compress))
@@ -362,10 +362,10 @@ $added = @()
 $report = $false
 $sessionId = $null
 
-if (-not $class.PassThrough -and $env:TERMHUB_API -and $env:TERMHUB_TAB_ID) {
+if (-not $class.PassThrough -and $env:THUB_API -and $env:THUB_TAB_ID) {
     try {
-        $launch = Invoke-TermHub '/claude/launch' @{
-            tabId = $env:TERMHUB_TAB_ID
+        $launch = Invoke-THub '/claude/launch' @{
+            tabId = $env:THUB_TAB_ID
             case = $class.Case
             sessionId = $class.GivenId
             cwd = [Environment]::CurrentDirectory
@@ -381,7 +381,7 @@ if (-not $class.PassThrough -and $env:TERMHUB_API -and $env:TERMHUB_TAB_ID) {
         }
         if ($class.Case -eq 'withId') { $sessionId = $class.GivenId }
     } catch {
-        # TermHub nicht erreichbar: claude unveraendert starten, nichts melden
+        # THub nicht erreichbar: claude unveraendert starten, nichts melden
         $added = @()
         $report = $false
     }
@@ -396,7 +396,7 @@ if ($isCmd) {
     $all = @($added) + @($argv)
     foreach ($a in $all) {
         if ($a.IndexOf("`n") -ge 0 -or $a.IndexOf("`r") -ge 0) {
-            [Console]::Error.WriteLine('TermHub: Zeilenumbrueche in Argumenten kann claude.cmd nicht empfangen')
+            [Console]::Error.WriteLine('THub: Zeilenumbrueche in Argumenten kann claude.cmd nicht empfangen')
             exit 1
         }
     }
@@ -414,13 +414,13 @@ if ($isCmd) {
     $psi.Arguments = $parts -join ' '
 }
 
-if ($env:TERMHUB_STARTER_DEBUG) {
-    [Console]::Error.WriteLine('TermHub-Starter: ' + $psi.FileName + ' ' + $psi.Arguments)
+if ($env:THUB_STARTER_DEBUG) {
+    [Console]::Error.WriteLine('THub-Starter: ' + $psi.FileName + ' ' + $psi.Arguments)
 }
 
 $sid = 'null'
 if ($sessionId -ne $null) { $sid = ConvertTo-JsonString $sessionId }
-$tabJson = ConvertTo-JsonString $env:TERMHUB_TAB_ID
+$tabJson = ConvertTo-JsonString $env:THUB_TAB_ID
 $exitJsonHead = '{"tabId":' + $tabJson + ',"sessionId":' + $sid + ',"exitCode":'
 
 # Ctrl+C geht an alle Prozesse der Konsole, auch an diesen. PowerShell merkt sich dann, dass die
@@ -436,7 +436,7 @@ try {
 } finally {
     if ($proc -ne $null) {
         $proc.WaitForExit()
-        if ($env:TERMHUB_STARTER_DEBUG) { [Console]::Error.WriteLine('TermHub-Starter: claude beendet, Exit-Code ' + $proc.ExitCode) }
+        if ($env:THUB_STARTER_DEBUG) { [Console]::Error.WriteLine('THub-Starter: claude beendet, Exit-Code ' + $proc.ExitCode) }
         if ($report) { Send-Report '/claude/exit' ($exitJsonHead + $proc.ExitCode + '}') }
         exit $proc.ExitCode
     }

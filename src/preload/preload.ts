@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
-import { IPC, type ResolvedTheme, type TermHubApi, type WorkspaceEvent } from '../shared/types';
+import { IPC, type ResolvedTheme, type THubApi, type WorkspaceEvent } from '../shared/types';
 
-const api: TermHubApi = {
+const api: THubApi = {
   loadSnapshot: () => ipcRenderer.invoke(IPC.workspaceSnapshot),
   onEvent: (listener) => {
     const handler = (_e: IpcRendererEvent, event: WorkspaceEvent) => listener(event);
@@ -23,4 +23,4 @@ const api: TermHubApi = {
   },
 };
 
-contextBridge.exposeInMainWorld('termhub', api);
+contextBridge.exposeInMainWorld('thub', api);

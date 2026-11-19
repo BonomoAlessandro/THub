@@ -16,13 +16,13 @@
               "--noproxy",
               "*",
               "--variable",
-              "%TERMHUB_TAB_ID=",
+              "%THUB_TAB_ID=",
               "--variable",
-              "%TERMHUB_TOKEN=",
+              "%THUB_TOKEN=",
               "--expand-header",
-              "X-TermHub-Tab: {{TERMHUB_TAB_ID}}",
+              "X-THub-Tab: {{THUB_TAB_ID}}",
               "--expand-header",
-              "X-TermHub-Token: {{TERMHUB_TOKEN}}",
+              "X-THub-Token: {{THUB_TOKEN}}",
               "-H",
               "Content-Type: application/json",
               "--data-binary",
@@ -42,12 +42,12 @@
             "url": "http://127.0.0.1:<PORT>/hooks/SessionEnd",
             "timeout": 2,
             "headers": {
-              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
-              "X-TermHub-Token": "$TERMHUB_TOKEN"
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
             },
             "allowedEnvVars": [
-              "TERMHUB_TAB_ID",
-              "TERMHUB_TOKEN"
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
             ]
           }
         ]
@@ -61,12 +61,12 @@
             "url": "http://127.0.0.1:<PORT>/hooks/UserPromptSubmit",
             "timeout": 2,
             "headers": {
-              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
-              "X-TermHub-Token": "$TERMHUB_TOKEN"
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
             },
             "allowedEnvVars": [
-              "TERMHUB_TAB_ID",
-              "TERMHUB_TOKEN"
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
             ]
           }
         ]
@@ -80,12 +80,12 @@
             "url": "http://127.0.0.1:<PORT>/hooks/PreToolUse",
             "timeout": 2,
             "headers": {
-              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
-              "X-TermHub-Token": "$TERMHUB_TOKEN"
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
             },
             "allowedEnvVars": [
-              "TERMHUB_TAB_ID",
-              "TERMHUB_TOKEN"
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
             ]
           }
         ]
@@ -99,12 +99,12 @@
             "url": "http://127.0.0.1:<PORT>/hooks/PostToolUse",
             "timeout": 2,
             "headers": {
-              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
-              "X-TermHub-Token": "$TERMHUB_TOKEN"
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
             },
             "allowedEnvVars": [
-              "TERMHUB_TAB_ID",
-              "TERMHUB_TOKEN"
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
             ]
           }
         ]
@@ -118,12 +118,12 @@
             "url": "http://127.0.0.1:<PORT>/hooks/PostToolUseFailure",
             "timeout": 2,
             "headers": {
-              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
-              "X-TermHub-Token": "$TERMHUB_TOKEN"
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
             },
             "allowedEnvVars": [
-              "TERMHUB_TAB_ID",
-              "TERMHUB_TOKEN"
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
             ]
           }
         ]
@@ -137,12 +137,12 @@
             "url": "http://127.0.0.1:<PORT>/hooks/PermissionRequest",
             "timeout": 2,
             "headers": {
-              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
-              "X-TermHub-Token": "$TERMHUB_TOKEN"
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
             },
             "allowedEnvVars": [
-              "TERMHUB_TAB_ID",
-              "TERMHUB_TOKEN"
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
             ]
           }
         ]
@@ -156,12 +156,12 @@
             "url": "http://127.0.0.1:<PORT>/hooks/Stop",
             "timeout": 2,
             "headers": {
-              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
-              "X-TermHub-Token": "$TERMHUB_TOKEN"
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
             },
             "allowedEnvVars": [
-              "TERMHUB_TAB_ID",
-              "TERMHUB_TOKEN"
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
             ]
           }
         ]
@@ -175,12 +175,12 @@
             "url": "http://127.0.0.1:<PORT>/hooks/StopFailure",
             "timeout": 2,
             "headers": {
-              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
-              "X-TermHub-Token": "$TERMHUB_TOKEN"
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
             },
             "allowedEnvVars": [
-              "TERMHUB_TAB_ID",
-              "TERMHUB_TOKEN"
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
             ]
           }
         ]
@@ -194,12 +194,12 @@
             "url": "http://127.0.0.1:<PORT>/hooks/Notification",
             "timeout": 2,
             "headers": {
-              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
-              "X-TermHub-Token": "$TERMHUB_TOKEN"
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
             },
             "allowedEnvVars": [
-              "TERMHUB_TAB_ID",
-              "TERMHUB_TOKEN"
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
             ]
           }
         ]

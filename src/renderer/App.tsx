@@ -5,7 +5,7 @@ import { TerminalArea } from './terminal/TerminalArea';
 import { focusTerminal, terminalViews } from './terminal/terminalViews';
 import { useWorkspace, type WorkspaceView } from './useWorkspace';
 
-const api = window.termhub;
+const api = window.thub;
 
 /** Das Fenster: Tab-Leiste oben, darunter die Terminal-Fläche. */
 export function App() {

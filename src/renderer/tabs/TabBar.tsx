@@ -5,7 +5,7 @@ import { focusTerminal } from '../terminal/terminalViews';
 import { Tab } from './Tab';
 import { Tooltip } from './Tooltip';
 
-const api = window.termhub;
+const api = window.thub;
 
 /** So lange liegt die Maus auf einem Element, bis sein Tooltip erscheint. */
 const TOOLTIP_DELAY_MS = 550;

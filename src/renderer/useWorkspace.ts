@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { TabSnapshot } from '../shared/types';
 import { terminalViews } from './terminal/terminalViews';
 
-const api = window.termhub;
+const api = window.thub;
 
 /** Was die Oberfläche vom Zustand des Kerns anzeigt. */
 export interface WorkspaceView {
