@@ -18,7 +18,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 01 | [Workspace-Kern mit Tests](01-workspace-kern-mit-tests.md) | AFK | – |
 | 02 | [Klickbarer Design-Prototyp](02-design-prototyp.md) | HITL | – |
 | 03 | [React-Oberfläche mit Tab-Leiste](03-react-tab-leiste.md) | AFK | 01, 02 |
-| 04 | [Titelleiste, Mica und Design hell/dunkel](04-titelleiste-design.md) | AFK | 03 |
+| 04 | [Titelleiste und Design hell/dunkel](04-titelleiste-design.md) | AFK | 03 |
 | 05 | [Ordner, Tab-Namen und Einstellungsdialog](05-ordner-und-einstellungen.md) | AFK | 04 |
 | 06 | [Shells erkennen und pro Tab wählen](06-shells.md) | AFK | 05 |
 | 07 | [Shell-Integration: Profil, aktueller Ordner, Startbefehl](07-shell-integration.md) | AFK | 06 |

@@ -10,7 +10,7 @@ Spezifikation: „Oberfläche (Renderer)“, „Weitere Hinweise → Ablauf“
 Ein **klickbarer Prototyp im Browser**, an dem der Look von TermHub abgestimmt wird, bevor die echte Oberfläche entsteht. Die Terminals sind nachgemacht, es laufen keine echten Shells. Der Prototyp liegt ausserhalb des App-Quellcodes, damit Typecheck und Build der App nicht betroffen sind.
 
 Er zeigt:
-- die eigene Titelleiste mit Tabs, Fensterknöpfen, Zieh-Fläche und nachgeahmtem Mica
+- die eigene Titelleiste mit Tabs, Fensterknöpfen und Zieh-Fläche
 - alle sechs Status-Symbole: arbeitet, wartet auf dich, Prozesse laufen, fertig und noch nicht angeschaut, pausiert, kein Symbol
 - den `+`-Knopf mit Pfeil-Menü: Shells, „Neues Terminal in …“ mit zuletzt benutzten Ordnern, „Ordner wählen …“
 - das Rechtsklick-Menü am Tab, Inline-Umbenennen, den Tooltip und Tabs bei Überlauf

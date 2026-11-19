@@ -24,7 +24,7 @@ TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessio
 - **Nach einem Neustart ist alles wieder da:** Normale Terminals starten im zuletzt aktiven Ordner und zeigen ihren früheren Inhalt ausgegraut als Verlauf. Claude-Sessions werden direkt fortgesetzt, die zuletzt aktive sofort, die übrigen beim ersten Anklicken.
 - **Hinweise unten rechts im Fenster** melden, wenn Claude in einem Tab, den du gerade nicht siehst, auf dich wartet oder fertig wird.
 - **Einfache Bedienung:** Maus, die bekannten Tastenkürzel und eine Befehlspalette (`Ctrl+Shift+P`).
-- **Moderner Look:** eigene Titelleiste, Windows-11-Mica, hell und dunkel nach Windows, Stil wie Warp, Linear oder Raycast, ohne Akzentfarbe.
+- **Moderner Look:** eigene Titelleiste, deckender Hintergrund, hell und dunkel nach Windows, Stil wie Warp, Linear oder Raycast, ohne Akzentfarbe.
 - **Funktioniert auf jedem Rechner direkt nach der Installation.** Deine Claude-Konfiguration wird nicht verändert.
 
 ## User Stories
@@ -138,7 +138,7 @@ TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessio
 75. Als Nutzer möchte ich über das Zahnrad einen Einstellungsdialog öffnen mit Standardordner, Standard-Shell, Design (System / Hell / Dunkel), Terminal-Schriftgrösse und Hinweisen an/aus, damit ich alles Nötige an einem Ort finde.
 76. Als Nutzer möchte ich, dass TermHub standardmässig dem hellen oder dunklen Design von Windows folgt und bei einem Wechsel sofort mitzieht, damit es zu meinem System passt.
 77. Als Nutzer möchte ich, dass auch die Terminalfläche dem Design folgt (im hellen Modus hell, mit passendem Farbschema), damit TermHub aus einem Guss wirkt.
-78. Als Nutzer möchte ich eine moderne Oberfläche mit eigener Titelleiste, Mica-Hintergrund, abgerundeten Ecken, neutraler Hervorhebung ohne Akzentfarbe und dezenten Animationen, damit ich gern damit arbeite.
+78. Als Nutzer möchte ich eine moderne Oberfläche mit eigener Titelleiste, deckendem Hintergrund, abgerundeten Ecken, neutraler Hervorhebung ohne Akzentfarbe und dezenten Animationen, damit ich gern damit arbeite.
 79. Als Nutzer möchte ich, dass eine Änderung des Standardordners nur für neue Tabs gilt, damit meine offenen Tabs nicht durcheinanderkommen.
 
 ## Implementierungsentscheidungen
@@ -366,10 +366,11 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Fenster und Titelleiste:**
   - Ohne Windows-Rahmen, mit verdeckter Titelleiste und den nativen Fensterknöpfen als Overlay, damit die Andock-Layouts von Windows 11 erhalten bleiben. Die Symbolfarbe der Knöpfe wird bei jedem Wechsel des Designs nachgezogen.
   - Die Tabs sind von der Zieh-Fläche ausgenommen, damit Klick, Rechtsklick und Ziehen funktionieren. Neben den Tabs bleibt immer eine feste Mindestfläche zum Verschieben des Fensters, auch bei überlaufender Leiste.
-  - Hintergrund-Material Mica, wo verfügbar (der Fensterhintergrund ist dort transparent), sonst eine ruhige Fläche.
+  - Der Fensterhintergrund ist deckend und einfarbig. Kein Mica, keine Transparenz.
   - Schrift: Segoe UI Variable für die Oberfläche, Cascadia Mono für das Terminal.
 - **Design:** folgt standardmässig Windows und reagiert live auf einen Wechsel. Die Terminalfläche hat je ein abgestimmtes helles und dunkles Farbschema.
 - **Entscheidungen aus dem Prototyp** (Referenz für Design-Variablen, Farbschemata und Animationen: `prototype/styles.css`):
+  - **Kein Mica, keine Transparenz:** Fenster, Titelleiste, Menüs und Dialoge haben deckende Hintergründe.
   - **Keine Akzentfarbe.** Hervorhebungen sind neutral (Monochrom): der Balken unter dem aktiven Tab, primäre Buttons, Schalter, Fokusrahmen und Cursor nutzen die Textfarbe des jeweiligen Designs.
   - **Terminal als Karte:** Die Terminalfläche ist eine abgerundete Karte mit feinem Rand innerhalb des Fensters, nicht randlos.
   - **Erster Start maximiert:** Ohne gespeicherte Fensterangaben öffnet TermHub maximiert.

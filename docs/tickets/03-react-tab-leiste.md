@@ -7,7 +7,7 @@ Spezifikation: „Oberfläche (Renderer)“ (Bestandteile, Tastenkürzel), „Ta
 
 ## Was gebaut wird
 
-Die Oberfläche wird mit **React und TypeScript** neu gebaut. Die Seitenleiste wird durch eine **Tab-Leiste oben** ersetzt, gestaltet wie im Prototyp. Die eigene Titelleiste, Mica und das Design-System folgen in Ticket 04; bis dahin sitzt die Tab-Leiste unter dem normalen Windows-Rahmen.
+Die Oberfläche wird mit **React und TypeScript** neu gebaut. Die Seitenleiste wird durch eine **Tab-Leiste oben** ersetzt, gestaltet wie im Prototyp. Die eigene Titelleiste und das Design-System folgen in Ticket 04; bis dahin sitzt die Tab-Leiste unter dem normalen Windows-Rahmen.
 
 - Tabs anzeigen, anklicken, mit `×` schliessen, per Doppelklick oder `F2` inline umbenennen; Tooltip mit vollem Namen, aktuellem Ordner und Shell.
 - Bei vielen Tabs werden die Tabs schmaler und die Leiste scrollbar.
