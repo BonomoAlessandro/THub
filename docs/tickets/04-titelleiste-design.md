@@ -1,6 +1,6 @@
 # 04 – Titelleiste und Design hell/dunkel
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 03
 User Stories: 69, 76, 77, 78
 Spezifikation: „Oberfläche (Renderer)“ (Fenster und Titelleiste, Design)

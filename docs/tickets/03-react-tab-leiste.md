@@ -1,6 +1,6 @@
 # 03 – React-Oberfläche mit Tab-Leiste
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `erledigt` (2026-11-19, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 01, 02
 User Stories: 10, 14, 15, 17, 18, 19, 72, 73
 Spezifikation: „Oberfläche (Renderer)“ (Bestandteile, Tastenkürzel), „Tab-Namen“ (Umbenennen), „Architektur im Überblick“ (Vertrag zwischen Renderer und Kern)

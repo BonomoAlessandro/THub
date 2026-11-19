@@ -17,12 +17,12 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 |---|---|---|---|---|
 | 01 | [Workspace-Kern mit Tests](01-workspace-kern-mit-tests.md) | AFK | – | erledigt |
 | 02 | [Klickbarer Design-Prototyp](02-design-prototyp.md) | HITL | – | erledigt |
-| 03 | [React-Oberfläche mit Tab-Leiste](03-react-tab-leiste.md) | AFK | 01, 02 | in Arbeit |
-| 04 | [Titelleiste und Design hell/dunkel](04-titelleiste-design.md) | AFK | 03 | offen |
+| 03 | [React-Oberfläche mit Tab-Leiste](03-react-tab-leiste.md) | AFK | 01, 02 | erledigt |
+| 04 | [Titelleiste und Design hell/dunkel](04-titelleiste-design.md) | AFK | 03 | in Arbeit |
 | 05 | [Ordner, Tab-Namen und Einstellungsdialog](05-ordner-und-einstellungen.md) | AFK | 04 | offen |
 | 06 | [Shells erkennen und pro Tab wählen](06-shells.md) | AFK | 05 | offen |
 | 07 | [Shell-Integration: Profil, aktueller Ordner, Startbefehl](07-shell-integration.md) | AFK | 06 | offen |
-| 08 | [Verlauf normaler Tabs sichern und wiederherstellen](08-verlauf.md) | AFK | 03 | offen |
+| 08 | [Verlauf normaler Tabs sichern und wiederherstellen](08-verlauf.md) | AFK | 03 | in Arbeit |
 | 09 | [Fenster merken und nur eine Instanz](09-fenster-und-einzelinstanz.md) | AFK | 01 | erledigt |
 | 10 | [Lokale Schnittstelle, Hook-Datei und Claude-Zuordnung](10-schnittstelle-und-zuordnung.md) | AFK | 01, 09 | in Arbeit |
 | 11 | [Starter und `claude`-Ersatz](11-starter-und-ersatz.md) | AFK | 07, 10 | offen |
