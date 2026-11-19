@@ -189,6 +189,12 @@ function createWindow(ws: Workspace, theme: ThemeSource): void {
   });
   mainWindow = win;
 
+  // Das Fenster zeigt nur die eigene Oberfläche. Ein auf das Fenster gezogener Link oder eine Datei würde
+  // sonst wegnavigieren, und eine fremde Seite bekäme Zugriff auf die Terminal-Schnittstelle aus dem Preload.
+  win.webContents.on('will-navigate', (event) => event.preventDefault());
+  win.webContents.on('will-redirect', (event) => event.preventDefault());
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
   // Gemeldet werden die normale Grösse und Lage (auch im maximierten Zustand) und ob maximiert.
   // Minimiert bleibt der zuletzt gemeldete Zustand stehen, sonst ginge „maximiert“ verloren.
   const reportWindow = (): void => {
