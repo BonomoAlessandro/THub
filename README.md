@@ -42,13 +42,15 @@ src/
   main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
   main/shells.ts            Feste Shell-Liste (pwsh, powershell, cmd), bis die Shell-Erkennung kommt
+  main/theme.ts             Design hell/dunkel: folgt Windows (nativeTheme), zieht Fensterfarbe, Fensterknöpfe und Oberfläche nach
   preload/preload.ts        Stellt dem Renderer die API `window.termhub` bereit
   renderer/                 React-Oberfläche: zeigt an und schickt Befehle, die Tab-Logik liegt im Kern
-    main.tsx                Einstieg; übernimmt das Design von Windows (hell/dunkel)
+    main.tsx                Einstieg; übernimmt zuerst das Design (hell/dunkel), dann wird gezeichnet
+    theme.ts                Design übernehmen und live wechseln, Terminal-Farbschema aus den Design-Variablen
     App.tsx                 Fenster: Tab-Leiste und Terminal-Fläche, Tastenkürzel
     useWorkspace.ts         Schnappschuss und Ereignisse des Kerns
     shortcuts.ts            Zuordnung der Tastenkürzel (alles andere geht ans Terminal)
-    tabs/                   Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf
+    tabs/                   Titelleiste mit Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf, Zieh-Fläche
     terminal/               Ein xterm.js pro Tab, inaktive ausgeblendet; meldet „Ansicht bereit“
     styles/tokens.css       Design-Variablen und Terminal-Farbschemata aus dem Prototyp
     styles/app.css
@@ -56,6 +58,7 @@ test/
   support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
   workspace/                Kern-Tests (Teststelle 1)
   renderer/                 Zuordnung der Tastenkürzel
+  main/                     Hauptprozess ohne Electron: Design hell/dunkel
 build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
 
@@ -84,7 +87,8 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
 - Tooltip mit Name, Ordner und Shell; Schliessen mit `×` oder der mittleren Maustaste
 - Tabs umbenennen (Doppelklick auf den Tab oder `F2`; Enter übernimmt, Escape bricht ab)
 - Beim Beenden werden alle Tabs gespeichert und beim nächsten Start in ihrem Verzeichnis neu gestartet; der zuletzt aktive Tab wird wieder angezeigt
-- Hell oder dunkel nach dem Design von Windows beim Start, auch die Terminalfläche
+- Eigene Titelleiste ohne Windows-Rahmen: Die Tabs sitzen direkt in der Titelleiste, rechts die nativen Fensterknöpfe mit den Andock-Layouts von Windows 11. Die freie Fläche neben den Tabs (mindestens 56 px, auch bei vielen Tabs) verschiebt das Fenster, Doppelklick maximiert.
+- Hell oder dunkel nach dem Design von Windows, auch die Terminalfläche und die Fensterknöpfe; ein Wechsel in Windows wirkt sofort
 - Der Standardordner lässt sich vorübergehend nicht einstellen; er kommt mit dem Einstellungsdialog zurück
 - Beendete Shell (z.B. `exit`): Hinweis im Terminal, beliebige Taste startet sie neu
 - Kopieren/Einfügen: Rechtsklick (mit Auswahl kopieren, sonst einfügen), `Ctrl+Shift+C` / `Ctrl+Shift+V`
