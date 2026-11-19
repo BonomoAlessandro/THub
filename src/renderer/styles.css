@@ -1,0 +1,217 @@
+:root {
+  --bg: #1e1e1e;
+  --sidebar-bg: #252526;
+  --sidebar-border: #333;
+  --text: #cccccc;
+  --text-dim: #8a8a8a;
+  --hover: #2a2d2e;
+  --active: #37373d;
+  --accent: #0e639c;
+  --danger: #c74e39;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+}
+
+body {
+  display: flex;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* ---------- Sidebar ---------- */
+
+#sidebar {
+  width: 220px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 8px 8px 12px;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.icon-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.icon-btn:hover {
+  background: var(--hover);
+}
+
+#session-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.session-item:hover {
+  background: var(--hover);
+}
+
+.session-item.active {
+  background: var(--active);
+}
+
+.session-item .status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: #4ec9b0;
+}
+
+.session-item.exited .status {
+  background: var(--text-dim);
+}
+
+.session-item .name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-item .rename-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  padding: 1px 4px;
+  outline: none;
+}
+
+.session-item .close {
+  visibility: hidden;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  color: var(--text-dim);
+}
+
+.session-item:hover .close,
+.session-item.active .close {
+  visibility: visible;
+}
+
+.session-item .close:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.sidebar-footer {
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.setting-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.cwd-btn {
+  width: 100%;
+  text-align: left;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: var(--bg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl; /* bei langen Pfaden das Ende zeigen */
+}
+
+.cwd-btn:hover {
+  outline: 1px solid var(--accent);
+}
+
+/* ---------- Terminal-Bereich ---------- */
+
+#terminals {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+/*
+ * Alle Terminals liegen übereinander und füllen den Bereich. Inaktive werden per
+ * visibility versteckt (nicht display:none), damit der FitAddon sie messen kann.
+ */
+.terminal-host {
+  position: absolute;
+  inset: 0;
+  padding: 6px 0 0 8px;
+  visibility: hidden;
+}
+
+.terminal-host.active {
+  visibility: visible;
+}
+
+#empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-dim);
+}
+
+#empty-state[hidden] {
+  display: none;
+}
+
+#empty-state button {
+  padding: 6px 14px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+}
