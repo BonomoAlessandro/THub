@@ -6,6 +6,11 @@ import type { PersistedState } from './workspace/schema';
 
 const SAVE_DEBOUNCE_MS = 200;
 
+/** Name der Zustandsdatei im Datenordner. */
+export const STATE_FILE_NAME = 'state.json';
+/** Unterordner neben der Zustandsdatei mit einer Verlaufsdatei pro Tab. */
+export const HISTORY_DIR_NAME = 'history';
+
 /**
  * Speicher: liest state.json und schreibt den Zustand entprellt und atomar zurück. Den Verlauf legt er
  * pro Tab als eigene Datei im Unterordner `history` ab, sofort und ebenfalls atomar.
@@ -17,7 +22,7 @@ export class StateStore implements StateStorage {
   private readonly historyDir: string;
 
   constructor(private readonly file: string) {
-    this.historyDir = path.join(path.dirname(file), 'history');
+    this.historyDir = path.join(path.dirname(file), HISTORY_DIR_NAME);
   }
 
   loadState(): unknown {

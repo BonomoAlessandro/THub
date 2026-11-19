@@ -47,7 +47,7 @@ export interface WorkspaceOptions {
   shells: ShellInfo[];
   /**
    * Die laufende lokale Schnittstelle (Ticket 10). Fehlt sie, weil sie sich nicht starten liess, bekommen die
-   * Terminals nur TERMHUB_TAB_ID; der Starter erreicht TermHub nicht und startet claude unverändert.
+   * Terminals nur THUB_TAB_ID; der Starter erreicht THub nicht und startet claude unverändert.
    */
   localApi?: LocalApiInfo;
 }
@@ -160,7 +160,7 @@ class WorkspaceCore implements Workspace {
   private readonly runtimes = new Map<string, TabRuntime>();
   private readonly listeners = new Set<(event: WorkspaceEvent) => void>();
   private stopping: Promise<void> | null = null;
-  /** Claude-Zuordnungen eingefroren, weil TermHub sich selbst beendet. */
+  /** Claude-Zuordnungen eingefroren, weil THub sich selbst beendet. */
   private frozen = false;
   /** Vorgemerktes Speichern geänderter Fensterangaben; `null`, wenn nichts aussteht. */
   private cancelWindowSave: CancelTimer | null = null;
@@ -183,7 +183,7 @@ class WorkspaceCore implements Workspace {
     this.state = loaded.state;
     for (const tab of this.state.tabs) this.runtimes.set(tab.id, newRuntime(true));
 
-    // Wie bisher: Ohne gespeicherte Tabs startet TermHub mit einem neuen Terminal.
+    // Wie bisher: Ohne gespeicherte Tabs startet THub mit einem neuen Terminal.
     if (this.state.tabs.length === 0) this.createTab();
     else if (loaded.migrated) this.save();
 
@@ -361,10 +361,10 @@ class WorkspaceCore implements Workspace {
 
   /** Umgebung jedes Terminals: Tab-Kennung, dazu Adresse und Token der lokalen Schnittstelle. */
   private terminalEnv(tab: PersistedTab): Record<string, string> {
-    const env: Record<string, string> = { TERMHUB_TAB_ID: tab.id };
+    const env: Record<string, string> = { THUB_TAB_ID: tab.id };
     if (this.localApi) {
-      env.TERMHUB_API = this.localApi.url;
-      env.TERMHUB_TOKEN = this.localApi.token;
+      env.THUB_API = this.localApi.url;
+      env.THUB_TOKEN = this.localApi.token;
     }
     return env;
   }
@@ -517,7 +517,7 @@ class WorkspaceCore implements Workspace {
   claudeLaunch(request: ClaudeLaunchRequest): ClaudeLaunchResponse | null {
     const tab = this.claudeTab(request.tabId);
     if (!tab || !this.localApi) return null;
-    // Im Fall „neu“ vergibt TermHub die Kennung selbst; so ist sie auch ohne ein einziges Hook-Ereignis
+    // Im Fall „neu“ vergibt THub die Kennung selbst; so ist sie auch ohne ein einziges Hook-Ereignis
     // bekannt (Sicherheitsnetz).
     const newId = request.case === 'new' ? randomUUID() : undefined;
     const sessionId = newId ?? (request.case === 'withId' ? request.sessionId : undefined);

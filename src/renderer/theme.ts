@@ -5,7 +5,7 @@ import type { ITheme } from '@xterm/xterm';
 import type { ResolvedTheme } from '../shared/types';
 import { terminalViews } from './terminal/terminalViews';
 
-const api = window.termhub;
+const api = window.thub;
 
 /**
  * Übernimmt das Design des Hauptprozesses und folgt danach jedem Wechsel. Erfüllt sich, sobald das

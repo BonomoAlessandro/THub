@@ -9,7 +9,7 @@ describe('Test-Gerüst', () => {
     expect(startWorkspace().tabs()).toHaveLength(1);
   });
 
-  it('läuft ohne geerbte TERMHUB_*-Variablen', () => {
-    expect(Object.keys(process.env).filter((key) => key.toUpperCase().startsWith('TERMHUB_'))).toEqual([]);
+  it('läuft ohne geerbte THUB_*-Variablen', () => {
+    expect(Object.keys(process.env).filter((key) => key.toUpperCase().startsWith('THUB_'))).toEqual([]);
   });
 });

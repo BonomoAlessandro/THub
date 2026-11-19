@@ -3,11 +3,11 @@
 // Token, liest die Anfrage und gibt sie an den Kern weiter; was sie bewirkt, entscheidet der Kern.
 // Lädt nie Electron, damit die Kern-Tests ihn echt betreiben können.
 //
-// Endpunkte (alle POST, Token in der Kopfzeile `X-TermHub-Token`, sonst 403):
+// Endpunkte (alle POST, Token in der Kopfzeile `X-THub-Token`, sonst 403):
 // - /claude/launch   {tabId, case, sessionId?, cwd?} → 200 {tabName, sessionId?, hookFile}; 404 bei unbekanntem Tab
 // - /claude/started  {tabId, pid}                    → 200 leer
 // - /claude/exit     {tabId, sessionId?, exitCode}   → 200 leer
-// - /hooks/<Ereignis> Hook-Nutzdaten, Tab in `X-TermHub-Tab` → immer sofort 200 leer, nie Entscheidungsfelder
+// - /hooks/<Ereignis> Hook-Nutzdaten, Tab in `X-THub-Tab` → immer sofort 200 leer, nie Entscheidungsfelder
 
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import * as http from 'node:http';
@@ -15,8 +15,8 @@ import type { AddressInfo } from 'node:net';
 import { LAUNCH_CASES, type ClaudeReceiver, type LaunchCase } from './workspace/claude';
 
 const HOST = '127.0.0.1';
-const TOKEN_HEADER = 'x-termhub-token';
-const TAB_HEADER = 'x-termhub-tab';
+const TOKEN_HEADER = 'x-thub-token';
+const TAB_HEADER = 'x-thub-tab';
 /** Grössere Inhalte (etwa `PostToolUse` nach dem Lesen einer riesigen Datei) werden nicht ausgewertet. */
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
 /** Eine Anfrage, die so lange nicht vollständig ankommt, wird abgebrochen; Claude wartet ohnehin nur 2 s. */
@@ -35,7 +35,7 @@ export class LocalApiServer {
 
   private constructor(
     private readonly server: http.Server,
-    /** Adresse, z.B. "http://127.0.0.1:51234"; so steht sie in TERMHUB_API und in der Hook-Datei. */
+    /** Adresse, z.B. "http://127.0.0.1:51234"; so steht sie in THUB_API und in der Hook-Datei. */
     readonly url: string,
     /** Pro App-Start zufällig; jede Anfrage muss es mitschicken. */
     readonly token: string,
@@ -123,7 +123,7 @@ export class LocalApiServer {
         const sessionId = optionalString(body.sessionId);
         if (!LAUNCH_CASES.includes(launchCase) || (launchCase === 'withId' && !sessionId)) return { status: 400 };
         const response = receiver.claudeLaunch({ tabId, case: launchCase, sessionId, cwd: optionalString(body.cwd) });
-        // Unbekannter Tab: Der Starter startet claude dann unverändert, wie ohne TermHub.
+        // Unbekannter Tab: Der Starter startet claude dann unverändert, wie ohne THub.
         return response ? { status: 200, json: response } : { status: 404 };
       }
       case '/claude/started':

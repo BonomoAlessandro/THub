@@ -3,7 +3,7 @@
 import { existsSync, realpathSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
-  FakeTermHub,
+  FakeTHub,
   SHELLS,
   ShellSession,
   type ShellId,
@@ -56,7 +56,7 @@ export function shellSuite(id: ShellId): void {
 
   describe.skipIf(!def.exe)(`${id}`, () => {
     let ws: Workspace;
-    let hub: FakeTermHub;
+    let hub: FakeTHub;
     const sessions: ShellSession[] = [];
 
     const start = async (opts: {
@@ -77,7 +77,7 @@ export function shellSuite(id: ShellId): void {
       return s;
     };
 
-    /** Tippt eine Zeile und liefert Exit-Code, Aufzeichnungen des Stubs und Anfragen an TermHub. */
+    /** Tippt eine Zeile und liefert Exit-Code, Aufzeichnungen des Stubs und Anfragen an THub. */
     const call = async (s: ShellSession, line: string, timeoutMs?: number) => {
       clearStubRecords(ws);
       hub.clear();
@@ -91,7 +91,7 @@ export function shellSuite(id: ShellId): void {
       ws = createWorkspace(id);
       ws.root = realpathSync.native(ws.root);
       configureStub(ws);
-      hub = new FakeTermHub({ tabName: TAB_NAME, sessionId: NEW_ID, hookFile: ws.hookFile });
+      hub = new FakeTHub({ tabName: TAB_NAME, sessionId: NEW_ID, hookFile: ws.hookFile });
       await hub.start();
     });
 
@@ -105,7 +105,7 @@ export function shellSuite(id: ShellId): void {
       it.skipIf(id === 'cmd')('lädt das Profil des Nutzers vor der Integration', async () => {
         const s = await start({});
         expect(existsSync(ws.profileLoaded)).toBe(true);
-        // claude ist der Ersatz, nicht das Programm: der Starter fragt TermHub an
+        // claude ist der Ersatz, nicht das Programm: der Starter fragt THub an
         const r = await call(s, 'claude');
         expect(r.requests.map((x) => x.path)).toEqual(['/claude/launch', '/claude/started', '/claude/exit']);
       });
@@ -287,7 +287,7 @@ export function shellSuite(id: ShellId): void {
       });
     });
 
-    describe('Ohne TermHub', () => {
+    describe('Ohne THub', () => {
       it('startet claude unverändert, wenn die Schnittstelle nicht erreichbar ist', async () => {
         const s = await start({ api: `http://127.0.0.1:${await closedPort()}` });
         const t0 = Date.now();
@@ -304,7 +304,7 @@ export function shellSuite(id: ShellId): void {
       });
 
       it('startet claude unverändert nach etwa 1 s, wenn die Schnittstelle nicht antwortet', async () => {
-        const hang = new FakeTermHub({ tabName: TAB_NAME, sessionId: NEW_ID, hookFile: ws.hookFile });
+        const hang = new FakeTHub({ tabName: TAB_NAME, sessionId: NEW_ID, hookFile: ws.hookFile });
         hang.mode = 'hang';
         await hang.start();
         try {
@@ -350,7 +350,7 @@ export function shellSuite(id: ShellId): void {
         expect(records[0].argv).toEqual(['--settings', ws.hookFile, '--resume', 'x']);
         expect(hub.paths()).toEqual(['/claude/launch', '/claude/started', '/claude/exit']);
         expect(hub.requests[0].body.case).toBe('withId');
-        expect(records[0].env.TERMHUB_TAB_ID).toBe(TAB_ID);
+        expect(records[0].env.THUB_TAB_ID).toBe(TAB_ID);
       });
     });
   });

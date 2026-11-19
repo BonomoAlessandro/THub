@@ -3,7 +3,7 @@ import type { TabSnapshot } from '../../shared/types';
 import { TerminalView } from './TerminalView';
 import { terminalViews } from './terminalViews';
 
-const api = window.termhub;
+const api = window.thub;
 
 interface TerminalAreaProps {
   tabs: TabSnapshot[];

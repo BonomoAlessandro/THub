@@ -1,4 +1,4 @@
-# TermHub
+# THub
 
 Desktop-App für Windows: mehrere benannte Terminal-Sessions in einem Fenster, die beim nächsten Start automatisch wieder geöffnet werden.
 
@@ -22,10 +22,12 @@ npm start          # bauen + App starten
 npm run dev        # wie start, mit Sourcemaps und unminifiziert
 npm run typecheck  # TypeScript prüfen
 npm test           # Kern-Tests mit Vitest
-npm run dist       # Installer bauen -> release\TermHub Setup <version>.exe
+npm run dist       # Installer bauen -> release\THub Setup <version>.exe
 ```
 
-Unpaketiert (`npm start`, `npm run dev`) verwendet TermHub den Datenordner `%APPDATA%\TermHub-dev` und berührt die installierte App (`%APPDATA%\TermHub`) nicht. Die Einzelinstanz-Sperre hängt am Datenordner: Die Entwicklungsversion läuft neben einer installierten TermHub, aber nur einmal.
+Unpaketiert (`npm start`, `npm run dev`) verwendet THub den Datenordner `%APPDATA%\THub-dev` und berührt die installierte App (`%APPDATA%\THub`) nicht. Die Einzelinstanz-Sperre hängt am Datenordner: Die Entwicklungsversion läuft neben einer installierten THub, aber nur einmal.
+
+**Umstieg vom alten Namen:** Bis 2026-11-19 hiess die App „TermHub“. Hat der Datenordner von THub noch keine `state.json`, übernimmt THub beim Start einmalig `state.json` und `history\` aus `%APPDATA%\TermHub` (unpaketiert aus `%APPDATA%\TermHub-dev`); der alte Ordner bleibt unverändert. Wegen der neuen App-Kennung `ch.custom.thub` bleibt eine installierte TermHub 0.1.0 eine eigene Installation und lässt sich wie gewohnt deinstallieren.
 
 ## Aufbau
 
@@ -42,11 +44,13 @@ src/
   main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
   main/hookFile.ts          Hook-Datei für Claude Code (claude-hooks.json im Datenordner)
   main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
+  main/shellEnv.ts          Umgebung der Shells: ohne geerbte THUB_*/TERMHUB_* und Interna des Dev-Starts
   main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json; Verlauf pro Tab unter history\
+  main/dataFolder.ts        Datenordner (THub bzw. THub-dev) und einmalige Übernahme aus dem alten Ordner
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
   main/shells.ts            Feste Shell-Liste (pwsh, powershell, cmd), bis die Shell-Erkennung kommt
   main/theme.ts             Design hell/dunkel: folgt Windows (nativeTheme), zieht Fensterfarbe, Fensterknöpfe und Oberfläche nach
-  preload/preload.ts        Stellt dem Renderer die API `window.termhub` bereit
+  preload/preload.ts        Stellt dem Renderer die API `window.thub` bereit
   renderer/                 React-Oberfläche: zeigt an und schickt Befehle, die Tab-Logik liegt im Kern
     main.tsx                Einstieg; übernimmt zuerst das Design (hell/dunkel), dann wird gezeichnet
     theme.ts                Design übernehmen und live wechseln, Terminal-Farbschema aus den Design-Variablen
@@ -62,13 +66,13 @@ test/
   support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
   workspace/                Kern-Tests (Teststelle 1)
   renderer/                 Zuordnung der Tastenkürzel; Verlauf mit echtem xterm.js in Node
-  main/                     Hauptprozess ohne Electron: Design hell/dunkel
+  main/                     Hauptprozess ohne Electron: Design hell/dunkel, Datenordner und Übernahme, Umgebung der Shells
 build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
 
 Der Hauptprozess ist die einzige Quelle der Wahrheit für den Zustand. Der Workspace-Kern besitzt die Tab-Logik: Der Renderer bekommt einen Schnappschuss und danach Änderungsereignisse und schickt nur Befehle. Shells startet nur der Kern, und zwar erst, wenn der Renderer die Ansicht des Tabs mit Spalten und Zeilen als bereit gemeldet hat.
 
-Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Datei der Version 1 wird beim Start übernommen, eine unlesbare als `state.json.corrupt-<Zeit>` beiseitegelegt.
+Gespeichert wird in `%APPDATA%\THub\state.json`, im Schema Version 2. Eine Datei der Version 1 wird beim Start übernommen, eine unlesbare als `state.json.corrupt-<Zeit>` beiseitegelegt.
 
 ```json
 {
@@ -84,7 +88,7 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
 }
 ```
 
-Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\TermHub\history\<Tab-Kennung>.json` (`{ "version": 1, "savedAt": …, "content": "…" }`): die letzten etwa 1000 Zeilen, serialisiert mit Farben, ohne den Bildschirm von Vollbildprogrammen wie `vim` oder `less`. Gesichert wird alle 30 Sekunden für Tabs mit neuer Ausgabe, beim Beenden (TermHub wartet höchstens 2 Sekunden auf den Renderer) und bei einer Windows-Abmeldung (sofort, mit dem zuletzt gesicherten Stand). Beim Schliessen eines Tabs wird seine Datei gelöscht.
+Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung>.json` (`{ "version": 1, "savedAt": …, "content": "…" }`): die letzten etwa 1000 Zeilen, serialisiert mit Farben, ohne den Bildschirm von Vollbildprogrammen wie `vim` oder `less`. Gesichert wird alle 30 Sekunden für Tabs mit neuer Ausgabe, beim Beenden (THub wartet höchstens 2 Sekunden auf den Renderer) und bei einer Windows-Abmeldung (sofort, mit dem zuletzt gesicherten Stand). Beim Schliessen eines Tabs wird seine Datei gelöscht.
 
 ## Was das Grundgerüst kann
 
@@ -104,11 +108,11 @@ Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\TermHub\history\<Tab-Kenn
 
 ### Lokale Schnittstelle und Claude-Zuordnung (Grundlage)
 
-Beim Start öffnet TermHub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem zufälligen freien Port und mit einem pro Start zufälligen Token. Jedes Terminal bekommt `TERMHUB_TAB_ID`, `TERMHUB_API` (Adresse) und `TERMHUB_TOKEN`. Über diese Schnittstelle melden der `claude`-Starter (folgt in Ticket 11) und die Hooks von Claude Code, welche Claude-Session in welchem Tab läuft; TermHub merkt sich das als Claude-Zuordnung im gespeicherten Zustand (Session-Kennung, Ordner, bestätigt, hatte Prompt).
+Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem zufälligen freien Port und mit einem pro Start zufälligen Token. Jedes Terminal bekommt `THUB_TAB_ID`, `THUB_API` (Adresse) und `THUB_TOKEN`. Über diese Schnittstelle melden der `claude`-Starter (folgt in Ticket 11) und die Hooks von Claude Code, welche Claude-Session in welchem Tab läuft; THub merkt sich das als Claude-Zuordnung im gespeicherten Zustand (Session-Kennung, Ordner, bestätigt, hatte Prompt).
 
-- Endpunkte: `POST /claude/launch`, `/claude/started`, `/claude/exit` und `/hooks/<Ereignis>`. Ohne gültiges Token (`X-TermHub-Token`) antwortet der Server mit 403. Hook-Antworten sind immer sofort leer; TermHub hört nur zu und beeinflusst Claude nie.
-- Die Hook-Datei `claude-hooks.json` schreibt TermHub bei jedem Start neu in seinen Datenordner, nach der im Spike geprüften Vorlage (`spikes/claude-hooks/empfohlene-hook-datei.json`). `SessionStart` läuft über `curl.exe`, weil Claude dafür keine HTTP-Hooks kennt. Die globale Claude-Konfiguration bleibt unberührt.
-- Beendet TermHub sich selbst (App beenden, Tab schliessen, Windows-Abmeldung), wird die Zuordnung eingefroren: Spätere Ereignisse ändern sie nicht mehr.
+- Endpunkte: `POST /claude/launch`, `/claude/started`, `/claude/exit` und `/hooks/<Ereignis>`. Ohne gültiges Token (`X-THub-Token`) antwortet der Server mit 403. Hook-Antworten sind immer sofort leer; THub hört nur zu und beeinflusst Claude nie.
+- Die Hook-Datei `claude-hooks.json` schreibt THub bei jedem Start neu in seinen Datenordner, nach der im Spike geprüften Vorlage (`spikes/claude-hooks/empfohlene-hook-datei.json`). `SessionStart` läuft über `curl.exe`, weil Claude dafür keine HTTP-Hooks kennt. Die globale Claude-Konfiguration bleibt unberührt.
+- Beendet THub sich selbst (App beenden, Tab schliessen, Windows-Abmeldung), wird die Zuordnung eingefroren: Spätere Ereignisse ändern sie nicht mehr.
 - Ein zweiter Start öffnet keinen Server und schreibt keine Hook-Datei.
 
 ### Tastenkürzel

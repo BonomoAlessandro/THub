@@ -1,4 +1,4 @@
-// Hook-Datei für Claude Code (Ticket 10). TermHub schreibt sie bei jedem Start neu in seinen Datenordner;
+// Hook-Datei für Claude Code (Ticket 10). THub schreibt sie bei jedem Start neu in seinen Datenordner;
 // der claude-Starter gibt sie Claude mit `--settings` mit. Der Aufbau folgt der im Spike geprüften Vorlage
 // spikes/claude-hooks/empfohlene-hook-datei.json (Befunde in docs/spikes/claude-hooks.md):
 // - alle Ereignisse ausser SessionStart als HTTP-Hook auf /hooks/<Ereignis>, Tab und Token aus der Umgebung;
@@ -28,7 +28,7 @@ const HTTP_TIMEOUT_S = 2;
 /** Zeitlimit des curl-Hooks; curl selbst gibt nach 1 s Verbindungsaufbau bzw. 2 s insgesamt auf. */
 const CURL_HOOK_TIMEOUT_S = 3;
 /** Umgebungsvariablen, die Claude in die Kopfzeilen der HTTP-Hooks einsetzen darf. */
-const ALLOWED_ENV_VARS = ['TERMHUB_TAB_ID', 'TERMHUB_TOKEN'];
+const ALLOWED_ENV_VARS = ['THUB_TAB_ID', 'THUB_TOKEN'];
 
 interface HttpHook {
   type: 'http';
@@ -65,7 +65,7 @@ export function hookSettings(apiUrl: string, curlExe: string | null): HookSettin
             type: 'http',
             url: `${apiUrl}/hooks/${event}`,
             timeout: HTTP_TIMEOUT_S,
-            headers: { 'X-TermHub-Tab': '$TERMHUB_TAB_ID', 'X-TermHub-Token': '$TERMHUB_TOKEN' },
+            headers: { 'X-THub-Tab': '$THUB_TAB_ID', 'X-THub-Token': '$THUB_TOKEN' },
             allowedEnvVars: [...ALLOWED_ENV_VARS],
           },
         ],
@@ -94,13 +94,13 @@ function curlForward(curlExe: string, url: string): CommandHook {
       '--noproxy',
       '*',
       '--variable',
-      '%TERMHUB_TAB_ID=',
+      '%THUB_TAB_ID=',
       '--variable',
-      '%TERMHUB_TOKEN=',
+      '%THUB_TOKEN=',
       '--expand-header',
-      'X-TermHub-Tab: {{TERMHUB_TAB_ID}}',
+      'X-THub-Tab: {{THUB_TAB_ID}}',
       '--expand-header',
-      'X-TermHub-Token: {{TERMHUB_TOKEN}}',
+      'X-THub-Token: {{THUB_TOKEN}}',
       '-H',
       'Content-Type: application/json',
       '--data-binary',

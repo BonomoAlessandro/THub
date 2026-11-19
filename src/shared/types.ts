@@ -89,8 +89,8 @@ export type WorkspaceCommand =
 
 export type Unsubscribe = () => void;
 
-/** Die API, die der Preload-Skript dem Renderer unter `window.termhub` bereitstellt. */
-export interface TermHubApi {
+/** Die API, die der Preload-Skript dem Renderer unter `window.thub` bereitstellt. */
+export interface THubApi {
   loadSnapshot(): Promise<WorkspaceSnapshot>;
   onEvent(listener: (event: WorkspaceEvent) => void): Unsubscribe;
   send(command: WorkspaceCommand): void;

@@ -4,7 +4,7 @@ import { Terminal } from '@xterm/xterm';
 import { cssVar, terminalTheme } from '../theme';
 import { restoredHistory, serializeHistory } from './history';
 
-const api = window.termhub;
+const api = window.thub;
 
 /**
  * Ein xterm.js-Terminal, gekoppelt an die Shell eines Tabs. Die Shell startet der Kern.

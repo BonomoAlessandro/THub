@@ -11,7 +11,7 @@ afterEach(() => {
 
 /** Legt einen leeren Temp-Ordner an, der nach dem Test wieder gelöscht wird. */
 export function makeTempDir(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'termhub-test-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'thub-test-'));
   created.push(dir);
   return dir;
 }

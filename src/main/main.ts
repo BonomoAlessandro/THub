@@ -1,20 +1,22 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme } from 'electron';
 import * as path from 'node:path';
 import { IPC, type WorkspaceCommand } from '../shared/types';
+import { dataFolders, takeOverLegacyData, type DataFolders } from './dataFolder';
 import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
 import { LocalApiServer } from './localApi';
 import { PtyManager } from './ptyManager';
 import { FIXED_SHELLS } from './shells';
-import { StateStore } from './store';
+import { STATE_FILE_NAME, StateStore } from './store';
 import { hostSystem, noProcessProbe, systemClock } from './system';
 import type { LocalApiInfo } from './workspace/claude';
 import { createThemeSource, followTheme, windowChrome, type ThemeSource } from './theme';
 import { createWorkspace, type Workspace } from './workspace/workspace';
 
-// Unpaketiert (npm start) eigener Datenordner, damit die Entwicklung die installierte App nie berührt.
-// Muss vor dem ersten Zugriff auf userData und vor dem ready-Ereignis passieren, und vor der
-// Einzelinstanz-Sperre: Die hängt am Datenordner, so hat die Entwicklung ihre eigene.
-if (!app.isPackaged) app.setPath('userData', path.join(app.getPath('appData'), 'TermHub-dev'));
+// Datenordner %APPDATA%\THub, unpaketiert (npm start) %APPDATA%\THub-dev, damit die Entwicklung die
+// installierte App nie berührt. Muss vor dem ersten Zugriff auf userData und vor dem ready-Ereignis
+// passieren, und vor der Einzelinstanz-Sperre: Die hängt am Datenordner, so hat die Entwicklung ihre eigene.
+const folders = dataFolders(app.getPath('appData'), app.isPackaged);
+app.setPath('userData', folders.current);
 
 let mainWindow: BrowserWindow | null = null;
 let workspace: Workspace | null = null;
@@ -38,12 +40,14 @@ async function start(): Promise<void> {
   // Im Dev-Modus Menü behalten (DevTools, Reload); in der installierten App ausblenden.
   if (app.isPackaged) Menu.setApplicationMenu(null);
 
+  // Erst nach der Einzelinstanz-Sperre, damit nie zwei Starts zugleich übernehmen, und vor dem Laden.
+  takeOverOldData(folders);
   const api = await startLocalApi();
   localApi = api?.server ?? null;
   workspace = createWorkspace(
     {
       terminal: new PtyManager(),
-      storage: new StateStore(path.join(app.getPath('userData'), 'state.json')),
+      storage: new StateStore(path.join(app.getPath('userData'), STATE_FILE_NAME)),
       clock: systemClock,
       processes: noProcessProbe,
       system: hostSystem,
@@ -62,8 +66,20 @@ async function start(): Promise<void> {
 }
 
 /**
+ * Einmalige Übernahme von Zustand und Verlauf aus dem Datenordner, den die App unter ihrem alten Namen
+ * „TermHub“ hatte. Scheitert sie, startet die App ohne die alten Daten, wie bei einem ersten Start.
+ */
+function takeOverOldData(f: DataFolders): void {
+  try {
+    if (takeOverLegacyData(f) === 'taken-over') console.log(`Zustand und Verlauf aus ${f.legacy} übernommen.`);
+  } catch (err) {
+    console.error(`Zustand und Verlauf aus ${f.legacy} konnten nicht übernommen werden:`, err);
+  }
+}
+
+/**
  * Startet die lokale Schnittstelle und schreibt die Hook-Datei für diesen Start neu (Adresse und Port ändern
- * sich bei jedem Start). Scheitert das, läuft TermHub ohne Claude-Erkennung: Der Starter erreicht TermHub
+ * sich bei jedem Start). Scheitert das, läuft THub ohne Claude-Erkennung: Der Starter erreicht THub
  * nicht und startet claude unverändert.
  */
 async function startLocalApi(): Promise<{ server: LocalApiServer; info: LocalApiInfo } | null> {
@@ -182,7 +198,7 @@ function createWindow(ws: Workspace, theme: ThemeSource): void {
     // Deckende Fensterfarbe des Designs (--win-solid), damit beim Öffnen nichts aufblitzt, und die
     // Farben der Fensterknöpfe. Kein Mica, keine Transparenz.
     ...windowChrome(theme.current()),
-    title: 'TermHub',
+    title: 'THub',
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
       contextIsolation: true,

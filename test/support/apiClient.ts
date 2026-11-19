@@ -33,13 +33,13 @@ export class ApiClient {
       'Content-Length': Buffer.byteLength(text),
       ...headers,
     };
-    if (this.token !== null) allHeaders['X-TermHub-Token'] = this.token;
+    if (this.token !== null) allHeaders['X-THub-Token'] = this.token;
     return send(`${this.url}${path}`, 'POST', allHeaders, text);
   }
 
   get(path: string): Promise<ApiResponse> {
     const headers: Record<string, string> = {};
-    if (this.token !== null) headers['X-TermHub-Token'] = this.token;
+    if (this.token !== null) headers['X-THub-Token'] = this.token;
     return send(`${this.url}${path}`, 'GET', headers, '');
   }
 
@@ -60,7 +60,7 @@ export class ApiClient {
 
   /** Hook-Ereignis, wie es Claude Code schickt: Tab in der Kopfzeile, Nutzdaten als Inhalt. */
   hook(tabId: string, event: string, payload: unknown): Promise<ApiResponse> {
-    return this.post(`/hooks/${event}`, payload, { 'X-TermHub-Tab': tabId });
+    return this.post(`/hooks/${event}`, payload, { 'X-THub-Tab': tabId });
   }
 }
 
