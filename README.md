@@ -27,6 +27,8 @@ npm run dist       # Installer bauen -> release\THub Setup <version>.exe
 
 Unpaketiert (`npm start`, `npm run dev`) verwendet THub den Datenordner `%APPDATA%\THub-dev` und berührt die installierte App (`%APPDATA%\THub`) nicht. Die Einzelinstanz-Sperre hängt am Datenordner: Die Entwicklungsversion läuft neben einer installierten THub, aber nur einmal.
 
+**Umstieg vom alten Namen:** Bis 2026-11-19 hiess die App „TermHub“. Hat der Datenordner von THub noch keine `state.json`, übernimmt THub beim Start einmalig `state.json` und `history\` aus `%APPDATA%\TermHub` (unpaketiert aus `%APPDATA%\TermHub-dev`); der alte Ordner bleibt unverändert. Wegen der neuen App-Kennung `ch.custom.thub` bleibt eine installierte TermHub 0.1.0 eine eigene Installation und lässt sich wie gewohnt deinstallieren.
+
 ## Aufbau
 
 ```
@@ -42,7 +44,9 @@ src/
   main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
   main/hookFile.ts          Hook-Datei für Claude Code (claude-hooks.json im Datenordner)
   main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
+  main/shellEnv.ts          Umgebung der Shells: ohne geerbte THUB_*/TERMHUB_* und Interna des Dev-Starts
   main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json; Verlauf pro Tab unter history\
+  main/dataFolder.ts        Datenordner (THub bzw. THub-dev) und einmalige Übernahme aus dem alten Ordner
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
   main/shells.ts            Feste Shell-Liste (pwsh, powershell, cmd), bis die Shell-Erkennung kommt
   main/theme.ts             Design hell/dunkel: folgt Windows (nativeTheme), zieht Fensterfarbe, Fensterknöpfe und Oberfläche nach
@@ -62,7 +66,7 @@ test/
   support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
   workspace/                Kern-Tests (Teststelle 1)
   renderer/                 Zuordnung der Tastenkürzel; Verlauf mit echtem xterm.js in Node
-  main/                     Hauptprozess ohne Electron: Design hell/dunkel
+  main/                     Hauptprozess ohne Electron: Design hell/dunkel, Datenordner und Übernahme, Umgebung der Shells
 build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
 
