@@ -1,15 +1,29 @@
-// Hell oder dunkel: Die Oberfläche übernimmt beim Start das Design von Windows.
-// Das Nachziehen bei einem Wechsel im laufenden Betrieb folgt mit Ticket 04.
+// Hell oder dunkel: Welches Design gilt, bestimmt der Hauptprozess (er folgt Windows). Die Oberfläche
+// übernimmt es beim Start und zieht bei jedem Wechsel sofort mit, auch in allen offenen Terminals.
 
 import type { ITheme } from '@xterm/xterm';
+import type { ResolvedTheme } from '../shared/types';
+import { terminalViews } from './terminal/terminalViews';
 
-export type ResolvedTheme = 'light' | 'dark';
+const api = window.termhub;
 
-/** Setzt das Design von Windows als Attribut data-theme; daran hängen die Design-Variablen. */
-export function applySystemTheme(): ResolvedTheme {
-  const theme: ResolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+/**
+ * Übernimmt das Design des Hauptprozesses und folgt danach jedem Wechsel. Erfüllt sich, sobald das
+ * Design gesetzt ist; erst dann soll die Oberfläche zeichnen.
+ */
+export function followTheme(): Promise<void> {
+  // Zuerst abonnieren, dann abfragen: So geht kein Wechsel verloren.
+  api.onThemeChange(applyTheme);
+  return api.loadTheme().then(applyTheme);
+}
+
+/**
+ * Setzt das Design als Attribut data-theme, daran hängen die Design-Variablen. Die Terminals lesen
+ * ihr Farbschema aus diesen Variablen und bekommen es deshalb danach neu.
+ */
+function applyTheme(theme: ResolvedTheme): void {
   document.documentElement.dataset.theme = theme;
-  return theme;
+  for (const view of terminalViews.values()) view.updateTheme();
 }
 
 /** Wert einer Design-Variablen im aktuellen Design. */

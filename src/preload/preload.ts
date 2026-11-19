@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
-import { IPC, type TermHubApi, type WorkspaceEvent } from '../shared/types';
+import { IPC, type ResolvedTheme, type TermHubApi, type WorkspaceEvent } from '../shared/types';
 
 const api: TermHubApi = {
   loadSnapshot: () => ipcRenderer.invoke(IPC.workspaceSnapshot),
@@ -14,6 +14,13 @@ const api: TermHubApi = {
 
   readClipboard: () => ipcRenderer.invoke(IPC.clipboardRead),
   writeClipboard: (text) => ipcRenderer.invoke(IPC.clipboardWrite, text),
+
+  loadTheme: () => ipcRenderer.invoke(IPC.themeCurrent),
+  onThemeChange: (listener) => {
+    const handler = (_e: IpcRendererEvent, theme: ResolvedTheme) => listener(theme);
+    ipcRenderer.on(IPC.themeChanged, handler);
+    return () => ipcRenderer.off(IPC.themeChanged, handler);
+  },
 };
 
 contextBridge.exposeInMainWorld('termhub', api);

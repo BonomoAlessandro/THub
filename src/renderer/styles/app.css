@@ -51,13 +51,31 @@ svg.i {
 }
 
 /* ---------- Titelleiste mit Tab-Leiste ---------- */
+/*
+ * Das Fenster hat keinen Windows-Rahmen; die Titelleiste ist seine Zieh-Fläche. Rechts liegen die
+ * nativen Fensterknöpfe als Overlay über der Seite: env(titlebar-area-width) ist die Breite links
+ * davon, so überdeckt nichts die Knöpfe. 6 px Abstand zu ihnen wie im Prototyp.
+ */
 .titlebar {
   display: flex;
   align-items: center;
+  width: env(titlebar-area-width, 100%);
   height: var(--titlebar-h);
-  padding-left: 7px;
+  padding: 0 6px 0 7px;
   flex: none;
   user-select: none;
+  -webkit-app-region: drag;
+}
+
+/*
+ * Tabs und Knöpfe sind von der Zieh-Fläche ausgenommen: Klick, Rechtsklick (ohne Fenstermenü von
+ * Windows) und später das Ziehen von Tabs gehen an die Oberfläche. Die Eigenschaft wird vererbt:
+ * Was in der Titelleiste steht, aber darüber hinaus ragt (Tooltip, Menüs), braucht no-drag.
+ */
+.tabstrip,
+.newtab,
+.titlebar .icon-btn {
+  -webkit-app-region: no-drag;
 }
 
 .tabstrip {
@@ -208,6 +226,21 @@ svg.i {
   flex: none;
   border-radius: var(--r-sm);
 }
+/* `+` und Pfeil bilden einen geteilten Knopf. */
+.newtab .icon-btn {
+  border-radius: var(--r-sm) 0 0 var(--r-sm);
+}
+.newtab .icon-btn.chevron {
+  width: 20px;
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+.newtab .icon-btn.chevron svg.i {
+  width: 13px;
+  height: 13px;
+}
+.newtab:hover {
+  box-shadow: inset 0 0 0 1px var(--border);
+}
 
 .icon-btn {
   display: grid;
@@ -221,12 +254,16 @@ svg.i {
     background var(--dur-fast),
     color var(--dur-fast);
 }
-.icon-btn:hover {
+.icon-btn:hover:not(:disabled) {
   background: var(--hover);
   color: var(--text);
 }
 
-/* Freie Fläche rechts der Tabs; bleibt auch bei überlaufender Leiste erhalten. */
+/*
+ * Freie Fläche rechts der Tabs; sie gehört zur Zieh-Fläche der Titelleiste, Doppelklick maximiert.
+ * Sie bleibt mindestens 56 px breit, auch bei überlaufender Leiste: Die Tab-Leiste schrumpft
+ * (min-width 0) und scrollt, diese Fläche nicht.
+ */
 .titlebar-space {
   flex: 1 1 auto;
   min-width: var(--drag-min-w);
@@ -363,6 +400,9 @@ svg.i {
   box-shadow: var(--shadow-lg);
   pointer-events: none;
   animation: fade 120ms var(--ease);
+  /* Steht im Code in der Titelleiste und würde deren Zieh-Fläche erben (die Eigenschaft wird
+     vererbt); über dem Terminal soll sich das Fenster aber nicht verschieben lassen. */
+  -webkit-app-region: no-drag;
 }
 .tip b {
   display: block;

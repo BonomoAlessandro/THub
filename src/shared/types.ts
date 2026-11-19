@@ -4,6 +4,9 @@
 
 export type Theme = 'system' | 'light' | 'dark';
 
+/** Das Design, das gerade gilt: hell oder dunkel; „System“ ist dabei schon aufgelöst. */
+export type ResolvedTheme = 'light' | 'dark';
+
 export interface Settings {
   /** Standardordner für neue Tabs; leer heisst Benutzerordner. */
   defaultCwd: string;
@@ -87,6 +90,11 @@ export interface TermHubApi {
 
   readClipboard(): Promise<string>;
   writeClipboard(text: string): Promise<void>;
+
+  /** Das geltende Design; es bestimmt der Hauptprozess. */
+  loadTheme(): Promise<ResolvedTheme>;
+  /** Meldet jeden Wechsel des Designs, zum Beispiel wenn Windows von dunkel auf hell wechselt. */
+  onThemeChange(listener: (theme: ResolvedTheme) => void): Unsubscribe;
 }
 
 /** IPC-Kanalnamen an einem Ort, damit Main und Preload nicht auseinanderlaufen. */
@@ -97,4 +105,6 @@ export const IPC = {
   dialogPickDirectory: 'dialog:pick-directory',
   clipboardRead: 'clipboard:read',
   clipboardWrite: 'clipboard:write',
+  themeCurrent: 'theme:current',
+  themeChanged: 'theme:changed',
 } as const;
