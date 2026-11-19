@@ -1,6 +1,6 @@
 # 04 – Titelleiste und Design hell/dunkel
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-19, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 03
 User Stories: 69, 76, 77, 78
 Spezifikation: „Oberfläche (Renderer)“ (Fenster und Titelleiste, Design)
