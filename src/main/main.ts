@@ -1,114 +1,61 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu } from 'electron';
-import { randomUUID } from 'node:crypto';
-import * as fs from 'node:fs';
-import * as os from 'node:os';
 import * as path from 'node:path';
-import { IPC, type SessionInfo, type Settings } from '../shared/types';
+import { IPC, type WorkspaceCommand } from '../shared/types';
 import { PtyManager } from './ptyManager';
+import { FIXED_SHELLS } from './shells';
 import { StateStore } from './store';
+import { hostSystem, noProcessProbe, systemClock } from './system';
+import { createWorkspace, type Workspace } from './workspace/workspace';
 
 let mainWindow: BrowserWindow | null = null;
-
-const store = new StateStore(path.join(app.getPath('userData'), 'state.json'));
+let workspace: Workspace | null = null;
 
 function sendToRenderer(channel: string, ...args: unknown[]): void {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, ...args);
 }
 
-const ptys = new PtyManager({
-  onData: (id, data) => sendToRenderer(IPC.ptyData, id, data),
-  onExit: (id, exitCode) => sendToRenderer(IPC.ptyExit, id, exitCode),
-});
-
-function isDirectory(p: string | undefined): p is string {
-  if (!p) return false;
-  try {
-    return fs.statSync(p).isDirectory();
-  } catch {
-    return false;
+/** Leitet einen Befehl aus dem Renderer an den Workspace-Kern weiter. */
+function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
+  switch (command.type) {
+    case 'createTab':
+      ws.createTab();
+      return;
+    case 'renameTab':
+      ws.renameTab(command.tabId, command.name);
+      return;
+    case 'activateTab':
+      ws.activateTab(command.tabId);
+      return;
+    case 'closeTab':
+      ws.closeTab(command.tabId);
+      return;
+    case 'viewReady':
+      ws.viewReady(command.tabId, command.cols, command.rows);
+      return;
+    case 'resizeTab':
+      ws.resizeTab(command.tabId, command.cols, command.rows);
+      return;
+    case 'writeToTab':
+      ws.writeToTab(command.tabId, command.data);
+      return;
+    case 'restartTab':
+      ws.restartTab(command.tabId);
+      return;
+    case 'updateSettings':
+      ws.updateSettings(command.patch);
+      return;
   }
 }
 
-/** Startverzeichnis: Session-Verzeichnis → Default-Verzeichnis → Home, je nachdem was existiert. */
-function resolveCwd(session: SessionInfo): string {
-  const { defaultCwd } = store.get().settings;
-  if (isDirectory(session.cwd)) return session.cwd;
-  if (isDirectory(defaultCwd)) return defaultCwd;
-  return os.homedir();
-}
-
-function nextSessionName(): string {
-  const used = new Set(store.get().sessions.map((s) => s.name));
-  for (let n = 1; ; n++) {
-    const name = `Terminal ${n}`;
-    if (!used.has(name)) return name;
-  }
-}
-
-function findSession(id: string): SessionInfo {
-  const session = store.get().sessions.find((s) => s.id === id);
-  if (!session) throw new Error(`Unbekannte Session: ${id}`);
-  return session;
-}
-
-function registerIpc(): void {
-  ipcMain.handle(IPC.stateLoad, () => store.get());
-
-  ipcMain.handle(IPC.sessionCreate, () => {
-    const session: SessionInfo = {
-      id: randomUUID(),
-      name: nextSessionName(),
-      cwd: store.get().settings.defaultCwd,
-    };
-    store.update((s) => {
-      s.sessions.push(session);
-      s.activeSessionId = session.id;
-    });
-    return session;
-  });
-
-  ipcMain.handle(IPC.sessionRename, (_e, id: string, name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    store.update(() => {
-      findSession(id).name = trimmed;
-    });
-  });
-
-  ipcMain.handle(IPC.sessionClose, (_e, id: string) => {
-    ptys.kill(id);
-    store.update((s) => {
-      s.sessions = s.sessions.filter((x) => x.id !== id);
-      if (s.activeSessionId === id) s.activeSessionId = s.sessions.at(-1)?.id ?? null;
-    });
-  });
-
-  ipcMain.handle(IPC.sessionSetActive, (_e, id: string | null) => {
-    store.update((s) => {
-      s.activeSessionId = id;
-    });
-  });
-
-  ipcMain.handle(IPC.ptyStart, (_e, id: string, cols: number, rows: number) => {
-    const session = findSession(id);
-    ptys.start(id, { shell: store.get().settings.shell, cwd: resolveCwd(session), cols, rows });
-  });
-
-  ipcMain.on(IPC.ptyWrite, (_e, id: string, data: string) => ptys.write(id, data));
-  ipcMain.on(IPC.ptyResize, (_e, id: string, cols: number, rows: number) => ptys.resize(id, cols, rows));
-
-  ipcMain.handle(IPC.settingsUpdate, (_e, patch: Partial<Settings>) => {
-    store.update((s) => {
-      s.settings = { ...s.settings, ...patch };
-    });
-    return store.get().settings;
-  });
+function registerIpc(ws: Workspace): void {
+  ipcMain.handle(IPC.workspaceSnapshot, () => ws.snapshot());
+  ipcMain.on(IPC.workspaceCommand, (_e, command: WorkspaceCommand) => handleCommand(ws, command));
 
   ipcMain.handle(IPC.dialogPickDirectory, async (_e, initial?: string) => {
     if (!mainWindow) return null;
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Standardverzeichnis wählen',
-      defaultPath: isDirectory(initial) ? initial : os.homedir(),
+      defaultPath: initial && hostSystem.directoryExists(initial) ? initial : hostSystem.homeDir(),
       properties: ['openDirectory'],
     });
     return result.canceled ? null : (result.filePaths[0] ?? null);
@@ -143,7 +90,20 @@ function createWindow(): void {
 app.whenReady().then(() => {
   // Im Dev-Modus Menü behalten (DevTools, Reload); in der installierten App ausblenden.
   if (app.isPackaged) Menu.setApplicationMenu(null);
-  registerIpc();
+
+  workspace = createWorkspace(
+    {
+      terminal: new PtyManager(),
+      storage: new StateStore(path.join(app.getPath('userData'), 'state.json')),
+      clock: systemClock,
+      processes: noProcessProbe,
+      system: hostSystem,
+    },
+    { shells: FIXED_SHELLS },
+  );
+  workspace.subscribe((event) => sendToRenderer(IPC.workspaceEvent, event));
+
+  registerIpc(workspace);
   createWindow();
 });
 
@@ -151,15 +111,17 @@ let shutdown: 'running' | 'stopping' | 'done' = 'running';
 
 // Erst Zustand sichern und alle Shells sauber beenden, dann wirklich beenden.
 app.on('before-quit', (event) => {
-  if (shutdown === 'done') return;
+  if (shutdown === 'done' || !workspace) return;
   event.preventDefault();
   if (shutdown === 'stopping') return;
   shutdown = 'stopping';
-  store.flush();
-  void ptys.killAll(3000).finally(() => {
-    shutdown = 'done';
-    app.quit();
-  });
+  workspace
+    .shutdown()
+    .catch((err: unknown) => console.error('Zustand konnte beim Beenden nicht gesichert werden:', err))
+    .finally(() => {
+      shutdown = 'done';
+      app.quit();
+    });
 });
 
 app.on('window-all-closed', () => {

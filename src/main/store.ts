@@ -1,40 +1,50 @@
 import * as fs from 'node:fs';
-import * as os from 'node:os';
 import * as path from 'node:path';
-import type { PersistedState, Settings } from '../shared/types';
+import type { StateStorage } from './workspace/ports';
+import type { PersistedState } from './workspace/schema';
 
 const SAVE_DEBOUNCE_MS = 200;
 
-function defaultSettings(): Settings {
-  return {
-    defaultCwd: os.homedir(),
-    shell: 'powershell.exe',
-  };
-}
-
-function defaultState(): PersistedState {
-  return { version: 1, settings: defaultSettings(), sessions: [], activeSessionId: null };
-}
-
 /**
- * Hält den App-Zustand im Speicher und schreibt ihn (entprellt, atomar) nach state.json.
- * Der Main-Prozess ist die einzige Quelle der Wahrheit; der Renderer ändert nur über IPC.
+ * Speicher: liest state.json und schreibt den Zustand entprellt und atomar zurück.
+ * Was im Zustand steht, entscheidet der Workspace-Kern; dieser Speicher kennt nur die Datei.
  */
-export class StateStore {
-  private state: PersistedState;
+export class StateStore implements StateStorage {
+  private pending: PersistedState | null = null;
   private saveTimer: NodeJS.Timeout | null = null;
 
-  constructor(private readonly file: string) {
-    this.state = this.load();
+  constructor(private readonly file: string) {}
+
+  loadState(): unknown {
+    let raw: string;
+    try {
+      raw = fs.readFileSync(this.file, 'utf8');
+    } catch {
+      return null;
+    }
+    try {
+      // Ein BOM (z.B. nach Bearbeiten im Editor) ist kein Grund, die Datei zu verwerfen.
+      const parsed: unknown = JSON.parse(raw.replace(/^﻿/, ''));
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        throw new Error('Kein JSON-Objekt');
+      }
+      return parsed;
+    } catch (err) {
+      // Kaputte Datei nicht stillschweigend überschreiben, sondern beiseitelegen.
+      const backup = `${this.file}.corrupt-${Date.now()}`;
+      fs.copyFileSync(this.file, backup);
+      console.error(`state.json konnte nicht gelesen werden, gesichert als ${backup}:`, err);
+      return null;
+    }
   }
 
-  get(): PersistedState {
-    return this.state;
-  }
-
-  update(mutate: (state: PersistedState) => void): void {
-    mutate(this.state);
-    this.scheduleSave();
+  saveState(state: PersistedState): void {
+    this.pending = state;
+    if (this.saveTimer) clearTimeout(this.saveTimer);
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = null;
+      this.writePending();
+    }, SAVE_DEBOUNCE_MS);
   }
 
   /** Schreibt sofort; beim Beenden der App aufrufen. */
@@ -43,46 +53,16 @@ export class StateStore {
       clearTimeout(this.saveTimer);
       this.saveTimer = null;
     }
-    this.writeNow();
+    this.writePending();
   }
 
-  private scheduleSave(): void {
-    if (this.saveTimer) clearTimeout(this.saveTimer);
-    this.saveTimer = setTimeout(() => {
-      this.saveTimer = null;
-      this.writeNow();
-    }, SAVE_DEBOUNCE_MS);
-  }
-
-  private writeNow(): void {
+  private writePending(): void {
+    if (!this.pending) return;
+    const state = this.pending;
+    this.pending = null;
     fs.mkdirSync(path.dirname(this.file), { recursive: true });
     const tmp = `${this.file}.tmp`;
-    fs.writeFileSync(tmp, JSON.stringify(this.state, null, 2), 'utf8');
+    fs.writeFileSync(tmp, JSON.stringify(state, null, 2), 'utf8');
     fs.renameSync(tmp, this.file);
-  }
-
-  private load(): PersistedState {
-    let raw: string;
-    try {
-      raw = fs.readFileSync(this.file, 'utf8');
-    } catch {
-      return defaultState();
-    }
-    try {
-      const parsed = JSON.parse(raw) as Partial<PersistedState>;
-      const defaults = defaultState();
-      return {
-        version: 1,
-        settings: { ...defaults.settings, ...parsed.settings },
-        sessions: Array.isArray(parsed.sessions) ? parsed.sessions : [],
-        activeSessionId: parsed.activeSessionId ?? null,
-      };
-    } catch (err) {
-      // Kaputte Datei nicht stillschweigend überschreiben, sondern beiseitelegen.
-      const backup = `${this.file}.corrupt-${Date.now()}`;
-      fs.copyFileSync(this.file, backup);
-      console.error(`state.json konnte nicht gelesen werden, gesichert als ${backup}:`, err);
-      return defaultState();
-    }
   }
 }
