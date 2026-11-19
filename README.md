@@ -39,7 +39,7 @@ src/
     schema.ts               Gespeicherter Zustand (Version 2) und Übernahme aus Version 1
     windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
   main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
-  main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json
+  main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json; Verlauf pro Tab unter history\
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
   main/shells.ts            Feste Shell-Liste (pwsh, powershell, cmd), bis die Shell-Erkennung kommt
   preload/preload.ts        Stellt dem Renderer die API `window.termhub` bereit
@@ -49,13 +49,14 @@ src/
     useWorkspace.ts         Schnappschuss und Ereignisse des Kerns
     shortcuts.ts            Zuordnung der Tastenkürzel (alles andere geht ans Terminal)
     tabs/                   Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf
-    terminal/               Ein xterm.js pro Tab, inaktive ausgeblendet; meldet „Ansicht bereit“
+    terminal/               Ein xterm.js pro Tab, inaktive ausgeblendet; meldet „Ansicht bereit“;
+                            Verlauf serialisieren und ausgegraut wiederherstellen (history.ts)
     styles/tokens.css       Design-Variablen und Terminal-Farbschemata aus dem Prototyp
     styles/app.css
 test/
   support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
   workspace/                Kern-Tests (Teststelle 1)
-  renderer/                 Zuordnung der Tastenkürzel
+  renderer/                 Zuordnung der Tastenkürzel; Verlauf mit echtem xterm.js in Node
 build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
 
@@ -77,6 +78,8 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
 }
 ```
 
+Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\TermHub\history\<Tab-Kennung>.json` (`{ "version": 1, "savedAt": …, "content": "…" }`): die letzten etwa 1000 Zeilen, serialisiert mit Farben, ohne den Bildschirm von Vollbildprogrammen wie `vim` oder `less`. Gesichert wird alle 30 Sekunden für Tabs mit neuer Ausgabe, beim Beenden (TermHub wartet höchstens 2 Sekunden auf den Renderer) und bei einer Windows-Abmeldung (sofort, mit dem zuletzt gesicherten Stand). Beim Schliessen eines Tabs wird seine Datei gelöscht.
+
 ## Was das Grundgerüst kann
 
 - Mehrere Terminals (PowerShell) als Tabs in einer Tab-Leiste oben; neue Tabs erscheinen rechts neben dem aktiven
@@ -84,6 +87,7 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
 - Tooltip mit Name, Ordner und Shell; Schliessen mit `×` oder der mittleren Maustaste
 - Tabs umbenennen (Doppelklick auf den Tab oder `F2`; Enter übernimmt, Escape bricht ab)
 - Beim Beenden werden alle Tabs gespeichert und beim nächsten Start in ihrem Verzeichnis neu gestartet; der zuletzt aktive Tab wird wieder angezeigt
+- Der frühere Inhalt jedes Terminals steht nach einem Neustart ausgegraut über der neuen Eingabezeile, mit der Trennlinie „Wiederhergestellt · <Datum, Uhrzeit der Sicherung>“; er liegt im Scrollback, eine Mausrad-Bewegung nach oben zeigt ihn. Nach einem Absturz fehlen höchstens die letzten etwa 30 Sekunden.
 - Hell oder dunkel nach dem Design von Windows beim Start, auch die Terminalfläche
 - Der Standardordner lässt sich vorübergehend nicht einstellen; er kommt mit dem Einstellungsdialog zurück
 - Beendete Shell (z.B. `exit`): Hinweis im Terminal, beliebige Taste startet sie neu
@@ -107,7 +111,7 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
 
 ## Offene Punkte (zum Ausspezifizieren)
 
-- **Was heisst „wiederherstellen“?** Aktuell: neue Shell im *Startverzeichnis* der Session. Nicht erhalten bleiben: der Inhalt/Scrollback, laufende Programme und ein später per `cd` gewechseltes Verzeichnis.
+- **Was heisst „wiederherstellen“?** Aktuell: neue Shell im *Startverzeichnis* der Session, darüber der frühere Inhalt ausgegraut. Nicht erhalten bleiben: laufende Programme und ein später per `cd` gewechseltes Verzeichnis.
 - **Shell-Auswahl:** fest `powershell.exe` (in `state.json` änderbar). PowerShell 7, cmd, Git Bash, WSL? Pro Session wählbar?
 - **Default-Verzeichnis:** global für alle; pro Session überschreibbar? Was passiert mit bestehenden Sessions, wenn es geändert wird?
 - **Schliessen:** ohne Rückfrage. Bestätigung, wenn noch ein Programm läuft?
