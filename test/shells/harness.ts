@@ -344,11 +344,12 @@ export interface Launch {
 export function buildLaunch(def: ShellDef, ws: Workspace, opts: LaunchOptions): Launch {
   if (!def.exe) throw new Error(`${def.id} ist nicht installiert`);
 
-  // Umgebung ausdruecklich setzen: geerbte THUB_*-Variablen und npm-/Node-Interna entfernen.
+  // Umgebung ausdruecklich setzen: geerbte THUB_*-Variablen (und die alten TERMHUB_*) sowie
+  // npm-/Node-Interna entfernen.
   const env: Record<string, string> = {};
   for (const [k, v] of Object.entries(process.env)) {
     if (v === undefined) continue;
-    if (/^(THUB_|npm_|NODE_|VITEST|ELECTRON_)/i.test(k)) continue;
+    if (/^(THUB_|TERMHUB_|npm_|NODE_|VITEST|ELECTRON_)/i.test(k)) continue;
     env[k] = v;
   }
   // PATH ohne die Ordner des Nutzers: so wird nie ein echtes claude gefunden.

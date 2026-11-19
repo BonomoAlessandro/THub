@@ -1,4 +1,5 @@
 import * as pty from 'node-pty';
+import { shellEnv } from './shellEnv';
 import type { StartOrder, TerminalBackend, TerminalListener } from './workspace/ports';
 
 /** Terminal-Backend über node-pty/ConPTY: verwaltet die laufenden Shells, eine pro Tab. */
@@ -74,18 +75,4 @@ export class PtyManager implements TerminalBackend {
     const timeout = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
     return Promise.race([Promise.all(exited).then(() => undefined), timeout]);
   }
-}
-
-/**
- * Umgebung für die Shell: die eigene, ohne npm-/Electron-Interna aus dem Dev-Start und ohne THUB_*
- * (etwa wenn THub aus einem THub-Tab gestartet wurde); die setzt der Kern im Startauftrag neu.
- */
-function shellEnv(): Record<string, string> {
-  const env: Record<string, string> = {};
-  for (const [key, value] of Object.entries(process.env)) {
-    if (value === undefined) continue;
-    if (/^(npm_|ELECTRON_|THUB_)/i.test(key)) continue;
-    env[key] = value;
-  }
-  return env;
 }
