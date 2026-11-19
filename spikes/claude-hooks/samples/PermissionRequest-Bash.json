@@ -1,0 +1,39 @@
+{
+  "szenario": "k-interrupt",
+  "pfad": "/hooks/PermissionRequest",
+  "kopfzeilen": {
+    "x-termhub-tab": "<tab-id>",
+    "x-termhub-token": "<token>",
+    "x-spike-braces": "<tab-id>",
+    "x-spike-mixed": "tab=<tab-id>;end",
+    "x-spike-unlisted": "",
+    "user-agent": "axios/1.15.2",
+    "content-type": "application/json"
+  },
+  "nutzdaten": {
+    "session_id": "d82f6be1-0a0c-4590-9c8e-9bf6d77e336d",
+    "transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-termhub-spike-ws-k-interrupt\\d82f6be1-0a0c-4590-9c8e-9bf6d77e336d.jsonl",
+    "cwd": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\termhub-spike-ws\\k-interrupt",
+    "scratchpad_dir": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\3c26e7e10c53a527\\d82f6be1-0a0c-4590-9c8e-9bf6d77e336d\\scratchpad",
+    "prompt_id": "13f55335-eb39-44d1-bdbd-0605200939e4",
+    "permission_mode": "default",
+    "effort": {
+      "level": "medium"
+    },
+    "hook_event_name": "PermissionRequest",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "echo hi > hi.txt",
+      "description": "Write \"hi\" into hi.txt in the current directory"
+    },
+    "permission_suggestions": [
+      {
+        "type": "addDirectories",
+        "directories": [
+          "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\termhub-spike-ws\\k-interrupt"
+        ],
+        "destination": "session"
+      }
+    ]
+  }
+}

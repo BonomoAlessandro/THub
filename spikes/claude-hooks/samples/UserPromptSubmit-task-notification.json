@@ -1,0 +1,23 @@
+{
+  "szenario": "k-bg",
+  "pfad": "/hooks/UserPromptSubmit",
+  "kopfzeilen": {
+    "x-termhub-tab": "<tab-id>",
+    "x-termhub-token": "<token>",
+    "x-spike-braces": "<tab-id>",
+    "x-spike-mixed": "tab=<tab-id>;end",
+    "x-spike-unlisted": "",
+    "user-agent": "axios/1.15.2",
+    "content-type": "application/json"
+  },
+  "nutzdaten": {
+    "session_id": "9a1d2322-a89e-43ad-b2ee-779b48f58d22",
+    "transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-termhub-spike-ws-k-bg\\9a1d2322-a89e-43ad-b2ee-779b48f58d22.jsonl",
+    "cwd": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\termhub-spike-ws\\k-bg",
+    "scratchpad_dir": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\9f42f036fa1ea720\\9a1d2322-a89e-43ad-b2ee-779b48f58d22\\scratchpad",
+    "prompt_id": "29dd8887-1f46-4736-947a-0dc57b67db94",
+    "permission_mode": "auto",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "<task-notification>…(gekuerzt)…</task-notification>"
+  }
+}

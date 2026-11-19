@@ -1,0 +1,21 @@
+{
+  "szenario": "k-resume-missing",
+  "pfad": "/hooks/SessionEnd",
+  "kopfzeilen": {
+    "x-termhub-tab": "<tab-id>",
+    "x-termhub-token": "<token>",
+    "x-spike-braces": "<tab-id>",
+    "x-spike-mixed": "tab=<tab-id>;end",
+    "x-spike-unlisted": "",
+    "user-agent": "axios/1.15.2",
+    "content-type": "application/json"
+  },
+  "nutzdaten": {
+    "session_id": "8c74988d-a942-4021-a698-4b97d7977f8b",
+    "transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-termhub-spike-ws-k-resume-missing\\8c74988d-a942-4021-a698-4b97d7977f8b.jsonl",
+    "cwd": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\termhub-spike-ws\\k-resume-missing",
+    "scratchpad_dir": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\df24b3a60526b611\\8c74988d-a942-4021-a698-4b97d7977f8b\\scratchpad",
+    "hook_event_name": "SessionEnd",
+    "reason": "other"
+  }
+}

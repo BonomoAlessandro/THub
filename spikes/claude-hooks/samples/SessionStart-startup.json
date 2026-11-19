@@ -1,0 +1,20 @@
+{
+  "szenario": "s1-hauptsession",
+  "pfad": "/hooks-cmd/SessionStart",
+  "kopfzeilen": {
+    "x-termhub-tab": "<tab-id>",
+    "x-termhub-token": "<token>",
+    "user-agent": "curl/8.21.0",
+    "content-type": "application/json"
+  },
+  "nutzdaten": {
+    "session_id": "ec84ffa6-a2f2-4150-983c-65e55fc1ff58",
+    "transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-termhub-spike-ws-s1-hauptsession\\ec84ffa6-a2f2-4150-983c-65e55fc1ff58.jsonl",
+    "cwd": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\termhub-spike-ws\\s1-hauptsession",
+    "scratchpad_dir": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\5347ee85841f507d\\ec84ffa6-a2f2-4150-983c-65e55fc1ff58\\scratchpad",
+    "hook_event_name": "SessionStart",
+    "source": "startup",
+    "model": "claude-haiku-5-5",
+    "session_title": "Spike Eins"
+  }
+}
