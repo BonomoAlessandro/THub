@@ -1,0 +1,499 @@
+{
+  "k-bg": {
+    "exit": {
+      "exitCode": 0,
+      "t": 61159,
+      "msAfterCommand": 1992
+    },
+    "checks": {
+      "events": [
+        "UserPromptSubmit",
+        "PreToolUse:Bash",
+        "PostToolUse:Bash",
+        "Stop bg=1",
+        "UserPromptSubmit",
+        "Stop bg=0"
+      ]
+    },
+    "ablauf": [
+      "1.5s Eingabe: Pfeil runter",
+      "1.9s Eingabe: Enter (trust)",
+      "2.5s /hooks-cmd/SessionStart startup sid=9a1d2322",
+      "6.5s Eingabe: tippe <Prompt redigiert>",
+      "9.0s Eingabe: Enter",
+      "9.2s /hooks/UserPromptSubmit  sid=9a1d2322",
+      "11.2s /hooks/PreToolUse Bash sid=9a1d2322",
+      "13.3s /hooks/PostToolUse Bash sid=9a1d2322",
+      "14.1s /hooks/Stop  sid=9a1d2322",
+      "37.8s /hooks/UserPromptSubmit  sid=9a1d2322",
+      "39.5s /hooks/Stop  sid=9a1d2322",
+      "59.2s Eingabe: tippe: /exit",
+      "59.6s Eingabe: Enter",
+      "59.8s /hooks/SessionEnd prompt_input_exit sid=9a1d2322",
+      "61.2s Prozessende exitCode=0"
+    ]
+  },
+  "k-disable-all": {
+    "exit": {
+      "exitCode": 0,
+      "t": 19009,
+      "msAfterCommand": 2072
+    },
+    "checks": {
+      "anyHook": false
+    },
+    "ablauf": [
+      "1.5s Eingabe: Pfeil runter",
+      "1.9s Eingabe: Enter (trust)",
+      "16.9s Eingabe: tippe: /exit",
+      "17.4s Eingabe: Enter",
+      "19.0s Prozessende exitCode=0"
+    ]
+  },
+  "k-disable-all-override": {
+    "exit": null,
+    "checks": {
+      "anyHook": true
+    },
+    "ablauf": [
+      "2.3s Eingabe: Pfeil runter",
+      "2.7s Eingabe: Enter (trust)",
+      "3.7s /hooks-cmd/SessionStart startup sid=6f66fe55",
+      "3.7s Eingabe: tippe: /exit",
+      "4.1s Eingabe: Enter"
+    ]
+  },
+  "k-double-settings": {
+    "exit": {
+      "exitCode": 0,
+      "t": 10710,
+      "msAfterCommand": 3230
+    },
+    "checks": {},
+    "ablauf": [
+      "2.2s Eingabe: Pfeil runter",
+      "2.6s Eingabe: Enter (trust)",
+      "3.5s /nutzer-cmd/SessionStart startup sid=cc9cfeb0",
+      "7.5s Eingabe: tippe: /exit",
+      "7.9s Eingabe: Enter",
+      "8.9s /nutzer/SessionEnd prompt_input_exit sid=cc9cfeb0",
+      "10.7s Prozessende exitCode=0"
+    ]
+  },
+  "k-double-settings-reverse": {
+    "exit": {
+      "exitCode": 0,
+      "t": 10017,
+      "msAfterCommand": 3009
+    },
+    "checks": {},
+    "ablauf": [
+      "1.6s Eingabe: Pfeil runter",
+      "2.0s Eingabe: Enter (trust)",
+      "3.0s /termhub-cmd/SessionStart startup sid=d4fb482a",
+      "7.0s Eingabe: tippe: /exit",
+      "7.4s Eingabe: Enter",
+      "8.3s /termhub/SessionEnd prompt_input_exit sid=d4fb482a",
+      "10.0s Prozessende exitCode=0"
+    ]
+  },
+  "k-down-prompt": {
+    "exit": {
+      "exitCode": 0,
+      "t": 20127,
+      "msAfterCommand": 2050
+    },
+    "checks": {
+      "readyScreen": true,
+      "promptRoundTripMs": 3167
+    },
+    "ablauf": [
+      "1.5s Eingabe: Pfeil runter",
+      "1.9s Eingabe: Enter (trust)",
+      "6.9s Eingabe: tippe <Prompt redigiert>",
+      "7.5s Eingabe: Enter",
+      "18.1s Eingabe: tippe: /exit",
+      "18.5s Eingabe: Enter",
+      "20.1s Prozessende exitCode=0"
+    ]
+  },
+  "k-esc": {
+    "exit": {
+      "exitCode": 0,
+      "t": 97999,
+      "msAfterCommand": 1992
+    },
+    "checks": {
+      "esc": {
+        "streaming": true,
+        "stopBefore": true,
+        "events": [
+          "UserPromptSubmit@-3.8s",
+          "Stop@-0.2s"
+        ],
+        "idleAfterEscMs": null,
+        "transcriptMarker": [
+          {
+            "type": "user",
+            "text": "[Request interrupted by user]"
+          }
+        ]
+      }
+    },
+    "ablauf": [
+      "2.1s Eingabe: Pfeil runter",
+      "2.5s Eingabe: Enter (trust)",
+      "3.6s /hooks-cmd/SessionStart startup sid=b6324101",
+      "7.6s Eingabe: tippe <Prompt redigiert>",
+      "10.0s Eingabe: Enter",
+      "10.2s /hooks/UserPromptSubmit  sid=b6324101",
+      "13.8s /hooks/Stop  sid=b6324101",
+      "14.0s Eingabe: Esc (Antwort unterbrechen)",
+      "96.0s Eingabe: tippe: /exit",
+      "96.4s Eingabe: Enter",
+      "96.7s /hooks/SessionEnd prompt_input_exit sid=b6324101",
+      "98.0s Prozessende exitCode=0"
+    ]
+  },
+  "k-esc-2000": {
+    "exit": {
+      "exitCode": 0,
+      "t": 100793,
+      "msAfterCommand": 2093
+    },
+    "checks": {
+      "esc": {
+        "streaming": false,
+        "stopBefore": false,
+        "events": [
+          "UserPromptSubmit@-7.0s"
+        ],
+        "idleAfterEscMs": null,
+        "transcriptMarker": [
+          {
+            "type": "user",
+            "text": "[Request interrupted by user]"
+          }
+        ]
+      }
+    },
+    "ablauf": [
+      "1.8s Eingabe: Pfeil runter",
+      "2.2s Eingabe: Enter (trust)",
+      "3.1s /hooks-cmd/SessionStart startup sid=f4d34ad1",
+      "7.1s Eingabe: tippe <Prompt redigiert>",
+      "9.4s Eingabe: Enter",
+      "9.7s /hooks/UserPromptSubmit  sid=f4d34ad1",
+      "16.7s Eingabe: Esc (Antwort unterbrechen)",
+      "98.7s Eingabe: tippe: /exit",
+      "99.1s Eingabe: Enter",
+      "99.4s /hooks/SessionEnd prompt_input_exit sid=f4d34ad1",
+      "100.8s Prozessende exitCode=0"
+    ]
+  },
+  "k-hang": {
+    "exit": {
+      "exitCode": 0,
+      "t": 14106,
+      "msAfterCommand": 7387
+    },
+    "checks": {
+      "readyScreen": true
+    },
+    "ablauf": [
+      "1.3s Eingabe: Pfeil runter",
+      "1.7s Eingabe: Enter (trust)",
+      "6.7s Eingabe: tippe: /exit",
+      "7.1s Eingabe: Enter",
+      "14.1s Prozessende exitCode=0"
+    ]
+  },
+  "k-interrupt": {
+    "exit": {
+      "exitCode": 0,
+      "t": 177876,
+      "msAfterCommand": 2076
+    },
+    "checks": {
+      "A": {
+        "streaming": false,
+        "events": [
+          "UserPromptSubmit@-60.0s",
+          "Stop@-45.1s",
+          "Notification:idle_prompt@15.2s"
+        ],
+        "idleAfterEscMs": 15169
+      },
+      "B": {
+        "permissionPromptDelayMs": 6048,
+        "events": [
+          "UserPromptSubmit@-7.5s",
+          "PreToolUse:Bash@-6.2s",
+          "PermissionRequest:Bash@-6.0s",
+          "Notification:permission_prompt@-0.0s"
+        ],
+        "idleAfterEscMs": null,
+        "hiTxtExists": false
+      }
+    },
+    "ablauf": [
+      "1.6s Eingabe: Pfeil runter",
+      "2.0s Eingabe: Enter (trust)",
+      "2.8s /hooks-cmd/SessionStart startup sid=d82f6be1",
+      "6.8s Eingabe: tippe <Prompt redigiert>",
+      "8.6s Eingabe: Enter",
+      "8.8s /hooks/UserPromptSubmit  sid=d82f6be1",
+      "23.6s /hooks/Stop  sid=d82f6be1",
+      "68.8s Eingabe: Esc (Antwort unterbrechen)",
+      "83.9s /hooks/Notification idle_prompt sid=d82f6be1",
+      "83.9s Eingabe: tippe <Prompt redigiert>",
+      "85.3s Eingabe: Enter",
+      "85.3s /hooks/UserPromptSubmit  sid=d82f6be1",
+      "86.6s /hooks/PreToolUse Bash sid=d82f6be1",
+      "86.7s /hooks/PermissionRequest Bash sid=d82f6be1",
+      "92.8s /hooks/Notification permission_prompt sid=d82f6be1",
+      "92.8s Eingabe: Esc (Rueckfrage ablehnen)",
+      "175.8s Eingabe: tippe: /exit",
+      "176.2s Eingabe: Enter",
+      "176.5s /hooks/SessionEnd prompt_input_exit sid=d82f6be1",
+      "177.9s Prozessende exitCode=0"
+    ]
+  },
+  "k-invalid": {
+    "exit": {
+      "exitCode": 0,
+      "t": 17132,
+      "msAfterCommand": 2720
+    },
+    "checks": {},
+    "ablauf": [
+      "1.5s Eingabe: Pfeil runter",
+      "1.9s Eingabe: Enter (trust)",
+      "9.9s Eingabe: Esc",
+      "14.4s Eingabe: tippe: /exit",
+      "14.8s Eingabe: Enter",
+      "17.1s Prozessende exitCode=0"
+    ]
+  },
+  "k-kill": {
+    "exit": null,
+    "checks": {
+      "afterKill": []
+    },
+    "ablauf": [
+      "1.5s Eingabe: Pfeil runter",
+      "1.9s Eingabe: Enter (trust)",
+      "2.4s /hooks-cmd/SessionStart startup sid=ace7627e",
+      "5.8s Prozessende exitCode=1"
+    ]
+  },
+  "k-recommended": {
+    "exit": {
+      "exitCode": 0,
+      "t": 9129,
+      "msAfterCommand": 2609
+    },
+    "checks": {
+      "settingsWarning": false,
+      "sessionStart": true
+    },
+    "ablauf": [
+      "1.5s Eingabe: Pfeil runter",
+      "1.9s Eingabe: Enter (trust)",
+      "2.5s /hooks/SessionStart startup sid=162be115",
+      "6.5s Eingabe: tippe: /exit",
+      "6.9s Eingabe: Enter",
+      "7.3s /hooks/SessionEnd prompt_input_exit sid=162be115",
+      "9.1s Prozessende exitCode=0"
+    ]
+  },
+  "k-resume-ctrlc": {
+    "exit": {
+      "exitCode": 0,
+      "t": 13368,
+      "msAfterCommand": 3008
+    },
+    "checks": {
+      "sameId": true
+    },
+    "ablauf": [
+      "1.5s /hooks-cmd/SessionStart resume sid=ec84ffa6",
+      "10.4s Eingabe: Ctrl+C",
+      "11.1s Eingabe: Ctrl+C",
+      "11.5s /hooks/SessionEnd prompt_input_exit sid=ec84ffa6",
+      "13.4s Prozessende exitCode=0"
+    ]
+  },
+  "k-resume-exit": {
+    "exit": {
+      "exitCode": 0,
+      "t": 12590,
+      "msAfterCommand": 2290
+    },
+    "checks": {
+      "sameId": true
+    },
+    "ablauf": [
+      "1.2s /hooks-cmd/SessionStart resume sid=ec84ffa6",
+      "10.3s Eingabe: tippe: /exit",
+      "10.7s Eingabe: Enter",
+      "11.0s /hooks/SessionEnd prompt_input_exit sid=ec84ffa6",
+      "12.6s Prozessende exitCode=0"
+    ]
+  },
+  "k-resume-exit-nosettings": {
+    "exit": {
+      "exitCode": 0,
+      "t": 24679,
+      "msAfterCommand": 2321
+    },
+    "checks": {
+      "sameId": null
+    },
+    "ablauf": [
+      "22.4s Eingabe: tippe: /exit",
+      "22.8s Eingabe: Enter",
+      "24.7s Prozessende exitCode=0"
+    ]
+  },
+  "k-resume-missing": {
+    "exit": {
+      "exitCode": 1,
+      "t": 4625
+    },
+    "checks": {},
+    "ablauf": [
+      "1.5s Eingabe: Pfeil runter",
+      "1.9s Eingabe: Enter (trust)",
+      "3.1s /hooks/SessionEnd other sid=8c74988d",
+      "4.6s Prozessende exitCode=1"
+    ]
+  },
+  "k-sessionid-taken": {
+    "exit": {
+      "exitCode": 1,
+      "t": 1885
+    },
+    "checks": {},
+    "ablauf": [
+      "1.9s Prozessende exitCode=1"
+    ]
+  },
+  "s0-start-exit": {
+    "exit": {
+      "exitCode": 0,
+      "t": 21639
+    },
+    "checks": {},
+    "ablauf": [
+      "1.3s /hooks-cmd/SessionStart startup sid=7cace0a6",
+      "19.4s Eingabe: tippe: /exit",
+      "19.8s Eingabe: Enter",
+      "20.1s /hooks/SessionEnd prompt_input_exit sid=7cace0a6",
+      "21.6s Prozessende exitCode=0"
+    ]
+  },
+  "s0-untrusted": {
+    "exit": {
+      "exitCode": 1,
+      "t": 2951
+    },
+    "checks": {},
+    "ablauf": [
+      "1.5s Eingabe: Enter (trust)",
+      "3.0s Prozessende exitCode=1",
+      "44.2s Eingabe: tippe: /exit",
+      "44.6s Eingabe: Enter"
+    ]
+  },
+  "s1-hauptsession": {
+    "exit": {
+      "exitCode": 0,
+      "t": 454941
+    },
+    "checks": {
+      "idle-nach-Stop": {
+        "idleAfterMs": 60525
+      },
+      "permissionPromptDelayMs": null,
+      "afterPermissionEsc": [],
+      "idle-nach-Ablehnung": {
+        "idleAfterMs": null
+      },
+      "afterInterruptEsc": [],
+      "stopBeforeEsc": false,
+      "idle-nach-Unterbrechung": {
+        "idleAfterMs": null
+      },
+      "askEvents": [
+        "UserPromptSubmit",
+        "PreToolUse:AskUserQuestion",
+        "PermissionRequest:AskUserQuestion",
+        "Notification:permission_prompt"
+      ],
+      "afterAskEsc": [],
+      "clearEvents": [
+        {
+          "ev": "SessionEnd",
+          "src": "clear",
+          "sid": "ec84ffa6-a2f2-4150-983c-65e55fc1ff58",
+          "path": "/hooks/SessionEnd"
+        },
+        {
+          "ev": "SessionStart",
+          "src": "clear",
+          "sid": "0f54d6f0-5e3c-45e6-aabf-d76021219bad",
+          "path": "/hooks-cmd/SessionStart"
+        }
+      ],
+      "exitEvents": [
+        {
+          "ev": "SessionEnd",
+          "reason": "prompt_input_exit",
+          "sid": "0f54d6f0-5e3c-45e6-aabf-d76021219bad"
+        }
+      ]
+    },
+    "ablauf": [
+      "1.7s Eingabe: Pfeil runter",
+      "2.2s Eingabe: Enter (trust)",
+      "2.6s /hooks-cmd/SessionStart startup sid=ec84ffa6",
+      "5.7s Eingabe: tippe <Prompt redigiert>",
+      "6.3s Eingabe: Enter",
+      "6.5s /hooks/UserPromptSubmit  sid=ec84ffa6",
+      "8.1s /hooks/Stop  sid=ec84ffa6",
+      "68.7s /hooks/Notification idle_prompt sid=ec84ffa6",
+      "68.7s Eingabe: tippe <Prompt redigiert>",
+      "70.1s Eingabe: Enter",
+      "70.2s /hooks/UserPromptSubmit  sid=ec84ffa6",
+      "71.9s /hooks/PreToolUse Read sid=ec84ffa6",
+      "72.0s /hooks/PermissionRequest Read sid=ec84ffa6",
+      "78.0s /hooks/Notification permission_prompt sid=ec84ffa6",
+      "162.1s Eingabe: tippe <Prompt redigiert>",
+      "163.6s Eingabe: Enter",
+      "163.9s /hooks/PostToolUse Read sid=ec84ffa6",
+      "165.3s /hooks/Stop  sid=ec84ffa6",
+      "225.9s /hooks/Notification idle_prompt sid=ec84ffa6",
+      "243.6s Eingabe: Esc (Berechtigung ablehnen)",
+      "331.6s Eingabe: tippe <Prompt redigiert>",
+      "333.3s Eingabe: Enter",
+      "333.5s /hooks/UserPromptSubmit  sid=ec84ffa6",
+      "336.0s Eingabe: Esc (Antwort unterbrechen)",
+      "423.5s Eingabe: tippe <Prompt redigiert>",
+      "425.2s Eingabe: Enter",
+      "425.3s /hooks/UserPromptSubmit  sid=ec84ffa6",
+      "428.0s /hooks/PreToolUse AskUserQuestion sid=ec84ffa6",
+      "428.0s /hooks/PermissionRequest AskUserQuestion sid=ec84ffa6",
+      "434.1s /hooks/Notification permission_prompt sid=ec84ffa6",
+      "440.3s Eingabe: Esc (Frage abbrechen)",
+      "446.3s Eingabe: tippe: /clear",
+      "446.7s Eingabe: Enter",
+      "446.8s /hooks/SessionEnd clear sid=ec84ffa6",
+      "447.2s /hooks-cmd/SessionStart clear sid=0f54d6f0",
+      "452.7s Eingabe: tippe: /exit",
+      "453.1s Eingabe: Enter",
+      "453.4s /hooks/SessionEnd prompt_input_exit sid=0f54d6f0",
+      "454.9s Prozessende exitCode=0"
+    ]
+  }
+}

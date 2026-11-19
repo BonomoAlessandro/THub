@@ -1,0 +1,41 @@
+{
+  "szenario": "s1-hauptsession",
+  "pfad": "/hooks/PostToolUse",
+  "kopfzeilen": {
+    "x-termhub-tab": "<tab-id>",
+    "x-termhub-token": "<token>",
+    "x-spike-braces": "<tab-id>",
+    "x-spike-mixed": "tab=<tab-id>;end",
+    "x-spike-unlisted": "",
+    "user-agent": "axios/1.15.2",
+    "content-type": "application/json"
+  },
+  "nutzdaten": {
+    "session_id": "ec84ffa6-a2f2-4150-983c-65e55fc1ff58",
+    "transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-termhub-spike-ws-s1-hauptsession\\ec84ffa6-a2f2-4150-983c-65e55fc1ff58.jsonl",
+    "cwd": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\termhub-spike-ws\\s1-hauptsession",
+    "scratchpad_dir": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\5347ee85841f507d\\ec84ffa6-a2f2-4150-983c-65e55fc1ff58\\scratchpad",
+    "prompt_id": "e29a665b-0b03-4efa-b6b0-ff407cd7fce5",
+    "permission_mode": "default",
+    "effort": {
+      "level": "medium"
+    },
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Read",
+    "tool_input": {
+      "file_path": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\termhub-spike-ws\\s1-hauptsession\\a.txt"
+    },
+    "tool_response": {
+      "type": "text",
+      "file": {
+        "filePath": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\termhub-spike-ws\\s1-hauptsession\\a.txt",
+        "content": "Inhalt von a\n",
+        "numLines": 2,
+        "startLine": 1,
+        "totalLines": 2
+      }
+    },
+    "tool_use_id": "toolu_01TBrLVN66Kytek7ahUbmvnT",
+    "duration_ms": 259
+  }
+}

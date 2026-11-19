@@ -1,0 +1,209 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:\\Windows\\System32\\curl.exe",
+            "args": [
+              "-s",
+              "-S",
+              "--connect-timeout",
+              "1",
+              "-m",
+              "2",
+              "--noproxy",
+              "*",
+              "--variable",
+              "%TERMHUB_TAB_ID=",
+              "--variable",
+              "%TERMHUB_TOKEN=",
+              "--expand-header",
+              "X-TermHub-Tab: {{TERMHUB_TAB_ID}}",
+              "--expand-header",
+              "X-TermHub-Token: {{TERMHUB_TOKEN}}",
+              "-H",
+              "Content-Type: application/json",
+              "--data-binary",
+              "@-",
+              "http://127.0.0.1:<PORT>/hooks/SessionStart"
+            ],
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/SessionEnd",
+            "timeout": 2,
+            "headers": {
+              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
+              "X-TermHub-Token": "$TERMHUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "TERMHUB_TAB_ID",
+              "TERMHUB_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/UserPromptSubmit",
+            "timeout": 2,
+            "headers": {
+              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
+              "X-TermHub-Token": "$TERMHUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "TERMHUB_TAB_ID",
+              "TERMHUB_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/PreToolUse",
+            "timeout": 2,
+            "headers": {
+              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
+              "X-TermHub-Token": "$TERMHUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "TERMHUB_TAB_ID",
+              "TERMHUB_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/PostToolUse",
+            "timeout": 2,
+            "headers": {
+              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
+              "X-TermHub-Token": "$TERMHUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "TERMHUB_TAB_ID",
+              "TERMHUB_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/PostToolUseFailure",
+            "timeout": 2,
+            "headers": {
+              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
+              "X-TermHub-Token": "$TERMHUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "TERMHUB_TAB_ID",
+              "TERMHUB_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/PermissionRequest",
+            "timeout": 2,
+            "headers": {
+              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
+              "X-TermHub-Token": "$TERMHUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "TERMHUB_TAB_ID",
+              "TERMHUB_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/Stop",
+            "timeout": 2,
+            "headers": {
+              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
+              "X-TermHub-Token": "$TERMHUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "TERMHUB_TAB_ID",
+              "TERMHUB_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/StopFailure",
+            "timeout": 2,
+            "headers": {
+              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
+              "X-TermHub-Token": "$TERMHUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "TERMHUB_TAB_ID",
+              "TERMHUB_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/Notification",
+            "timeout": 2,
+            "headers": {
+              "X-TermHub-Tab": "$TERMHUB_TAB_ID",
+              "X-TermHub-Token": "$TERMHUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "TERMHUB_TAB_ID",
+              "TERMHUB_TOKEN"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

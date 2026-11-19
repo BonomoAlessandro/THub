@@ -1,0 +1,9 @@
+{
+  "name": "spike-claude-hooks",
+  "private": true,
+  "type": "module",
+  "description": "Spike: Claude-Code-Hooks fuer TermHub empirisch pruefen (node-pty kommt aus dem Wurzelordner)",
+  "dependencies": {
+    "@xterm/headless": "6.0.0"
+  }
+}
