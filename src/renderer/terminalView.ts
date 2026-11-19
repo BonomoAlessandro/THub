@@ -3,17 +3,16 @@ import { Terminal } from '@xterm/xterm';
 
 const api = window.termhub;
 
-/** Ein xterm.js-Terminal im DOM, gekoppelt an den Shell-Prozess einer Session. */
+/** Ein xterm.js-Terminal im DOM, gekoppelt an die Shell eines Tabs. Die Shell startet der Kern. */
 export class TerminalView {
   readonly host: HTMLDivElement;
   private readonly term: Terminal;
   private readonly fitAddon = new FitAddon();
-  private _exited = false;
+  private exited = false;
 
   constructor(
-    readonly id: string,
+    readonly tabId: string,
     parent: HTMLElement,
-    private readonly onStatusChange: () => void,
   ) {
     this.host = document.createElement('div');
     this.host.className = 'terminal-host';
@@ -31,13 +30,13 @@ export class TerminalView {
     this.term.open(this.host);
 
     this.term.onData((data) => {
-      if (this._exited) {
-        void this.start();
+      if (this.exited) {
+        api.send({ type: 'restartTab', tabId: this.tabId });
         return;
       }
-      api.writePty(this.id, data);
+      api.send({ type: 'writeToTab', tabId: this.tabId, data });
     });
-    this.term.onResize(({ cols, rows }) => api.resizePty(this.id, cols, rows));
+    this.term.onResize(({ cols, rows }) => api.send({ type: 'resizeTab', tabId: this.tabId, cols, rows }));
 
     // Rechtsklick wie in der Windows-Konsole: mit Auswahl kopieren, sonst einfügen.
     this.host.addEventListener('contextmenu', (e) => {
@@ -47,21 +46,18 @@ export class TerminalView {
     });
   }
 
-  get exited(): boolean {
-    return this._exited;
+  /**
+   * Meldet dem Kern „Ansicht bereit“ mit der aktuellen Grösse. Eine verdeckte Ansicht meldet ihre
+   * beste bekannte Grösse und passt sie beim Anzeigen an.
+   */
+  reportReady(): void {
+    this.fit();
+    api.send({ type: 'viewReady', tabId: this.tabId, cols: this.term.cols, rows: this.term.rows });
   }
 
-  /** Startet (oder startet neu) den Shell-Prozess in der aktuellen Terminalgrösse. */
-  async start(): Promise<void> {
-    this.fit();
-    try {
-      await api.startPty(this.id, this.term.cols, this.term.rows);
-      this._exited = false;
-    } catch (err) {
-      this._exited = true;
-      this.term.write(`\r\n\x1b[31mShell konnte nicht gestartet werden: ${String(err)}\x1b[0m\r\n`);
-    }
-    this.onStatusChange();
+  /** Beendete Shells startet die nächste Taste über den Kern neu. */
+  setExited(exited: boolean): void {
+    this.exited = exited;
   }
 
   write(data: string): void {
@@ -69,11 +65,15 @@ export class TerminalView {
   }
 
   markExited(exitCode: number): void {
-    this._exited = true;
     this.term.write(
       `\r\n\x1b[90m[Prozess beendet mit Code ${exitCode} – beliebige Taste startet die Shell neu]\x1b[0m\r\n`,
     );
-    this.onStatusChange();
+  }
+
+  /** Hinweis des Kerns im Terminal. */
+  notice(level: 'info' | 'error', text: string): void {
+    const color = level === 'error' ? '31' : '90';
+    this.term.write(`\r\n\x1b[${color}m${text}\x1b[0m\r\n`);
   }
 
   setActive(active: boolean): void {

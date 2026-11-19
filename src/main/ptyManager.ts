@@ -1,66 +1,51 @@
 import * as pty from 'node-pty';
+import type { StartOrder, TerminalBackend, TerminalListener } from './workspace/ports';
 
-export interface PtyEvents {
-  onData(id: string, data: string): void;
-  onExit(id: string, exitCode: number): void;
-}
-
-export interface PtyStartOptions {
-  shell: string;
-  cwd: string;
-  cols: number;
-  rows: number;
-}
-
-/** Verwaltet die laufenden Shell-Prozesse, eine pro Session-ID. */
-export class PtyManager {
+/** Terminal-Backend über node-pty/ConPTY: verwaltet die laufenden Shells, eine pro Tab. */
+export class PtyManager implements TerminalBackend {
   private readonly ptys = new Map<string, pty.IPty>();
 
-  constructor(private readonly events: PtyEvents) {}
+  start(tabId: string, order: StartOrder, listener: TerminalListener): number {
+    if (this.ptys.has(tabId)) throw new Error(`Für diesen Tab läuft bereits eine Shell: ${tabId}`);
 
-  isRunning(id: string): boolean {
-    return this.ptys.has(id);
-  }
-
-  start(id: string, opts: PtyStartOptions): void {
-    if (this.ptys.has(id)) return;
-
-    const proc = pty.spawn(opts.shell, [], {
+    // Den Startbefehl (order.startCommand) führt erst die Shell-Integration aus Ticket 07 aus.
+    const proc = pty.spawn(order.file, order.args, {
       name: 'xterm-256color',
-      cols: opts.cols,
-      rows: opts.rows,
-      cwd: opts.cwd,
-      env: shellEnv(),
+      cols: order.cols,
+      rows: order.rows,
+      cwd: order.cwd,
+      env: { ...shellEnv(), ...order.env },
       useConpty: true,
     });
 
-    proc.onData((data) => this.events.onData(id, data));
+    proc.onData((data) => listener.data(data));
     proc.onExit(({ exitCode }) => {
       // Nur entfernen, wenn in der Zwischenzeit nicht schon ein neuer Prozess gestartet wurde.
-      if (this.ptys.get(id) === proc) this.ptys.delete(id);
-      this.events.onExit(id, exitCode);
+      if (this.ptys.get(tabId) === proc) this.ptys.delete(tabId);
+      listener.exit(exitCode);
     });
 
-    this.ptys.set(id, proc);
+    this.ptys.set(tabId, proc);
+    return proc.pid;
   }
 
-  write(id: string, data: string): void {
-    this.ptys.get(id)?.write(data);
+  write(tabId: string, data: string): void {
+    this.ptys.get(tabId)?.write(data);
   }
 
-  resize(id: string, cols: number, rows: number): void {
+  resize(tabId: string, cols: number, rows: number): void {
     if (cols < 1 || rows < 1) return;
     try {
-      this.ptys.get(id)?.resize(cols, rows);
+      this.ptys.get(tabId)?.resize(cols, rows);
     } catch {
       // Resize auf einen gerade beendeten Prozess ist harmlos.
     }
   }
 
-  kill(id: string): void {
-    const proc = this.ptys.get(id);
+  kill(tabId: string): void {
+    const proc = this.ptys.get(tabId);
     if (!proc) return;
-    this.ptys.delete(id);
+    this.ptys.delete(tabId);
     try {
       proc.kill();
     } catch {

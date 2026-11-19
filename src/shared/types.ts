@@ -1,44 +1,82 @@
-/** Eine benannte Terminal-Session, wie sie gespeichert und wiederhergestellt wird. */
-export interface SessionInfo {
-  id: string;
-  name: string;
-  /** Verzeichnis, in dem die Shell beim (Wieder-)Öffnen startet. */
-  cwd: string;
-}
+// Vertrag zwischen Renderer und Workspace-Kern (über IPC).
+// Der Kern im Hauptprozess ist die einzige Quelle der Wahrheit: Der Renderer bekommt einen
+// Schnappschuss und danach Änderungsereignisse und schickt nur Befehle.
+
+export type Theme = 'system' | 'light' | 'dark';
 
 export interface Settings {
-  /** Verzeichnis, in dem neue Terminals starten. */
+  /** Standardordner für neue Tabs; leer heisst Benutzerordner. */
   defaultCwd: string;
-  /** Ausführbare Shell, z.B. "powershell.exe", "pwsh.exe" oder "cmd.exe". */
-  shell: string;
+  /** Kennung der Standard-Shell (z.B. "pwsh"); fehlt sie, wählt der Kern selbst. */
+  defaultShellId?: string;
+  theme: Theme;
+  /** Terminal-Schriftgrösse, 8 bis 32. */
+  fontSize: number;
+  /** Hinweise im Fenster an/aus. */
+  notifications: boolean;
 }
 
-/** Alles, was zwischen zwei App-Starts erhalten bleibt (state.json im userData-Ordner). */
-export interface PersistedState {
-  version: 1;
-  settings: Settings;
-  sessions: SessionInfo[];
-  activeSessionId: string | null;
+/**
+ * Prozess-Zustand eines Tabs:
+ * - `pending`: wartet auf „Ansicht bereit“, es läuft noch keine Shell;
+ * - `running`: die Shell läuft;
+ * - `exited`: die Shell ist beendet (oder liess sich nicht starten).
+ */
+export type TabProcessState = 'pending' | 'running' | 'exited';
+
+/** Ein Tab, wie ihn der Renderer anzeigt. */
+export interface TabSnapshot {
+  id: string;
+  name: string;
+  shellId: string;
+  /** Ordner zur Anzeige: zuletzt aktiver Ordner, sonst Startordner. */
+  cwd: string;
+  process: TabProcessState;
 }
+
+/** Vollständiger Zustand für den Renderer, beim Laden abgeholt. */
+export interface WorkspaceSnapshot {
+  tabs: TabSnapshot[];
+  activeTabId: string | null;
+  settings: Settings;
+  /** Benutzerordner, zur Anzeige eines leeren Standardordners. */
+  homeDir: string;
+}
+
+/** Änderungsereignisse vom Kern an den Renderer. */
+export type WorkspaceEvent =
+  /** Tabs, Reihenfolge, aktiver Tab oder Prozess-Zustand haben sich geändert. */
+  | { type: 'tabs'; tabs: TabSnapshot[]; activeTabId: string | null }
+  | { type: 'settings'; settings: Settings }
+  /** Rohe Ausgabe der Shell eines Tabs. */
+  | { type: 'output'; tabId: string; data: string }
+  /** Die Shell eines Tabs hat sich beendet. */
+  | { type: 'exit'; tabId: string; exitCode: number }
+  /** Hinweis im Terminal eines Tabs (z.B. Shell liess sich nicht starten). */
+  | { type: 'notice'; tabId: string; level: 'info' | 'error'; text: string };
+
+/** Befehle vom Renderer an den Kern. */
+export type WorkspaceCommand =
+  | { type: 'createTab' }
+  | { type: 'renameTab'; tabId: string; name: string }
+  | { type: 'activateTab'; tabId: string }
+  | { type: 'closeTab'; tabId: string }
+  /** Die Ansicht des Tabs ist bereit; erst danach erteilt der Kern den Startauftrag. */
+  | { type: 'viewReady'; tabId: string; cols: number; rows: number }
+  | { type: 'resizeTab'; tabId: string; cols: number; rows: number }
+  | { type: 'writeToTab'; tabId: string; data: string }
+  /** Beendete Shell neu starten (beliebige Taste im Terminal). */
+  | { type: 'restartTab'; tabId: string }
+  | { type: 'updateSettings'; patch: Partial<Settings> };
 
 export type Unsubscribe = () => void;
 
 /** Die API, die der Preload-Skript dem Renderer unter `window.termhub` bereitstellt. */
 export interface TermHubApi {
-  loadState(): Promise<PersistedState>;
+  loadSnapshot(): Promise<WorkspaceSnapshot>;
+  onEvent(listener: (event: WorkspaceEvent) => void): Unsubscribe;
+  send(command: WorkspaceCommand): void;
 
-  createSession(): Promise<SessionInfo>;
-  renameSession(id: string, name: string): Promise<void>;
-  closeSession(id: string): Promise<void>;
-  setActiveSession(id: string | null): Promise<void>;
-
-  startPty(id: string, cols: number, rows: number): Promise<void>;
-  writePty(id: string, data: string): void;
-  resizePty(id: string, cols: number, rows: number): void;
-  onPtyData(listener: (id: string, data: string) => void): Unsubscribe;
-  onPtyExit(listener: (id: string, exitCode: number) => void): Unsubscribe;
-
-  updateSettings(patch: Partial<Settings>): Promise<Settings>;
   pickDirectory(initial?: string): Promise<string | null>;
 
   readClipboard(): Promise<string>;
@@ -47,17 +85,9 @@ export interface TermHubApi {
 
 /** IPC-Kanalnamen an einem Ort, damit Main und Preload nicht auseinanderlaufen. */
 export const IPC = {
-  stateLoad: 'state:load',
-  sessionCreate: 'session:create',
-  sessionRename: 'session:rename',
-  sessionClose: 'session:close',
-  sessionSetActive: 'session:set-active',
-  ptyStart: 'pty:start',
-  ptyWrite: 'pty:write',
-  ptyResize: 'pty:resize',
-  ptyData: 'pty:data',
-  ptyExit: 'pty:exit',
-  settingsUpdate: 'settings:update',
+  workspaceSnapshot: 'workspace:snapshot',
+  workspaceCommand: 'workspace:command',
+  workspaceEvent: 'workspace:event',
   dialogPickDirectory: 'dialog:pick-directory',
   clipboardRead: 'clipboard:read',
   clipboardWrite: 'clipboard:write',

@@ -1,6 +1,6 @@
 import '@xterm/xterm/css/xterm.css';
 import './styles.css';
-import type { SessionInfo, Settings } from '../shared/types';
+import type { Settings, TabSnapshot, WorkspaceEvent } from '../shared/types';
 import { TerminalView } from './terminalView';
 
 const api = window.termhub;
@@ -14,85 +14,129 @@ const els = {
   btnDefaultCwd: document.getElementById('btn-default-cwd') as HTMLButtonElement,
 };
 
-let sessions: SessionInfo[] = [];
-let settings: Settings;
+// Anzeige-Zustand, so wie ihn der Kern zuletzt gemeldet hat.
+let tabs: TabSnapshot[] = [];
 let activeId: string | null = null;
-/** Session, deren Name gerade inline bearbeitet wird (dann wird die Liste nicht neu gezeichnet). */
+let settings: Settings;
+let homeDir = '';
+/** Erst nach dem Schnappschuss werden Ereignisse angewendet; frühere stecken schon darin. */
+let loaded = false;
+/** Tab, dessen Ansicht gerade sichtbar ist. */
+let shownId: string | null = null;
+/** Tab, dessen Name gerade inline bearbeitet wird (dann wird die Liste nicht neu gezeichnet). */
 let renamingId: string | null = null;
 const views = new Map<string, TerminalView>();
 
-// ---------- Sessions ----------
+// ---------- Zustand vom Kern ----------
 
-async function openView(session: SessionInfo): Promise<void> {
-  const view = new TerminalView(session.id, els.terminals, renderSidebar);
-  views.set(session.id, view);
-  await view.start();
-}
-
-async function newSession(): Promise<void> {
-  const session = await api.createSession();
-  sessions.push(session);
-  await openView(session);
-  activate(session.id);
-}
-
-async function closeSession(id: string): Promise<void> {
-  await api.closeSession(id);
-  views.get(id)?.dispose();
-  views.delete(id);
-  const index = sessions.findIndex((s) => s.id === id);
-  sessions = sessions.filter((s) => s.id !== id);
-  if (activeId === id) {
-    const neighbour = sessions[Math.min(index, sessions.length - 1)];
-    activate(neighbour?.id ?? null);
-  } else {
-    renderSidebar();
+function handleEvent(event: WorkspaceEvent): void {
+  if (!loaded) return;
+  switch (event.type) {
+    case 'tabs':
+      applyTabs(event.tabs, event.activeTabId);
+      return;
+    case 'settings':
+      settings = event.settings;
+      renderSettings();
+      return;
+    case 'output':
+      views.get(event.tabId)?.write(event.data);
+      return;
+    case 'exit':
+      views.get(event.tabId)?.markExited(event.exitCode);
+      return;
+    case 'notice':
+      views.get(event.tabId)?.notice(event.level, event.text);
+      return;
   }
 }
 
-function activate(id: string | null): void {
-  activeId = id;
-  for (const [viewId, view] of views) view.setActive(viewId === id);
-  els.emptyState.hidden = sessions.length > 0;
-  void api.setActiveSession(id);
+/** Gleicht die Ansichten mit den Tabs des Kerns ab. */
+function applyTabs(nextTabs: TabSnapshot[], nextActiveId: string | null): void {
+  tabs = nextTabs;
+  activeId = nextActiveId;
+
+  const ids = new Set(tabs.map((t) => t.id));
+  for (const [id, view] of views) {
+    if (ids.has(id)) continue;
+    view.dispose();
+    views.delete(id);
+    if (shownId === id) shownId = null;
+  }
+
+  const created: TerminalView[] = [];
+  for (const tab of tabs) {
+    let view = views.get(tab.id);
+    if (!view) {
+      view = new TerminalView(tab.id, els.terminals);
+      views.set(tab.id, view);
+      created.push(view);
+    }
+    view.setExited(tab.process === 'exited');
+  }
+
+  if (shownId !== activeId) {
+    for (const [id, view] of views) view.setActive(id === activeId);
+    shownId = activeId;
+  }
+  // Erst jetzt, mit sichtbarer aktiver Ansicht, melden neue Ansichten „bereit“; dann startet der Kern die Shell.
+  for (const view of created) view.reportReady();
+
+  els.emptyState.hidden = tabs.length > 0;
   renderSidebar();
 }
 
-function activateRelative(offset: number): void {
-  if (sessions.length === 0) return;
-  const index = sessions.findIndex((s) => s.id === activeId);
-  const next = (index + offset + sessions.length) % sessions.length;
-  activate(sessions[next].id);
+// ---------- Befehle ----------
+
+function newTab(): void {
+  api.send({ type: 'createTab' });
 }
 
-async function renameSession(id: string, name: string): Promise<void> {
+function closeTab(id: string): void {
+  api.send({ type: 'closeTab', tabId: id });
+}
+
+function activate(id: string): void {
+  if (id === activeId) views.get(id)?.focus();
+  else api.send({ type: 'activateTab', tabId: id });
+}
+
+function activateRelative(offset: number): void {
+  if (tabs.length === 0) return;
+  const index = tabs.findIndex((t) => t.id === activeId);
+  const next = (index + offset + tabs.length) % tabs.length;
+  activate(tabs[next].id);
+}
+
+function renameTab(id: string, name: string): void {
   const trimmed = name.trim();
-  const session = sessions.find((s) => s.id === id);
-  if (!session || !trimmed || trimmed === session.name) return;
-  session.name = trimmed;
-  await api.renameSession(id, trimmed);
+  const tab = tabs.find((t) => t.id === id);
+  if (!tab || !trimmed || trimmed === tab.name) return;
+  // Sofort anzeigen; der Kern bestätigt mit dem nächsten Ereignis.
+  tab.name = trimmed;
+  api.send({ type: 'renameTab', tabId: id, name: trimmed });
 }
 
 // ---------- Sidebar ----------
 
 function renderSidebar(): void {
   if (renamingId) return;
-  els.sessionList.replaceChildren(...sessions.map(renderSessionItem));
+  els.sessionList.replaceChildren(...tabs.map(renderTabItem));
 }
 
-function renderSessionItem(session: SessionInfo): HTMLLIElement {
+function renderTabItem(tab: TabSnapshot): HTMLLIElement {
   const li = document.createElement('li');
   li.className = 'session-item';
-  li.classList.toggle('active', session.id === activeId);
-  li.classList.toggle('exited', views.get(session.id)?.exited ?? false);
-  li.title = session.cwd;
+  li.classList.toggle('active', tab.id === activeId);
+  li.classList.toggle('exited', tab.process === 'exited');
+  li.title = tab.cwd;
 
   const status = document.createElement('span');
   status.className = 'status';
 
   const name = document.createElement('span');
   name.className = 'name';
-  name.textContent = session.name;
+  name.textContent = tab.name;
 
   const close = document.createElement('button');
   close.className = 'close';
@@ -100,55 +144,60 @@ function renderSessionItem(session: SessionInfo): HTMLLIElement {
   close.title = 'Session schliessen (Ctrl+Shift+W)';
   close.addEventListener('click', (e) => {
     e.stopPropagation();
-    void closeSession(session.id);
+    closeTab(tab.id);
   });
 
   li.append(status, name, close);
-  li.addEventListener('click', () => activate(session.id));
-  li.addEventListener('dblclick', () => startRename(session.id));
+  li.addEventListener('click', () => activate(tab.id));
+  li.addEventListener('dblclick', () => startRename(tab.id));
   return li;
 }
 
 function startRename(id: string): void {
-  const session = sessions.find((s) => s.id === id);
-  const index = sessions.findIndex((s) => s.id === id);
+  const tab = tabs.find((t) => t.id === id);
+  const index = tabs.findIndex((t) => t.id === id);
   const nameEl = els.sessionList.children[index]?.querySelector('.name');
-  if (!session || !nameEl) return;
+  if (!tab || !nameEl) return;
 
   renamingId = id;
   const input = document.createElement('input');
   input.className = 'rename-input';
-  input.value = session.name;
+  input.value = tab.name;
   nameEl.replaceWith(input);
   input.focus();
   input.select();
 
   let done = false;
-  const finish = async (commit: boolean) => {
+  const finish = (commit: boolean) => {
     if (done) return;
     done = true;
-    if (commit) await renameSession(id, input.value);
+    if (commit) renameTab(id, input.value);
     renamingId = null;
     renderSidebar();
     views.get(activeId ?? '')?.focus();
   };
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') void finish(true);
-    if (e.key === 'Escape') void finish(false);
+    if (e.key === 'Enter') finish(true);
+    if (e.key === 'Escape') finish(false);
   });
-  input.addEventListener('blur', () => void finish(true));
+  input.addEventListener('blur', () => finish(true));
+}
+
+/** Der Standardordner, wie er wirkt: leer heisst Benutzerordner. */
+function effectiveDefaultCwd(): string {
+  return settings.defaultCwd || homeDir;
 }
 
 function renderSettings(): void {
-  els.btnDefaultCwd.textContent = settings.defaultCwd;
-  els.btnDefaultCwd.title = `${settings.defaultCwd}\nKlicken zum Ändern`;
+  const dir = effectiveDefaultCwd();
+  els.btnDefaultCwd.textContent = dir;
+  els.btnDefaultCwd.title = `${dir}\nKlicken zum Ändern`;
 }
 
 async function changeDefaultCwd(): Promise<void> {
-  const dir = await api.pickDirectory(settings.defaultCwd);
+  const dir = await api.pickDirectory(effectiveDefaultCwd());
   if (!dir) return;
-  settings = await api.updateSettings({ defaultCwd: dir });
-  renderSettings();
+  api.send({ type: 'updateSettings', patch: { defaultCwd: dir } });
 }
 
 // ---------- Tastenkürzel ----------
@@ -164,10 +213,10 @@ function handleShortcut(e: KeyboardEvent): boolean {
 
   switch (combo) {
     case 'Ctrl+Shift+KeyT':
-      void newSession();
+      newTab();
       return true;
     case 'Ctrl+Shift+KeyW':
-      if (activeId) void closeSession(activeId);
+      if (activeId) closeTab(activeId);
       return true;
     case 'Ctrl+Shift+KeyC':
       void active?.copySelection();
@@ -188,10 +237,10 @@ function handleShortcut(e: KeyboardEvent): boolean {
       return true;
   }
 
-  // Ctrl+1 … Ctrl+9: direkt zur n-ten Session springen.
+  // Ctrl+1 … Ctrl+9: direkt zum n-ten Tab springen.
   const digit = /^Ctrl\+Digit([1-9])$/.exec(combo);
   if (digit) {
-    const target = sessions[Number(digit[1]) - 1];
+    const target = tabs[Number(digit[1]) - 1];
     if (target) activate(target.id);
     return true;
   }
@@ -213,27 +262,21 @@ window.addEventListener(
 // ---------- Start ----------
 
 async function init(): Promise<void> {
-  const state = await api.loadState();
-  settings = state.settings;
-  sessions = state.sessions;
+  // Zuerst abonnieren, dann den Schnappschuss holen: So geht kein Ereignis verloren.
+  api.onEvent(handleEvent);
+  const snapshot = await api.loadSnapshot();
+  settings = snapshot.settings;
+  homeDir = snapshot.homeDir;
   renderSettings();
 
-  api.onPtyData((id, data) => views.get(id)?.write(data));
-  api.onPtyExit((id, exitCode) => views.get(id)?.markExited(exitCode));
-
-  els.btnNew.addEventListener('click', () => void newSession());
-  els.btnNewEmpty.addEventListener('click', () => void newSession());
+  els.btnNew.addEventListener('click', newTab);
+  els.btnNewEmpty.addEventListener('click', newTab);
   els.btnDefaultCwd.addEventListener('click', () => void changeDefaultCwd());
   new ResizeObserver(() => views.get(activeId ?? '')?.fit()).observe(els.terminals);
 
-  // Gespeicherte Sessions wiederherstellen: alle Shells starten, letzte aktive Session anzeigen.
-  await Promise.all(sessions.map(openView));
-  if (sessions.length === 0) {
-    await newSession();
-  } else {
-    const restored = sessions.some((s) => s.id === state.activeSessionId);
-    activate(restored ? state.activeSessionId : sessions[0].id);
-  }
+  // Die gespeicherten Tabs zeigen; ihre Shells startet der Kern, sobald die Ansichten bereit sind.
+  loaded = true;
+  applyTabs(snapshot.tabs, snapshot.activeTabId);
 }
 
 void init();
