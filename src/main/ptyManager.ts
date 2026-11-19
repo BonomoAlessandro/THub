@@ -76,12 +76,15 @@ export class PtyManager implements TerminalBackend {
   }
 }
 
-/** Umgebung für die Shell: die eigene, ohne npm-/Electron-Interna aus dem Dev-Start. */
+/**
+ * Umgebung für die Shell: die eigene, ohne npm-/Electron-Interna aus dem Dev-Start und ohne TERMHUB_*
+ * (etwa wenn TermHub aus einem TermHub-Tab gestartet wurde); die setzt der Kern im Startauftrag neu.
+ */
 function shellEnv(): Record<string, string> {
   const env: Record<string, string> = {};
   for (const [key, value] of Object.entries(process.env)) {
     if (value === undefined) continue;
-    if (/^(npm_|ELECTRON_)/i.test(key)) continue;
+    if (/^(npm_|ELECTRON_|TERMHUB_)/i.test(key)) continue;
     env[key] = value;
   }
   return env;

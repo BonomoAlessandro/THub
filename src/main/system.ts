@@ -39,6 +39,15 @@ export const hostSystem: HostSystem = {
       primary: d.id === primaryId,
     }));
   },
+  longPath(p) {
+    // Nur Kurznamen auflösen: realpath löst auch Verknüpfungen auf, und die sollen bleiben, wie sie sind.
+    if (!p.includes('~')) return p;
+    try {
+      return fs.realpathSync.native(p);
+    } catch {
+      return p;
+    }
+  },
 };
 
 /** Platzhalter, bis die echte Prozess-Sonde (Ticket 13) den Prozessbaum liefert. */

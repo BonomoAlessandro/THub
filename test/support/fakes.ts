@@ -191,6 +191,8 @@ export interface FakeSystemOptions {
   /** Vorhandene Ordner; der Benutzerordner ist immer vorhanden. */
   directories?: string[];
   displays?: DisplayInfo[];
+  /** 8.3-Kurzpfade und ihre Langform, z.B. `{ 'C:\\Users\\ANNA~1': 'C:\\Users\\anna.mueller' }`. */
+  shortPaths?: Record<string, string>;
 }
 
 export const PRIMARY_DISPLAY: DisplayInfo = {
@@ -205,11 +207,13 @@ export class FakeSystem implements HostSystem {
   private readonly user: string;
   private readonly dirs = new Set<string>();
   private screens: DisplayInfo[];
+  private readonly shortPaths: Record<string, string>;
 
   constructor(options: FakeSystemOptions = {}) {
     this.home = options.homeDir ?? 'C:\\Users\\tester';
     this.user = options.userName ?? 'tester';
     this.screens = options.displays ?? [PRIMARY_DISPLAY];
+    this.shortPaths = options.shortPaths ?? {};
     this.addDirectory(this.home);
     for (const dir of options.directories ?? []) this.addDirectory(dir);
   }
@@ -240,6 +244,16 @@ export class FakeSystem implements HostSystem {
 
   displays(): DisplayInfo[] {
     return structuredClone(this.screens);
+  }
+
+  /** Ersetzt einen bekannten Kurzpfad am Anfang durch seine Langform, wie GetLongPathName. */
+  longPath(path: string): string {
+    for (const [short, long] of Object.entries(this.shortPaths)) {
+      const key = dirKey(short);
+      const candidate = dirKey(path);
+      if (candidate === key || candidate.startsWith(`${key}\\`)) return long + path.slice(short.length);
+    }
+    return path;
   }
 }
 

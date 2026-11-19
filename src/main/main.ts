@@ -1,10 +1,13 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme } from 'electron';
 import * as path from 'node:path';
 import { IPC, type WorkspaceCommand } from '../shared/types';
+import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
+import { LocalApiServer } from './localApi';
 import { PtyManager } from './ptyManager';
 import { FIXED_SHELLS } from './shells';
 import { StateStore } from './store';
 import { hostSystem, noProcessProbe, systemClock } from './system';
+import type { LocalApiInfo } from './workspace/claude';
 import { createWorkspace, type Workspace } from './workspace/workspace';
 
 // Unpaketiert (npm start) eigener Datenordner, damit die Entwicklung die installierte App nie berührt.
@@ -14,10 +17,12 @@ if (!app.isPackaged) app.setPath('userData', path.join(app.getPath('appData'), '
 
 let mainWindow: BrowserWindow | null = null;
 let workspace: Workspace | null = null;
+let localApi: LocalApiServer | null = null;
 let shutdown: 'running' | 'stopping' | 'done' = 'running';
 
-// Nur eine Instanz: Ein zweiter Start gibt hier sofort auf, bevor er Zustand lädt, Shells startet oder
-// Dateien schreibt. Die laufende Instanz bekommt dafür 'second-instance' und holt ihr Fenster nach vorne.
+// Nur eine Instanz: Ein zweiter Start gibt hier sofort auf, bevor er Zustand lädt, Shells oder die lokale
+// Schnittstelle startet oder Dateien (Zustand, Hook-Datei) schreibt. Die laufende Instanz bekommt dafür
+// 'second-instance' und holt ihr Fenster nach vorne.
 if (app.requestSingleInstanceLock()) {
   app.on('second-instance', bringWindowToFront);
   app.whenReady().then(start);
@@ -27,11 +32,13 @@ if (app.requestSingleInstanceLock()) {
   app.quit();
 }
 
-/** Start der einzigen Instanz: Zustand laden, Fenster öffnen. */
-function start(): void {
+/** Start der einzigen Instanz: lokale Schnittstelle und Hook-Datei, Zustand laden, Fenster öffnen. */
+async function start(): Promise<void> {
   // Im Dev-Modus Menü behalten (DevTools, Reload); in der installierten App ausblenden.
   if (app.isPackaged) Menu.setApplicationMenu(null);
 
+  const api = await startLocalApi();
+  localApi = api?.server ?? null;
   workspace = createWorkspace(
     {
       terminal: new PtyManager(),
@@ -40,12 +47,32 @@ function start(): void {
       processes: noProcessProbe,
       system: hostSystem,
     },
-    { shells: FIXED_SHELLS },
+    { shells: FIXED_SHELLS, localApi: api?.info },
   );
+  localApi?.connect(workspace);
   workspace.subscribe((event) => sendToRenderer(IPC.workspaceEvent, event));
 
   registerIpc(workspace);
   createWindow(workspace);
+}
+
+/**
+ * Startet die lokale Schnittstelle und schreibt die Hook-Datei für diesen Start neu (Adresse und Port ändern
+ * sich bei jedem Start). Scheitert das, läuft TermHub ohne Claude-Erkennung: Der Starter erreicht TermHub
+ * nicht und startet claude unverändert.
+ */
+async function startLocalApi(): Promise<{ server: LocalApiServer; info: LocalApiInfo } | null> {
+  const hookFile = path.join(app.getPath('userData'), HOOK_FILE_NAME);
+  let server: LocalApiServer | null = null;
+  try {
+    server = await LocalApiServer.start();
+    writeHookFile(hookFile, server.url);
+    return { server, info: { url: server.url, token: server.token, hookFile } };
+  } catch (err) {
+    console.error('Lokale Schnittstelle konnte nicht gestartet werden, Claude wird nicht erkannt:', err);
+    await server?.close();
+    return null;
+  }
 }
 
 /** Ein zweiter Start: Das bestehende Fenster kommt nach vorne, auch aus minimiertem Zustand. */
@@ -65,6 +92,7 @@ function onBeforeQuit(event: Electron.Event): void {
   workspace
     .shutdown()
     .catch((err: unknown) => console.error('Zustand konnte beim Beenden nicht gesichert werden:', err))
+    .then(() => localApi?.close())
     .finally(() => {
       shutdown = 'done';
       app.quit();
@@ -166,6 +194,17 @@ function createWindow(ws: Workspace): void {
   win.on('closed', () => {
     mainWindow = null;
   });
+  // Windows-Abmeldung oder -Neustart: sofort einfrieren und synchron sichern. Die Shells (und Claude darin)
+  // können danach jederzeit enden, ebenso TermHub selbst; ihr Ende darf die Claude-Zuordnungen nicht löschen.
+  const freeze = (): void => {
+    try {
+      ws.freeze();
+    } catch (err) {
+      console.error('Zustand konnte bei der Windows-Abmeldung nicht gesichert werden:', err);
+    }
+  };
+  win.on('query-session-end', freeze);
+  win.on('session-end', freeze);
 
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   // Maximiert öffnen: Darunter bleibt die gespeicherte normale Grösse, „Wiederherstellen“ führt dorthin.

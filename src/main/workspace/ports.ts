@@ -98,6 +98,11 @@ export interface HostSystem {
   homeDir(): string;
   userName(): string;
   displays(): DisplayInfo[];
+  /**
+   * Langform eines Pfads: 8.3-Kurznamen wie `C:\Users\ANNA~1` aufgelöst. Andere Pfade und Pfade,
+   * die es nicht gibt, bleiben unverändert.
+   */
+  longPath(path: string): string;
 }
 
 // ---------- Shells ----------
