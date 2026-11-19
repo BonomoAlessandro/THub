@@ -1,6 +1,6 @@
 # 20 – Umbenennen in THub
 
-Status: `offen` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 04, 08 (nur, um Konflikte mit laufenden Branches zu vermeiden)
 User Stories: –
 Spezifikation: Hinweis „Name“ am Anfang

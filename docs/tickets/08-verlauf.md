@@ -1,6 +1,6 @@
 # 08 – Verlauf normaler Tabs sichern und wiederherstellen
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-19, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 03
 User Stories: 58, 66
 Spezifikation: „Wiederherstellen“ (normaler Tab, Verlauf sichern), „App-Verhalten“ (Beenden)

@@ -9,6 +9,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
   - Für den Abschnitt **„Abnahme von Hand“** liefert er eine kurze Prüfliste. Die Abnahme machst du **gesammelt am Schluss** (Ticket 19), nicht nach jedem Ticket. Bis dahin gilt ein Ticket als erledigt, wenn die automatischen Kriterien erfüllt sind und der Stand auf `main` ist.
   - Agenten installieren den Installer nicht über eine bestehende THub-Installation. Zum Prüfen dient das ungepackte Paket (`release/win-unpacked`) bzw. `npm start` mit eigenem Entwicklungs-Datenordner.
 - **Der Desktop des Nutzers ist tabu:** Agenten senden keine echten Maus- oder Tastatureingaben, holen keine Fenster in den Vordergrund und ändern keine Systemeinstellungen (auch nicht vorübergehend, etwa das Windows-Design). Geprüft wird über Tests, die Entwicklerwerkzeuge der App (Chrome DevTools Protocol), Fenster-Nachrichten ohne Fokuswechsel (z.B. `WM_NCHITTEST`) und Screenshots per `PrintWindow`. Was sich nur mit echter Bedienung prüfen lässt, kommt in die Prüfliste „Abnahme von Hand“.
+- **Debug-Ports:** Für die Entwicklerwerkzeuge der App (`--remote-debugging-port`) immer einen zufälligen hohen Port verwenden, nie 9222 oder 9333; auf dem Rechner laufen andere Werkzeuge, die diese Ports nutzen. Nur mit Seiten der eigenen App verbinden.
 - **HITL** (Status `ready-for-human`): Das Ticket braucht dich laufend, zum Beispiel für Rückmeldungen.
 - Begriffe wie „Workspace-Kern“, „Port“, „Starter“, „Claude-Zuordnung“ oder „Einfrieren“ sind in der Spezifikation erklärt. Vor jedem Ticket die dort genannten Abschnitte lesen.
 
@@ -23,7 +24,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 05 | [Ordner, Tab-Namen und Einstellungsdialog](05-ordner-und-einstellungen.md) | AFK | 04 | offen |
 | 06 | [Shells erkennen und pro Tab wählen](06-shells.md) | AFK | 05 | offen |
 | 07 | [Shell-Integration: Profil, aktueller Ordner, Startbefehl](07-shell-integration.md) | AFK | 06 | offen |
-| 08 | [Verlauf normaler Tabs sichern und wiederherstellen](08-verlauf.md) | AFK | 03 | in Arbeit |
+| 08 | [Verlauf normaler Tabs sichern und wiederherstellen](08-verlauf.md) | AFK | 03 | erledigt |
 | 09 | [Fenster merken und nur eine Instanz](09-fenster-und-einzelinstanz.md) | AFK | 01 | erledigt |
 | 10 | [Lokale Schnittstelle, Hook-Datei und Claude-Zuordnung](10-schnittstelle-und-zuordnung.md) | AFK | 01, 09 | erledigt |
 | 11 | [Starter und `claude`-Ersatz](11-starter-und-ersatz.md) | AFK | 07, 10 | offen |
@@ -35,7 +36,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 17 | [Befehlspalette](17-befehlspalette.md) | AFK | 15 | offen |
 | 18 | [Design-Wahl und Schriftgrösse](18-design-und-schrift.md) | AFK | 05 | offen |
 | 19 | [README und Abschluss-Prüfung auf einem frischen Rechner](19-readme-und-abschluss.md) | HITL | alle | offen |
-| 20 | [Umbenennen in THub](20-umbenennen-thub.md) | AFK | 04, 08 | offen |
+| 20 | [Umbenennen in THub](20-umbenennen-thub.md) | AFK | 04, 08 | in Arbeit |
 
 ```mermaid
 flowchart LR
