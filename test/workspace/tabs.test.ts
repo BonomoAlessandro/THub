@@ -15,7 +15,7 @@ describe('Tabs', () => {
     expect(h.activeTab()?.shellId).toBe('powershell');
   });
 
-  it('legt einen neuen Tab am Ende im Standardordner an und macht ihn aktiv', () => {
+  it('legt einen neuen Tab im Standardordner an und macht ihn aktiv', () => {
     const h = startWorkspace({ directories: ['D:\\work'] });
     h.workspace.updateSettings({ defaultCwd: 'D:\\work' });
 
@@ -24,6 +24,49 @@ describe('Tabs', () => {
     expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 2']);
     expect(h.snapshot().activeTabId).toBe(id);
     expect(h.activeTab()).toMatchObject({ name: 'Terminal 2', cwd: 'D:\\work' });
+  });
+
+  describe('ein neuer Tab erscheint rechts neben dem aktiven', () => {
+    it('zwischen dem aktiven Tab und seinem rechten Nachbarn', () => {
+      const h = startWorkspace();
+      h.workspace.createTab();
+      h.workspace.createTab();
+      h.workspace.activateTab(h.tabNamed('Terminal 1').id);
+
+      const id = h.workspace.createTab();
+
+      expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 4', 'Terminal 2', 'Terminal 3']);
+      expect(h.snapshot().activeTabId).toBe(id);
+    });
+
+    it('ganz rechts, wenn der aktive Tab der letzte ist', () => {
+      const h = startWorkspace();
+      h.workspace.createTab();
+
+      h.workspace.createTab();
+
+      expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 2', 'Terminal 3']);
+    });
+
+    it('nacheinander angelegte Tabs reihen sich rechts vom ursprünglich aktiven auf', () => {
+      const h = startWorkspace();
+      h.workspace.createTab();
+      h.workspace.activateTab(h.tabNamed('Terminal 1').id);
+
+      h.workspace.createTab();
+      h.workspace.createTab();
+
+      expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 3', 'Terminal 4', 'Terminal 2']);
+    });
+
+    it('als einziger Tab, wenn keiner mehr offen ist', () => {
+      const h = startWorkspace();
+      h.workspace.closeTab(h.activeTab()!.id);
+
+      const id = h.workspace.createTab();
+
+      expect(h.snapshot()).toMatchObject({ tabs: [{ id, name: 'Terminal 1' }], activeTabId: id });
+    });
   });
 
   it('vergibt wie bisher die kleinste freie Nummer im Namen', () => {
@@ -65,6 +108,73 @@ describe('Tabs', () => {
     h.workspace.activateTab(first);
 
     expect(h.snapshot().activeTabId).toBe(first);
+  });
+
+  describe('Wechsel zum nächsten, vorherigen und n-ten Tab', () => {
+    it('wechselt zum nächsten und vorherigen Tab, über die Enden hinweg im Kreis', () => {
+      const h = startWorkspace();
+      h.workspace.createTab();
+      h.workspace.createTab();
+
+      h.workspace.activateRelativeTab(1);
+      expect(h.activeTab()?.name).toBe('Terminal 1');
+
+      h.workspace.activateRelativeTab(1);
+      expect(h.activeTab()?.name).toBe('Terminal 2');
+
+      h.workspace.activateRelativeTab(-1);
+      h.workspace.activateRelativeTab(-1);
+      expect(h.activeTab()?.name).toBe('Terminal 3');
+    });
+
+    it('wechselt zum Tab an einer Position der Leiste', () => {
+      const h = startWorkspace();
+      h.workspace.createTab();
+      h.workspace.createTab();
+
+      h.workspace.activateTabAt(1);
+
+      expect(h.activeTab()?.name).toBe('Terminal 2');
+    });
+
+    it('bleibt beim aktiven Tab, wenn es an der Position keinen Tab gibt', () => {
+      const h = startWorkspace();
+      h.workspace.createTab();
+
+      h.workspace.activateTabAt(5);
+      h.workspace.activateTabAt(-1);
+
+      expect(h.activeTab()?.name).toBe('Terminal 2');
+    });
+
+    it('macht ohne offene Tabs nichts', () => {
+      const h = startWorkspace();
+      h.workspace.closeTab(h.activeTab()!.id);
+
+      h.workspace.activateRelativeTab(1);
+      h.workspace.activateTabAt(0);
+
+      expect(h.snapshot()).toMatchObject({ tabs: [], activeTabId: null });
+    });
+  });
+
+  it('nennt im Schnappschuss den Anzeigenamen der Shell, auch für eine nicht mehr vorhandene Shell', () => {
+    const h = startWorkspace({
+      state: {
+        version: 2,
+        settings: { defaultCwd: '', theme: 'system', fontSize: 14, notifications: true },
+        tabs: [
+          { id: 'a', name: 'A', nameIsManual: true, shellId: 'cmd', startCwd: 'C:\\Users\\tester' },
+          { id: 'b', name: 'B', nameIsManual: true, shellId: 'gitbash', startCwd: 'C:\\Users\\tester' },
+        ],
+        activeTabId: 'a',
+        recentDirs: [],
+        closedTabs: [],
+      },
+    });
+
+    // Eine Shell, die es nicht mehr gibt, startet als Standard-Shell; so heisst sie dann auch.
+    expect(h.tabs().map((t) => t.shellName)).toEqual(['cmd', 'Windows PowerShell']);
   });
 
   it('ignoriert Befehle für unbekannte Tabs', () => {

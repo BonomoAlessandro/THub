@@ -17,6 +17,18 @@ describe('Neustart', () => {
     expect(h.activeTab()?.name).toBe('Server');
   });
 
+  it('behält die Reihenfolge, wenn neue Tabs rechts neben dem aktiven eingefügt wurden', async () => {
+    const h = startWorkspace();
+    h.workspace.createTab();
+    h.workspace.activateTab(h.tabNamed('Terminal 1').id);
+    h.workspace.createTab();
+
+    await h.restart();
+
+    expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 3', 'Terminal 2']);
+    expect(h.activeTab()?.name).toBe('Terminal 3');
+  });
+
   it('lässt geschlossene Tabs weg', async () => {
     const h = startWorkspace();
     h.workspace.createTab();

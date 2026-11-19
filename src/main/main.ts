@@ -87,6 +87,12 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
     case 'activateTab':
       ws.activateTab(command.tabId);
       return;
+    case 'activateRelativeTab':
+      ws.activateRelativeTab(command.offset);
+      return;
+    case 'activateTabAt':
+      ws.activateTabAt(command.index);
+      return;
     case 'closeTab':
       ws.closeTab(command.tabId);
       return;
