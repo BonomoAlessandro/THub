@@ -10,11 +10,23 @@ import type {
   WorkspaceEvent,
   WorkspaceSnapshot,
 } from '../../shared/types';
+import {
+  linkAfterHook,
+  linkAfterLaunch,
+  normalizeDirectory,
+  readHook,
+  sameLink,
+  type ClaudeLaunchRequest,
+  type ClaudeLaunchResponse,
+  type ClaudeReceiver,
+  type LocalApiInfo,
+} from './claude';
 import type { CancelTimer, ShellInfo, StartOrder, WorkspacePorts } from './ports';
 import {
   normalizeSettings,
   normalizeWindow,
   readPersistedState,
+  type PersistedClaudeLink,
   type PersistedState,
   type PersistedTab,
   type WindowState,
@@ -29,9 +41,18 @@ const WINDOW_SAVE_DELAY_MS = 500;
 export interface WorkspaceOptions {
   /** Shells, die der Kern starten kann. Bis zur Shell-Erkennung (Ticket 06) eine feste Liste. */
   shells: ShellInfo[];
+  /**
+   * Die laufende lokale Schnittstelle (Ticket 10). Fehlt sie, weil sie sich nicht starten liess, bekommen die
+   * Terminals nur TERMHUB_TAB_ID; der Starter erreicht TermHub nicht und startet claude unverändert.
+   */
+  localApi?: LocalApiInfo;
 }
 
-export interface Workspace {
+/**
+ * Der Kern. Die Eingänge von Starter und Claude Code (`claudeLaunch`, `claudeStarted`, `claudeExit`,
+ * `claudeHook`) beschreibt `ClaudeReceiver`.
+ */
+export interface Workspace extends ClaudeReceiver {
   /** Vollständiger Zustand für den Renderer. */
   snapshot(): WorkspaceSnapshot;
   /** Änderungsereignisse abonnieren; liefert die Abmeldung. */
@@ -66,12 +87,18 @@ export interface Workspace {
    */
   windowChanged(state: WindowState): void;
 
-  /** Sichert den Zustand und beendet alle Shells. Danach nimmt der Kern keine Befehle mehr an. */
+  /**
+   * TermHub beendet sich selbst (etwa bei einer Windows-Abmeldung): Die Claude-Zuordnungen werden eingefroren
+   * und der Zustand sofort geschrieben. Danach ändern weder Meldungen von Starter und Claude noch das Ende
+   * einer Shell die Zuordnungen; sonst käme nach dem Beenden jeder Claude-Tab als normales Terminal zurück.
+   */
+  freeze(): void;
+  /** Friert ein, sichert den Zustand und beendet alle Shells. Danach nimmt der Kern keine Befehle mehr an. */
   shutdown(): Promise<void>;
 }
 
 export function createWorkspace(ports: WorkspacePorts, options: WorkspaceOptions): Workspace {
-  return new WorkspaceCore(ports, options.shells);
+  return new WorkspaceCore(ports, options.shells, options.localApi);
 }
 
 /** Laufzeit-Angaben eines Tabs; werden nicht gespeichert. */
@@ -82,6 +109,8 @@ interface TabRuntime {
   /** Kennzeichen des laufenden Prozesses, damit Meldungen früherer Prozesse ins Leere gehen. */
   run?: object;
   pid?: number;
+  /** Prozess-ID von Claude, vom Starter gemeldet; für die Prozess-Regeln (Ticket 13). */
+  claudePid?: number;
 }
 
 class WorkspaceCore implements Workspace {
@@ -89,12 +118,15 @@ class WorkspaceCore implements Workspace {
   private readonly runtimes = new Map<string, TabRuntime>();
   private readonly listeners = new Set<(event: WorkspaceEvent) => void>();
   private stopping: Promise<void> | null = null;
+  /** Claude-Zuordnungen eingefroren, weil TermHub sich selbst beendet. */
+  private frozen = false;
   /** Vorgemerktes Speichern geänderter Fensterangaben; `null`, wenn nichts aussteht. */
   private cancelWindowSave: CancelTimer | null = null;
 
   constructor(
     private readonly ports: WorkspacePorts,
     private readonly shells: ShellInfo[],
+    private readonly localApi: LocalApiInfo | undefined,
   ) {
     if (shells.length === 0) throw new Error('Der Workspace-Kern braucht mindestens eine Shell.');
 
@@ -212,7 +244,7 @@ class WorkspaceCore implements Workspace {
       file: shell.file,
       args: [...shell.args],
       cwd: this.resolveCwd(tab),
-      env: {},
+      env: this.terminalEnv(tab),
       cols: view.cols,
       rows: view.rows,
     };
@@ -231,6 +263,8 @@ class WorkspaceCore implements Workspace {
           runtime.process = 'exited';
           runtime.run = undefined;
           runtime.pid = undefined;
+          // Mit der Shell endet auch ein Claude darin: Der Tab wird ein normales Terminal.
+          if (!this.frozen) this.setClaudeLink(tab, undefined);
           this.emit({ type: 'exit', tabId: tab.id, exitCode });
           this.emitTabs();
         },
@@ -249,6 +283,16 @@ class WorkspaceCore implements Workspace {
       });
     }
     this.emitTabs();
+  }
+
+  /** Umgebung jedes Terminals: Tab-Kennung, dazu Adresse und Token der lokalen Schnittstelle. */
+  private terminalEnv(tab: PersistedTab): Record<string, string> {
+    const env: Record<string, string> = { TERMHUB_TAB_ID: tab.id };
+    if (this.localApi) {
+      env.TERMHUB_API = this.localApi.url;
+      env.TERMHUB_TOKEN = this.localApi.token;
+    }
+    return env;
   }
 
   /** Startordner: zuletzt aktiver Ordner → Startordner → Standardordner → Benutzerordner. */
@@ -306,15 +350,76 @@ class WorkspaceCore implements Workspace {
     });
   }
 
+  // ---------- Claude ----------
+
+  claudeLaunch(request: ClaudeLaunchRequest): ClaudeLaunchResponse | null {
+    const tab = this.claudeTab(request.tabId);
+    if (!tab || !this.localApi) return null;
+    // Im Fall „neu“ vergibt TermHub die Kennung selbst; so ist sie auch ohne ein einziges Hook-Ereignis
+    // bekannt (Sicherheitsnetz).
+    const newId = request.case === 'new' ? randomUUID() : undefined;
+    const sessionId = newId ?? (request.case === 'withId' ? request.sessionId : undefined);
+    const reported = request.cwd ? this.normalizeDir(request.cwd) : '';
+    this.setClaudeLink(tab, linkAfterLaunch(tab.claude, sessionId, reported || (tab.lastCwd ?? tab.startCwd)));
+
+    const { hookFile } = this.localApi;
+    return newId ? { tabName: tab.name, sessionId: newId, hookFile } : { tabName: tab.name, hookFile };
+  }
+
+  claudeStarted(tabId: string, pid: number): void {
+    const runtime = this.runtimes.get(tabId);
+    if (this.claudeTab(tabId)?.claude && runtime) runtime.claudePid = pid;
+  }
+
+  claudeExit(tabId: string, _sessionId: string | undefined, _exitCode: number): void {
+    // Claude hat sich beendet, auch ohne SessionEnd (etwa nach einem Absturz): normales Terminal.
+    // Session-Kennung und Exit-Code braucht erst das fehlgeschlagene Fortsetzen (Ticket 12).
+    const tab = this.claudeTab(tabId);
+    if (tab) this.setClaudeLink(tab, undefined);
+  }
+
+  claudeHook(tabId: string, event: string, payload: unknown): void {
+    const tab = this.claudeTab(tabId);
+    if (!tab) return;
+    this.setClaudeLink(tab, linkAfterHook(tab.claude, readHook(event, payload), (raw) => this.normalizeDir(raw)));
+  }
+
+  /** Der Tab, für den eine Meldung von Starter oder Claude gilt; keiner, wenn unbekannt oder eingefroren. */
+  private claudeTab(tabId: string): PersistedTab | undefined {
+    return this.frozen || this.stopping ? undefined : this.findTab(tabId);
+  }
+
+  /** Setzt die Claude-Zuordnung eines Tabs; `undefined` macht ihn zum normalen Terminal. */
+  private setClaudeLink(tab: PersistedTab, link: PersistedClaudeLink | undefined): void {
+    if (sameLink(tab.claude, link)) return;
+    if (link) {
+      tab.claude = link;
+    } else {
+      delete tab.claude;
+      const runtime = this.runtimes.get(tab.id);
+      if (runtime) runtime.claudePid = undefined;
+    }
+    this.save();
+  }
+
+  private normalizeDir(raw: string): string {
+    return normalizeDirectory(raw, (dir) => this.ports.system.longPath(dir));
+  }
+
   // ---------- Beenden ----------
+
+  freeze(): void {
+    this.frozen = true;
+    this.saveWindowNow();
+    this.ports.storage.flush();
+  }
 
   shutdown(): Promise<void> {
     if (!this.stopping) {
       // Die Shells werden auch dann beendet, wenn das Sichern scheitert; der Fehler kommt danach.
       let saveError: unknown = null;
       try {
-        this.saveWindowNow();
-        this.ports.storage.flush();
+        this.freeze();
       } catch (err) {
         saveError = err;
       }
