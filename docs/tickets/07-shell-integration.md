@@ -1,0 +1,46 @@
+# 07 – Shell-Integration: Profil, aktueller Ordner, Startbefehl
+
+Status: `ready-for-agent` · Typ: AFK
+Blockiert durch: 06
+User Stories: 11, 17 (aktueller Ordner im Tooltip), 57, 65
+Spezifikation: „Shell-Integration“ (Robust laden, Punkte 1 und 3, Umgebung), „Wiederherstellen“ (normaler Tab), „Testentscheidungen → Teststelle 1 und 2“
+
+## Was gebaut wird
+
+Jede Windows-Shell (PowerShell 7, Windows PowerShell, cmd, Git Bash) startet mit der mitgelieferten **Integration**:
+
+- **Robust laden:** zuerst das normale Profil des Nutzers, dann die Integration.
+  - PowerShell bekommt den Integrationscode per `-EncodedCommand`, nicht als Skriptdatei; cmd lädt per `/k`; Git Bash über eine eigene Startdatei, die zuerst `~/.bashrc` lädt.
+  - Mitgelieferte Skripte sind reines ASCII oder UTF-8 mit BOM.
+  - Scheitert die Integration, startet die Shell trotzdem normal.
+- **Ordner melden** per OSC 7 bzw. OSC 9;9 bei jedem Prompt, nur für Orte im Dateisystem. Ein eigener Prompt des Nutzers wird erweitert, nicht ersetzt.
+  - Der **Kern** erkennt die Sequenzen im Ausgabestrom (auch über Stückgrenzen, Endzeichen BEL oder `ESC \`), normalisiert den Pfad (Prozentkodierung, `/c/…` → `C:\…`) und speichert ihn als zuletzt aktiven Ordner.
+  - Die Sequenzen bleiben im Strom.
+- **Startbefehl:** Ein von TermHub mitgegebener Befehl läuft genau einmal, sobald die Shell bereit ist; keine simulierten Tastendrücke. Ticket 12 nutzt das zum Fortsetzen von Claude.
+- **Umgebung:** jedes Terminal bekommt `TERMHUB_TAB_ID`; `TERMHUB_*` aus der eigenen Umgebung wird vorher entfernt; `NO_PROXY` wird um `127.0.0.1,localhost` ergänzt. Adresse und Token der Schnittstelle kommen in Ticket 10 dazu.
+- **Wiederherstellen:** Ein normaler Tab startet im zuletzt aktiven Ordner (Rückfallkette). Der Tooltip zeigt den aktuellen Ordner.
+- **Teststelle 2:** Gerüst für Integrationstests mit echten Shells über das echte Terminal-Backend, als eigener Testlauf.
+- **Paket:** Die Integrationsdateien liegen im installierten Paket als echte Dateien ausserhalb des asar-Archivs.
+
+## Akzeptanzkriterien
+
+- [ ] Kern-Tests zur Ordner-Erkennung:
+  - Sequenz an jeder Position zwischen zwei Stücken getrennt;
+  - beide Endzeichen, mehrere Sequenzen pro Stück;
+  - Prozentkodierung, Git-Bash-Pfade;
+  - Orte ausserhalb des Dateisystems werden ignoriert;
+  - der Ordner übersteht einen Neustart, Wiederherstellen im zuletzt aktiven Ordner, Rückfallkette bei gelöschten Ordnern.
+- [ ] Integrationstests (eigener Befehl, z.B. `npm run test:shells`) für alle vier Windows-Shells, nicht installierte werden übersprungen:
+  - `cd` in einen Testordner (auch mit Leerzeichen und Umlauten) führt zur Meldung genau dieses Ordners;
+  - ein Testprofil wird weiterhin geladen;
+  - ein Startbefehl läuft genau einmal, auch wenn danach weitere Prompts erscheinen;
+  - die Escape-Sequenzen erscheinen nicht als sichtbarer Text.
+- [ ] Die Tests setzen die Umgebung ausdrücklich und sprechen keine laufende TermHub-Instanz an.
+- [ ] WSL-Tabs bekommen keine Integration und funktionieren wie bisher.
+
+## Abnahme von Hand
+
+- [ ] In jeder Shell mit `cd` den Ordner wechseln, TermHub neu starten → der Tab startet im neuen Ordner.
+- [ ] Ein vorhandenes PowerShell-Profil (z.B. mit oh-my-posh) funktioniert weiter, der Prompt sieht aus wie ausserhalb von TermHub.
+- [ ] Im gebauten Paket (`release/win-unpacked`) funktioniert die Integration ebenfalls.
+- [ ] Optional, falls verfügbar: Mit Execution Policy `AllSigned` startet PowerShell trotzdem.
