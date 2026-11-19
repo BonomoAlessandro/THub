@@ -5,6 +5,7 @@ import { PtyManager } from './ptyManager';
 import { FIXED_SHELLS } from './shells';
 import { StateStore } from './store';
 import { hostSystem, noProcessProbe, systemClock } from './system';
+import { createThemeSource, followTheme, windowChrome, type ThemeSource } from './theme';
 import { createWorkspace, type Workspace } from './workspace/workspace';
 
 // Unpaketiert (npm start) eigener Datenordner, damit die Entwicklung die installierte App nie berührt.
@@ -44,8 +45,12 @@ function start(): void {
   );
   workspace.subscribe((event) => sendToRenderer(IPC.workspaceEvent, event));
 
+  // Design hell/dunkel: folgt Windows (nativeTheme) und zieht bei jedem Wechsel sofort mit.
+  const theme = createThemeSource(nativeTheme);
+  ipcMain.handle(IPC.themeCurrent, () => theme.current());
+
   registerIpc(workspace);
-  createWindow(workspace);
+  createWindow(workspace, theme);
 }
 
 /** Ein zweiter Start: Das bestehende Fenster kommt nach vorne, auch aus minimiertem Zustand. */
@@ -133,15 +138,19 @@ function registerIpc(ws: Workspace): void {
 }
 
 /** Öffnet das Fenster so, wie der Kern es vorgibt, und meldet ihm jede Änderung von Grösse und Lage. */
-function createWindow(ws: Workspace): void {
+function createWindow(ws: Workspace, theme: ThemeSource): void {
   const { bounds, maximized } = ws.windowState();
   const win = new BrowserWindow({
     ...bounds,
     minWidth: 600,
     minHeight: 360,
     show: false,
-    // Deckende Fensterfarbe des Designs (--win-solid), damit beim Öffnen nichts aufblitzt.
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#1d1d22' : '#f3f3f6',
+    // Ohne Windows-Rahmen: Die Oberfläche zeichnet die Titelleiste mit den Tabs selbst. Die nativen
+    // Fensterknöpfe bleiben als Overlay darüber, mit ihnen die Andock-Layouts von Windows 11.
+    titleBarStyle: 'hidden',
+    // Deckende Fensterfarbe des Designs (--win-solid), damit beim Öffnen nichts aufblitzt, und die
+    // Farben der Fensterknöpfe. Kein Mica, keine Transparenz.
+    ...windowChrome(theme.current()),
     title: 'TermHub',
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
@@ -166,6 +175,7 @@ function createWindow(ws: Workspace): void {
   win.on('closed', () => {
     mainWindow = null;
   });
+  win.once('closed', followTheme(win, theme));
 
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   // Maximiert öffnen: Darunter bleibt die gespeicherte normale Grösse, „Wiederherstellen“ führt dorthin.

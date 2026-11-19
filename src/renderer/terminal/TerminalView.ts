@@ -84,6 +84,11 @@ export class TerminalView {
     this.term.focus();
   }
 
+  /** Das Design hat gewechselt: Farbschema neu aus den Design-Variablen übernehmen. */
+  updateTheme(): void {
+    this.term.options.theme = terminalTheme();
+  }
+
   fit(): void {
     try {
       this.fitAddon.fit();
