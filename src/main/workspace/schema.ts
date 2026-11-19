@@ -226,14 +226,19 @@ function normalizeClosedTab(raw: unknown, ctx: SchemaContext): ClosedTab | null 
   };
 }
 
-function normalizeWindow(raw: unknown): WindowState | null {
+/** Prüft Fensterangaben; ohne brauchbare Grösse und Position gibt es keine (`null`). */
+export function normalizeWindow(raw: unknown): WindowState | null {
   if (!isRecord(raw) || !isRecord(raw.bounds)) return null;
   const { x, y, width, height } = raw.bounds;
   if (![x, y, width, height].every(isFiniteNumber)) return null;
-  return {
-    bounds: { x: x as number, y: y as number, width: width as number, height: height as number },
-    maximized: raw.maximized === true,
+  const bounds = {
+    x: Math.round(x as number),
+    y: Math.round(y as number),
+    width: Math.round(width as number),
+    height: Math.round(height as number),
   };
+  if (bounds.width < 1 || bounds.height < 1) return null;
+  return { bounds, maximized: raw.maximized === true };
 }
 
 // ---------- Hilfen ----------

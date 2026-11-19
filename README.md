@@ -24,18 +24,19 @@ npm test           # Kern-Tests mit Vitest
 npm run dist       # Installer bauen -> release\TermHub Setup <version>.exe
 ```
 
-Unpaketiert (`npm start`, `npm run dev`) verwendet TermHub den Datenordner `%APPDATA%\TermHub-dev` und berührt die installierte App (`%APPDATA%\TermHub`) nicht.
+Unpaketiert (`npm start`, `npm run dev`) verwendet TermHub den Datenordner `%APPDATA%\TermHub-dev` und berührt die installierte App (`%APPDATA%\TermHub`) nicht. Die Einzelinstanz-Sperre hängt am Datenordner: Die Entwicklungsversion läuft neben einer installierten TermHub, aber nur einmal.
 
 ## Aufbau
 
 ```
 src/
   shared/types.ts           Vertrag Renderer ↔ Kern: Schnappschuss, Änderungsereignisse, Befehle, IPC-Kanäle
-  main/main.ts              Electron-Hauptprozess: Fenster, IPC ↔ Workspace-Kern, geordnetes Beenden
+  main/main.ts              Electron-Hauptprozess: Einzelinstanz, Fenster, IPC ↔ Workspace-Kern, geordnetes Beenden
   main/workspace/
     workspace.ts            Workspace-Kern: die gesamte Tab-Logik, ohne Electron
     ports.ts                Ports des Kerns: Terminal-Backend, Speicher, Uhr, Prozess-Sonde, System
     schema.ts               Gespeicherter Zustand (Version 2) und Übernahme aus Version 1
+    windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
   main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
   main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
@@ -64,7 +65,8 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
   ],
   "activeTabId": "…",
   "recentDirs": [],
-  "closedTabs": []
+  "closedTabs": [],
+  "window": { "bounds": { "x": 200, "y": 100, "width": 1200, "height": 760 }, "maximized": false }
 }
 ```
 
@@ -76,6 +78,8 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
 - Standardverzeichnis unten in der Sidebar wählbar; neue Terminals starten dort
 - Beendete Shell (z.B. `exit`): Hinweis im Terminal, beliebige Taste startet sie neu
 - Kopieren/Einfügen: Rechtsklick (mit Auswahl kopieren, sonst einfügen), `Ctrl+Shift+C` / `Ctrl+Shift+V`
+- Das Fenster öffnet mit gespeicherter Grösse, Position und Maximiert-Zustand; beim allerersten Start maximiert. Liegt es ausserhalb aller Bildschirme (etwa nach dem Abziehen eines Monitors), öffnet es zentriert auf dem Hauptbildschirm.
+- Nur eine Instanz: Ein zweiter Start holt das bestehende Fenster nach vorne, auch aus minimiertem Zustand, und beendet sich sofort.
 
 ### Tastenkürzel
 
@@ -96,5 +100,5 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
 - **Default-Verzeichnis:** global für alle; pro Session überschreibbar? Was passiert mit bestehenden Sessions, wenn es geändert wird?
 - **Schliessen:** ohne Rückfrage. Bestätigung, wenn noch ein Programm läuft?
 - **Darstellung:** Sidebar vs. Tabs oben, Reihenfolge per Drag & Drop, Gruppen, Farben/Icons, Theme, Schriftgrösse
-- **Fenster:** Grösse/Position merken, mehrere Fenster, Split-Ansicht (mehrere Terminals nebeneinander)
+- **Fenster:** mehrere Fenster, Split-Ansicht (mehrere Terminals nebeneinander)
 - **Installation/Updates:** Installer (NSIS) für den eigenen Benutzer, Auto-Update, Autostart, Code-Signing
