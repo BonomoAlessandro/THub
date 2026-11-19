@@ -37,6 +37,9 @@ src/
     ports.ts                Ports des Kerns: Terminal-Backend, Speicher, Uhr, Prozess-Sonde, System
     schema.ts               Gespeicherter Zustand (Version 2) und Übernahme aus Version 1
     windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
+    claude.ts               Claude-Zuordnung pro Tab: Vertrag von Starter und Hooks, Regeln
+  main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
+  main/hookFile.ts          Hook-Datei für Claude Code (claude-hooks.json im Datenordner)
   main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
   main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
@@ -80,6 +83,15 @@ Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Da
 - Kopieren/Einfügen: Rechtsklick (mit Auswahl kopieren, sonst einfügen), `Ctrl+Shift+C` / `Ctrl+Shift+V`
 - Das Fenster öffnet mit gespeicherter Grösse, Position und Maximiert-Zustand; beim allerersten Start maximiert. Liegt es ausserhalb aller Bildschirme (etwa nach dem Abziehen eines Monitors), öffnet es zentriert auf dem Hauptbildschirm.
 - Nur eine Instanz: Ein zweiter Start holt das bestehende Fenster nach vorne, auch aus minimiertem Zustand, und beendet sich sofort.
+
+### Lokale Schnittstelle und Claude-Zuordnung (Grundlage)
+
+Beim Start öffnet TermHub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem zufälligen freien Port und mit einem pro Start zufälligen Token. Jedes Terminal bekommt `TERMHUB_TAB_ID`, `TERMHUB_API` (Adresse) und `TERMHUB_TOKEN`. Über diese Schnittstelle melden der `claude`-Starter (folgt in Ticket 11) und die Hooks von Claude Code, welche Claude-Session in welchem Tab läuft; TermHub merkt sich das als Claude-Zuordnung im gespeicherten Zustand (Session-Kennung, Ordner, bestätigt, hatte Prompt).
+
+- Endpunkte: `POST /claude/launch`, `/claude/started`, `/claude/exit` und `/hooks/<Ereignis>`. Ohne gültiges Token (`X-TermHub-Token`) antwortet der Server mit 403. Hook-Antworten sind immer sofort leer; TermHub hört nur zu und beeinflusst Claude nie.
+- Die Hook-Datei `claude-hooks.json` schreibt TermHub bei jedem Start neu in seinen Datenordner, nach der im Spike geprüften Vorlage (`spikes/claude-hooks/empfohlene-hook-datei.json`). `SessionStart` läuft über `curl.exe`, weil Claude dafür keine HTTP-Hooks kennt. Die globale Claude-Konfiguration bleibt unberührt.
+- Beendet TermHub sich selbst (App beenden, Tab schliessen, Windows-Abmeldung), wird die Zuordnung eingefroren: Spätere Ereignisse ändern sie nicht mehr.
+- Ein zweiter Start öffnet keinen Server und schreibt keine Hook-Datei.
 
 ### Tastenkürzel
 
