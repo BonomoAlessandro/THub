@@ -29,6 +29,8 @@ export interface TabSnapshot {
   id: string;
   name: string;
   shellId: string;
+  /** Anzeigename der Shell, mit der der Tab läuft, z.B. "PowerShell 7". */
+  shellName: string;
   /** Ordner zur Anzeige: zuletzt aktiver Ordner, sonst Startordner. */
   cwd: string;
   process: TabProcessState;
@@ -60,6 +62,10 @@ export type WorkspaceCommand =
   | { type: 'createTab' }
   | { type: 'renameTab'; tabId: string; name: string }
   | { type: 'activateTab'; tabId: string }
+  /** Zum Tab `offset` Plätze weiter, im Kreis (Ctrl+Tab: 1, Ctrl+Shift+Tab: -1). */
+  | { type: 'activateRelativeTab'; offset: number }
+  /** Zum Tab an Position `index` der Leiste, ab 0 (Ctrl+1 … Ctrl+9). */
+  | { type: 'activateTabAt'; index: number }
   | { type: 'closeTab'; tabId: string }
   /** Die Ansicht des Tabs ist bereit; erst danach erteilt der Kern den Startauftrag. */
   | { type: 'viewReady'; tabId: string; cols: number; rows: number }

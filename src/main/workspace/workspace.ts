@@ -37,11 +37,18 @@ export interface Workspace {
   /** Änderungsereignisse abonnieren; liefert die Abmeldung. */
   subscribe(listener: (event: WorkspaceEvent) => void): () => void;
 
-  /** Legt einen Tab an, macht ihn aktiv und liefert seine Kennung (leer, wenn der Kern beendet wird). */
+  /**
+   * Legt einen Tab rechts neben dem aktiven an, macht ihn aktiv und liefert seine Kennung
+   * (leer, wenn der Kern beendet wird).
+   */
   createTab(): string;
   /** Leere Namen werden ignoriert. */
   renameTab(tabId: string, name: string): void;
   activateTab(tabId: string): void;
+  /** Aktiviert den Tab `offset` Plätze weiter, über die Enden hinweg im Kreis. */
+  activateRelativeTab(offset: number): void;
+  /** Aktiviert den Tab an Position `index` (ab 0); gibt es dort keinen, bleibt alles, wie es ist. */
+  activateTabAt(index: number): void;
   /** Beendet die Shell; war der Tab aktiv, wird sein Nachbar aktiv. */
   closeTab(tabId: string): void;
 
@@ -137,7 +144,10 @@ class WorkspaceCore implements Workspace {
       shellId: this.defaultShell(this.state.settings.defaultShellId).id,
       startCwd: this.state.settings.defaultCwd || this.ports.system.homeDir(),
     };
-    this.state.tabs.push(tab);
+    // Rechts neben dem aktiven Tab, damit zusammengehörige Tabs nebeneinander bleiben; ohne aktiven ganz rechts.
+    const activeIndex = this.state.tabs.findIndex((t) => t.id === this.state.activeTabId);
+    const index = activeIndex < 0 ? this.state.tabs.length : activeIndex + 1;
+    this.state.tabs.splice(index, 0, tab);
     this.runtimes.set(tab.id, { process: 'pending' });
     this.state.activeTabId = tab.id;
     this.tabsChanged();
@@ -157,6 +167,19 @@ class WorkspaceCore implements Workspace {
     if (this.stopping || !this.findTab(tabId) || this.state.activeTabId === tabId) return;
     this.state.activeTabId = tabId;
     this.tabsChanged();
+  }
+
+  activateRelativeTab(offset: number): void {
+    const { tabs } = this.state;
+    if (tabs.length === 0 || !Number.isInteger(offset)) return;
+    const current = tabs.findIndex((t) => t.id === this.state.activeTabId);
+    const next = (((current + offset) % tabs.length) + tabs.length) % tabs.length;
+    this.activateTab(tabs[next].id);
+  }
+
+  activateTabAt(index: number): void {
+    const tab = Number.isInteger(index) ? this.state.tabs[index] : undefined;
+    if (tab) this.activateTab(tab.id);
   }
 
   closeTab(tabId: string): void {
@@ -345,6 +368,7 @@ class WorkspaceCore implements Workspace {
       id: tab.id,
       name: tab.name,
       shellId: tab.shellId,
+      shellName: this.shellFor(tab).name,
       cwd: tab.lastCwd ?? tab.startCwd,
       process: this.runtimes.get(tab.id)?.process ?? 'pending',
     }));

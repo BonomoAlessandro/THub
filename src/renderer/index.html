@@ -10,23 +10,7 @@
     <link rel="stylesheet" href="./renderer.css" />
   </head>
   <body>
-    <aside id="sidebar">
-      <header class="sidebar-header">
-        <span>Sessions</span>
-        <button id="btn-new" class="icon-btn" title="Neues Terminal (Ctrl+Shift+T)">+</button>
-      </header>
-      <ul id="session-list"></ul>
-      <footer class="sidebar-footer">
-        <div class="setting-label">Standardverzeichnis</div>
-        <button id="btn-default-cwd" class="cwd-btn" title="Standardverzeichnis ändern"></button>
-      </footer>
-    </aside>
-    <main id="terminals">
-      <div id="empty-state" hidden>
-        <p>Kein Terminal offen.</p>
-        <button id="btn-new-empty">Neues Terminal</button>
-      </div>
-    </main>
+    <div id="root"></div>
     <script src="./renderer.js"></script>
   </body>
 </html>

@@ -1,33 +1,32 @@
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
+import { cssVar, terminalTheme } from '../theme';
 
 const api = window.termhub;
 
-/** Ein xterm.js-Terminal im DOM, gekoppelt an die Shell eines Tabs. Die Shell startet der Kern. */
+/**
+ * Ein xterm.js-Terminal, gekoppelt an die Shell eines Tabs. Die Shell startet der Kern.
+ * Das Host-Element gehört der React-Komponente; die Ansicht wird darin geöffnet.
+ */
 export class TerminalView {
-  readonly host: HTMLDivElement;
   private readonly term: Terminal;
   private readonly fitAddon = new FitAddon();
   private exited = false;
 
   constructor(
     readonly tabId: string,
-    parent: HTMLElement,
+    private readonly host: HTMLElement,
   ) {
-    this.host = document.createElement('div');
-    this.host.className = 'terminal-host';
-    parent.appendChild(this.host);
-
     this.term = new Terminal({
-      fontFamily: "'Cascadia Mono', 'Cascadia Code', Consolas, monospace",
+      fontFamily: cssVar('--font-mono'),
       fontSize: 14,
       cursorBlink: true,
       scrollback: 5000,
       windowsPty: { backend: 'conpty' },
-      theme: { background: '#1e1e1e' },
+      theme: terminalTheme(),
     });
     this.term.loadAddon(this.fitAddon);
-    this.term.open(this.host);
+    this.term.open(host);
 
     this.term.onData((data) => {
       if (this.exited) {
@@ -39,11 +38,7 @@ export class TerminalView {
     this.term.onResize(({ cols, rows }) => api.send({ type: 'resizeTab', tabId: this.tabId, cols, rows }));
 
     // Rechtsklick wie in der Windows-Konsole: mit Auswahl kopieren, sonst einfügen.
-    this.host.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      if (this.term.hasSelection()) void this.copySelection();
-      else void this.paste();
-    });
+    host.addEventListener('contextmenu', this.onContextMenu);
   }
 
   /**
@@ -76,12 +71,13 @@ export class TerminalView {
     this.term.write(`\r\n\x1b[${color}m${text}\x1b[0m\r\n`);
   }
 
-  setActive(active: boolean): void {
-    this.host.classList.toggle('active', active);
-    if (active) {
-      this.fit();
-      this.term.focus();
-    }
+  /**
+   * Die Ansicht ist gerade sichtbar geworden: Grösse anpassen und Fokus holen. Ein offenes
+   * Eingabefeld (etwa beim Umbenennen eines Tabs) behält den Fokus.
+   */
+  show(): void {
+    this.fit();
+    if (!(document.activeElement instanceof HTMLInputElement)) this.term.focus();
   }
 
   focus(): void {
@@ -108,7 +104,13 @@ export class TerminalView {
   }
 
   dispose(): void {
+    this.host.removeEventListener('contextmenu', this.onContextMenu);
     this.term.dispose();
-    this.host.remove();
   }
+
+  private readonly onContextMenu = (e: MouseEvent): void => {
+    e.preventDefault();
+    if (this.term.hasSelection()) void this.copySelection();
+    else void this.paste();
+  };
 }
