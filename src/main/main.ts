@@ -88,7 +88,7 @@ function bringWindowToFront(): void {
   mainWindow.focus();
 }
 
-// Erst Zustand sichern und alle Shells sauber beenden, dann wirklich beenden.
+// Erst Verlauf und Zustand sichern und alle Shells sauber beenden, dann wirklich beenden.
 function onBeforeQuit(event: Electron.Event): void {
   if (shutdown === 'done' || !workspace) return;
   event.preventDefault();
@@ -140,6 +140,9 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
       return;
     case 'restartTab':
       ws.restartTab(command.tabId);
+      return;
+    case 'saveHistory':
+      ws.saveHistory(command.tabId, command.content);
       return;
     case 'updateSettings':
       ws.updateSettings(command.patch);
@@ -209,21 +212,39 @@ function createWindow(ws: Workspace, theme: ThemeSource): void {
   win.on('closed', () => {
     mainWindow = null;
   });
-  // Windows-Abmeldung oder -Neustart: sofort einfrieren und synchron sichern. Die Shells (und Claude darin)
-  // können danach jederzeit enden, ebenso TermHub selbst; ihr Ende darf die Claude-Zuordnungen nicht löschen.
-  const freeze = (): void => {
-    try {
-      ws.freeze();
-    } catch (err) {
-      console.error('Zustand konnte bei der Windows-Abmeldung nicht gesichert werden:', err);
-    }
-  };
-  win.on('query-session-end', freeze);
-  win.on('session-end', freeze);
   win.once('closed', followTheme(win, theme));
+  handleWindowEnd(win, ws);
 
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   // Maximiert öffnen: Darunter bleibt die gespeicherte normale Grösse, „Wiederherstellen“ führt dorthin.
   if (maximized) win.maximize();
   win.show();
+}
+
+/**
+ * Beenden über das Fenster (`×`, Alt+F4, Taskleiste): Das Schliessen wird abgefangen und läuft als
+ * geordnetes Beenden (onBeforeQuit), solange der Renderer noch lebt und dem Kern den Verlauf liefern
+ * kann. Erst danach schliesst sich das Fenster wirklich.
+ * Bei einer Windows-Abmeldung oder einem Neustart schreibt der Kern sofort, ohne auf den Renderer zu warten.
+ */
+function handleWindowEnd(win: BrowserWindow, ws: Workspace): void {
+  win.on('close', (event) => {
+    if (shutdown === 'done') return;
+    event.preventDefault();
+    // Das Fenster verschwindet sofort wie bisher. Versteckt darf der Renderer nicht gebremst werden,
+    // sonst käme seine Antwort mit dem Verlauf womöglich erst nach dem Zeitlimit.
+    win.webContents.setBackgroundThrottling(false);
+    win.hide();
+    app.quit();
+  });
+
+  const onSessionEnd = (): void => {
+    try {
+      ws.sessionEnding();
+    } catch (err) {
+      console.error('Zustand konnte bei der Windows-Abmeldung nicht gesichert werden:', err);
+    }
+  };
+  win.on('query-session-end', onSessionEnd);
+  win.on('session-end', onSessionEnd);
 }

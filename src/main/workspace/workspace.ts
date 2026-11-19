@@ -37,6 +37,10 @@ import { placeWindow } from './windowPlacement';
 const SHUTDOWN_TIMEOUT_MS = 3000;
 /** Fensterangaben werden gespeichert, sobald das Fenster so lange nicht mehr verändert wurde. */
 const WINDOW_SAVE_DELAY_MS = 500;
+/** In diesem Abstand wird der Verlauf von Tabs gesichert, deren Inhalt sich geändert hat. */
+const HISTORY_SAVE_INTERVAL_MS = 30_000;
+/** So lange wartet das Beenden höchstens auf den Verlauf aus dem Renderer. */
+const HISTORY_QUIT_TIMEOUT_MS = 2000;
 
 export interface WorkspaceOptions {
   /** Shells, die der Kern starten kann. Bis zur Shell-Erkennung (Ticket 06) eine feste Liste. */
@@ -70,15 +74,24 @@ export interface Workspace extends ClaudeReceiver {
   activateRelativeTab(offset: number): void;
   /** Aktiviert den Tab an Position `index` (ab 0); gibt es dort keinen, bleibt alles, wie es ist. */
   activateTabAt(index: number): void;
-  /** Beendet die Shell; war der Tab aktiv, wird sein Nachbar aktiv. */
+  /** Beendet die Shell und löscht den Verlauf; war der Tab aktiv, wird sein Nachbar aktiv. */
   closeTab(tabId: string): void;
 
-  /** Die Ansicht des Tabs ist bereit; erst jetzt startet seine Shell, in dieser Grösse. */
+  /**
+   * Die Ansicht des Tabs ist bereit; erst jetzt startet seine Shell, in dieser Grösse. Ein Tab aus dem
+   * gespeicherten Zustand bekommt vorher einmal seinen Verlauf (`restoreHistory`).
+   */
   viewReady(tabId: string, cols: number, rows: number): void;
   resizeTab(tabId: string, cols: number, rows: number): void;
   writeToTab(tabId: string, data: string): void;
   /** Startet eine beendete Shell neu. */
   restartTab(tabId: string): void;
+
+  /**
+   * Der Renderer liefert den Verlauf eines Tabs, meist als Antwort auf `requestHistory`. Der Kern
+   * sichert ihn sofort. Für geschlossene Tabs wird nichts mehr gesichert.
+   */
+  saveHistory(tabId: string, content: string): void;
 
   updateSettings(patch: Partial<Settings>): void;
 
@@ -95,13 +108,23 @@ export interface Workspace extends ClaudeReceiver {
   windowChanged(state: WindowState): void;
 
   /**
-   * TermHub beendet sich selbst (etwa bei einer Windows-Abmeldung): Die Claude-Zuordnungen werden eingefroren
+   * THub beendet sich selbst (etwa bei einer Windows-Abmeldung): Die Claude-Zuordnungen werden eingefroren
    * und der Zustand sofort geschrieben. Danach ändern weder Meldungen von Starter und Claude noch das Ende
    * einer Shell die Zuordnungen; sonst käme nach dem Beenden jeder Claude-Tab als normales Terminal zurück.
    */
   freeze(): void;
-  /** Friert ein, sichert den Zustand und beendet alle Shells. Danach nimmt der Kern keine Befehle mehr an. */
+  /**
+   * Friert die Claude-Zuordnungen ein, fordert den Verlauf geänderter Tabs an und wartet darauf höchstens
+   * 2 Sekunden, sichert den Zustand und beendet alle Shells. Danach nimmt der Kern keine Befehle mehr an.
+   */
   shutdown(): Promise<void>;
+
+  /**
+   * Windows meldet sich ab oder startet neu: Der Zustand wird sofort und synchron geschrieben. Als
+   * Verlauf gilt der zuletzt gesicherte; der Renderer wird nicht gefragt, weil er womöglich nicht mehr
+   * antwortet. Wirft, wenn das Schreiben scheitert.
+   */
+  sessionEnding(): void;
 }
 
 export function createWorkspace(ports: WorkspacePorts, options: WorkspaceOptions): Workspace {
@@ -118,6 +141,18 @@ interface TabRuntime {
   pid?: number;
   /** Prozess-ID von Claude, vom Starter gemeldet; für die Prozess-Regeln (Ticket 13). */
   claudePid?: number;
+  /** Der Tab kommt aus dem gespeicherten Zustand: Vor dem ersten Start bekommt die Ansicht seinen Verlauf. */
+  restorePending: boolean;
+  /** Zählt die Ausgabestücke der Shell; daran erkennt die Sicherung, ob sich der Inhalt geändert hat. */
+  output: number;
+  /** Stand von `output`, als der Verlauf zuletzt angefordert wurde. */
+  requested: number;
+  /** Stand von `output`, den der gesicherte Verlauf enthält. */
+  saved: number;
+}
+
+function newRuntime(restorePending: boolean): TabRuntime {
+  return { process: 'pending', restorePending, output: 0, requested: 0, saved: 0 };
 }
 
 class WorkspaceCore implements Workspace {
@@ -129,6 +164,10 @@ class WorkspaceCore implements Workspace {
   private frozen = false;
   /** Vorgemerktes Speichern geänderter Fensterangaben; `null`, wenn nichts aussteht. */
   private cancelWindowSave: CancelTimer | null = null;
+  /** Nächste periodische Sicherung des Verlaufs; `null` nach dem Beenden. */
+  private cancelHistoryTimer: CancelTimer | null = null;
+  /** Beim Beenden: Tabs, deren Verlauf noch aussteht, und wie es danach weitergeht. */
+  private quitHistory: { pending: Set<string>; finish: () => void } | null = null;
 
   constructor(
     private readonly ports: WorkspacePorts,
@@ -142,11 +181,13 @@ class WorkspaceCore implements Workspace {
       defaultShellId: this.defaultShell(undefined).id,
     });
     this.state = loaded.state;
-    for (const tab of this.state.tabs) this.runtimes.set(tab.id, { process: 'pending' });
+    for (const tab of this.state.tabs) this.runtimes.set(tab.id, newRuntime(true));
 
     // Wie bisher: Ohne gespeicherte Tabs startet TermHub mit einem neuen Terminal.
     if (this.state.tabs.length === 0) this.createTab();
     else if (loaded.migrated) this.save();
+
+    this.scheduleHistorySave();
   }
 
   // ---------- Abfragen und Ereignisse ----------
@@ -180,7 +221,7 @@ class WorkspaceCore implements Workspace {
     const activeIndex = this.state.tabs.findIndex((t) => t.id === this.state.activeTabId);
     const index = activeIndex < 0 ? this.state.tabs.length : activeIndex + 1;
     this.state.tabs.splice(index, 0, tab);
-    this.runtimes.set(tab.id, { process: 'pending' });
+    this.runtimes.set(tab.id, newRuntime(false));
     this.state.activeTabId = tab.id;
     this.tabsChanged();
     return tab.id;
@@ -217,9 +258,14 @@ class WorkspaceCore implements Workspace {
   closeTab(tabId: string): void {
     const index = this.state.tabs.findIndex((t) => t.id === tabId);
     if (this.stopping || index < 0) return;
-    // Zuerst austragen: Das Ende der Shell gehört dann zu keinem Tab mehr.
+    // Zuerst austragen: Das Ende der Shell gehört dann zu keinem Tab mehr, ein später eintreffender
+    // Verlauf ebenfalls nicht.
     this.runtimes.delete(tabId);
     this.ports.terminal.kill(tabId);
+    // Bis zur Liste der geschlossenen Tabs (Ticket 15) verschwindet der Verlauf mit dem Tab.
+    this.withHistoryStorage('Verlauf konnte nicht gelöscht werden', () =>
+      this.ports.storage.deleteHistory(tabId),
+    );
     this.state.tabs.splice(index, 1);
     if (this.state.activeTabId === tabId) {
       const neighbour = this.state.tabs[index] ?? this.state.tabs[index - 1];
@@ -235,8 +281,11 @@ class WorkspaceCore implements Workspace {
     const runtime = this.runtimes.get(tabId);
     if (this.stopping || !tab || !runtime || !isValidSize(cols, rows)) return;
     runtime.view = { cols, rows };
-    if (runtime.process === 'pending') this.startShell(tab, runtime);
-    else if (runtime.process === 'running') this.ports.terminal.resize(tabId, cols, rows);
+    if (runtime.process === 'pending') {
+      // Erst der Verlauf, dann der Startauftrag: So steht er vor der ersten Ausgabe der Shell.
+      this.restoreHistory(tabId, runtime);
+      this.startShell(tab, runtime);
+    } else if (runtime.process === 'running') this.ports.terminal.resize(tabId, cols, rows);
   }
 
   resizeTab(tabId: string, cols: number, rows: number): void {
@@ -279,7 +328,9 @@ class WorkspaceCore implements Workspace {
     try {
       const pid = this.ports.terminal.start(tab.id, order, {
         data: (chunk) => {
-          if (isCurrent()) this.emit({ type: 'output', tabId: tab.id, data: chunk });
+          if (!isCurrent()) return;
+          runtime.output++;
+          this.emit({ type: 'output', tabId: tab.id, data: chunk });
         },
         exit: (exitCode) => {
           if (!isCurrent()) return;
@@ -323,6 +374,94 @@ class WorkspaceCore implements Workspace {
     const candidates = [tab.lastCwd, tab.startCwd, this.state.settings.defaultCwd];
     const existing = candidates.find((dir) => dir && this.ports.system.directoryExists(dir));
     return existing ?? this.ports.system.homeDir();
+  }
+
+  // ---------- Verlauf ----------
+
+  saveHistory(tabId: string, content: string): void {
+    const runtime = this.runtimes.get(tabId);
+    const quit = this.quitHistory;
+    const awaited = quit?.pending.has(tabId) ?? false;
+    // Beim Beenden zählen nur noch die Antworten, auf die das Beenden wartet.
+    if (!runtime || typeof content !== 'string' || (this.stopping && !awaited)) return;
+    this.withHistoryStorage('Verlauf konnte nicht gesichert werden', () => {
+      this.ports.storage.saveHistory(tabId, { content, savedAt: this.ports.clock.now() });
+      runtime.saved = runtime.requested;
+    });
+    if (quit && awaited) {
+      quit.pending.delete(tabId);
+      if (quit.pending.size === 0) quit.finish();
+    }
+  }
+
+  /** Gibt der Ansicht eines wiederhergestellten Tabs seinen Verlauf, einmal und vor dem ersten Start. */
+  private restoreHistory(tabId: string, runtime: TabRuntime): void {
+    if (!runtime.restorePending) return;
+    runtime.restorePending = false;
+    const history = this.withHistoryStorage('Verlauf konnte nicht gelesen werden', () =>
+      this.ports.storage.loadHistory(tabId),
+    );
+    if (history?.content) {
+      this.emit({ type: 'restoreHistory', tabId, content: history.content, savedAt: history.savedAt });
+    }
+  }
+
+  /** Sichert alle 30 Sekunden den Verlauf der Tabs, deren Inhalt sich geändert hat. */
+  private scheduleHistorySave(): void {
+    this.cancelHistoryTimer = this.ports.clock.schedule(HISTORY_SAVE_INTERVAL_MS, () => {
+      this.requestHistory(this.changedTabIds());
+      this.scheduleHistorySave();
+    });
+  }
+
+  /** Tabs mit Ausgabe seit der letzten Sicherung, in der Reihenfolge der Leiste. */
+  private changedTabIds(): string[] {
+    return this.state.tabs
+      .map((tab) => tab.id)
+      .filter((id) => {
+        const runtime = this.runtimes.get(id);
+        return runtime !== undefined && runtime.output !== runtime.saved;
+      });
+  }
+
+  /** Fordert den Verlauf dieser Tabs beim Renderer an; er antwortet je Tab mit `saveHistory`. */
+  private requestHistory(tabIds: string[]): void {
+    if (tabIds.length === 0) return;
+    for (const id of tabIds) {
+      const runtime = this.runtimes.get(id);
+      if (runtime) runtime.requested = runtime.output;
+    }
+    this.emit({ type: 'requestHistory', tabIds });
+  }
+
+  /** Beim Beenden: fordert den Verlauf geänderter Tabs an und wartet auf alle Antworten, höchstens 2 s. */
+  private collectHistory(): Promise<void> {
+    const tabIds = this.changedTabIds();
+    if (tabIds.length === 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      const finish = (): void => {
+        cancelTimeout();
+        this.quitHistory = null;
+        resolve();
+      };
+      // Antwortet der Renderer nicht (mehr), geht das Beenden nach dem Zeitlimit trotzdem weiter.
+      const cancelTimeout = this.ports.clock.schedule(HISTORY_QUIT_TIMEOUT_MS, finish);
+      this.quitHistory = { pending: new Set(tabIds), finish };
+      this.requestHistory(tabIds);
+    });
+  }
+
+  /**
+   * Der Verlauf ist eine Zugabe: Scheitert der Speicher daran, laufen Tabs und Beenden trotzdem weiter.
+   * Liefert das Ergebnis von `action`, bei einem Fehler `undefined`.
+   */
+  private withHistoryStorage<T>(failure: string, action: () => T): T | undefined {
+    try {
+      return action();
+    } catch (err) {
+      console.error(`${failure}:`, err);
+      return undefined;
+    }
   }
 
   // ---------- Shells ----------
@@ -439,18 +578,30 @@ class WorkspaceCore implements Workspace {
 
   shutdown(): Promise<void> {
     if (!this.stopping) {
-      // Die Shells werden auch dann beendet, wenn das Sichern scheitert; der Fehler kommt danach.
-      let saveError: unknown = null;
-      try {
-        this.freeze();
-      } catch (err) {
-        saveError = err;
-      }
-      this.stopping = this.ports.terminal.killAll(SHUTDOWN_TIMEOUT_MS).then(() => {
-        if (saveError) throw saveError;
+      this.cancelHistoryTimer?.();
+      this.cancelHistoryTimer = null;
+      // Sofort einfrieren: Ab jetzt ändern Meldungen von Starter und Claude die Zuordnungen nicht mehr.
+      this.frozen = true;
+      // Erst den Verlauf, solange die Shells noch laufen und der Renderer ihn zeigt; dann sichern und beenden.
+      this.stopping = this.collectHistory().then(() => {
+        // Die Shells werden auch dann beendet, wenn das Sichern scheitert; der Fehler kommt danach.
+        let saveError: unknown = null;
+        try {
+          this.freeze();
+        } catch (err) {
+          saveError = err;
+        }
+        return this.ports.terminal.killAll(SHUTDOWN_TIMEOUT_MS).then(() => {
+          if (saveError) throw saveError;
+        });
       });
     }
     return this.stopping;
+  }
+
+  sessionEnding(): void {
+    // Einfrieren und synchron sichern; der Verlauf liegt von der letzten periodischen Sicherung schon auf der Platte.
+    this.freeze();
   }
 
   // ---------- Intern ----------

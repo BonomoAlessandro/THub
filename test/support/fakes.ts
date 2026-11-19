@@ -9,6 +9,7 @@ import type {
   ProcessProbe,
   StartOrder,
   StateStorage,
+  TabHistory,
   TerminalBackend,
   TerminalListener,
 } from '../../src/main/workspace/ports';
@@ -97,11 +98,15 @@ export class FakeTerminalBackend implements TerminalBackend {
 
 // ---------- Speicher ----------
 
-/** Speicher im Arbeitsspeicher. `stored` ist das, was „auf der Platte“ liegt. */
+/**
+ * Speicher im Arbeitsspeicher. `stored` ist der Zustand, `histories` der Verlauf pro Tab, so wie
+ * beides „auf der Platte“ liegt.
+ */
 export class MemoryStorage implements StateStorage {
   stored: unknown;
   saves = 0;
   flushes = 0;
+  readonly histories = new Map<string, TabHistory>();
 
   /** @param initial roher gespeicherter Zustand, z.B. eine Datei der Version 1 */
   constructor(initial: unknown = null) {
@@ -119,6 +124,19 @@ export class MemoryStorage implements StateStorage {
 
   flush(): void {
     this.flushes++;
+  }
+
+  loadHistory(tabId: string): TabHistory | null {
+    const history = this.histories.get(tabId);
+    return history ? structuredClone(history) : null;
+  }
+
+  saveHistory(tabId: string, history: TabHistory): void {
+    this.histories.set(tabId, structuredClone(history));
+  }
+
+  deleteHistory(tabId: string): void {
+    this.histories.delete(tabId);
   }
 }
 

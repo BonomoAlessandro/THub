@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StateStore } from '../../src/main/store';
 import { startWorkspace, type TestWorkspace } from '../support/harness';
 import { makeTempDir } from '../support/tempDir';
@@ -26,6 +26,7 @@ function corruptBackups(dir: string): string[] {
 // Beendet die Kerne vor dem Aufräumen der Temp-Ordner, damit kein entprelltes Schreiben nachläuft.
 afterEach(async () => {
   for (const h of running.splice(0)) await h.workspace.shutdown();
+  vi.restoreAllMocks();
 });
 
 describe('Zustandsdatei', () => {
@@ -101,5 +102,75 @@ describe('Zustandsdatei', () => {
 
     expect(h.tabs()).toMatchObject([{ id: 't1', name: 'Mit BOM', shellId: 'cmd' }]);
     expect(corruptBackups(dir)).toEqual([]);
+  });
+});
+
+describe('Verlaufsdateien', () => {
+  it('legt den Verlauf pro Tab als eigene Datei ab und gibt ihn nach einem Neustart zurück', async () => {
+    const { h, dir } = startWithStateFile();
+    const id = h.activeTab()!.id;
+    const content = '\x1b[32mgrün\x1b[0m Übersicht\r\n';
+    h.showAllViews();
+    h.terminal.output(id, content);
+    h.clock.advance(30_000);
+
+    expect(fs.readdirSync(path.join(dir, 'history'))).toEqual([`${id}.json`]);
+    await h.restart();
+    h.showAllViews();
+    expect(h.eventsOfType('restoreHistory')).toEqual([
+      { type: 'restoreHistory', tabId: id, content, savedAt: expect.any(Number) },
+    ]);
+  });
+
+  it('löscht die Datei, wenn der Tab geschlossen wird', () => {
+    const { h, dir } = startWithStateFile();
+    const id = h.activeTab()!.id;
+    h.showAllViews();
+    h.terminal.output(id, 'Ausgabe\r\n');
+    h.clock.advance(30_000);
+
+    h.workspace.closeTab(id);
+
+    expect(fs.readdirSync(path.join(dir, 'history'))).toEqual([]);
+  });
+
+  it('übergeht eine unlesbare Verlaufsdatei und startet die Shell trotzdem', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { h, dir } = startWithStateFile();
+    const id = h.activeTab()!.id;
+    h.showAllViews();
+    h.terminal.output(id, 'Ausgabe\r\n');
+    await h.restart();
+    fs.writeFileSync(path.join(dir, 'history', `${id}.json`), '{ "content": ', 'utf8');
+
+    h.showAllViews();
+
+    expect(h.eventsOfType('restoreHistory')).toEqual([]);
+    expect(h.terminal.startsFor(id)).toHaveLength(1);
+  });
+
+  it('macht aus anderen Tab-Kennungen (etwa aus Version 1) sichere Dateinamen', () => {
+    const dir = makeTempDir();
+    const store = new StateStore(path.join(dir, 'state.json'));
+    const ids = ['a1', 'CON', '..\\..\\böse', 'x/y:z*?'];
+
+    for (const id of ids) store.saveHistory(id, { content: `Verlauf von ${id}`, savedAt: 1 });
+
+    const files = fs.readdirSync(path.join(dir, 'history'));
+    expect(files).toHaveLength(ids.length);
+    expect(files.every((name) => /^[0-9a-f]{64}\.json$/.test(name))).toBe(true);
+    expect(fs.readdirSync(dir)).toEqual(['history']);
+    for (const id of ids) expect(store.loadHistory(id)).toEqual({ content: `Verlauf von ${id}`, savedAt: 1 });
+  });
+
+  it('schreibt bei einer Windows-Abmeldung sofort, auch innerhalb der Entprellzeit', () => {
+    const { h, file } = startWithStateFile();
+    h.workspace.renameTab(h.activeTab()!.id, 'Kurz vor der Abmeldung');
+
+    h.workspace.sessionEnding();
+
+    expect(JSON.parse(fs.readFileSync(file, 'utf8'))).toMatchObject({
+      tabs: [{ name: 'Kurz vor der Abmeldung' }],
+    });
   });
 });

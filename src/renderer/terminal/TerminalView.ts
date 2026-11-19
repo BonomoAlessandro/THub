@@ -1,6 +1,8 @@
 import { FitAddon } from '@xterm/addon-fit';
+import { SerializeAddon } from '@xterm/addon-serialize';
 import { Terminal } from '@xterm/xterm';
 import { cssVar, terminalTheme } from '../theme';
+import { restoredHistory, serializeHistory } from './history';
 
 const api = window.termhub;
 
@@ -11,6 +13,7 @@ const api = window.termhub;
 export class TerminalView {
   private readonly term: Terminal;
   private readonly fitAddon = new FitAddon();
+  private readonly serializeAddon = new SerializeAddon();
   private exited = false;
 
   constructor(
@@ -26,6 +29,7 @@ export class TerminalView {
       theme: terminalTheme(),
     });
     this.term.loadAddon(this.fitAddon);
+    this.term.loadAddon(this.serializeAddon);
     this.term.open(host);
 
     this.term.onData((data) => {
@@ -69,6 +73,24 @@ export class TerminalView {
   notice(level: 'info' | 'error', text: string): void {
     const color = level === 'error' ? '31' : '90';
     this.term.write(`\r\n\x1b[${color}m${text}\x1b[0m\r\n`);
+  }
+
+  /**
+   * Schreibt den gesicherten Verlauf ins noch leere Terminal, bevor die Shell etwas ausgibt: ausgegraut,
+   * mit Trennlinie und ganz im Scrollback, damit ihn das Leeren durch ConPTY beim Start nicht trifft.
+   */
+  restoreHistory(content: string, savedAt: number): void {
+    this.term.write(restoredHistory(content, savedAt, this.term.cols, this.term.rows));
+  }
+
+  /**
+   * Der aktuelle Inhalt zum Sichern. Serialisiert wird erst, wenn alle bisher empfangenen Ausgaben
+   * verarbeitet sind; xterm.js schreibt verzögert.
+   */
+  serializeHistory(): Promise<string> {
+    return new Promise((resolve) => {
+      this.term.write('', () => resolve(serializeHistory(this.term, this.serializeAddon)));
+    });
   }
 
   /**

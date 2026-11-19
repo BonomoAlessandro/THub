@@ -8,7 +8,7 @@ import { afterEach } from 'vitest';
 import { HOOK_FILE_NAME, writeHookFile } from '../../src/main/hookFile';
 import { LocalApiServer } from '../../src/main/localApi';
 import type { LocalApiInfo } from '../../src/main/workspace/claude';
-import type { ShellInfo, StateStorage } from '../../src/main/workspace/ports';
+import type { ShellInfo, StateStorage, TabHistory } from '../../src/main/workspace/ports';
 import type { PersistedState, PersistedTab } from '../../src/main/workspace/schema';
 import { createWorkspace, type Workspace } from '../../src/main/workspace/workspace';
 import type { TabSnapshot, WorkspaceEvent, WorkspaceSnapshot } from '../../src/shared/types';
@@ -66,9 +66,42 @@ export interface TestWorkspaceOptions extends FakeSystemOptions {
   shells?: ShellInfo[];
 }
 
+/**
+ * Die Oberfläche, soweit die Kern-Tests sie brauchen: Sie zeigt pro Tab den wiederhergestellten Verlauf
+ * und die Ausgabe der Shell an und liefert diesen Inhalt, wenn der Kern den Verlauf anfordert. Sie
+ * antwortet sofort; mit `answersHistory = false` spielt sie einen Renderer, der nicht mehr antwortet.
+ */
+export class TestRenderer {
+  answersHistory = true;
+  private readonly screens = new Map<string, string>();
+
+  constructor(private readonly workspace: Workspace) {}
+
+  /** Was im Terminal des Tabs steht. */
+  screen(tabId: string): string {
+    return this.screens.get(tabId) ?? '';
+  }
+
+  handle(event: WorkspaceEvent): void {
+    switch (event.type) {
+      case 'restoreHistory':
+        this.screens.set(event.tabId, event.content);
+        return;
+      case 'output':
+        this.screens.set(event.tabId, this.screen(event.tabId) + event.data);
+        return;
+      case 'requestHistory':
+        if (!this.answersHistory) return;
+        for (const tabId of event.tabIds) this.workspace.saveHistory(tabId, this.screen(tabId));
+        return;
+    }
+  }
+}
+
 interface Instance {
   workspace: Workspace;
   terminal: FakeTerminalBackend;
+  renderer: TestRenderer;
   events: WorkspaceEvent[];
   api: RunningApi | null;
 }
@@ -102,6 +135,11 @@ export class TestWorkspace {
   /** Ereignisse, die der Renderer vom laufenden Kern bekommen hat. */
   get events(): WorkspaceEvent[] {
     return this.current.events;
+  }
+
+  /** Die Oberfläche des laufenden Kerns; nach einem Neustart eine neue mit leeren Terminals. */
+  get renderer(): TestRenderer {
+    return this.current.renderer;
   }
 
   /**
@@ -147,6 +185,11 @@ export class TestWorkspace {
     return tabs.find((t) => t.id === activeTabId);
   }
 
+  /** Der gesicherte Verlauf eines Tabs, so wie er im Speicher liegt. */
+  storedHistory(tabId: string): TabHistory | null {
+    return this.storage.loadHistory(tabId);
+  }
+
   tabNamed(name: string): TabSnapshot {
     const tab = this.tabs().find((t) => t.name === name);
     if (!tab) throw new Error(`Kein Tab mit dem Namen ${name}`);
@@ -181,8 +224,12 @@ export class TestWorkspace {
       { shells: this.shells, localApi: api?.info },
     );
     api?.server.connect(workspace);
-    workspace.subscribe((event) => events.push(event));
-    return { workspace, terminal, events, api };
+    const renderer = new TestRenderer(workspace);
+    workspace.subscribe((event) => {
+      events.push(event);
+      renderer.handle(event);
+    });
+    return { workspace, terminal, renderer, events, api };
   }
 }
 

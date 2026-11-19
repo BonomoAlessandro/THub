@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { StateStore } from '../../src/main/store';
 import { MemoryStorage } from '../support/fakes';
 import { hookEvent, hookPayload, type HookSample } from '../support/apiClient';
@@ -371,9 +371,10 @@ describe('Claude-Zuordnung', () => {
       await hook(h, tabId, 'UserPromptSubmit', { session_id: id, cwd: 'C:\\proj' });
       const frozen = h.storedTab(tabId)?.claude;
 
-      // Beenden beendet die Shells; ihr Ende kommt, während TermHub noch Meldungen annimmt.
+      // Beenden holt erst den Verlauf und beendet dann die Shells; ihr Ende kommt, während TermHub noch
+      // Meldungen annimmt. Eingefroren ist ab dem Aufruf von shutdown().
       const shutdown = h.workspace.shutdown();
-      expect(h.terminal.isRunning(tabId)).toBe(false);
+      await vi.waitFor(() => expect(h.terminal.isRunning(tabId)).toBe(false));
       await hook(h, tabId, 'SessionEnd-other', { session_id: id, cwd: 'C:\\proj' });
       expect(await h.api.exit(tabId, id, 0)).toMatchObject({ status: 200, body: '' });
       await shutdown;

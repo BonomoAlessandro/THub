@@ -1,19 +1,24 @@
+import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { StateStorage } from './workspace/ports';
+import type { StateStorage, TabHistory } from './workspace/ports';
 import type { PersistedState } from './workspace/schema';
 
 const SAVE_DEBOUNCE_MS = 200;
 
 /**
- * Speicher: liest state.json und schreibt den Zustand entprellt und atomar zurück.
- * Was im Zustand steht, entscheidet der Workspace-Kern; dieser Speicher kennt nur die Datei.
+ * Speicher: liest state.json und schreibt den Zustand entprellt und atomar zurück. Den Verlauf legt er
+ * pro Tab als eigene Datei im Unterordner `history` ab, sofort und ebenfalls atomar.
+ * Was im Zustand steht, entscheidet der Workspace-Kern; dieser Speicher kennt nur die Dateien.
  */
 export class StateStore implements StateStorage {
   private pending: PersistedState | null = null;
   private saveTimer: NodeJS.Timeout | null = null;
+  private readonly historyDir: string;
 
-  constructor(private readonly file: string) {}
+  constructor(private readonly file: string) {
+    this.historyDir = path.join(path.dirname(file), 'history');
+  }
 
   loadState(): unknown {
     let raw: string;
@@ -56,6 +61,42 @@ export class StateStore implements StateStorage {
     this.writePending();
   }
 
+  loadHistory(tabId: string): TabHistory | null {
+    let raw: string;
+    try {
+      raw = fs.readFileSync(this.historyFile(tabId), 'utf8');
+    } catch {
+      return null;
+    }
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (isHistoryFile(parsed)) return { content: parsed.content, savedAt: parsed.savedAt };
+    } catch {
+      // Unten weiter.
+    }
+    // Eine unlesbare Verlaufsdatei kostet nur den Verlauf; die nächste Sicherung ersetzt sie.
+    console.error(`Verlauf von Tab ${tabId} ist unlesbar und wird ignoriert.`);
+    return null;
+  }
+
+  saveHistory(tabId: string, history: TabHistory): void {
+    const file: HistoryFile = { version: 1, savedAt: history.savedAt, content: history.content };
+    writeAtomically(this.historyFile(tabId), JSON.stringify(file));
+  }
+
+  deleteHistory(tabId: string): void {
+    fs.rmSync(this.historyFile(tabId), { force: true });
+  }
+
+  private historyFile(tabId: string): string {
+    // Kennungen sind UUIDs. Andere (etwa aus Version 1) werden zu einem sicheren Dateinamen; die
+    // Mindestlänge schliesst reservierte Namen wie CON oder NUL aus.
+    const name = /^[A-Za-z0-9_-]{8,64}$/.test(tabId)
+      ? tabId
+      : createHash('sha256').update(tabId).digest('hex');
+    return path.join(this.historyDir, `${name}.json`);
+  }
+
   private writePending(): void {
     if (!this.pending) return;
     const state = this.pending;
@@ -65,4 +106,26 @@ export class StateStore implements StateStorage {
     fs.writeFileSync(tmp, JSON.stringify(state, null, 2), 'utf8');
     fs.renameSync(tmp, this.file);
   }
+}
+
+/** Inhalt einer Verlaufsdatei. */
+interface HistoryFile {
+  version: 1;
+  savedAt: number;
+  /** Serialisierter Terminal-Inhalt mit Escape-Sequenzen. */
+  content: string;
+}
+
+function isHistoryFile(value: unknown): value is HistoryFile {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.content === 'string' && typeof v.savedAt === 'number' && Number.isFinite(v.savedAt);
+}
+
+/** Schreibt wie state.json über eine Temp-Datei: Ein Absturz hinterlässt nie eine halbe Datei. */
+function writeAtomically(file: string, data: string): void {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = `${file}.tmp`;
+  fs.writeFileSync(tmp, data, 'utf8');
+  fs.renameSync(tmp, file);
 }

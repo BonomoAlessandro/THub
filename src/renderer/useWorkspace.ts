@@ -12,7 +12,8 @@ export interface WorkspaceView {
 
 /**
  * Hält die Anzeige mit dem Kern im Gleichstand: zuerst der Schnappschuss, danach die
- * Änderungsereignisse. Ausgabe, Ende und Hinweise gehen direkt an die Terminal-Ansichten.
+ * Änderungsereignisse. Ausgabe, Ende, Hinweise und Verlauf gehen direkt an die Terminal-Ansichten;
+ * fordert der Kern den Verlauf an, antworten sie mit ihrem serialisierten Inhalt.
  * Liefert `null`, solange der Schnappschuss noch nicht da ist.
  */
 export function useWorkspace(): {
@@ -42,6 +43,18 @@ export function useWorkspace(): {
           return;
         case 'notice':
           terminalViews.get(event.tabId)?.notice(event.level, event.text);
+          return;
+        case 'restoreHistory':
+          // Kommt nach „Ansicht bereit“ und vor der ersten Ausgabe der Shell.
+          terminalViews.get(event.tabId)?.restoreHistory(event.content, event.savedAt);
+          return;
+        case 'requestHistory':
+          for (const tabId of event.tabIds) {
+            void terminalViews
+              .get(tabId)
+              ?.serializeHistory()
+              .then((content) => api.send({ type: 'saveHistory', tabId, content }));
+          }
           return;
         case 'settings':
           // Einstellungen zeigt die Oberfläche erst mit dem Einstellungsdialog (Ticket 05) wieder an.
