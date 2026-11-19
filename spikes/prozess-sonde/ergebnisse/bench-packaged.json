@@ -1,0 +1,382 @@
+{
+  "when": "2026-11-19T14:29:40.189Z",
+  "packaged": true,
+  "appPath": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\spikes\\prozess-sonde\\release\\win-unpacked\\resources\\app.asar",
+  "electron": "45.4.1",
+  "node": "24.22.3",
+  "napi": "10",
+  "modules": "150",
+  "arch": "x64",
+  "os": "Windows_NT 10.0.26200",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12800H",
+  "logicalCpus": 20,
+  "pollMs": 1500,
+  "results": [
+    {
+      "key": "toolhelp",
+      "name": "koffi + Toolhelp32",
+      "kind": "in-process",
+      "createMs": 2.3919000000005326,
+      "firstSnapshotMs": 38.15809999999965,
+      "processCount": 554,
+      "selfCheck": {
+        "name": "ProzessSondeSpike.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 36392,
+          "ppid": 10752,
+          "name": "timeout.exe"
+        },
+        {
+          "pid": 36664,
+          "ppid": 36392,
+          "name": "ProzessSondeSpike.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 58,
+          "min": 14.74,
+          "median": 16.411,
+          "p95": 27.93,
+          "max": 36.153,
+          "mean": 17.273
+        },
+        "mainCpuMsPerSnapshot": 16.982758620689655,
+        "childCpuMsPerSnapshot": 0,
+        "wmiCpuMsPerSnapshot": 6.734913793103448,
+        "wallTotalMs": 1002.0190999999995,
+        "totalCpuMsPerSnapshot": 23.717672413793103,
+        "cpuPercentOneCoreAt1500ms": 1.5811781609195403
+      },
+      "interval": {
+        "polls": 4,
+        "wallMs": 6037.460599999999,
+        "mainCpuMsOverIdle": 93.90010506666667,
+        "childCpuMs": 0,
+        "wmiCpuMsOverIdle": -17.380965624999988,
+        "cpuPercentOneCore": 1.2674060256669284,
+        "cpuPercentMachine": 0.06337030128334642,
+        "childWorkingSetMB": 0,
+        "childPrivateMB": 0
+      }
+    },
+    {
+      "key": "ntqsi",
+      "name": "koffi + NtQuerySystemInformation(SystemProcessInformation)",
+      "kind": "in-process",
+      "createMs": 0.2540000000008149,
+      "firstSnapshotMs": 14.941500000000815,
+      "processCount": 560,
+      "selfCheck": {
+        "name": "ProzessSondeSpike.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 36392,
+          "ppid": 10752,
+          "name": "timeout.exe"
+        },
+        {
+          "pid": 36664,
+          "ppid": 36392,
+          "name": "ProzessSondeSpike.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 126,
+          "min": 5.363,
+          "median": 7.813,
+          "p95": 10.495,
+          "max": 12.044,
+          "mean": 7.965
+        },
+        "mainCpuMsPerSnapshot": 8.055555555555555,
+        "childCpuMsPerSnapshot": 0,
+        "wmiCpuMsPerSnapshot": 0,
+        "wallTotalMs": 1003.8868999999995,
+        "totalCpuMsPerSnapshot": 8.055555555555555,
+        "cpuPercentOneCoreAt1500ms": 0.537037037037037,
+        "syscallOnlyMs": {
+          "n": 126,
+          "min": 5.251,
+          "median": 6.732,
+          "p95": 7.362,
+          "max": 8.123,
+          "mean": 6.686
+        },
+        "parseOnlyMs": {
+          "n": 126,
+          "min": 0.225,
+          "median": 0.473,
+          "p95": 0.631,
+          "max": 0.789,
+          "mean": 0.467
+        }
+      },
+      "interval": {
+        "polls": 4,
+        "wallMs": 6036.818700000002,
+        "mainCpuMsOverIdle": 29.901816799999995,
+        "childCpuMs": 0,
+        "wmiCpuMsOverIdle": -95.47587656250005,
+        "cpuPercentOneCore": -1.0862353670236948,
+        "cpuPercentMachine": -0.054311768351184744,
+        "childWorkingSetMB": 0,
+        "childPrivateMB": 0
+      }
+    },
+    {
+      "key": "ntqsi-async",
+      "name": "koffi + NtQuerySystemInformation(SystemProcessInformation) async",
+      "kind": "in-process",
+      "createMs": 0.32009999999718275,
+      "firstSnapshotMs": 15.650299999997515,
+      "processCount": 561,
+      "selfCheck": {
+        "name": "ProzessSondeSpike.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 36392,
+          "ppid": 10752,
+          "name": "timeout.exe"
+        },
+        {
+          "pid": 36664,
+          "ppid": 36392,
+          "name": "ProzessSondeSpike.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 128,
+          "min": 5.867,
+          "median": 7.779,
+          "p95": 10.446,
+          "max": 14.583,
+          "mean": 7.909
+        },
+        "mainCpuMsPerSnapshot": 8.0625,
+        "childCpuMsPerSnapshot": 0,
+        "wmiCpuMsPerSnapshot": 0,
+        "wallTotalMs": 1012.6414000000004,
+        "totalCpuMsPerSnapshot": 8.0625,
+        "cpuPercentOneCoreAt1500ms": 0.5375,
+        "syscallOnlyMs": {
+          "n": 128,
+          "min": 7.414,
+          "median": 9.689,
+          "p95": 12.935,
+          "max": 14.302,
+          "mean": 10.09
+        },
+        "parseOnlyMs": {
+          "n": 128,
+          "min": 0.381,
+          "median": 0.81,
+          "p95": 1.114,
+          "max": 1.484,
+          "mean": 0.779
+        }
+      },
+      "interval": {
+        "polls": 4,
+        "wallMs": 6027.797900000001,
+        "mainCpuMsOverIdle": 45.92587226666666,
+        "childCpuMs": 0,
+        "wmiCpuMsOverIdle": -188.80302656250007,
+        "cpuPercentOneCore": -2.3703043245002187,
+        "cpuPercentMachine": -0.11851521622501093,
+        "childWorkingSetMB": 0,
+        "childPrivateMB": 0
+      }
+    },
+    {
+      "key": "basic",
+      "name": "koffi + NtQuerySystemInformation(SystemBasicProcessInformation)",
+      "kind": "in-process",
+      "createMs": 0.3356999999996333,
+      "firstSnapshotMs": 0.89259999999922,
+      "processCount": 554,
+      "selfCheck": {
+        "name": "ProzessSondeSpike.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 36392,
+          "ppid": 10752,
+          "name": "timeout.exe"
+        },
+        {
+          "pid": 36664,
+          "ppid": 36392,
+          "name": "ProzessSondeSpike.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 3305,
+          "min": 0.146,
+          "median": 0.315,
+          "p95": 0.428,
+          "max": 0.979,
+          "mean": 0.302
+        },
+        "mainCpuMsPerSnapshot": 0.3071104387291982,
+        "childCpuMsPerSnapshot": 0,
+        "wmiCpuMsPerSnapshot": 0.018910741301059002,
+        "wallTotalMs": 1000.0355000000018,
+        "totalCpuMsPerSnapshot": 0.3260211800302572,
+        "cpuPercentOneCoreAt1500ms": 0.02173474533535048,
+        "syscallOnlyMs": {
+          "n": 3305,
+          "min": 0.048,
+          "median": 0.1,
+          "p95": 0.137,
+          "max": 0.335,
+          "mean": 0.097
+        },
+        "parseOnlyMs": {
+          "n": 3305,
+          "min": 0.096,
+          "median": 0.217,
+          "p95": 0.269,
+          "max": 0.523,
+          "mean": 0.201
+        }
+      },
+      "interval": {
+        "polls": 4,
+        "wallMs": 6017.106700000004,
+        "mainCpuMsOverIdle": -16.045617866666678,
+        "childCpuMs": 0,
+        "wmiCpuMsOverIdle": -172.67687656250018,
+        "cpuPercentOneCore": -3.1364325719729504,
+        "cpuPercentMachine": -0.1568216285986475,
+        "childWorkingSetMB": 0,
+        "childPrivateMB": 0
+      }
+    },
+    {
+      "key": "wpt",
+      "name": "@vscode/windows-process-tree",
+      "kind": "in-process",
+      "createMs": 11.777099999999336,
+      "firstSnapshotMs": 34.33719999999448,
+      "processCount": 550,
+      "selfCheck": {
+        "name": "ProzessSondeSpike.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 36392,
+          "ppid": 10752,
+          "name": "timeout.exe"
+        },
+        {
+          "pid": 36664,
+          "ppid": 36392,
+          "name": "ProzessSondeSpike.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 50,
+          "min": 19.927,
+          "median": 33.114,
+          "p95": 38.077,
+          "max": 43.36,
+          "mean": 32.294
+        },
+        "mainCpuMsPerSnapshot": 29.08,
+        "childCpuMsPerSnapshot": 0,
+        "wmiCpuMsPerSnapshot": 5,
+        "wallTotalMs": 1614.9713000000047,
+        "totalCpuMsPerSnapshot": 34.08,
+        "cpuPercentOneCoreAt1500ms": 2.272
+      },
+      "interval": {
+        "polls": 4,
+        "wallMs": 6019.678999999996,
+        "mainCpuMsOverIdle": 140.94752266666669,
+        "childCpuMs": 0,
+        "wmiCpuMsOverIdle": 1139.7025468750003,
+        "cpuPercentOneCore": 21.27439136774017,
+        "cpuPercentMachine": 1.0637195683870084,
+        "childWorkingSetMB": 0,
+        "childPrivateMB": 0
+      }
+    },
+    {
+      "key": "ps-csv",
+      "name": "powershell.exe + Get-CimInstance (csv)",
+      "kind": "child",
+      "createMs": 23.365100000002712,
+      "firstSnapshotMs": 1261.1255999999994,
+      "processCount": 556,
+      "selfCheck": {
+        "name": "ProzessSondeSpike.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 36392,
+          "ppid": 10752,
+          "name": "timeout.exe"
+        },
+        {
+          "pid": 36664,
+          "ppid": 36392,
+          "name": "ProzessSondeSpike.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 10,
+          "min": 592.277,
+          "median": 637.998,
+          "p95": 718.73,
+          "max": 718.73,
+          "mean": 639.7
+        },
+        "mainCpuMsPerSnapshot": 0,
+        "childCpuMsPerSnapshot": 76.5625,
+        "wmiCpuMsPerSnapshot": 387.5,
+        "wallTotalMs": 6397.014900000002,
+        "totalCpuMsPerSnapshot": 464.0625,
+        "cpuPercentOneCoreAt1500ms": 30.9375
+      },
+      "interval": {
+        "polls": 4,
+        "wallMs": 6012.030900000005,
+        "mainCpuMsOverIdle": -0.03208240000001439,
+        "childCpuMs": 390.625,
+        "wmiCpuMsOverIdle": 1530.6860515624999,
+        "cpuPercentOneCore": 31.957237098739768,
+        "cpuPercentMachine": 1.5978618549369883,
+        "childWorkingSetMB": 144.75390625,
+        "childPrivateMB": 127.92578125
+      }
+    }
+  ],
+  "errors": {},
+  "systemProcessCount": 547,
+  "idle": {
+    "seconds": 6,
+    "mainCpuMs": 16,
+    "wmiCpuMs": 281.25
+  },
+  "loadedNativeModules": [
+    "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\spikes\\prozess-sonde\\release\\win-unpacked\\resources\\app.asar\\node_modules\\@koromix\\koffi-win32-x64\\win32_x64\\koffi.node",
+    "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\spikes\\prozess-sonde\\release\\win-unpacked\\resources\\app.asar\\node_modules\\@vscode\\windows-process-tree\\build\\Release\\windows_process_tree.node"
+  ],
+  "processCountAtEnd": 560
+}
