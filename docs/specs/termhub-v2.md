@@ -24,7 +24,7 @@ TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessio
 - **Nach einem Neustart ist alles wieder da:** Normale Terminals starten im zuletzt aktiven Ordner und zeigen ihren früheren Inhalt ausgegraut als Verlauf. Claude-Sessions werden direkt fortgesetzt, die zuletzt aktive sofort, die übrigen beim ersten Anklicken.
 - **Hinweise unten rechts im Fenster** melden, wenn Claude in einem Tab, den du gerade nicht siehst, auf dich wartet oder fertig wird.
 - **Einfache Bedienung:** Maus, die bekannten Tastenkürzel und eine Befehlspalette (`Ctrl+Shift+P`).
-- **Moderner Look:** eigene Titelleiste, Windows-11-Mica, hell und dunkel nach Windows, Stil wie Warp, Linear oder Raycast.
+- **Moderner Look:** eigene Titelleiste, Windows-11-Mica, hell und dunkel nach Windows, Stil wie Warp, Linear oder Raycast, ohne Akzentfarbe.
 - **Funktioniert auf jedem Rechner direkt nach der Installation.** Deine Claude-Konfiguration wird nicht verändert.
 
 ## User Stories
@@ -138,7 +138,7 @@ TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessio
 75. Als Nutzer möchte ich über das Zahnrad einen Einstellungsdialog öffnen mit Standardordner, Standard-Shell, Design (System / Hell / Dunkel), Terminal-Schriftgrösse und Hinweisen an/aus, damit ich alles Nötige an einem Ort finde.
 76. Als Nutzer möchte ich, dass TermHub standardmässig dem hellen oder dunklen Design von Windows folgt und bei einem Wechsel sofort mitzieht, damit es zu meinem System passt.
 77. Als Nutzer möchte ich, dass auch die Terminalfläche dem Design folgt (im hellen Modus hell, mit passendem Farbschema), damit TermHub aus einem Guss wirkt.
-78. Als Nutzer möchte ich eine moderne Oberfläche mit eigener Titelleiste, Mica-Hintergrund, abgerundeten Ecken, einer Akzentfarbe und dezenten Animationen, damit ich gern damit arbeite.
+78. Als Nutzer möchte ich eine moderne Oberfläche mit eigener Titelleiste, Mica-Hintergrund, abgerundeten Ecken, neutraler Hervorhebung ohne Akzentfarbe und dezenten Animationen, damit ich gern damit arbeite.
 79. Als Nutzer möchte ich, dass eine Änderung des Standardordners nur für neue Tabs gilt, damit meine offenen Tabs nicht durcheinanderkommen.
 
 ## Implementierungsentscheidungen
@@ -294,7 +294,7 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 6. nichts
 
 **Hinweise im Fenster:**
-- Der Kern löst einen Hinweis aus, wenn ein nicht sichtbarer Tab in „wartet auf dich“ wechselt oder fertig wird. Pro Tab gibt es höchstens einen Hinweis; ein neuer ersetzt den alten.
+- Der Kern löst einen Hinweis aus, wenn ein nicht sichtbarer Tab in „wartet auf dich“ wechselt oder fertig wird. Pro Tab gibt es höchstens einen Hinweis; ein neuer ersetzt den alten. Hinweise verschiedener Tabs stehen gleichzeitig übereinander; wird ein Tab angezeigt (auf welchem Weg auch immer), verschwindet nur dessen Hinweis.
 - „Fertig“ verschwindet nach etwa 6 Sekunden Vordergrundzeit oder beim Anzeigen des Tabs.
 - „Wartet“ verschwindet beim Anzeigen des Tabs oder wenn der Tab wieder arbeitet.
 - Hinweise nehmen dem Terminal nie den Fokus.
@@ -369,6 +369,13 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - Hintergrund-Material Mica, wo verfügbar (der Fensterhintergrund ist dort transparent), sonst eine ruhige Fläche.
   - Schrift: Segoe UI Variable für die Oberfläche, Cascadia Mono für das Terminal.
 - **Design:** folgt standardmässig Windows und reagiert live auf einen Wechsel. Die Terminalfläche hat je ein abgestimmtes helles und dunkles Farbschema.
+- **Entscheidungen aus dem Prototyp** (Referenz für Design-Variablen, Farbschemata und Animationen: `prototype/styles.css`):
+  - **Keine Akzentfarbe.** Hervorhebungen sind neutral (Monochrom): der Balken unter dem aktiven Tab, primäre Buttons, Schalter, Fokusrahmen und Cursor nutzen die Textfarbe des jeweiligen Designs.
+  - **Terminal als Karte:** Die Terminalfläche ist eine abgerundete Karte mit feinem Rand innerhalb des Fensters, nicht randlos.
+  - **Erster Start maximiert:** Ohne gespeicherte Fensterangaben öffnet TermHub maximiert.
+  - **Tabs:** pillenförmig; der aktive Tab mit fettem Namen und neutralem Balken darunter; feine Trennlinien zwischen inaktiven Tabs; der Schliessen-Knopf erscheint beim aktiven Tab und beim Überfahren.
+  - **Symbol-Platz links vom Tab-Namen:** Im Ruhezustand zeigt er gedämpft den Typ des Tabs (`>_` für ein normales Terminal, ein Stern für einen Claude-Tab), sonst den Status.
+  - **Status-Animationen:** „arbeitet“ = violetter Claude-Stern, der rotiert und pulsiert; „wartet auf dich“ = oranger Punkt mit Ping-Ring; „Prozesse laufen“ = blauer, ruhig atmender Punkt; „fertig“ = grüner Punkt; „pausiert“ = graues Pause-Symbol. Bei reduzierter Bewegung (Windows-Einstellung) laufen die Animationen stark verlangsamt.
 - **Tastenkürzel:**
 
 | Kürzel | Aktion |
@@ -465,7 +472,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - Geteilte Ansicht (mehrere Terminals nebeneinander) und mehrere Fenster.
 - Abgleich von Tabs zwischen Rechnern.
 - Ein globaler Hook in `~/.claude/settings.json`.
-- Weitere Einstellungen wie Terminal-Schriftart oder Akzentfarbe.
+- Weitere Einstellungen wie Terminal-Schriftart. Eine Akzentfarbe gibt es bewusst nicht.
 - Auto-Update, Autostart und Code-Signing.
 - Automatisierte Tests der Oberfläche.
 

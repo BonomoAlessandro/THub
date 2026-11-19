@@ -21,7 +21,8 @@ Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Hinweise im Fenster
 
 - [ ] Kern-Tests mit steuerbarer Uhr:
   - kein Hinweis für den sichtbaren Tab; ein Hinweis für einen nicht sichtbaren Tab bei „wartet“ und bei „fertig“;
-  - höchstens ein Hinweis pro Tab;
+  - höchstens ein Hinweis pro Tab; Hinweise mehrerer Tabs stehen gleichzeitig übereinander;
+  - wird ein Tab angezeigt (per Klick auf den Hinweis, auf den Tab, per Tastenkürzel oder Palette), verschwindet nur dessen Hinweis, die anderen bleiben;
   - „fertig“ verschwindet nach 6 Sekunden Vordergrundzeit, im Hintergrund pausiert der Countdown; „fertig“ verschwindet auch beim Anzeigen des Tabs;
   - „wartet“ bleibt, bis der Tab angezeigt wird oder wieder arbeitet;
   - ausgeschaltete Hinweise erzeugen nichts; die Einstellung übersteht einen Neustart.

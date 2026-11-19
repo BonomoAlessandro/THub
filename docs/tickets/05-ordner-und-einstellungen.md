@@ -11,7 +11,7 @@ Spezifikation: „Tab-Namen“, „Gespeicherter Zustand“ (Einstellungen, zule
 - **Pfeil-Menü neben `+`** mit „Neues Terminal in …“: die zuletzt benutzten Ordner und „Ordner wählen …“ (Ordner-Dialog).
 - **Zuletzt benutzte Ordner** pflegt der Kern: Startordner jedes neu angelegten Tabs und der zuletzt aktive Ordner eines Tabs beim Schliessen; höchstens acht, neueste zuerst, ohne Doppelte, nur existierende Ordner werden angezeigt.
 - **Automatische Tab-Namen** nach der Regel der Spezifikation (Ordnername, Benutzername, Laufwerksbuchstabe, „ 2“ bei Gleichstand). Ein von Hand vergebener Name wird nie automatisch überschrieben.
-- **Einstellungsdialog** über das Zahnrad in der Titelleiste, zunächst mit dem Feld „Standardordner“ (wählen und leeren). Spätere Tickets ergänzen weitere Felder.
+- **Einstellungsdialog** über das Zahnrad in der Titelleiste, zunächst mit dem Feld „Standardordner“: „Ändern …“ öffnet den Ordner-Dialog von Windows (Explorer), „Zurücksetzen“ leert das Feld. Spätere Tickets ergänzen weitere Felder.
 
 ## Akzeptanzkriterien
 

@@ -8,6 +8,7 @@ Spezifikation: „App-Verhalten“, „Gespeicherter Zustand“ (Fenster)
 ## Was gebaut wird
 
 - **Fenster merken:** Grösse und Position im normalen Zustand sowie der Maximiert-Zustand werden gespeichert (entprellt bei Änderungen und beim Beenden) und beim Start wiederhergestellt. Nach einem Start im maximierten Zustand führt „Wiederherstellen“ zur gespeicherten normalen Grösse.
+- **Erster Start:** Ohne gespeicherte Fensterangaben öffnet das Fenster maximiert auf dem Hauptbildschirm, mit einer sinnvollen normalen Grösse darunter (etwa 1200×760, zentriert).
 - **Ausserhalb aller Bildschirme**, etwa nach dem Abziehen eines Monitors: Das Fenster öffnet zentriert auf dem Hauptbildschirm. Die Bildschirme liefert der Port „System“.
 - **Nur eine Instanz:** Ein zweiter Start beendet sich sofort und holt das bestehende Fenster nach vorne, auch aus minimiertem Zustand. Er startet keine Shells und keinen Server, schreibt keine Hook-Datei und keinen Zustand.
 - Die Entwicklungsversion (eigener Datenordner aus Ticket 01) hat ihre eigene Sperre und stört eine installierte TermHub-Instanz nicht.

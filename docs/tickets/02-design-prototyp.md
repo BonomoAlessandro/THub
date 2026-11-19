@@ -27,7 +27,7 @@ Ablauf: Der Prototyp wird dir gezeigt, du gibst Rückmeldung, er wird angepasst,
 - [ ] Der Prototyp lässt sich lokal im Browser öffnen. Alle oben genannten Zustände sind erreichbar, etwa über eine kleine Steuerleiste zum Durchschalten der Status.
 - [ ] Hell und dunkel lassen sich umschalten und folgen standardmässig dem System.
 - [ ] Die Entscheidungen sind in der Spezifikation nachgetragen:
-  - Design-Variablen: Farben inklusive Akzentfarbe, Status-Farben, Radien, Abstände, Schriftgrössen
+  - Design-Variablen: Farben (ohne Akzentfarbe, neutral), Status-Farben, Radien, Abstände, Schriftgrössen
   - beide Terminal-Farbschemata
   - Gestaltung der Menüs, Hinweise und Animationen
   - ob die Terminalfläche im hellen Modus hell bleibt
