@@ -20,34 +20,51 @@ npm install
 npm start          # bauen + App starten
 npm run dev        # wie start, mit Sourcemaps und unminifiziert
 npm run typecheck  # TypeScript prüfen
+npm test           # Kern-Tests mit Vitest
 npm run dist       # Installer bauen -> release\TermHub Setup <version>.exe
 ```
+
+Unpaketiert (`npm start`, `npm run dev`) verwendet TermHub den Datenordner `%APPDATA%\TermHub-dev` und berührt die installierte App (`%APPDATA%\TermHub`) nicht.
 
 ## Aufbau
 
 ```
 src/
-  shared/types.ts         Datentypen (Session, Settings, gespeicherter Zustand) und IPC-Kanalnamen
-  main/main.ts            Electron-Hauptprozess: Fenster, IPC-Handler, geordnetes Beenden
-  main/store.ts           Zustand im Speicher + entprelltes, atomares Speichern nach state.json
-  main/ptyManager.ts      Startet/beendet die Shell-Prozesse (eine pro Session)
-  preload/preload.ts      Stellt dem Renderer die API `window.termhub` bereit
-  renderer/index.html     Fenster-Layout: Sidebar mit Sessions + Terminal-Bereich
-  renderer/renderer.ts    UI-Logik: Sessions anlegen/wechseln/umbenennen/schliessen, Tastenkürzel
-  renderer/terminalView.ts  Ein xterm.js-Terminal, gekoppelt an eine Session
+  shared/types.ts           Vertrag Renderer ↔ Kern: Schnappschuss, Änderungsereignisse, Befehle, IPC-Kanäle
+  main/main.ts              Electron-Hauptprozess: Fenster, IPC ↔ Workspace-Kern, geordnetes Beenden
+  main/workspace/
+    workspace.ts            Workspace-Kern: die gesamte Tab-Logik, ohne Electron
+    ports.ts                Ports des Kerns: Terminal-Backend, Speicher, Uhr, Prozess-Sonde, System
+    schema.ts               Gespeicherter Zustand (Version 2) und Übernahme aus Version 1
+  main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
+  main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json
+  main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
+  main/shells.ts            Feste Shell-Liste (pwsh, powershell, cmd), bis die Shell-Erkennung kommt
+  preload/preload.ts        Stellt dem Renderer die API `window.termhub` bereit
+  renderer/index.html       Fenster-Layout: Sidebar mit Tabs + Terminal-Bereich
+  renderer/renderer.ts      Anzeige: Schnappschuss und Ereignisse des Kerns, Befehle, Tastenkürzel
+  renderer/terminalView.ts  Ein xterm.js-Terminal pro Tab, meldet „Ansicht bereit“
   renderer/styles.css
-build.mjs                 esbuild-Skript, schreibt nach dist/
+test/
+  support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
+  workspace/                Kern-Tests (Teststelle 1)
+build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
 
-Der Hauptprozess ist die einzige Quelle der Wahrheit für den Zustand; der Renderer ändert ihn nur über IPC.
-Gespeichert wird in `%APPDATA%\TermHub\state.json`:
+Der Hauptprozess ist die einzige Quelle der Wahrheit für den Zustand. Der Workspace-Kern besitzt die Tab-Logik: Der Renderer bekommt einen Schnappschuss und danach Änderungsereignisse und schickt nur Befehle. Shells startet nur der Kern, und zwar erst, wenn der Renderer die Ansicht des Tabs mit Spalten und Zeilen als bereit gemeldet hat.
+
+Gespeichert wird in `%APPDATA%\TermHub\state.json`, im Schema Version 2. Eine Datei der Version 1 wird beim Start übernommen, eine unlesbare als `state.json.corrupt-<Zeit>` beiseitegelegt.
 
 ```json
 {
-  "version": 1,
-  "settings": { "defaultCwd": "C:\\Users\\…", "shell": "powershell.exe" },
-  "sessions": [{ "id": "…", "name": "Mein Projekt", "cwd": "C:\\…" }],
-  "activeSessionId": "…"
+  "version": 2,
+  "settings": { "defaultCwd": "", "theme": "system", "fontSize": 14, "notifications": true },
+  "tabs": [
+    { "id": "…", "name": "Mein Projekt", "nameIsManual": true, "shellId": "powershell", "startCwd": "C:\\…" }
+  ],
+  "activeTabId": "…",
+  "recentDirs": [],
+  "closedTabs": []
 }
 ```
 
