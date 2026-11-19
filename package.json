@@ -10,6 +10,7 @@
     "start": "node build.mjs && electron .",
     "dev": "node build.mjs --dev && electron .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
     "dist": "node build.mjs && electron-builder --win"
   },
   "build": {
@@ -45,6 +46,7 @@
     "electron": "^45.4.1",
     "electron-builder": "^26.18.0",
     "esbuild": "^0.28.2",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   }
 }
