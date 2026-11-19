@@ -50,6 +50,7 @@ function statusHtml(s, claude = false) {
           : SPARK;
   else if (s === 'paused')
     inner = '<svg viewBox="0 0 10 10"><rect x="1.5" y="1" width="2.6" height="8" rx="0.8"/><rect x="5.9" y="1" width="2.6" height="8" rx="0.8"/></svg>';
+  else if (s === 'waiting') inner = '<span class="st-dot"></span><span class="st-ping"></span>';
   else inner = '<span class="st-dot"></span>';
   return `<span class="st" data-s="${s}" data-v="${state.workAnim}">${inner}</span>`;
 }
@@ -1096,13 +1097,24 @@ function pushToast(tab, kind) {
   dismissToastsFor(tab.id, true);
   const el = document.createElement('div');
   el.className = 'toast';
+  el.setAttribute('role', 'button');
+  el.tabIndex = 0;
+  el.title = `„${tab.name}“ öffnen`;
   el.innerHTML = `${statusHtml(kind === 'waiting' ? 'waiting' : 'finished')}<div class="t-body"><div class="t-title">${esc(tab.name)}</div><div class="t-msg">${
     kind === 'waiting' ? 'Claude wartet auf deine Bestätigung.' : 'Claude ist fertig.'
-  }</div><div class="t-actions"><button class="btn sm primary">Öffnen</button></div></div><button class="t-close" aria-label="Hinweis schliessen">${icon('x')}</button>${
-    kind === 'finished' ? '<div class="t-progress"></div>' : ''
-  }`;
-  $('.btn', el).addEventListener('click', () => activate(tab.id));
-  $('.t-close', el).addEventListener('click', () => removeToast(tab.id));
+  }</div></div><button class="t-close" aria-label="Hinweis schliessen">${icon('x')}</button>${kind === 'finished' ? '<div class="t-progress"></div>' : ''}`;
+  // Die ganze Karte öffnet den Tab; das × schliesst nur den Hinweis.
+  el.addEventListener('click', () => activate(tab.id));
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      activate(tab.id);
+    }
+  });
+  $('.t-close', el).addEventListener('click', (e) => {
+    e.stopPropagation();
+    removeToast(tab.id);
+  });
   els.toasts.prepend(el);
 
   const entry = { el, kind, left: 6000, hover: false, last: performance.now() };
@@ -1388,6 +1400,7 @@ switch (params.get('demo')) {
     window.focus();
     pushToast(state.tabs[2], 'waiting');
     pushToast(state.tabs[5], 'finished');
+    pushToast(state.tabs[1], 'waiting');
     break;
   case 'overflow':
     $('[data-act="overflow"]').click();
