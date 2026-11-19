@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme } from 'electron';
 import * as path from 'node:path';
 import { IPC, type WorkspaceCommand } from '../shared/types';
 import { PtyManager } from './ptyManager';
@@ -140,7 +140,8 @@ function createWindow(ws: Workspace): void {
     minWidth: 600,
     minHeight: 360,
     show: false,
-    backgroundColor: '#1e1e1e',
+    // Deckende Fensterfarbe des Designs (--win-solid), damit beim Öffnen nichts aufblitzt.
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#1d1d22' : '#f3f3f6',
     title: 'TermHub',
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),

@@ -1,0 +1,410 @@
+/* Oberfläche nach dem Prototyp (prototype/styles.css): Tab-Leiste, Terminal-Karte, Tooltip. */
+
+/* ---------- Grundlagen ---------- */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--win-solid);
+  color: var(--text);
+  font: 13px/1.4 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: default;
+}
+
+svg.i {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Titelleiste mit Tab-Leiste ---------- */
+.titlebar {
+  display: flex;
+  align-items: center;
+  height: var(--titlebar-h);
+  padding-left: 7px;
+  flex: none;
+  user-select: none;
+}
+
+.tabstrip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex: 0 1 auto;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  padding: 0 1px;
+}
+.tabstrip::-webkit-scrollbar {
+  display: none;
+}
+.tabstrip.fade-l {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 28px);
+  mask-image: linear-gradient(to right, transparent, #000 28px);
+}
+.tabstrip.fade-r {
+  -webkit-mask-image: linear-gradient(to left, transparent, #000 28px);
+  mask-image: linear-gradient(to left, transparent, #000 28px);
+}
+.tabstrip.fade-l.fade-r {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+}
+
+/* Jeder Tab ist eine eigene Fläche mit feinem Rand. */
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Feste Breite statt flex-basis, damit die Tab-Leiste ihre volle Wunschbreite meldet
+     und die Tabs erst schrumpfen, wenn der Platz wirklich fehlt. */
+  flex: 0 1 auto;
+  width: var(--tab-w);
+  min-width: var(--tab-min-w);
+  height: var(--tab-h);
+  padding: 0 5px 0 10px;
+  border-radius: var(--r-sm);
+  background: var(--tab-bg);
+  box-shadow: inset 0 0 0 1px var(--tab-border);
+  color: var(--tab-fg);
+  font-size: 12.5px;
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast),
+    box-shadow var(--dur-fast);
+  animation: tab-in var(--dur) var(--ease);
+}
+.tab:hover {
+  background: var(--tab-hover);
+  color: var(--text);
+}
+.tab.active {
+  background: var(--tab-active-bg);
+  color: var(--tab-active-fg);
+  box-shadow: var(--tab-active-shadow);
+}
+.tab.active .tab-name {
+  font-weight: 600;
+}
+/* Neutraler Balken unter dem aktiven Tab. */
+.tab.active::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.tab-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Umbenennen: Der Tab bleibt in Form und Grösse gleich, nur der Name wird editierbar. */
+.tab.renaming {
+  padding-right: 10px;
+  background: var(--tab-active-bg);
+  color: var(--tab-active-fg);
+  box-shadow:
+    inset 0 0 0 1px var(--border-strong),
+    var(--tab-active-shadow);
+}
+.tab-rename {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  caret-color: currentColor;
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+.tab-rename::selection {
+  background: color-mix(in srgb, currentColor 24%, transparent);
+}
+
+.tab-close {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-xs);
+  opacity: 0;
+  flex: none;
+  transition:
+    opacity var(--dur-fast),
+    background var(--dur-fast);
+}
+.tab-close svg.i {
+  width: 13px;
+  height: 13px;
+}
+.tab:not(.active):not(:hover) .tab-close {
+  display: none;
+}
+.tab:hover .tab-close,
+.tab.active .tab-close {
+  opacity: 0.65;
+}
+.tab-close:hover {
+  opacity: 1 !important;
+  background: var(--hover-strong);
+}
+
+.newtab {
+  display: flex;
+  align-items: center;
+  margin-left: 4px;
+  flex: none;
+  border-radius: var(--r-sm);
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  flex: none;
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast);
+}
+.icon-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+/* Freie Fläche rechts der Tabs; bleibt auch bei überlaufender Leiste erhalten. */
+.titlebar-space {
+  flex: 1 1 auto;
+  min-width: var(--drag-min-w);
+  align-self: stretch;
+}
+
+/* ---------- Symbol-Platz am Tab ---------- */
+.st {
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+/* Ruht: Typ-Symbol (>_ für normale Tabs, Stern für Claude-Tabs), gedämpft. */
+.st[data-s='idle'] {
+  color: var(--text-faint);
+}
+.tab.active .st[data-s='idle'],
+.tab:hover .st[data-s='idle'] {
+  color: var(--text-muted);
+}
+.st svg.ty {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.st svg.spark {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  fill: none;
+  stroke-linecap: round;
+}
+
+/* ---------- Terminal-Fläche: abgerundete Karte mit feinem Rand ---------- */
+.terminal-area {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 0 7px 7px;
+}
+
+.terminal-card {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  padding: 12px 6px 6px 16px;
+  background: var(--term-bg);
+  border: 1px solid var(--term-border);
+  border-radius: var(--r-term);
+  overflow: hidden;
+}
+
+.terminal-stack {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/*
+ * Alle Terminals liegen übereinander und füllen die Karte. Inaktive werden per
+ * visibility versteckt (nicht display:none), damit der FitAddon sie messen kann.
+ */
+.terminal-host {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+.terminal-host.active {
+  visibility: visible;
+}
+
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-muted);
+}
+.empty-state p {
+  margin: 0;
+}
+
+/* ---------- Knöpfe ---------- */
+.btn {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border-strong);
+  background: var(--btn-bg);
+  color: var(--text);
+  transition:
+    background var(--dur-fast),
+    filter var(--dur-fast);
+}
+.btn:hover {
+  background: var(--btn-hover);
+}
+.btn.primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+.btn.primary:hover {
+  filter: brightness(1.08);
+}
+
+/* ---------- Tooltip ---------- */
+.tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 70;
+  max-width: 380px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--tip-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  animation: fade 120ms var(--ease);
+}
+.tip b {
+  display: block;
+  font-size: 12.5px;
+  margin-bottom: 5px;
+}
+.tip dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 0;
+}
+.tip dt {
+  color: var(--text-faint);
+}
+.tip dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.tip dd.mono {
+  font: 11.5px var(--font-mono);
+}
+
+/* ---------- Animationen ---------- */
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes tab-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition: none !important;
+  }
+}

@@ -35,11 +35,14 @@ await Promise.all([
   }),
   build({
     ...common,
-    entryPoints: ['src/renderer/renderer.ts'],
+    // React-Oberfläche; JSX wird mit der automatischen Laufzeit von React übersetzt.
+    entryPoints: ['src/renderer/main.tsx'],
     outfile: 'dist/renderer/renderer.js',
     platform: 'browser',
     format: 'iife',
     target: 'chrome130',
+    jsx: 'automatic',
+    define: { 'process.env.NODE_ENV': JSON.stringify(dev ? 'development' : 'production') },
   }),
 ]);
 
