@@ -1,0 +1,1030 @@
+{
+  "when": "2026-11-19T14:25:02.488Z",
+  "electronPid": 29248,
+  "os": "Windows_NT 10.0.26200",
+  "scenarios": [
+    {
+      "id": "pwsh",
+      "title": "PowerShell 7 über den WindowsApps-Alias",
+      "file": "C:\\Users\\<Benutzer>\\AppData\\Local\\Microsoft\\WindowsApps\\pwsh.exe",
+      "args": [
+        "-NoLogo"
+      ],
+      "ptyPid": 19996,
+      "spawnMs": 152.4048,
+      "snapshots": [
+        {
+          "label": "Leerlauf am Prompt",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 4552,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 6.2338,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0x8f4 --server 0x8dc",
+              "isPtyPid": false
+            },
+            {
+              "pid": 19996,
+              "ppid": 29248,
+              "name": "pwsh.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 101.6694,
+              "image": "C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe\\pwsh.exe",
+              "cmdline": "C:\\Users\\<Benutzer>\\AppData\\Local\\Microsoft\\WindowsApps\\pwsh.exe -NoLogo",
+              "isPtyPid": true
+            }
+          ]
+        },
+        {
+          "label": "mit \"ping -t localhost\"",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 4552,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 6.2338,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0x8f4 --server 0x8dc",
+              "isPtyPid": false
+            },
+            {
+              "pid": 19996,
+              "ppid": 29248,
+              "name": "pwsh.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 101.6694,
+              "image": "C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe\\pwsh.exe",
+              "cmdline": "C:\\Users\\<Benutzer>\\AppData\\Local\\Microsoft\\WindowsApps\\pwsh.exe -NoLogo",
+              "isPtyPid": true
+            },
+            {
+              "pid": 8120,
+              "ppid": 19996,
+              "name": "PING.EXE",
+              "depth": 2,
+              "startedMsAfterSpawn": 2499.3361,
+              "image": "C:\\Windows\\System32\\PING.EXE",
+              "cmdline": "\"C:\\Windows\\system32\\PING.EXE\" -t localhost",
+              "isPtyPid": false
+            }
+          ]
+        },
+        {
+          "label": "nach Start-Process -WindowStyle Hidden ping",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 4552,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 6.2338,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0x8f4 --server 0x8dc",
+              "isPtyPid": false
+            },
+            {
+              "pid": 19996,
+              "ppid": 29248,
+              "name": "pwsh.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 101.6694,
+              "image": "C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe\\pwsh.exe",
+              "cmdline": "C:\\Users\\<Benutzer>\\AppData\\Local\\Microsoft\\WindowsApps\\pwsh.exe -NoLogo",
+              "isPtyPid": true
+            },
+            {
+              "pid": 2508,
+              "ppid": 19996,
+              "name": "PING.EXE",
+              "depth": 2,
+              "startedMsAfterSpawn": 7291.288,
+              "image": "C:\\Windows\\System32\\PING.EXE",
+              "cmdline": "\"C:\\Windows\\system32\\PING.EXE\" -t localhost",
+              "isPtyPid": false
+            },
+            {
+              "pid": 8900,
+              "ppid": 2508,
+              "name": "conhost.exe",
+              "depth": 3,
+              "startedMsAfterSpawn": 7299.9871,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+              "isPtyPid": false
+            }
+          ]
+        }
+      ],
+      "shortLived": [
+        {
+          "enters": 5,
+          "pollMs": 0.6124084013716526,
+          "polls": 12248,
+          "items": [
+            {
+              "pid": 9284,
+              "name": "git.exe",
+              "parent": "pwsh.exe [19996]",
+              "depth": 1,
+              "lifetimeMsAtLeast": 51.5,
+              "stillRunning": false
+            },
+            {
+              "pid": 32700,
+              "name": "git.exe",
+              "parent": "pwsh.exe [19996]",
+              "depth": 1,
+              "lifetimeMsAtLeast": 54.5,
+              "stillRunning": false
+            },
+            {
+              "pid": 7432,
+              "name": "git.exe",
+              "parent": "pwsh.exe [19996]",
+              "depth": 1,
+              "lifetimeMsAtLeast": 36.1,
+              "stillRunning": false
+            },
+            {
+              "pid": 34624,
+              "name": "git.exe",
+              "parent": "pwsh.exe [19996]",
+              "depth": 1,
+              "lifetimeMsAtLeast": 35.6,
+              "stillRunning": false
+            },
+            {
+              "pid": 10424,
+              "name": "git.exe",
+              "parent": "pwsh.exe [19996]",
+              "depth": 1,
+              "lifetimeMsAtLeast": 33.8,
+              "stillRunning": false
+            }
+          ]
+        }
+      ],
+      "leftoversAfterPtyKill": [
+        {
+          "pid": 2508,
+          "name": "PING.EXE"
+        }
+      ]
+    },
+    {
+      "id": "powershell",
+      "title": "Windows PowerShell 5.1",
+      "file": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoLogo"
+      ],
+      "ptyPid": 10420,
+      "spawnMs": 62.059400000001915,
+      "snapshots": [
+        {
+          "label": "Leerlauf am Prompt",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 41396,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 4.5923,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0x94c --server 0xca8",
+              "isPtyPid": false
+            },
+            {
+              "pid": 10420,
+              "ppid": 29248,
+              "name": "powershell.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 52.0206,
+              "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+              "cmdline": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -NoLogo",
+              "isPtyPid": true
+            }
+          ]
+        },
+        {
+          "label": "mit \"ping -t localhost\"",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 41396,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 4.5923,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0x94c --server 0xca8",
+              "isPtyPid": false
+            },
+            {
+              "pid": 10420,
+              "ppid": 29248,
+              "name": "powershell.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 52.0206,
+              "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+              "cmdline": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -NoLogo",
+              "isPtyPid": true
+            },
+            {
+              "pid": 32952,
+              "ppid": 10420,
+              "name": "PING.EXE",
+              "depth": 2,
+              "startedMsAfterSpawn": 2184.9527,
+              "image": "C:\\Windows\\System32\\PING.EXE",
+              "cmdline": "\"C:\\Windows\\system32\\PING.EXE\" -t localhost",
+              "isPtyPid": false
+            }
+          ]
+        }
+      ],
+      "shortLived": [
+        {
+          "enters": 3,
+          "pollMs": 0.5438547878012369,
+          "polls": 9378,
+          "items": []
+        }
+      ],
+      "leftoversAfterPtyKill": []
+    },
+    {
+      "id": "cmd",
+      "title": "cmd",
+      "file": "C:\\Windows\\System32\\cmd.exe",
+      "args": [],
+      "ptyPid": 41468,
+      "spawnMs": 58.45830000000569,
+      "snapshots": [
+        {
+          "label": "Leerlauf am Prompt",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 34808,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 3.6455,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0xcdc --server 0xce0",
+              "isPtyPid": false
+            },
+            {
+              "pid": 41468,
+              "ppid": 29248,
+              "name": "cmd.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 48.9823,
+              "image": "C:\\Windows\\System32\\cmd.exe",
+              "cmdline": "C:\\Windows\\System32\\cmd.exe",
+              "isPtyPid": true
+            }
+          ]
+        },
+        {
+          "label": "mit \"ping -t localhost\"",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 34808,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 3.6455,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0xcdc --server 0xce0",
+              "isPtyPid": false
+            },
+            {
+              "pid": 41468,
+              "ppid": 29248,
+              "name": "cmd.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 48.9823,
+              "image": "C:\\Windows\\System32\\cmd.exe",
+              "cmdline": "C:\\Windows\\System32\\cmd.exe",
+              "isPtyPid": true
+            },
+            {
+              "pid": 25164,
+              "ppid": 41468,
+              "name": "PING.EXE",
+              "depth": 2,
+              "startedMsAfterSpawn": 1836.7572,
+              "image": "C:\\Windows\\System32\\PING.EXE",
+              "cmdline": "ping  -t localhost",
+              "isPtyPid": false
+            }
+          ]
+        }
+      ],
+      "shortLived": [
+        {
+          "enters": 3,
+          "pollMs": 0.5325163708498644,
+          "polls": 9578,
+          "items": []
+        }
+      ],
+      "leftoversAfterPtyKill": []
+    },
+    {
+      "id": "gitbash",
+      "title": "Git Bash (bin\\bash.exe)",
+      "file": "C:\\Program Files\\Git\\bin\\bash.exe",
+      "args": [
+        "--login",
+        "-i"
+      ],
+      "ptyPid": 32316,
+      "spawnMs": 88.01160000000527,
+      "snapshots": [
+        {
+          "label": "Leerlauf am Prompt",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 48784,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 5.5217,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0xcb8 --server 0x810",
+              "isPtyPid": false
+            },
+            {
+              "pid": 32316,
+              "ppid": 29248,
+              "name": "bash.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 82.4589,
+              "image": "C:\\Program Files\\Git\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\bash.exe\" --login -i",
+              "isPtyPid": true
+            },
+            {
+              "pid": 26328,
+              "ppid": 32316,
+              "name": "bash.exe",
+              "depth": 2,
+              "startedMsAfterSpawn": 124.4683,
+              "image": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\..\\usr\\bin\\bash.exe\" --login -i",
+              "isPtyPid": false
+            },
+            {
+              "pid": 37664,
+              "ppid": 26328,
+              "name": "bash.exe",
+              "depth": 3,
+              "startedMsAfterSpawn": 958.6705,
+              "image": null,
+              "cmdline": null,
+              "isPtyPid": false
+            }
+          ]
+        },
+        {
+          "label": "mit \"ping -t localhost\"",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 48784,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 5.5217,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0xcb8 --server 0x810",
+              "isPtyPid": false
+            },
+            {
+              "pid": 32316,
+              "ppid": 29248,
+              "name": "bash.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 82.4589,
+              "image": "C:\\Program Files\\Git\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\bash.exe\" --login -i",
+              "isPtyPid": true
+            },
+            {
+              "pid": 26328,
+              "ppid": 32316,
+              "name": "bash.exe",
+              "depth": 2,
+              "startedMsAfterSpawn": 124.4683,
+              "image": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\..\\usr\\bin\\bash.exe\" --login -i",
+              "isPtyPid": false
+            },
+            {
+              "pid": 24020,
+              "ppid": 26328,
+              "name": "bash.exe",
+              "depth": 3,
+              "startedMsAfterSpawn": 1985.883,
+              "image": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\..\\usr\\bin\\bash.exe\" --login -i",
+              "isPtyPid": false
+            },
+            {
+              "pid": 48944,
+              "ppid": 24020,
+              "name": "PING.EXE",
+              "depth": 4,
+              "startedMsAfterSpawn": 2014.3581,
+              "image": "C:\\Windows\\System32\\PING.EXE",
+              "cmdline": "C:\\Windows\\system32\\ping.exe -t localhost",
+              "isPtyPid": false
+            }
+          ]
+        },
+        {
+          "label": "mit Hintergrundjob \"sleep 300 &\"",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 48784,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 5.5217,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0xcb8 --server 0x810",
+              "isPtyPid": false
+            },
+            {
+              "pid": 32316,
+              "ppid": 29248,
+              "name": "bash.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 82.4589,
+              "image": "C:\\Program Files\\Git\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\bash.exe\" --login -i",
+              "isPtyPid": true
+            },
+            {
+              "pid": 26328,
+              "ppid": 32316,
+              "name": "bash.exe",
+              "depth": 2,
+              "startedMsAfterSpawn": 124.4683,
+              "image": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\..\\usr\\bin\\bash.exe\" --login -i",
+              "isPtyPid": false
+            }
+          ]
+        },
+        {
+          "label": "mit Vordergrund \"sleep 300\"",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 48784,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 5.5217,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0xcb8 --server 0x810",
+              "isPtyPid": false
+            },
+            {
+              "pid": 32316,
+              "ppid": 29248,
+              "name": "bash.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 82.4589,
+              "image": "C:\\Program Files\\Git\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\bash.exe\" --login -i",
+              "isPtyPid": true
+            },
+            {
+              "pid": 26328,
+              "ppid": 32316,
+              "name": "bash.exe",
+              "depth": 2,
+              "startedMsAfterSpawn": 124.4683,
+              "image": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\..\\usr\\bin\\bash.exe\" --login -i",
+              "isPtyPid": false
+            }
+          ]
+        },
+        {
+          "label": "mit Hintergrundjob \"cmd //c ping -t localhost &\"",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 48784,
+              "ppid": 29248,
+              "name": "conhost.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 5.5217,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "cmdline": "\\\\?\\C:\\WINDOWS\\system32\\conhost.exe --headless --width 120 --height 30 --signal 0xcb8 --server 0x810",
+              "isPtyPid": false
+            },
+            {
+              "pid": 32316,
+              "ppid": 29248,
+              "name": "bash.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 82.4589,
+              "image": "C:\\Program Files\\Git\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\bash.exe\" --login -i",
+              "isPtyPid": true
+            },
+            {
+              "pid": 26328,
+              "ppid": 32316,
+              "name": "bash.exe",
+              "depth": 2,
+              "startedMsAfterSpawn": 124.4683,
+              "image": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\..\\usr\\bin\\bash.exe\" --login -i",
+              "isPtyPid": false
+            },
+            {
+              "pid": 25212,
+              "ppid": 26328,
+              "name": "bash.exe",
+              "depth": 3,
+              "startedMsAfterSpawn": 28520.0316,
+              "image": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+              "cmdline": "\"C:\\Program Files\\Git\\bin\\..\\usr\\bin\\bash.exe\" --login -i",
+              "isPtyPid": false
+            },
+            {
+              "pid": 45140,
+              "ppid": 25212,
+              "name": "cmd.exe",
+              "depth": 4,
+              "startedMsAfterSpawn": 28642.2817,
+              "image": "C:\\Windows\\System32\\cmd.exe",
+              "cmdline": "C:\\Windows\\system32\\cmd.exe /c \"ping -t localhost\"",
+              "isPtyPid": false
+            },
+            {
+              "pid": 30116,
+              "ppid": 45140,
+              "name": "PING.EXE",
+              "depth": 5,
+              "startedMsAfterSpawn": 28683.2064,
+              "image": "C:\\Windows\\System32\\PING.EXE",
+              "cmdline": "ping  -t localhost",
+              "isPtyPid": false
+            }
+          ]
+        }
+      ],
+      "shortLived": [
+        {
+          "enters": 5,
+          "pollMs": 0.6825806243174377,
+          "polls": 10988,
+          "items": [
+            {
+              "pid": 36280,
+              "name": "bash.exe",
+              "parent": "bash.exe [26328]",
+              "depth": 1,
+              "lifetimeMsAtLeast": 361.3,
+              "stillRunning": false
+            },
+            {
+              "pid": 44416,
+              "name": "bash.exe",
+              "parent": "bash.exe [36280]",
+              "depth": 2,
+              "lifetimeMsAtLeast": 197.8,
+              "stillRunning": false
+            },
+            {
+              "pid": 8276,
+              "name": "bash.exe",
+              "parent": "bash.exe [44416]",
+              "depth": 3,
+              "lifetimeMsAtLeast": 147.7,
+              "stillRunning": false
+            },
+            {
+              "pid": 17192,
+              "name": "git.exe",
+              "parent": "bash.exe [8276]",
+              "depth": 4,
+              "lifetimeMsAtLeast": 71.9,
+              "stillRunning": false
+            },
+            {
+              "pid": 48908,
+              "name": "bash.exe",
+              "parent": "bash.exe [36280]",
+              "depth": 2,
+              "lifetimeMsAtLeast": 104.7,
+              "stillRunning": false
+            },
+            {
+              "pid": 15896,
+              "name": "git.exe",
+              "parent": "bash.exe [48908]",
+              "depth": 3,
+              "lifetimeMsAtLeast": 54.1,
+              "stillRunning": false
+            },
+            {
+              "pid": 29012,
+              "name": "bash.exe",
+              "parent": "bash.exe [26328]",
+              "depth": 1,
+              "lifetimeMsAtLeast": 521.8,
+              "stillRunning": false
+            },
+            {
+              "pid": 27412,
+              "name": "bash.exe",
+              "parent": "bash.exe [29012]",
+              "depth": 2,
+              "lifetimeMsAtLeast": 198.5,
+              "stillRunning": false
+            },
+            {
+              "pid": 28048,
+              "name": "bash.exe",
+              "parent": "bash.exe [27412]",
+              "depth": 3,
+              "lifetimeMsAtLeast": 141.6,
+              "stillRunning": false
+            },
+            {
+              "pid": 22064,
+              "name": "git.exe",
+              "parent": "bash.exe [28048]",
+              "depth": 4,
+              "lifetimeMsAtLeast": 75.1,
+              "stillRunning": false
+            },
+            {
+              "pid": 44728,
+              "name": "bash.exe",
+              "parent": "bash.exe [29012]",
+              "depth": 2,
+              "lifetimeMsAtLeast": 148.6,
+              "stillRunning": false
+            },
+            {
+              "pid": 47168,
+              "name": "git.exe",
+              "parent": "bash.exe [44728]",
+              "depth": 3,
+              "lifetimeMsAtLeast": 78.7,
+              "stillRunning": false
+            },
+            {
+              "pid": 4308,
+              "name": "bash.exe",
+              "parent": "bash.exe [26328]",
+              "depth": 1,
+              "lifetimeMsAtLeast": 208.1,
+              "stillRunning": false
+            },
+            {
+              "pid": 38444,
+              "name": "bash.exe",
+              "parent": "bash.exe [4308]",
+              "depth": 2,
+              "lifetimeMsAtLeast": 100.2,
+              "stillRunning": false
+            },
+            {
+              "pid": 41208,
+              "name": "bash.exe",
+              "parent": "bash.exe [38444]",
+              "depth": 3,
+              "lifetimeMsAtLeast": 71.2,
+              "stillRunning": false
+            },
+            {
+              "pid": 10572,
+              "name": "git.exe",
+              "parent": "bash.exe [41208]",
+              "depth": 4,
+              "lifetimeMsAtLeast": 38.9,
+              "stillRunning": false
+            },
+            {
+              "pid": 30864,
+              "name": "bash.exe",
+              "parent": "bash.exe [4308]",
+              "depth": 2,
+              "lifetimeMsAtLeast": 78.5,
+              "stillRunning": false
+            },
+            {
+              "pid": 35920,
+              "name": "git.exe",
+              "parent": "bash.exe [30864]",
+              "depth": 3,
+              "lifetimeMsAtLeast": 36.6,
+              "stillRunning": false
+            },
+            {
+              "pid": 48364,
+              "name": "bash.exe",
+              "parent": "bash.exe [26328]",
+              "depth": 1,
+              "lifetimeMsAtLeast": 493.3,
+              "stillRunning": false
+            },
+            {
+              "pid": 7164,
+              "name": "bash.exe",
+              "parent": "bash.exe [48364]",
+              "depth": 2,
+              "lifetimeMsAtLeast": 172.9,
+              "stillRunning": false
+            },
+            {
+              "pid": 23820,
+              "name": "bash.exe",
+              "parent": "bash.exe [7164]",
+              "depth": 3,
+              "lifetimeMsAtLeast": 116.8,
+              "stillRunning": false
+            },
+            {
+              "pid": 34184,
+              "name": "git.exe",
+              "parent": "bash.exe [23820]",
+              "depth": 4,
+              "lifetimeMsAtLeast": 61.4,
+              "stillRunning": false
+            },
+            {
+              "pid": 37684,
+              "name": "bash.exe",
+              "parent": "bash.exe [48364]",
+              "depth": 2,
+              "lifetimeMsAtLeast": 146.1,
+              "stillRunning": false
+            },
+            {
+              "pid": 8456,
+              "name": "git.exe",
+              "parent": "bash.exe [37684]",
+              "depth": 3,
+              "lifetimeMsAtLeast": 34.6,
+              "stillRunning": false
+            },
+            {
+              "pid": 38164,
+              "name": "bash.exe",
+              "parent": "bash.exe [26328]",
+              "depth": 1,
+              "lifetimeMsAtLeast": 285.5,
+              "stillRunning": false
+            },
+            {
+              "pid": 29748,
+              "name": "bash.exe",
+              "parent": "bash.exe [38164]",
+              "depth": 2,
+              "lifetimeMsAtLeast": 95.9,
+              "stillRunning": false
+            },
+            {
+              "pid": 48296,
+              "name": "bash.exe",
+              "parent": "bash.exe [29748]",
+              "depth": 3,
+              "lifetimeMsAtLeast": 68.1,
+              "stillRunning": false
+            },
+            {
+              "pid": 42244,
+              "name": "git.exe",
+              "parent": "bash.exe [48296]",
+              "depth": 4,
+              "lifetimeMsAtLeast": 36.7,
+              "stillRunning": false
+            },
+            {
+              "pid": 17388,
+              "name": "bash.exe",
+              "parent": "bash.exe [38164]",
+              "depth": 2,
+              "lifetimeMsAtLeast": 73.3,
+              "stillRunning": false
+            },
+            {
+              "pid": 27440,
+              "name": "git.exe",
+              "parent": "bash.exe [17388]",
+              "depth": 3,
+              "lifetimeMsAtLeast": 44.1,
+              "stillRunning": false
+            }
+          ]
+        }
+      ],
+      "found": [
+        "sleep.exe [37368] (Konsolen-Host 48784) <- [22440] (Elternprozess beendet)",
+        "sleep.exe [20928] (Konsolen-Host 48784) <- [46600] (Elternprozess beendet)",
+        "PING.EXE [30116] (Konsolen-Host 48784) <- cmd.exe [45140] <- bash.exe [25212] <- bash.exe [26328] <- bash.exe [32316] <- electron.exe [29248]"
+      ],
+      "leftoversAfterPtyKill": []
+    },
+    {
+      "id": "cmd-dll",
+      "title": "cmd mit useConptyDll (mitgeliefertes OpenConsole.exe)",
+      "file": "C:\\Windows\\System32\\cmd.exe",
+      "args": [],
+      "ptyPid": 46324,
+      "spawnMs": 110.71770000000834,
+      "snapshots": [
+        {
+          "label": "mit \"ping -t localhost\"",
+          "nodes": [
+            {
+              "pid": 29248,
+              "ppid": 20116,
+              "name": "electron.exe",
+              "depth": 0,
+              "startedMsAfterSpawn": null,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\electron\\dist\\electron.exe",
+              "cmdline": null,
+              "isPtyPid": false
+            },
+            {
+              "pid": 35304,
+              "ppid": 29248,
+              "name": "OpenConsole.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 8.6005,
+              "image": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\node-pty\\prebuilds\\win32-x64\\conpty\\OpenConsole.exe",
+              "cmdline": "\"C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\node_modules\\node-pty\\prebuilds\\win32-x64\\conpty\\OpenConsole.exe\" --headless --width 120 --height 30 --signal 0xc90 --server 0xa80",
+              "isPtyPid": false
+            },
+            {
+              "pid": 46324,
+              "ppid": 29248,
+              "name": "cmd.exe",
+              "depth": 1,
+              "startedMsAfterSpawn": 105.0142,
+              "image": "C:\\Windows\\System32\\cmd.exe",
+              "cmdline": "C:\\Windows\\System32\\cmd.exe",
+              "isPtyPid": true
+            },
+            {
+              "pid": 30560,
+              "ppid": 46324,
+              "name": "PING.EXE",
+              "depth": 2,
+              "startedMsAfterSpawn": 3168.9295,
+              "image": "C:\\Windows\\System32\\PING.EXE",
+              "cmdline": "ping  -t localhost",
+              "isPtyPid": false
+            }
+          ]
+        }
+      ],
+      "shortLived": [],
+      "leftoversAfterPtyKill": []
+    }
+  ],
+  "staleParentLinks": {
+    "total": 552,
+    "parentGone": 8,
+    "parentPidReused": [
+      "Secure System [284] -> System [4]",
+      "Registry [324] -> System [4]",
+      "csrss.exe [1596] -> svchost.exe [1340]",
+      "wininit.exe [1704] -> svchost.exe [1340]",
+      "MoNotificationUx.exe [4508] -> msrdc.exe [19712]"
+    ]
+  }
+}

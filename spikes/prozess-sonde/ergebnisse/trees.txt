@@ -1,0 +1,273 @@
+Electron 45.4.1, node-pty aus C:\workspace\custom\termhub\.claude\worktrees\agent-a08aa9cb860516ad8\node_modules\node-pty\lib\index.js
+Systemweit: 552 Prozesse, 8 mit beendetem Elternprozess, 5 mit wiederverwendeter Eltern-PID (Elternprozess jünger als das Kind)
+  Secure System [284] -> System [4]
+  Registry [324] -> System [4]
+  csrss.exe [1596] -> svchost.exe [1340]
+  wininit.exe [1704] -> svchost.exe [1340]
+  MoNotificationUx.exe [4508] -> msrdc.exe [19712]
+
+=== PowerShell 7 über den WindowsApps-Alias
+  pty.spawn("C:\\Users\\<Benutzer>\\AppData\\Local\\Microsoft\\WindowsApps\\pwsh.exe", ["-NoLogo"])
+  node-pty meldet pid 19996; pty.spawn() blockierte den Hauptthread 152 ms
+  -- Leerlauf am Prompt
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [4552]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0x8f4 --server 0x8dc
+            gestartet 6 ms nach pty.spawn
+       └─ pwsh.exe [19996]   <== pid von node-pty   (Konsolen-Host 4552)
+            Pfad: C:\Program Files\WindowsApps\Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe\pwsh.exe
+            Befehl: C:\Users\<Benutzer>\AppData\Local\Microsoft\WindowsApps\pwsh.exe -NoLogo
+            gestartet 102 ms nach pty.spawn
+  -- mit "ping -t localhost"
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [4552]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0x8f4 --server 0x8dc
+            gestartet 6 ms nach pty.spawn
+       └─ pwsh.exe [19996]   <== pid von node-pty   (Konsolen-Host 4552)
+            Pfad: C:\Program Files\WindowsApps\Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe\pwsh.exe
+            Befehl: C:\Users\<Benutzer>\AppData\Local\Microsoft\WindowsApps\pwsh.exe -NoLogo
+            gestartet 102 ms nach pty.spawn
+            └─ PING.EXE [8120]   (Konsolen-Host 4552)
+                 Pfad: C:\Windows\System32\PING.EXE
+                 Befehl: "C:\Windows\system32\PING.EXE" -t localhost
+                 gestartet 2499 ms nach pty.spawn
+  -- nach Start-Process -WindowStyle Hidden ping
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [4552]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0x8f4 --server 0x8dc
+            gestartet 6 ms nach pty.spawn
+       └─ pwsh.exe [19996]   <== pid von node-pty   (Konsolen-Host 4552)
+            Pfad: C:\Program Files\WindowsApps\Microsoft.PowerShell_7.7.0.0_x64__8wekyb3d8bbwe\pwsh.exe
+            Befehl: C:\Users\<Benutzer>\AppData\Local\Microsoft\WindowsApps\pwsh.exe -NoLogo
+            gestartet 102 ms nach pty.spawn
+            └─ PING.EXE [2508]   (Konsolen-Host 8900)
+                 Pfad: C:\Windows\System32\PING.EXE
+                 Befehl: "C:\Windows\system32\PING.EXE" -t localhost
+                 gestartet 7291 ms nach pty.spawn
+                 └─ conhost.exe [8900]   (Konsolen-Host 2508)
+                      Pfad: C:\Windows\System32\conhost.exe
+                      Befehl: \??\C:\WINDOWS\system32\conhost.exe 0x4
+                      gestartet 7300 ms nach pty.spawn
+  -- Kurzlebige Nachfahren bei 5x Enter (Abfrage alle 0.61 ms, 12248 Abfragen)
+     git.exe [9284] unter pwsh.exe [19996]: mindestens 51.5 ms
+     git.exe [32700] unter pwsh.exe [19996]: mindestens 54.5 ms
+     git.exe [7432] unter pwsh.exe [19996]: mindestens 36.1 ms
+     git.exe [34624] unter pwsh.exe [19996]: mindestens 35.6 ms
+     git.exe [10424] unter pwsh.exe [19996]: mindestens 33.8 ms
+  -- nach pty.kill() noch am Leben: PING.EXE [2508]
+
+=== Windows PowerShell 5.1
+  pty.spawn("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", ["-NoLogo"])
+  node-pty meldet pid 10420; pty.spawn() blockierte den Hauptthread 62 ms
+  -- Leerlauf am Prompt
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [41396]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0x94c --server 0xca8
+            gestartet 5 ms nach pty.spawn
+       └─ powershell.exe [10420]   <== pid von node-pty   (Konsolen-Host 41396)
+            Pfad: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+            Befehl: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo
+            gestartet 52 ms nach pty.spawn
+  -- mit "ping -t localhost"
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [41396]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0x94c --server 0xca8
+            gestartet 5 ms nach pty.spawn
+       └─ powershell.exe [10420]   <== pid von node-pty   (Konsolen-Host 41396)
+            Pfad: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+            Befehl: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo
+            gestartet 52 ms nach pty.spawn
+            └─ PING.EXE [32952]   (Konsolen-Host 41396)
+                 Pfad: C:\Windows\System32\PING.EXE
+                 Befehl: "C:\Windows\system32\PING.EXE" -t localhost
+                 gestartet 2185 ms nach pty.spawn
+  -- Kurzlebige Nachfahren bei 3x Enter (Abfrage alle 0.54 ms, 9378 Abfragen)
+     keine
+  -- nach pty.kill() noch am Leben: nichts
+
+=== cmd
+  pty.spawn("C:\\Windows\\System32\\cmd.exe", [])
+  node-pty meldet pid 41468; pty.spawn() blockierte den Hauptthread 58 ms
+  -- Leerlauf am Prompt
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [34808]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0xcdc --server 0xce0
+            gestartet 4 ms nach pty.spawn
+       └─ cmd.exe [41468]   <== pid von node-pty   (Konsolen-Host 34808)
+            Pfad: C:\Windows\System32\cmd.exe
+            Befehl: C:\Windows\System32\cmd.exe
+            gestartet 49 ms nach pty.spawn
+  -- mit "ping -t localhost"
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [34808]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0xcdc --server 0xce0
+            gestartet 4 ms nach pty.spawn
+       └─ cmd.exe [41468]   <== pid von node-pty   (Konsolen-Host 34808)
+            Pfad: C:\Windows\System32\cmd.exe
+            Befehl: C:\Windows\System32\cmd.exe
+            gestartet 49 ms nach pty.spawn
+            └─ PING.EXE [25164]   (Konsolen-Host 34808)
+                 Pfad: C:\Windows\System32\PING.EXE
+                 Befehl: ping  -t localhost
+                 gestartet 1837 ms nach pty.spawn
+  -- Kurzlebige Nachfahren bei 3x Enter (Abfrage alle 0.53 ms, 9578 Abfragen)
+     keine
+  -- nach pty.kill() noch am Leben: nichts
+
+=== Git Bash (bin\bash.exe)
+  pty.spawn("C:\\Program Files\\Git\\bin\\bash.exe", ["--login","-i"])
+  node-pty meldet pid 32316; pty.spawn() blockierte den Hauptthread 88 ms
+  -- Leerlauf am Prompt
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [48784]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0xcb8 --server 0x810
+            gestartet 6 ms nach pty.spawn
+       └─ bash.exe [32316]   <== pid von node-pty   (Konsolen-Host 48784)
+            Pfad: C:\Program Files\Git\bin\bash.exe
+            Befehl: "C:\Program Files\Git\bin\bash.exe" --login -i
+            gestartet 82 ms nach pty.spawn
+            └─ bash.exe [26328]   (Konsolen-Host 48784)
+                 Pfad: C:\Program Files\Git\usr\bin\bash.exe
+                 Befehl: "C:\Program Files\Git\bin\..\usr\bin\bash.exe" --login -i
+                 gestartet 124 ms nach pty.spawn
+                 └─ bash.exe [37664]   (Konsolen-Host null)
+                      Pfad: ?
+                      gestartet 959 ms nach pty.spawn
+  -- mit "ping -t localhost"
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [48784]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0xcb8 --server 0x810
+            gestartet 6 ms nach pty.spawn
+       └─ bash.exe [32316]   <== pid von node-pty   (Konsolen-Host 48784)
+            Pfad: C:\Program Files\Git\bin\bash.exe
+            Befehl: "C:\Program Files\Git\bin\bash.exe" --login -i
+            gestartet 82 ms nach pty.spawn
+            └─ bash.exe [26328]   (Konsolen-Host 48784)
+                 Pfad: C:\Program Files\Git\usr\bin\bash.exe
+                 Befehl: "C:\Program Files\Git\bin\..\usr\bin\bash.exe" --login -i
+                 gestartet 124 ms nach pty.spawn
+                 └─ bash.exe [24020]   (Konsolen-Host 48784)
+                      Pfad: C:\Program Files\Git\usr\bin\bash.exe
+                      Befehl: "C:\Program Files\Git\bin\..\usr\bin\bash.exe" --login -i
+                      gestartet 1986 ms nach pty.spawn
+                      └─ PING.EXE [48944]   (Konsolen-Host 48784)
+                           Pfad: C:\Windows\System32\PING.EXE
+                           Befehl: C:\Windows\system32\ping.exe -t localhost
+                           gestartet 2014 ms nach pty.spawn
+  -- mit Hintergrundjob "sleep 300 &"
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [48784]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0xcb8 --server 0x810
+            gestartet 6 ms nach pty.spawn
+       └─ bash.exe [32316]   <== pid von node-pty   (Konsolen-Host 48784)
+            Pfad: C:\Program Files\Git\bin\bash.exe
+            Befehl: "C:\Program Files\Git\bin\bash.exe" --login -i
+            gestartet 82 ms nach pty.spawn
+            └─ bash.exe [26328]   (Konsolen-Host 48784)
+                 Pfad: C:\Program Files\Git\usr\bin\bash.exe
+                 Befehl: "C:\Program Files\Git\bin\..\usr\bin\bash.exe" --login -i
+                 gestartet 124 ms nach pty.spawn
+  -- systemweit gesucht: sleep.exe [37368] (Konsolen-Host 48784) <- [22440] (Elternprozess beendet)
+  -- mit Vordergrund "sleep 300"
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [48784]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0xcb8 --server 0x810
+            gestartet 6 ms nach pty.spawn
+       └─ bash.exe [32316]   <== pid von node-pty   (Konsolen-Host 48784)
+            Pfad: C:\Program Files\Git\bin\bash.exe
+            Befehl: "C:\Program Files\Git\bin\bash.exe" --login -i
+            gestartet 82 ms nach pty.spawn
+            └─ bash.exe [26328]   (Konsolen-Host 48784)
+                 Pfad: C:\Program Files\Git\usr\bin\bash.exe
+                 Befehl: "C:\Program Files\Git\bin\..\usr\bin\bash.exe" --login -i
+                 gestartet 124 ms nach pty.spawn
+  -- systemweit gesucht: sleep.exe [20928] (Konsolen-Host 48784) <- [46600] (Elternprozess beendet)
+  -- mit Hintergrundjob "cmd //c ping -t localhost &"
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ conhost.exe [48784]   (Konsolen-Host 29248)
+            Pfad: C:\Windows\System32\conhost.exe
+            Befehl: \\?\C:\WINDOWS\system32\conhost.exe --headless --width 120 --height 30 --signal 0xcb8 --server 0x810
+            gestartet 6 ms nach pty.spawn
+       └─ bash.exe [32316]   <== pid von node-pty   (Konsolen-Host 48784)
+            Pfad: C:\Program Files\Git\bin\bash.exe
+            Befehl: "C:\Program Files\Git\bin\bash.exe" --login -i
+            gestartet 82 ms nach pty.spawn
+            └─ bash.exe [26328]   (Konsolen-Host 48784)
+                 Pfad: C:\Program Files\Git\usr\bin\bash.exe
+                 Befehl: "C:\Program Files\Git\bin\..\usr\bin\bash.exe" --login -i
+                 gestartet 124 ms nach pty.spawn
+                 └─ bash.exe [25212]   (Konsolen-Host 48784)
+                      Pfad: C:\Program Files\Git\usr\bin\bash.exe
+                      Befehl: "C:\Program Files\Git\bin\..\usr\bin\bash.exe" --login -i
+                      gestartet 28520 ms nach pty.spawn
+                      └─ cmd.exe [45140]   (Konsolen-Host 48784)
+                           Pfad: C:\Windows\System32\cmd.exe
+                           Befehl: C:\Windows\system32\cmd.exe /c "ping -t localhost"
+                           gestartet 28642 ms nach pty.spawn
+                           └─ PING.EXE [30116]   (Konsolen-Host 48784)
+                                Pfad: C:\Windows\System32\PING.EXE
+                                Befehl: ping  -t localhost
+                                gestartet 28683 ms nach pty.spawn
+  -- systemweit gesucht: PING.EXE [30116] (Konsolen-Host 48784) <- cmd.exe [45140] <- bash.exe [25212] <- bash.exe [26328] <- bash.exe [32316] <- electron.exe [29248]
+  -- Kurzlebige Nachfahren bei 5x Enter (Abfrage alle 0.68 ms, 10988 Abfragen)
+     bash.exe [36280] unter bash.exe [26328]: mindestens 361.3 ms
+       bash.exe [44416] unter bash.exe [36280]: mindestens 197.8 ms
+         bash.exe [8276] unter bash.exe [44416]: mindestens 147.7 ms
+           git.exe [17192] unter bash.exe [8276]: mindestens 71.9 ms
+       bash.exe [48908] unter bash.exe [36280]: mindestens 104.7 ms
+         git.exe [15896] unter bash.exe [48908]: mindestens 54.1 ms
+     bash.exe [29012] unter bash.exe [26328]: mindestens 521.8 ms
+       bash.exe [27412] unter bash.exe [29012]: mindestens 198.5 ms
+         bash.exe [28048] unter bash.exe [27412]: mindestens 141.6 ms
+           git.exe [22064] unter bash.exe [28048]: mindestens 75.1 ms
+       bash.exe [44728] unter bash.exe [29012]: mindestens 148.6 ms
+         git.exe [47168] unter bash.exe [44728]: mindestens 78.7 ms
+     bash.exe [4308] unter bash.exe [26328]: mindestens 208.1 ms
+       bash.exe [38444] unter bash.exe [4308]: mindestens 100.2 ms
+         bash.exe [41208] unter bash.exe [38444]: mindestens 71.2 ms
+           git.exe [10572] unter bash.exe [41208]: mindestens 38.9 ms
+       bash.exe [30864] unter bash.exe [4308]: mindestens 78.5 ms
+         git.exe [35920] unter bash.exe [30864]: mindestens 36.6 ms
+     bash.exe [48364] unter bash.exe [26328]: mindestens 493.3 ms
+       bash.exe [7164] unter bash.exe [48364]: mindestens 172.9 ms
+         bash.exe [23820] unter bash.exe [7164]: mindestens 116.8 ms
+           git.exe [34184] unter bash.exe [23820]: mindestens 61.4 ms
+       bash.exe [37684] unter bash.exe [48364]: mindestens 146.1 ms
+         git.exe [8456] unter bash.exe [37684]: mindestens 34.6 ms
+     bash.exe [38164] unter bash.exe [26328]: mindestens 285.5 ms
+       bash.exe [29748] unter bash.exe [38164]: mindestens 95.9 ms
+         bash.exe [48296] unter bash.exe [29748]: mindestens 68.1 ms
+           git.exe [42244] unter bash.exe [48296]: mindestens 36.7 ms
+       bash.exe [17388] unter bash.exe [38164]: mindestens 73.3 ms
+         git.exe [27440] unter bash.exe [17388]: mindestens 44.1 ms
+  -- nach pty.kill() noch am Leben: nichts
+
+=== cmd mit useConptyDll (mitgeliefertes OpenConsole.exe)
+  pty.spawn("C:\\Windows\\System32\\cmd.exe", [], useConptyDll: true)
+  node-pty meldet pid 46324; pty.spawn() blockierte den Hauptthread 111 ms
+  -- mit "ping -t localhost"
+  electron.exe [29248] (Electron-Hauptprozess)
+       └─ OpenConsole.exe [35304]   (Konsolen-Host 29248)
+            Pfad: C:\workspace\custom\termhub\.claude\worktrees\agent-a08aa9cb860516ad8\node_modules\node-pty\prebuilds\win32-x64\conpty\OpenConsole.exe
+            Befehl: "C:\workspace\custom\termhub\.claude\worktrees\agent-a08aa9cb860516ad8\node_modules\node-pty\prebuilds\win32-x64\conpty\OpenConsole.exe" --headless --width 1...
+            gestartet 9 ms nach pty.spawn
+       └─ cmd.exe [46324]   <== pid von node-pty   (Konsolen-Host 35304)
+            Pfad: C:\Windows\System32\cmd.exe
+            Befehl: C:\Windows\System32\cmd.exe
+            gestartet 105 ms nach pty.spawn
+            └─ PING.EXE [30560]   (Konsolen-Host 35304)
+                 Pfad: C:\Windows\System32\PING.EXE
+                 Befehl: ping  -t localhost
+                 gestartet 3169 ms nach pty.spawn
+  -- nach pty.kill() noch am Leben: nichts

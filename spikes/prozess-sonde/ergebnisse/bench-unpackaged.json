@@ -1,0 +1,484 @@
+{
+  "when": "2026-11-19T14:07:44.520Z",
+  "packaged": false,
+  "appPath": "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\spikes\\prozess-sonde",
+  "electron": "45.4.1",
+  "node": "24.22.3",
+  "napi": "10",
+  "modules": "150",
+  "arch": "x64",
+  "os": "Windows_NT 10.0.26200",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12800H",
+  "logicalCpus": 20,
+  "pollMs": 1500,
+  "results": [
+    {
+      "key": "toolhelp",
+      "name": "koffi + Toolhelp32",
+      "kind": "in-process",
+      "createMs": 2.192699999999604,
+      "firstSnapshotMs": 23.943899999998393,
+      "processCount": 612,
+      "selfCheck": {
+        "name": "electron.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 12304,
+          "ppid": 48420,
+          "name": "bash.exe"
+        },
+        {
+          "pid": 47216,
+          "ppid": 12304,
+          "name": "electron.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 326,
+          "min": 12.056,
+          "median": 14.352,
+          "p95": 20.926,
+          "max": 28.141,
+          "mean": 15.343
+        },
+        "mainCpuMsPerSnapshot": 15.144171779141104,
+        "childCpuMsPerSnapshot": 0,
+        "wmiCpuMsPerSnapshot": 0.3834355828220859,
+        "wallTotalMs": 5002.601899999998,
+        "totalCpuMsPerSnapshot": 15.52760736196319,
+        "cpuPercentOneCoreAt1500ms": 1.0351738241308794
+      },
+      "interval": {
+        "polls": 20,
+        "wallMs": 30170.3451,
+        "mainCpuMsOverIdle": 326.3754013,
+        "childCpuMs": 0,
+        "wmiCpuMsOverIdle": 633.3498446875001,
+        "cpuPercentOneCore": 3.18102177090278,
+        "cpuPercentMachine": 0.159051088545139,
+        "childWorkingSetMB": 0,
+        "childPrivateMB": 0
+      }
+    },
+    {
+      "key": "ntqsi",
+      "name": "koffi + NtQuerySystemInformation(SystemProcessInformation)",
+      "kind": "in-process",
+      "createMs": 0.4138999999995576,
+      "firstSnapshotMs": 14.238199999999779,
+      "processCount": 591,
+      "selfCheck": {
+        "name": "electron.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 12304,
+          "ppid": 48420,
+          "name": "bash.exe"
+        },
+        {
+          "pid": 47216,
+          "ppid": 12304,
+          "name": "electron.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 711,
+          "min": 5.447,
+          "median": 6.794,
+          "p95": 8.544,
+          "max": 13.592,
+          "mean": 7.042
+        },
+        "mainCpuMsPerSnapshot": 6.966244725738397,
+        "childCpuMsPerSnapshot": 0,
+        "wmiCpuMsPerSnapshot": 0.28568917018284107,
+        "wallTotalMs": 5008.185899999997,
+        "totalCpuMsPerSnapshot": 7.251933895921238,
+        "cpuPercentOneCoreAt1500ms": 0.4834622597280825,
+        "syscallOnlyMs": {
+          "n": 711,
+          "min": 5.268,
+          "median": 6.729,
+          "p95": 10.503,
+          "max": 13.335,
+          "mean": 7.152
+        },
+        "parseOnlyMs": {
+          "n": 711,
+          "min": 0.24,
+          "median": 0.401,
+          "p95": 0.731,
+          "max": 1.338,
+          "mean": 0.424
+        }
+      },
+      "interval": {
+        "polls": 20,
+        "wallMs": 30155.6679,
+        "mainCpuMsOverIdle": 108.4292177,
+        "childCpuMs": 0,
+        "wmiCpuMsOverIdle": -303.5233165625,
+        "cpuPercentOneCore": -0.6469566501045729,
+        "cpuPercentMachine": -0.032347832505228644,
+        "childWorkingSetMB": 0,
+        "childPrivateMB": 0
+      }
+    },
+    {
+      "key": "ntqsi-async",
+      "name": "koffi + NtQuerySystemInformation(SystemProcessInformation) async",
+      "kind": "in-process",
+      "createMs": 0.661099999997532,
+      "firstSnapshotMs": 11.252099999997881,
+      "processCount": 547,
+      "selfCheck": {
+        "name": "electron.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 12304,
+          "ppid": 48420,
+          "name": "bash.exe"
+        },
+        {
+          "pid": 47216,
+          "ppid": 12304,
+          "name": "electron.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 650,
+          "min": 5.616,
+          "median": 7.493,
+          "p95": 10.893,
+          "max": 19.628,
+          "mean": 7.698
+        },
+        "mainCpuMsPerSnapshot": 7.427692307692308,
+        "childCpuMsPerSnapshot": 0,
+        "wmiCpuMsPerSnapshot": 0.19230769230769232,
+        "wallTotalMs": 5004.839399999997,
+        "totalCpuMsPerSnapshot": 7.62,
+        "cpuPercentOneCoreAt1500ms": 0.508,
+        "syscallOnlyMs": {
+          "n": 650,
+          "min": 4.797,
+          "median": 7.638,
+          "p95": 10.613,
+          "max": 13.814,
+          "mean": 7.806
+        },
+        "parseOnlyMs": {
+          "n": 650,
+          "min": 0.205,
+          "median": 0.48,
+          "p95": 0.976,
+          "max": 1.331,
+          "mean": 0.546
+        }
+      },
+      "interval": {
+        "polls": 20,
+        "wallMs": 30138.665999999997,
+        "mainCpuMsOverIdle": 77.49155800000001,
+        "childCpuMs": 0,
+        "wmiCpuMsOverIdle": -271.5471937499999,
+        "cpuPercentOneCore": -0.643875995540081,
+        "cpuPercentMachine": -0.032193799777004053,
+        "childWorkingSetMB": 0,
+        "childPrivateMB": 0
+      }
+    },
+    {
+      "key": "basic",
+      "name": "koffi + NtQuerySystemInformation(SystemBasicProcessInformation)",
+      "kind": "in-process",
+      "createMs": 0.5605999999970663,
+      "firstSnapshotMs": 1.1536999999952968,
+      "processCount": 548,
+      "selfCheck": {
+        "name": "electron.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 12304,
+          "ppid": 48420,
+          "name": "bash.exe"
+        },
+        {
+          "pid": 47216,
+          "ppid": 12304,
+          "name": "electron.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 17592,
+          "min": 0.141,
+          "median": 0.267,
+          "p95": 0.579,
+          "max": 1.352,
+          "mean": 0.284
+        },
+        "mainCpuMsPerSnapshot": 0.27887676216462026,
+        "childCpuMsPerSnapshot": 0,
+        "wmiCpuMsPerSnapshot": 0.01065825375170532,
+        "wallTotalMs": 5000.224699999992,
+        "totalCpuMsPerSnapshot": 0.2895350159163256,
+        "cpuPercentOneCoreAt1500ms": 0.019302334394421704,
+        "syscallOnlyMs": {
+          "n": 17592,
+          "min": 0.038,
+          "median": 0.08,
+          "p95": 0.209,
+          "max": 1.051,
+          "mean": 0.092
+        },
+        "parseOnlyMs": {
+          "n": 17592,
+          "min": 0.091,
+          "median": 0.167,
+          "p95": 0.348,
+          "max": 1.081,
+          "mean": 0.178
+        }
+      },
+      "interval": {
+        "polls": 20,
+        "wallMs": 30136.688399999985,
+        "mainCpuMsOverIdle": -33.50119079999995,
+        "childCpuMs": 0,
+        "wmiCpuMsOverIdle": 462.9122662500006,
+        "cpuPercentOneCore": 1.4248781078746557,
+        "cpuPercentMachine": 0.07124390539373279,
+        "childWorkingSetMB": 0,
+        "childPrivateMB": 0
+      }
+    },
+    {
+      "key": "wpt",
+      "name": "@vscode/windows-process-tree",
+      "kind": "in-process",
+      "createMs": 5.752399999997579,
+      "firstSnapshotMs": 28.528200000000652,
+      "processCount": 578,
+      "selfCheck": {
+        "name": "electron.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 12304,
+          "ppid": 48420,
+          "name": "bash.exe"
+        },
+        {
+          "pid": 47216,
+          "ppid": 12304,
+          "name": "electron.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 195,
+          "min": 20.462,
+          "median": 25.04,
+          "p95": 30.51,
+          "max": 38.696,
+          "mean": 25.666
+        },
+        "mainCpuMsPerSnapshot": 25.08205128205128,
+        "childCpuMsPerSnapshot": 0,
+        "wmiCpuMsPerSnapshot": 1.5224358974358974,
+        "wallTotalMs": 5005.348600000027,
+        "totalCpuMsPerSnapshot": 26.60448717948718,
+        "cpuPercentOneCoreAt1500ms": 1.7736324786324789
+      },
+      "interval": {
+        "polls": 20,
+        "wallMs": 30186.388399999996,
+        "mainCpuMsOverIdle": 405.31657586666665,
+        "childCpuMs": 0,
+        "wmiCpuMsOverIdle": 54.539662083333496,
+        "cpuPercentOneCore": 1.5233893894706536,
+        "cpuPercentMachine": 0.07616946947353267,
+        "childWorkingSetMB": 0,
+        "childPrivateMB": 0
+      }
+    },
+    {
+      "key": "ps-csv",
+      "name": "powershell.exe + Get-CimInstance (csv)",
+      "kind": "child",
+      "createMs": 64.56960000001709,
+      "firstSnapshotMs": 1277.7810999999929,
+      "processCount": 573,
+      "selfCheck": {
+        "name": "electron.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 12304,
+          "ppid": 48420,
+          "name": "bash.exe"
+        },
+        {
+          "pid": 47216,
+          "ppid": 12304,
+          "name": "electron.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 40,
+          "min": 598.277,
+          "median": 768.47,
+          "p95": 867.111,
+          "max": 867.473,
+          "mean": 757.161
+        },
+        "mainCpuMsPerSnapshot": 0,
+        "childCpuMsPerSnapshot": 76.5625,
+        "wmiCpuMsPerSnapshot": 474.21875,
+        "wallTotalMs": 30286.4706,
+        "totalCpuMsPerSnapshot": 550.78125,
+        "cpuPercentOneCoreAt1500ms": 36.71875
+      },
+      "interval": {
+        "polls": 20,
+        "wallMs": 30117.55839999998,
+        "mainCpuMsOverIdle": -49.431047466666584,
+        "childCpuMs": 1578.125,
+        "wmiCpuMsOverIdle": 8416.854276666667,
+        "cpuPercentOneCore": 33.02242531453017,
+        "cpuPercentMachine": 1.6511212657265084,
+        "childWorkingSetMB": 136.77734375,
+        "childPrivateMB": 119.640625
+      }
+    },
+    {
+      "key": "ps-json",
+      "name": "powershell.exe + Get-CimInstance (json)",
+      "kind": "child",
+      "createMs": 25.4035000000149,
+      "firstSnapshotMs": 1270.141399999964,
+      "processCount": 578,
+      "selfCheck": {
+        "name": "electron.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 12304,
+          "ppid": 48420,
+          "name": "bash.exe"
+        },
+        {
+          "pid": 47216,
+          "ppid": 12304,
+          "name": "electron.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 40,
+          "min": 655.897,
+          "median": 787.931,
+          "p95": 919.904,
+          "max": 921.407,
+          "mean": 793.218
+        },
+        "mainCpuMsPerSnapshot": 1.55,
+        "childCpuMsPerSnapshot": 115.234375,
+        "wmiCpuMsPerSnapshot": 478.90625,
+        "wallTotalMs": 31728.776899999997,
+        "totalCpuMsPerSnapshot": 595.690625,
+        "cpuPercentOneCoreAt1500ms": 39.71270833333333
+      },
+      "interval": {
+        "polls": 20,
+        "wallMs": 30152.529500000004,
+        "mainCpuMsOverIdle": -79.55927483333335,
+        "childCpuMs": 2171.875,
+        "wmiCpuMsOverIdle": 9102.860719270833,
+        "cpuPercentOneCore": 37.128481855684775,
+        "cpuPercentMachine": 1.8564240927842388,
+        "childWorkingSetMB": 145.890625,
+        "childPrivateMB": 125.97265625
+      }
+    },
+    {
+      "key": "pwsh-csv",
+      "name": "pwsh.exe + Get-CimInstance (csv)",
+      "kind": "child",
+      "createMs": 136.4363000000012,
+      "firstSnapshotMs": 1339.7041999999783,
+      "processCount": 580,
+      "selfCheck": {
+        "name": "electron.exe",
+        "ppidOk": true
+      },
+      "sample": [
+        {
+          "pid": 12304,
+          "ppid": 48420,
+          "name": "bash.exe"
+        },
+        {
+          "pid": 47216,
+          "ppid": 12304,
+          "name": "electron.exe"
+        }
+      ],
+      "tight": {
+        "wallMs": {
+          "n": 40,
+          "min": 652.164,
+          "median": 782.732,
+          "p95": 860.038,
+          "max": 893.94,
+          "mean": 773.853
+        },
+        "mainCpuMsPerSnapshot": 0.775,
+        "childCpuMsPerSnapshot": 99.21875,
+        "wmiCpuMsPerSnapshot": 461.328125,
+        "wallTotalMs": 30954.15279999998,
+        "totalCpuMsPerSnapshot": 561.321875,
+        "cpuPercentOneCoreAt1500ms": 37.42145833333333
+      },
+      "interval": {
+        "polls": 20,
+        "wallMs": 30134.00959999999,
+        "mainCpuMsOverIdle": -94.4913685333333,
+        "childCpuMs": 2671.875,
+        "wmiCpuMsOverIdle": 9181.776673333334,
+        "cpuPercentOneCore": 39.02288630318882,
+        "cpuPercentMachine": 1.951144315159441,
+        "childWorkingSetMB": 122.19140625,
+        "childPrivateMB": 55.62109375
+      }
+    }
+  ],
+  "errors": {},
+  "systemProcessCount": 574,
+  "idle": {
+    "seconds": 30,
+    "mainCpuMs": 110,
+    "wmiCpuMs": 1281.25
+  },
+  "loadedNativeModules": [
+    "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\spikes\\prozess-sonde\\node_modules\\@koromix\\koffi-win32-x64\\win32_x64\\koffi.node",
+    "C:\\workspace\\custom\\termhub\\.claude\\worktrees\\agent-a08aa9cb860516ad8\\spikes\\prozess-sonde\\node_modules\\@vscode\\windows-process-tree\\build\\Release\\windows_process_tree.node"
+  ],
+  "processCountAtEnd": 585
+}

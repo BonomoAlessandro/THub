@@ -1,0 +1,43 @@
+{
+  "name": "prozess-sonde-spike",
+  "productName": "ProzessSondeSpike",
+  "version": "0.0.1",
+  "description": "Wegwerf-Spike zu Ticket 13: Kandidaten für die Prozess-Sonde im Electron-Hauptprozess messen.",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "bench": "..\\..\\node_modules\\.bin\\electron . --out=release\\bench-unpackaged.json",
+    "trees": "..\\..\\node_modules\\.bin\\electron trees.js",
+    "pack": "..\\..\\node_modules\\.bin\\electron-builder --win dir"
+  },
+  "build": {
+    "appId": "ch.custom.termhub.prozesssonde",
+    "productName": "ProzessSondeSpike",
+    "electronVersion": "45.4.1",
+    "electronDist": "../../node_modules/electron/dist",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "probes/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/@koromix/koffi-win32-*/**",
+      "node_modules/@vscode/windows-process-tree/build/Release/*.node"
+    ],
+    "npmRebuild": false,
+    "win": {
+      "target": "dir"
+    }
+  },
+  "dependencies": {
+    "@vscode/windows-process-tree": "0.8.0",
+    "koffi": "3.3.8"
+  },
+  "allowScripts": {
+    "@vscode/windows-process-tree": false,
+    "koffi": true
+  }
+}
