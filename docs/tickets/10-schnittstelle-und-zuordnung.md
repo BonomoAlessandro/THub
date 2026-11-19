@@ -7,14 +7,14 @@ Spezifikation: „Hook-Empfänger und lokale Schnittstelle“, „Claude-Status:
 
 ## Was gebaut wird
 
-Die Seite von TermHub, die Claude-Sessions erkennt. Der Starter in den Shells folgt in Ticket 11; hier wird alles über echte HTTP-Anfragen getestet.
+Die Seite von THub, die Claude-Sessions erkennt. Der Starter in den Shells folgt in Ticket 11; hier wird alles über echte HTTP-Anfragen getestet.
 
 - **Lokale Schnittstelle:** HTTP-Server nur auf `127.0.0.1`, zufälliger freier Port, pro App-Start ein zufälliges Token. Anfragen ohne gültiges Token → 403, unbekannte Tabs werden ignoriert.
   - Endpunkte: `POST /claude/launch`, `POST /claude/started`, `POST /claude/exit`, `POST /hooks/<Ereignis>`, mit Inhalt und Antworten wie in der Tabelle der Spezifikation.
   - Hook-Antworten sind immer sofort leer und enthalten nie Entscheidungsfelder.
-- **Umgebung der Terminals:** zusätzlich `TERMHUB_API` (Adresse) und `TERMHUB_TOKEN`.
+- **Umgebung der Terminals:** zusätzlich `THUB_API` (Adresse) und `THUB_TOKEN`.
 - **Hook-Datei:** bei jedem Start neu im Datenordner erzeugt, nach der geprüften Vorlage `spikes/claude-hooks/empfohlene-hook-datei.json` (Befunde in `docs/spikes/claude-hooks.md`).
-  - Hooks vom Typ `http` auf `/hooks/<Ereignis>`, mit den Kopfzeilen `X-TermHub-Tab: $TERMHUB_TAB_ID` und `X-TermHub-Token: $TERMHUB_TOKEN`; beide Variablen stehen in `allowedEnvVars`; Timeout 2 Sekunden.
+  - Hooks vom Typ `http` auf `/hooks/<Ereignis>`, mit den Kopfzeilen `X-THub-Tab: $THUB_TAB_ID` und `X-THub-Token: $THUB_TOKEN`; beide Variablen stehen in `allowedEnvVars`; Timeout 2 Sekunden.
   - Ereignisse per HTTP: `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `Stop`, `StopFailure`, `Notification`.
   - `SessionStart` als Befehls-Hook in Exec-Form mit `curl.exe` (`--connect-timeout 1 -m 2`, Hook-Timeout 3 s), der die Nutzdaten an `/hooks/SessionStart` weiterleitet; die Antwort ist leer. Fehlt `curl.exe`, entfällt der Eintrag.
 - **Claude-Zuordnung im Kern**, nach der Tabelle der Spezifikation, ohne die Status-Zeilen (die kommen in Ticket 13):
@@ -24,8 +24,8 @@ Die Seite von TermHub, die Claude-Sessions erkennt. Der Starter in den Shells fo
   - ein anderes Ereignis (ausser `SessionEnd`) mit einer neuen `session_id` wird wie `SessionStart` behandelt;
   - Ereignisse werden in der Reihenfolge ihres Eintreffens verarbeitet;
   - `UserPromptSubmit` setzt „hatte Prompt“;
-  - `SessionEnd` (ausser `clear`/`resume`), `exit` und das Ende der Shell → normales Terminal; nach einem von TermHub gestarteten Fortsetzen ohne `SessionStart` entscheidet erst `exit` (Ticket 12).
-- **Einfrieren:** Beendet TermHub selbst (App, Tab schliessen, Windows-Abmeldung), ändern spätere Ereignisse die Claude-Zuordnung im gespeicherten Zustand nicht mehr.
+  - `SessionEnd` (ausser `clear`/`resume`), `exit` und das Ende der Shell → normales Terminal; nach einem von THub gestarteten Fortsetzen ohne `SessionStart` entscheidet erst `exit` (Ticket 12).
+- **Einfrieren:** Beendet THub selbst (App, Tab schliessen, Windows-Abmeldung), ändern spätere Ereignisse die Claude-Zuordnung im gespeicherten Zustand nicht mehr.
 - Die Claude-Zuordnung wird im Schema gespeichert: Session-Kennung, Ordner, bestätigt, hatte Prompt.
 
 ## Akzeptanzkriterien

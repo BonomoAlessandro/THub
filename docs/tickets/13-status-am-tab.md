@@ -47,4 +47,4 @@ Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Status-Zeilen, „P
 - [ ] Claude startet einen Dev-Server im Hintergrund → nach dem Ende der Antwort blau.
 - [ ] `npm run dev` in einem normalen Tab → blau, nach `Ctrl+C` kein Symbol.
 - [ ] Ein Git-Bash-Tab und ein PowerShell-Tab mit oh-my-posh im Leerlauf zeigen kein Symbol.
-- [ ] Mit 20 offenen Tabs braucht TermHub im Leerlauf im Mittel unter 1 % CPU (Task-Manager).
+- [ ] Mit 20 offenen Tabs braucht THub im Leerlauf im Mittel unter 1 % CPU (Task-Manager).

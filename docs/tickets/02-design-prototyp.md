@@ -7,7 +7,7 @@ Spezifikation: „Oberfläche (Renderer)“, „Weitere Hinweise → Ablauf“
 
 ## Was gebaut wird
 
-Ein **klickbarer Prototyp im Browser**, an dem der Look von TermHub abgestimmt wird, bevor die echte Oberfläche entsteht. Die Terminals sind nachgemacht, es laufen keine echten Shells. Der Prototyp liegt ausserhalb des App-Quellcodes, damit Typecheck und Build der App nicht betroffen sind.
+Ein **klickbarer Prototyp im Browser**, an dem der Look von THub abgestimmt wird, bevor die echte Oberfläche entsteht. Die Terminals sind nachgemacht, es laufen keine echten Shells. Der Prototyp liegt ausserhalb des App-Quellcodes, damit Typecheck und Build der App nicht betroffen sind.
 
 Er zeigt:
 - die eigene Titelleiste mit Tabs, Fensterknöpfen und Zieh-Fläche

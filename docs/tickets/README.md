@@ -1,4 +1,4 @@
-# Tickets für TermHub 2
+# Tickets für THub 2
 
 Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, die sich einzeln umsetzen lassen. Jedes Ticket ist ein durchgehender Schnitt (Kern, Oberfläche, Tests) und lässt sich für sich prüfen.
 
@@ -7,7 +7,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 - **AFK** (Status `ready-for-agent`): Ein Agent setzt das Ticket allein um.
   - Er erfüllt die Abschnitte **„Akzeptanzkriterien“**, die alle automatisch oder am Code prüfbar sind, und liefert einen lauffähigen Stand: `npm start`, bei Bedarf ein gebautes Paket.
   - Für den Abschnitt **„Abnahme von Hand“** liefert er eine kurze Prüfliste. Die Abnahme machst du **gesammelt am Schluss** (Ticket 19), nicht nach jedem Ticket. Bis dahin gilt ein Ticket als erledigt, wenn die automatischen Kriterien erfüllt sind und der Stand auf `main` ist.
-  - Agenten installieren den Installer nicht über eine bestehende TermHub-Installation. Zum Prüfen dient das ungepackte Paket (`release/win-unpacked`) bzw. `npm start` mit eigenem Entwicklungs-Datenordner.
+  - Agenten installieren den Installer nicht über eine bestehende THub-Installation. Zum Prüfen dient das ungepackte Paket (`release/win-unpacked`) bzw. `npm start` mit eigenem Entwicklungs-Datenordner.
 - **HITL** (Status `ready-for-human`): Das Ticket braucht dich laufend, zum Beispiel für Rückmeldungen.
 - Begriffe wie „Workspace-Kern“, „Port“, „Starter“, „Claude-Zuordnung“ oder „Einfrieren“ sind in der Spezifikation erklärt. Vor jedem Ticket die dort genannten Abschnitte lesen.
 
@@ -34,6 +34,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 17 | [Befehlspalette](17-befehlspalette.md) | AFK | 15 | offen |
 | 18 | [Design-Wahl und Schriftgrösse](18-design-und-schrift.md) | AFK | 05 | offen |
 | 19 | [README und Abschluss-Prüfung auf einem frischen Rechner](19-readme-und-abschluss.md) | HITL | alle | offen |
+| 20 | [Umbenennen in THub](20-umbenennen-thub.md) | AFK | 04, 08 | offen |
 
 ```mermaid
 flowchart LR
@@ -62,6 +63,8 @@ flowchart LR
   T16 --> T19
   T17 --> T19
   T18 --> T19
+  T04 --> T20[20 Umbenennen in THub]
+  T08 --> T20
 ```
 
 **Parallel möglich:**

@@ -32,11 +32,11 @@ Spezifikation: „Shell-Integration“ (Punkt 2, Bekannte Grenzen), „Hook-Empf
   - `launch`, `started` und `exit` kommen an, `exit` auch nach `Ctrl+C` und bei Exit-Code ≠ 0; der Exit-Code kommt in der Shell an.
   - Ohne erreichbare Schnittstelle startet `claude` unverändert; ohne `claude` im PATH kommt eine verständliche Meldung mit Exit-Code 1.
   - Ein Startbefehl „Starter mit `--resume x`“ erreicht das nachgemachte `claude` mit `--settings`.
-- [ ] Die Tests sprechen keine laufende TermHub-Instanz an, auch wenn sie in einem TermHub-Tab laufen.
+- [ ] Die Tests sprechen keine laufende THub-Instanz an, auch wenn sie in einem THub-Tab laufen.
 
 ## Abnahme von Hand (mit echtem Claude Code)
 
-- [ ] In einem TermHub-Tab `claude` tippen → der Tab ist als Claude-Tab mit der richtigen Kennung vermerkt (Zustandsdatei bzw. Entwicklerwerkzeuge); die Session trägt den Tab-Namen in Claudes `/resume`-Liste.
+- [ ] In einem THub-Tab `claude` tippen → der Tab ist als Claude-Tab mit der richtigen Kennung vermerkt (Zustandsdatei bzw. Entwicklerwerkzeuge); die Session trägt den Tab-Namen in Claudes `/resume`-Liste.
 - [ ] `/clear` → neue Kennung vermerkt. `/exit` → Tab ist wieder normal.
 - [ ] In cmd `claude` starten und mit `Ctrl+C` beenden → keine Rückfrage „Batchvorgang abbrechen?“.
-- [ ] `~/.claude/settings.json` ist unverändert. Eine Claude-Session ausserhalb von TermHub zeigt keine Hook-Fehler.
+- [ ] `~/.claude/settings.json` ist unverändert. Eine Claude-Session ausserhalb von THub zeigt keine Hook-Fehler.

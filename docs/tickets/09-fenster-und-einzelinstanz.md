@@ -11,7 +11,7 @@ Spezifikation: „App-Verhalten“, „Gespeicherter Zustand“ (Fenster)
 - **Erster Start:** Ohne gespeicherte Fensterangaben öffnet das Fenster maximiert auf dem Hauptbildschirm, mit einer sinnvollen normalen Grösse darunter (etwa 1200×760, zentriert).
 - **Ausserhalb aller Bildschirme**, etwa nach dem Abziehen eines Monitors: Das Fenster öffnet zentriert auf dem Hauptbildschirm. Die Bildschirme liefert der Port „System“.
 - **Nur eine Instanz:** Ein zweiter Start beendet sich sofort und holt das bestehende Fenster nach vorne, auch aus minimiertem Zustand. Er startet keine Shells und keinen Server, schreibt keine Hook-Datei und keinen Zustand.
-- Die Entwicklungsversion (eigener Datenordner aus Ticket 01) hat ihre eigene Sperre und stört eine installierte TermHub-Instanz nicht.
+- Die Entwicklungsversion (eigener Datenordner aus Ticket 01) hat ihre eigene Sperre und stört eine installierte THub-Instanz nicht.
 
 ## Akzeptanzkriterien
 
@@ -21,5 +21,5 @@ Spezifikation: „App-Verhalten“, „Gespeicherter Zustand“ (Fenster)
 ## Abnahme von Hand
 
 - [ ] Maximiert beenden → maximiert starten, „Wiederherstellen“ ergibt die alte Grösse.
-- [ ] TermHub ein zweites Mal starten, auch minimiert → das bestehende Fenster kommt nach vorne, nichts wird doppelt fortgesetzt.
-- [ ] `npm start` neben einer installierten TermHub-Instanz → beide laufen unabhängig.
+- [ ] THub ein zweites Mal starten, auch minimiert → das bestehende Fenster kommt nach vorne, nichts wird doppelt fortgesetzt.
+- [ ] `npm start` neben einer installierten THub-Instanz → beide laufen unabhängig.

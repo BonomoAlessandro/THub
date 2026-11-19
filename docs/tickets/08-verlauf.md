@@ -11,7 +11,7 @@ Spezifikation: „Wiederherstellen“ (normaler Tab, Verlauf sichern), „App-Ve
 - **Wann gesichert wird:**
   - beim Schliessen eines Tabs;
   - periodisch etwa alle 30 Sekunden für Tabs, deren Inhalt sich geändert hat;
-  - **beim Beenden:** Das Schliessen des Fensters wird abgefangen. TermHub fordert den aktuellen Verlauf mit etwa 2 Sekunden Zeitlimit an, sichert und beendet erst dann wie bisher die Shells und die App.
+  - **beim Beenden:** Das Schliessen des Fensters wird abgefangen. THub fordert den aktuellen Verlauf mit etwa 2 Sekunden Zeitlimit an, sichert und beendet erst dann wie bisher die Shells und die App.
   - **Windows-Abmeldung oder Neustart** (`query-session-end` / `session-end`): synchron mit dem zuletzt periodisch gesicherten Verlauf schreiben, weil der Renderer womöglich nicht mehr antwortet.
 - **Wiederherstellen:**
   - Vor dem Start der Shell schreibt der Renderer den Verlauf ausgegraut ins Terminal, gefolgt von der Trennlinie „Wiederhergestellt · <Datum, Uhrzeit>“ und so vielen Leerzeilen, dass alles im Scrollback liegt; ConPTY leert beim Start den sichtbaren Bereich.
@@ -32,8 +32,8 @@ Spezifikation: „Wiederherstellen“ (normaler Tab, Verlauf sichern), „App-Ve
 
 - [ ] Befehle ausführen, Fenster mit `×` schliessen, neu starten → der frühere Inhalt steht ausgegraut mit Trennlinie über dem neuen Prompt, lesbar in hell und dunkel.
 - [ ] Mit offenem `vim` bzw. `less` beenden → im Verlauf steht die normale Shell-Ausgabe, nicht der Vollbildinhalt.
-- [ ] TermHub per Task-Manager beenden → nach dem Neustart ist der Inhalt bis höchstens etwa 30 Sekunden vor dem Absturz da.
-- [ ] Windows mit offenem TermHub neu starten → Verlauf ist da.
+- [ ] THub per Task-Manager beenden → nach dem Neustart ist der Inhalt bis höchstens etwa 30 Sekunden vor dem Absturz da.
+- [ ] Windows mit offenem THub neu starten → Verlauf ist da.
 
 ## Hinweise
 

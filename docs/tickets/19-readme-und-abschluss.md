@@ -8,12 +8,12 @@ Spezifikation: „Weitere Hinweise“
 ## Was gebaut wird
 
 - **README neu schreiben:**
-  - Funktionen von TermHub 2, Bedienung und Tastenkürzel;
+  - Funktionen von THub 2, Bedienung und Tastenkürzel;
   - Aufbau: Workspace-Kern, Ports, lokale Schnittstelle, Shell-Integration und Starter, Renderer;
   - Tests: beide Testläufe, und warum sie keine laufende Instanz ansprechen;
   - Entwicklung inklusive eigenem Datenordner.
   - Die „Offenen Punkte“ verschwinden. Bekannte Grenzen (cmd nur am Zeilenanfang, kein Claude in WSL, kein Claude über den vollen Pfad) und was bewusst nicht dabei ist, stehen als kurzer Abschnitt mit Verweis auf die Spezifikation.
-- **Installer bauen** und auf einem **zweiten Rechner** oder unter einem frischen Windows-Benutzer ohne TermHub-Daten prüfen.
+- **Installer bauen** und auf einem **zweiten Rechner** oder unter einem frischen Windows-Benutzer ohne THub-Daten prüfen.
 
 ## Akzeptanzkriterien
 
@@ -29,7 +29,7 @@ Spezifikation: „Weitere Hinweise“
   - `claude` in einem Tab → die Status-Symbole funktionieren;
   - `~/.claude/settings.json` ist unverändert;
   - nach einem Neustart des Rechners ist alles wieder da: normale Tabs mit Verlauf im letzten Ordner, der aktive Claude-Tab läuft weiter, die anderen sind pausiert.
-- [ ] Ohne installiertes Claude Code funktioniert TermHub als normales Terminal-Fenster, ohne Fehlermeldungen beim Start.
+- [ ] Ohne installiertes Claude Code funktioniert THub als normales Terminal-Fenster, ohne Fehlermeldungen beim Start.
 - [ ] Hinter einem Firmen-Proxy (falls vorhanden) funktionieren Status und Fortsetzen.
 - [ ] Ob die helle Terminalfläche mit Claude gut aussieht, ist entschieden und in der Spezifikation vermerkt.
 - [ ] Gefundene Fehler sind als neue Tickets erfasst.

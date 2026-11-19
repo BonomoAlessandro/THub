@@ -29,7 +29,7 @@ Spezifikation: „Shell-Erkennung“, „Gespeicherter Zustand“ (Übernahme au
 ## Abnahme von Hand
 
 - [ ] Auf diesem Rechner erscheinen PowerShell 7, Windows PowerShell, cmd, Git Bash und WSL (Ubuntu) im Menü, `docker-desktop` nicht. Alle starten im richtigen Ordner.
-- [ ] Einen Git-Bash-Tab anlegen, TermHub neu starten → wieder Git Bash.
+- [ ] Einen Git-Bash-Tab anlegen, THub neu starten → wieder Git Bash.
 
 ## Hinweise
 

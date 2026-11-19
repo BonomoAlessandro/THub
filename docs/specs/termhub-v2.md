@@ -1,7 +1,9 @@
-# TermHub 2: Tabs, Claude-Sessions, die einen Neustart überleben, und neuer Look
+# THub 2: Tabs, Claude-Sessions, die einen Neustart überleben, und neuer Look
 
 > Status: `ready-for-agent`
 > Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
+
+> **Name:** Die App heisst **THub** (bis 2026-11-19 „TermHub“). Datenordner `%APPDATA%\THub`, in der Entwicklung `%APPDATA%\THub-dev`. Umsetzung des Namenswechsels: Ticket 20.
 
 ## Problemstellung
 
@@ -12,15 +14,15 @@ Ich arbeite den ganzen Tag mit mehreren Terminals gleichzeitig, und in vielen da
 - Nach einem Neustart (der App oder des Rechners) ist alles weg. Ich muss jedes Terminal neu öffnen, in den Ordner wechseln und jede Claude-Session einzeln über `claude --resume` wiederfinden.
 - Ich sehe nicht, in welchem Terminal Claude gerade arbeitet, auf meine Bestätigung wartet oder längst fertig ist. Ich muss durch alle Terminals klicken.
 
-Das Grundgerüst von TermHub kann benannte Terminals öffnen und nach einem Neustart in ihrem Startordner neu starten. Es weiss aber nichts von Claude, merkt sich weder den letzten Ordner noch den Inhalt, kennt nur Windows PowerShell 5 und sieht noch wie ein Entwurf aus.
+Das Grundgerüst von THub kann benannte Terminals öffnen und nach einem Neustart in ihrem Startordner neu starten. Es weiss aber nichts von Claude, merkt sich weder den letzten Ordner noch den Inhalt, kennt nur Windows PowerShell 5 und sieht noch wie ein Entwurf aus.
 
 ## Lösung
 
-TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions versteht:
+THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions versteht:
 
 - **Tabs oben in einer eigenen Titelleiste.** `+` öffnet sofort ein Terminal im optionalen Standardordner. Über ein Pfeil-Menü wählst du eine andere Shell oder „Neues Terminal in …“ mit den zuletzt benutzten Ordnern.
 - **Tabs benennen sich selbst nach ihrem Ordner** und lassen sich jederzeit umbenennen.
-- **Claude startest du wie gewohnt mit `claude`.** TermHub erkennt das von selbst, ohne Knopf und ohne Einrichtung, und zeigt am Tab, ob Claude arbeitet, auf dich wartet, fertig ist oder ob noch Prozesse laufen.
+- **Claude startest du wie gewohnt mit `claude`.** THub erkennt das von selbst, ohne Knopf und ohne Einrichtung, und zeigt am Tab, ob Claude arbeitet, auf dich wartet, fertig ist oder ob noch Prozesse laufen.
 - **Nach einem Neustart ist alles wieder da:** Normale Terminals starten im zuletzt aktiven Ordner und zeigen ihren früheren Inhalt ausgegraut als Verlauf. Claude-Sessions werden direkt fortgesetzt, die zuletzt aktive sofort, die übrigen beim ersten Anklicken.
 - **Hinweise unten rechts im Fenster** melden, wenn Claude in einem Tab, den du gerade nicht siehst, auf dich wartet oder fertig wird.
 - **Einfache Bedienung:** Maus, die bekannten Tastenkürzel und eine Befehlspalette (`Ctrl+Shift+P`).
@@ -33,15 +35,15 @@ TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessio
 
 1. Als Nutzer möchte ich mit einem Klick auf `+` oder mit `Ctrl+Shift+T` sofort ein neues Terminal bekommen, damit ich ohne Umweg loslegen kann.
 2. Als Nutzer möchte ich einen optionalen Standardordner festlegen, damit neue Terminals direkt in meinem Arbeitsordner starten.
-3. Als Nutzer möchte ich, dass ohne festgelegten Standardordner mein Benutzerordner gilt, damit TermHub auch ohne jede Einstellung funktioniert.
+3. Als Nutzer möchte ich, dass ohne festgelegten Standardordner mein Benutzerordner gilt, damit THub auch ohne jede Einstellung funktioniert.
 4. Als Nutzer möchte ich über „Neues Terminal in …“ einen der zuletzt benutzten Ordner wählen, damit ich mit zwei Klicks in einem anderen Projekt starte, ohne den Standardordner umzustellen.
 5. Als Nutzer möchte ich in „Neues Terminal in …“ auch einen beliebigen Ordner über einen Ordner-Dialog wählen können, damit ich nicht auf die Liste beschränkt bin.
-6. Als Nutzer möchte ich, dass TermHub die auf meinem Rechner installierten Shells selbst erkennt, damit ich nichts von Hand eintragen muss.
+6. Als Nutzer möchte ich, dass THub die auf meinem Rechner installierten Shells selbst erkennt, damit ich nichts von Hand eintragen muss.
 7. Als Nutzer möchte ich, dass PowerShell 7 die Standard-Shell ist, wenn sie installiert ist, damit ich die moderne PowerShell bekomme.
 8. Als Nutzer möchte ich beim Anlegen eines Tabs über das Pfeil-Menü eine andere Shell wählen (Windows PowerShell, cmd, Git Bash, WSL), damit ich für jede Aufgabe die passende Shell habe.
 9. Als Nutzer möchte ich, dass ein Tab seine Shell auch nach einem Neustart behält, damit eine Git-Bash-Session nicht plötzlich eine PowerShell ist.
 10. Als Nutzer möchte ich, dass neue Tabs rechts neben dem aktiven Tab erscheinen, damit zusammengehörige Tabs nebeneinander bleiben.
-11. Als Nutzer möchte ich, dass meine PowerShell-, Bash- und cmd-Profile wie gewohnt geladen werden, damit mein Prompt, meine Aliase und Module auch in TermHub funktionieren.
+11. Als Nutzer möchte ich, dass meine PowerShell-, Bash- und cmd-Profile wie gewohnt geladen werden, damit mein Prompt, meine Aliase und Module auch in THub funktionieren.
 
 ### Tabs benennen und ordnen
 
@@ -68,20 +70,20 @@ TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessio
 26. Als Nutzer möchte ich beim Schliessen mehrerer Tabs („Andere Tabs schliessen“) höchstens eine gemeinsame Rückfrage bekommen, die die betroffenen Tabs nennt, damit ich nicht zehnmal klicken muss.
 27. Als Nutzer möchte ich einen versehentlich geschlossenen Tab mit `Ctrl+Shift+Z` oder über „Zuletzt geschlossen“ in der Befehlspalette wieder öffnen, mit Name, Ordner, Shell und Verlauf, damit ein Fehlklick nichts kostet.
 28. Als Nutzer möchte ich, dass beim Wiederöffnen eines Claude-Tabs dessen Claude-Session fortgesetzt wird, damit ich nahtlos weitermachen kann.
-29. Als Nutzer möchte ich, dass sich TermHub die letzten zehn geschlossenen Tabs auch über einen Neustart hinweg merkt, damit das Wiederöffnen auch morgen noch geht.
+29. Als Nutzer möchte ich, dass sich THub die letzten zehn geschlossenen Tabs auch über einen Neustart hinweg merkt, damit das Wiederöffnen auch morgen noch geht.
 
 ### Claude erkennen
 
 30. Als Nutzer möchte ich Claude wie gewohnt mit `claude` im Terminal starten, ohne einen speziellen Knopf, damit sich meine Arbeitsweise nicht ändert.
-31. Als Nutzer möchte ich, dass TermHub automatisch erkennt, dass in einem Tab Claude läuft, damit Status und Wiederherstellen ohne mein Zutun funktionieren.
+31. Als Nutzer möchte ich, dass THub automatisch erkennt, dass in einem Tab Claude läuft, damit Status und Wiederherstellen ohne mein Zutun funktionieren.
 32. Als Nutzer möchte ich, dass die Zuordnung auch nach `/clear`, `/resume` oder `/compact` innerhalb von Claude stimmt, damit nach einem Neustart die richtige Session zurückkommt.
-33. Als Nutzer möchte ich, dass TermHub den Tab-Namen als Claude-Session-Namen mitgibt, damit ich die Session auch in Claudes eigener `/resume`-Liste unter diesem Namen finde.
-34. Als Nutzer möchte ich, dass TermHub nichts ergänzt, wenn ich selbst einen Namen oder eine Session angebe (`-n`, `--resume`, `--continue`, `--session-id`), damit meine eigenen Angaben gelten.
+33. Als Nutzer möchte ich, dass THub den Tab-Namen als Claude-Session-Namen mitgibt, damit ich die Session auch in Claudes eigener `/resume`-Liste unter diesem Namen finde.
+34. Als Nutzer möchte ich, dass THub nichts ergänzt, wenn ich selbst einen Namen oder eine Session angebe (`-n`, `--resume`, `--continue`, `--session-id`), damit meine eigenen Angaben gelten.
 35. Als Nutzer möchte ich, dass Claude-Unterbefehle und nicht-interaktive Aufrufe (zum Beispiel `claude mcp list`, `claude -p "…"`, `claude --version`) unverändert durchgereicht werden und den Tab nicht zu einem Claude-Tab machen, damit Hilfsaufrufe nicht als Session gelten.
-36. Als Nutzer möchte ich, dass TermHub meine globale Claude-Konfiguration nicht verändert, damit Claude-Sessions ausserhalb von TermHub unberührt bleiben.
-37. Als Nutzer möchte ich, dass die Claude-Erkennung auf einem anderen Rechner direkt nach der Installation funktioniert, ohne Einrichtung und ohne Rückfrage, damit ich TermHub einfach mitnehmen kann.
+36. Als Nutzer möchte ich, dass THub meine globale Claude-Konfiguration nicht verändert, damit Claude-Sessions ausserhalb von THub unberührt bleiben.
+37. Als Nutzer möchte ich, dass die Claude-Erkennung auf einem anderen Rechner direkt nach der Installation funktioniert, ohne Einrichtung und ohne Rückfrage, damit ich THub einfach mitnehmen kann.
 38. Als Nutzer möchte ich, dass das Fortsetzen auch dann funktioniert, wenn eine Firmenrichtlinie Hooks sperrt, damit mir zumindest das Wichtigste bleibt (nur die Statusanzeige fehlt dann).
-39. Als Nutzer möchte ich, dass TermHub ohne installiertes Claude Code ganz normal als Terminal funktioniert, damit es auch auf Rechnern ohne Claude nützlich ist.
+39. Als Nutzer möchte ich, dass THub ohne installiertes Claude Code ganz normal als Terminal funktioniert, damit es auch auf Rechnern ohne Claude nützlich ist.
 40. Als Nutzer möchte ich, dass ein Tab nach dem Beenden von Claude (`/exit`, `Ctrl+C`) als normales Terminal im selben Ordner offen bleibt, damit ich direkt weiterarbeiten kann.
 
 ### Status am Tab
@@ -97,47 +99,47 @@ TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessio
 
 ### Hinweise im Fenster
 
-49. Als Nutzer möchte ich unten rechts im TermHub-Fenster einen Hinweis bekommen, wenn Claude in einem Tab, den ich gerade nicht sehe, auf mich wartet oder fertig wird, damit ich reagieren kann, ohne alle Tabs zu prüfen.
+49. Als Nutzer möchte ich unten rechts im THub-Fenster einen Hinweis bekommen, wenn Claude in einem Tab, den ich gerade nicht sehe, auf mich wartet oder fertig wird, damit ich reagieren kann, ohne alle Tabs zu prüfen.
 50. Als Nutzer möchte ich mit einem Klick auf den Hinweis direkt in den betroffenen Tab springen, damit ich sofort weitermachen kann.
-51. Als Nutzer möchte ich, dass „Fertig“-Hinweise nach etwa sechs Sekunden verschwinden, der Countdown aber erst läuft, wenn TermHub im Vordergrund ist, damit ich nichts verpasse, während ich in einem anderen Programm bin.
+51. Als Nutzer möchte ich, dass „Fertig“-Hinweise nach etwa sechs Sekunden verschwinden, der Countdown aber erst läuft, wenn THub im Vordergrund ist, damit ich nichts verpasse, während ich in einem anderen Programm bin.
 52. Als Nutzer möchte ich, dass „Wartet auf dich“-Hinweise stehen bleiben, bis ich den Tab öffne oder Claude dort wieder arbeitet, damit eine offene Frage nicht untergeht.
 53. Als Nutzer möchte ich, dass sich mehrere Hinweise stapeln, damit ich alle sehe.
-54. Als Nutzer möchte ich die Hinweise in den Einstellungen abschalten können, damit mich TermHub nicht stört, wenn ich das nicht will.
-55. Als Nutzer möchte ich keine Windows-Benachrichtigungen und kein Blinken in der Taskleiste, damit TermHub mein System nicht zumüllt.
+54. Als Nutzer möchte ich die Hinweise in den Einstellungen abschalten können, damit mich THub nicht stört, wenn ich das nicht will.
+55. Als Nutzer möchte ich keine Windows-Benachrichtigungen und kein Blinken in der Taskleiste, damit THub mein System nicht zumüllt.
 
 ### Wiederherstellen nach einem Neustart
 
-56. Als Nutzer möchte ich, dass beim Start von TermHub alle Tabs in ihrer Reihenfolge, mit Namen und Shell wieder da sind und der zuletzt aktive Tab angezeigt wird, damit ich dort weitermache, wo ich aufgehört habe.
+56. Als Nutzer möchte ich, dass beim Start von THub alle Tabs in ihrer Reihenfolge, mit Namen und Shell wieder da sind und der zuletzt aktive Tab angezeigt wird, damit ich dort weitermache, wo ich aufgehört habe.
 57. Als Nutzer möchte ich, dass ein normales Terminal im zuletzt aktiven Ordner startet (auch wenn ich dorthin mit `cd` gewechselt bin), damit ich nicht wieder navigieren muss.
 58. Als Nutzer möchte ich, dass der frühere Inhalt eines normalen Terminals ausgegraut als Verlauf über der neuen Eingabezeile steht, mit einer Trennlinie und dem Zeitpunkt, damit ich sehe, was ich zuletzt getan habe.
 59. Als Nutzer möchte ich, dass ein Claude-Tab keinen alten Verlauf zeigt, sondern die Claude-Session direkt fortsetzt, damit ich sofort im Gespräch bin.
-60. Als Nutzer möchte ich, dass die zuletzt aktive Claude-Session sofort und die übrigen erst beim ersten Anklicken fortgesetzt werden, damit TermHub schnell startet und nicht unnötig Speicher belegt.
+60. Als Nutzer möchte ich, dass die zuletzt aktive Claude-Session sofort und die übrigen erst beim ersten Anklicken fortgesetzt werden, damit THub schnell startet und nicht unnötig Speicher belegt.
 61. Als Nutzer möchte ich, dass eine Claude-Session in dem Ordner fortgesetzt wird, in dem sie gestartet wurde, damit Claude im richtigen Projekt arbeitet.
 62. Als Nutzer möchte ich, dass Claude nach dem Fortsetzen ebenfalls in der Shell läuft, damit ich nach dem Beenden wieder in der Shell bin.
 63. Als Nutzer möchte ich einen verständlichen Hinweis im Tab und eine normale Shell im Ordner bekommen, wenn eine Claude-Session nicht fortgesetzt werden kann, damit ich nicht vor einem toten Tab sitze.
-64. Als Nutzer möchte ich, dass ein Tab, in dem ich Claude vor dem Beenden von TermHub beendet hatte, als normales Terminal zurückkommt, damit keine alte Session ungefragt wieder aufgeht.
+64. Als Nutzer möchte ich, dass ein Tab, in dem ich Claude vor dem Beenden von THub beendet hatte, als normales Terminal zurückkommt, damit keine alte Session ungefragt wieder aufgeht.
 65. Als Nutzer möchte ich, dass ein nicht mehr existierender Ordner auf den Standardordner bzw. den Benutzerordner zurückfällt, damit der Tab trotzdem startet.
-66. Als Nutzer möchte ich, dass der Inhalt meiner Terminals auch nach einem Absturz von TermHub weitgehend erhalten ist, damit ein Absturz nicht alles kostet.
+66. Als Nutzer möchte ich, dass der Inhalt meiner Terminals auch nach einem Absturz von THub weitgehend erhalten ist, damit ein Absturz nicht alles kostet.
 
 ### Fenster
 
-67. Als Nutzer möchte ich, dass sich TermHub Grösse, Position und den Maximiert-Zustand des Fensters merkt, damit es immer so aufgeht, wie ich es eingerichtet habe.
-68. Als Nutzer möchte ich, dass ein zweiter Start von TermHub einfach das bestehende Fenster nach vorne holt, damit nie zwei Instanzen dieselben Sessions fortsetzen.
+67. Als Nutzer möchte ich, dass sich THub Grösse, Position und den Maximiert-Zustand des Fensters merkt, damit es immer so aufgeht, wie ich es eingerichtet habe.
+68. Als Nutzer möchte ich, dass ein zweiter Start von THub einfach das bestehende Fenster nach vorne holt, damit nie zwei Instanzen dieselben Sessions fortsetzen.
 69. Als Nutzer möchte ich die Fensterknöpfe von Windows 11 inklusive Andock-Layouts beim Überfahren von „Maximieren“ behalten, damit sich das Fenster wie jede andere App bedienen lässt.
 
 ### Befehlspalette und Tastenkürzel
 
 70. Als Nutzer möchte ich mit `Ctrl+Shift+P` eine Befehlspalette öffnen und durch Tippen eines Namens zu einem Tab springen, damit ich auch bei vielen Tabs sofort finde, was ich suche.
 71. Als Nutzer möchte ich in der Befehlspalette Befehle finden (Neues Terminal, Neues Terminal in …, Umbenennen, Schliessen, Zuletzt geschlossen, Einstellungen, Standardordner ändern), damit ich keine Tastenkürzel auswendig lernen muss.
-72. Als Nutzer möchte ich, dass `Ctrl+K` in Claude und in den Shells weiterhin funktioniert, damit TermHub meine gewohnten Tasten nicht stiehlt.
+72. Als Nutzer möchte ich, dass `Ctrl+K` in Claude und in den Shells weiterhin funktioniert, damit THub meine gewohnten Tasten nicht stiehlt.
 73. Als Nutzer möchte ich mit `Ctrl+Shift+C` / `Ctrl+Shift+V` und mit Rechtsklick im Terminal kopieren und einfügen, damit das wie gewohnt funktioniert.
 74. Als Nutzer möchte ich die Terminal-Schriftgrösse mit `Ctrl` + Mausrad oder `Ctrl` `+` / `Ctrl` `-` ändern, damit ich sie schnell anpassen kann.
 
 ### Einstellungen und Aussehen
 
 75. Als Nutzer möchte ich über das Zahnrad einen Einstellungsdialog öffnen mit Standardordner, Standard-Shell, Design (System / Hell / Dunkel), Terminal-Schriftgrösse und Hinweisen an/aus, damit ich alles Nötige an einem Ort finde.
-76. Als Nutzer möchte ich, dass TermHub standardmässig dem hellen oder dunklen Design von Windows folgt und bei einem Wechsel sofort mitzieht, damit es zu meinem System passt.
-77. Als Nutzer möchte ich, dass auch die Terminalfläche dem Design folgt (im hellen Modus hell, mit passendem Farbschema), damit TermHub aus einem Guss wirkt.
+76. Als Nutzer möchte ich, dass THub standardmässig dem hellen oder dunklen Design von Windows folgt und bei einem Wechsel sofort mitzieht, damit es zu meinem System passt.
+77. Als Nutzer möchte ich, dass auch die Terminalfläche dem Design folgt (im hellen Modus hell, mit passendem Farbschema), damit THub aus einem Guss wirkt.
 78. Als Nutzer möchte ich eine moderne Oberfläche mit eigener Titelleiste, deckendem Hintergrund, abgerundeten Ecken, neutraler Hervorhebung ohne Akzentfarbe und dezenten Animationen, damit ich gern damit arbeite.
 79. Als Nutzer möchte ich, dass eine Änderung des Standardordners nur für neue Tabs gilt, damit meine offenen Tabs nicht durcheinanderkommen.
 
@@ -159,7 +161,7 @@ TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessio
   - Der Kern erteilt die Startaufträge, nicht der Renderer.
   - Ein Startauftrag wird erst ausgeführt, wenn der Renderer die Ansicht des Tabs als bereit gemeldet hat. Verdeckte Ansichten melden ihre beste bekannte Grösse und passen sie beim Anzeigen an. So geht keine Ausgabe verloren, und ein wiederhergestellter Verlauf steht immer vor der ersten Shell-Ausgabe.
   - Pausierte Claude-Tabs bekommen ihre Ansicht erst beim ersten Anzeigen.
-- **Entwicklung getrennt von der installierten App:** Unpaketiert (`npm start`, Tests) verwendet TermHub einen eigenen Datenordner („TermHub-dev“) und damit eine eigene Zustandsdatei, eigene Hook-Datei und eigene Einzelinstanz-Sperre.
+- **Entwicklung getrennt von der installierten App:** Unpaketiert (`npm start`, Tests) verwendet THub einen eigenen Datenordner („THub-dev“) und damit eine eigene Zustandsdatei, eigene Hook-Datei und eigene Einzelinstanz-Sperre.
 - Die bestehenden Module (Zustandsspeicher mit entprelltem, atomarem Schreiben; Shell-Verwaltung mit geordnetem Beenden) bleiben erhalten und werden zum Speicher bzw. Terminal-Backend erweitert.
 
 ### Shell-Erkennung
@@ -172,7 +174,7 @@ TermHub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessio
 
 ### Shell-Integration
 
-TermHub startet jede Windows-Shell mit einer mitgelieferten Integration. Sie lädt **zuerst das normale Profil des Nutzers** und richtet dann drei Dinge ein.
+THub startet jede Windows-Shell mit einer mitgelieferten Integration. Sie lädt **zuerst das normale Profil des Nutzers** und richtet dann drei Dinge ein.
 
 **Robust laden:**
 - PowerShell bekommt den Integrationscode per `-EncodedCommand`, nicht als Skriptdatei, damit eine restriktive Execution Policy ihn nicht blockiert. cmd lädt seine Integration per `/k`, Git Bash über eine eigene Startdatei, die zuerst `~/.bashrc` lädt.
@@ -192,27 +194,27 @@ TermHub startet jede Windows-Shell mit einer mitgelieferten Integration. Sie lä
 
 Der Starter arbeitet in diesen Schritten:
 
-1. **Echtes `claude` finden:** im PATH, ohne TermHubs eigene Ordner; `claude.exe` vor `claude.cmd`, `claude.ps1` nie. Findet er keines, gibt er „claude wurde nicht gefunden“ aus und endet mit Exit-Code 1.
+1. **Echtes `claude` finden:** im PATH, ohne THubs eigene Ordner; `claude.exe` vor `claude.cmd`, `claude.ps1` nie. Findet er keines, gibt er „claude wurde nicht gefunden“ aus und endet mit Exit-Code 1.
 2. **Aufruf einordnen**, bevor irgendetwas angefragt wird:
-   - **Durchreichen:** Der Aufruf geht unverändert und ohne Anfrage an TermHub an `claude`, wenn `-p`/`--print`, `-v`/`--version` oder `-h`/`--help` vorkommt oder wenn das erste Argument, das kein Optionswert ist und nicht mit `-` beginnt, ein bekannter Unterbefehl ist. Bekannte Unterbefehle, Stand Claude Code 2.1.328 (bei Updates nachziehen): `agents`, `attach`, `auth`, `auto-mode`, `doctor`, `gateway`, `import`, `install`, `logs`, `mcp`, `plugin`, `plugins`, `purge`, `respawn`, `rm`, `setup-token`, `stop`, `kill`, `ultrareview`, `update`, `upgrade`. Für das Überspringen von Optionswerten gilt die Liste der Optionen mit Wert aus `claude --help`.
+   - **Durchreichen:** Der Aufruf geht unverändert und ohne Anfrage an THub an `claude`, wenn `-p`/`--print`, `-v`/`--version` oder `-h`/`--help` vorkommt oder wenn das erste Argument, das kein Optionswert ist und nicht mit `-` beginnt, ein bekannter Unterbefehl ist. Bekannte Unterbefehle, Stand Claude Code 2.1.328 (bei Updates nachziehen): `agents`, `attach`, `auth`, `auto-mode`, `doctor`, `gateway`, `import`, `install`, `logs`, `mcp`, `plugin`, `plugins`, `purge`, `respawn`, `rm`, `setup-token`, `stop`, `kill`, `ultrareview`, `update`, `upgrade`. Für das Überspringen von Optionswerten gilt die Liste der Optionen mit Wert aus `claude --help`.
    - Sonst ist es ein interaktiver Aufruf, und zwar einer von drei **Fällen**:
      - **neu:** keine der Optionen `--resume`/`-r`, `--continue`/`-c`, `--session-id`;
      - **mit Kennung:** `--resume <Kennung>` / `-r <Kennung>` oder `--session-id <Kennung>`;
      - **ohne Kennung:** `--continue`/`-c` oder `--resume` ohne Wert, also Claudes Auswahlliste.
-3. **Startparameter holen:** Anfrage an TermHub mit Tab-Kennung, Fall, angegebener Kennung und aktuellem Ordner, ohne Proxy und mit etwa 1 Sekunde Zeitlimit. Antwort: aktueller Tab-Name, im Fall „neu“ eine neue Session-Kennung, Pfad zur Hook-Datei. Ist TermHub nicht erreichbar, startet `claude` unverändert.
+3. **Startparameter holen:** Anfrage an THub mit Tab-Kennung, Fall, angegebener Kennung und aktuellem Ordner, ohne Proxy und mit etwa 1 Sekunde Zeitlimit. Antwort: aktueller Tab-Name, im Fall „neu“ eine neue Session-Kennung, Pfad zur Hook-Datei. Ist THub nicht erreichbar, startet `claude` unverändert.
 4. **Optionen ergänzen:**
-   - `--settings <Hook-Datei>`, ausser der Nutzer gibt selbst `--settings` an; dann laufen keine TermHub-Hooks, das Sicherheitsnetz gilt aber weiter.
+   - `--settings <Hook-Datei>`, ausser der Nutzer gibt selbst `--settings` an; dann laufen keine THub-Hooks, das Sicherheitsnetz gilt aber weiter.
    - Im Fall „neu“ `--session-id <neue Kennung>`.
    - Im Fall „neu“ ohne eigenes `-n`/`--name` auch `-n <Tab-Name>`.
-5. **Starten:** Der Starter baut die Befehlszeile selbst nach den Regeln von `CommandLineToArgvW` (für `claude.cmd` über `cmd.exe /d /s /c` mit cmd-Quoting) und startet den Prozess direkt mit geerbter Konsole, nicht über PowerShells eigene Argumentübergabe an native Programme (in 5.1 fehlerhaft). Direkt nach dem Start meldet er die Prozess-ID von Claude an TermHub. Er wartet und gibt den Exit-Code weiter.
-6. **Ende melden:** Nach dem Ende von `claude` meldet der Starter Tab-Kennung, Session-Kennung (falls bekannt) und Exit-Code an TermHub, auch nach `Ctrl+C` und bei Exit-Code ungleich 0.
+5. **Starten:** Der Starter baut die Befehlszeile selbst nach den Regeln von `CommandLineToArgvW` (für `claude.cmd` über `cmd.exe /d /s /c` mit cmd-Quoting) und startet den Prozess direkt mit geerbter Konsole, nicht über PowerShells eigene Argumentübergabe an native Programme (in 5.1 fehlerhaft). Direkt nach dem Start meldet er die Prozess-ID von Claude an THub. Er wartet und gibt den Exit-Code weiter.
+6. **Ende melden:** Nach dem Ende von `claude` meldet der Starter Tab-Kennung, Session-Kennung (falls bekannt) und Exit-Code an THub, auch nach `Ctrl+C` und bei Exit-Code ungleich 0.
 
-**3. Startbefehl einmalig ausführen:** Die Integration kann einen von TermHub mitgegebenen Befehl genau einmal ausführen, sobald die Shell bereit ist; es werden keine Tastendrücke simuliert. TermHub setzt damit Claude-Sessions fort. Der Startbefehl ruft den Starter direkt auf (mit `--resume <Kennung>`), nicht das Wort `claude`, weil doskey-Makros in cmd in Skripten nicht wirken.
+**3. Startbefehl einmalig ausführen:** Die Integration kann einen von THub mitgegebenen Befehl genau einmal ausführen, sobald die Shell bereit ist; es werden keine Tastendrücke simuliert. THub setzt damit Claude-Sessions fort. Der Startbefehl ruft den Starter direkt auf (mit `--resume <Kennung>`), nicht das Wort `claude`, weil doskey-Makros in cmd in Skripten nicht wirken.
 
 **Umgebung jedes Terminals:**
-- `TERMHUB_TAB_ID` (Tab-Kennung), `TERMHUB_API` (Adresse der lokalen Schnittstelle) und `TERMHUB_TOKEN` (pro App-Start zufällig).
+- `THUB_TAB_ID` (Tab-Kennung), `THUB_API` (Adresse der lokalen Schnittstelle) und `THUB_TOKEN` (pro App-Start zufällig).
 - `NO_PROXY` wird um `127.0.0.1,localhost` ergänzt, damit Claudes HTTP-Hooks nicht über einen Firmen-Proxy laufen.
-- `TERMHUB_*`-Variablen aus der eigenen Umgebung von TermHub (etwa wenn es aus einem TermHub-Tab gestartet wurde) werden vorher entfernt.
+- `THUB_*`-Variablen aus der eigenen Umgebung von THub (etwa wenn es aus einem THub-Tab gestartet wurde) werden vorher entfernt.
 
 **WSL-Tabs** bekommen keine Integration und starten mit `wsl.exe -d <Distribution> --cd <Windows-Pfad>`.
 
@@ -233,8 +235,8 @@ Der Starter arbeitet in diesen Schritten:
 | `POST /claude/exit` | Starter, nach dem Ende | Tab-Kennung, Session-Kennung, Exit-Code | leer |
 | `POST /hooks/<Ereignis>` | Claude Code (HTTP-Hooks; `SessionStart` über `curl.exe`, siehe unten) | Hook-Nutzdaten | immer sofort leerer Erfolg mit leerem Inhalt |
 
-- Die **Hook-Datei** erzeugt TermHub bei jedem Start neu im eigenen Datenordner:
-  - Hooks vom Typ `http` auf `/hooks/<Ereignis>`, mit den Kopfzeilen `X-TermHub-Tab: $TERMHUB_TAB_ID` und `X-TermHub-Token: $TERMHUB_TOKEN`. Beide Variablen stehen in `allowedEnvVars`. Timeout 2 Sekunden.
+- Die **Hook-Datei** erzeugt THub bei jedem Start neu im eigenen Datenordner:
+  - Hooks vom Typ `http` auf `/hooks/<Ereignis>`, mit den Kopfzeilen `X-THub-Tab: $THUB_TAB_ID` und `X-THub-Token: $THUB_TOKEN`. Beide Variablen stehen in `allowedEnvVars`. Timeout 2 Sekunden.
   - Registrierte Ereignisse per HTTP: `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `Stop`, `StopFailure`, `Notification`.
   - **`SessionStart` unterstützt keine HTTP-Hooks** (Claude überspringt sie still). Dafür gibt es einen Befehls-Hook ohne Shell (Exec-Form), der die Nutzdaten mit dem `curl.exe` von Windows an `/hooks/SessionStart` weiterleitet. curl liest Tab-Kennung und Token selbst aus der Umgebung (`--variable %VAR` mit `--expand-header`), mit `--connect-timeout 1 -m 2` und Hook-Timeout 3 Sekunden. Die Antwort muss leer sein, weil die Ausgabe dieses Hooks in Claudes Kontext landet. Fehlt `curl.exe`, entfällt der Eintrag; die Zuordnung läuft dann über die Ersatzregel „neue Kennung in einem anderen Ereignis“ (siehe Zustandsautomat).
   - Eine geprüfte Vorlage liegt in `spikes/claude-hooks/empfohlene-hook-datei.json`.
@@ -246,11 +248,11 @@ Der Starter arbeitet in diesen Schritten:
   - `PermissionRequest` kommt sofort, auch bei Rückfragen von `AskUserQuestion`;
   - `Stop.background_tasks` ist immer vorhanden. Endet eine Hintergrund-Aufgabe, schickt Claude ein `UserPromptSubmit` (Prompt beginnt mit `<task-notification>`) und danach wieder `Stop`.
   - Beispiel-Nutzdaten und alle Befunde: `docs/spikes/claude-hooks.md`, `spikes/claude-hooks/samples/`.
-- Der Empfänger antwortet **immer sofort mit einem leeren Erfolg** und gibt nie Entscheidungsfelder zurück. TermHub beeinflusst Claudes Verhalten also nie, es hört nur zu.
+- Der Empfänger antwortet **immer sofort mit einem leeren Erfolg** und gibt nie Entscheidungsfelder zurück. THub beeinflusst Claudes Verhalten also nie, es hört nur zu.
 - Ereignisse werden in der Reihenfolge ihres Eintreffens verarbeitet (`PreToolUse` kommt vor `PermissionRequest`).
 - In einem noch nicht vertrauten Ordner laufen keine Hooks, bis der Nutzer den Vertrauensdialog von Claude bestätigt.
 - Ist der Empfänger nicht erreichbar, zeigt Claude bei jedem Hook eine Fehlerzeile im Terminal; hängt er, verzögert er jedes Ereignis bis zum Timeout. Deshalb antwortet der Empfänger immer sofort.
-- Die globale Claude-Konfiguration (`~/.claude/settings.json`) wird nicht angefasst. Die Hooks gelten nur für Sessions, die über den Ersatz in TermHub-Terminals gestartet werden. Claude führt `--settings`-Hooks zusätzlich zu denen des Nutzers aus. Weil `--settings` beim Fortsetzen nicht erhalten bleibt, gibt der Starter es bei jedem Aufruf mit.
+- Die globale Claude-Konfiguration (`~/.claude/settings.json`) wird nicht angefasst. Die Hooks gelten nur für Sessions, die über den Ersatz in THub-Terminals gestartet werden. Claude führt `--settings`-Hooks zusätzlich zu denen des Nutzers aus. Weil `--settings` beim Fortsetzen nicht erhalten bleibt, gibt der Starter es bei jedem Aufruf mit.
 - Eine zweite Instanz (siehe „App-Verhalten“) startet keinen Server und schreibt keine Hook-Datei.
 
 ### Claude-Status: Zustandsautomat pro Tab
@@ -282,10 +284,10 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 | Andere Eingabe des Nutzers in einem Claude-Tab, der „wartet“ | Zustand „arbeitet“. Nach einer Bestätigung kommt bis `PostToolUse` kein Ereignis; ein langer bestätigter Befehl bliebe sonst orange |
 | `Stop`, `StopFailure` | Zustand „ruht“; war der Tab dabei nicht sichtbar (nicht aktiv oder Fenster nicht im Vordergrund), „fertig, noch nicht angeschaut“ setzen |
 | `SessionEnd` mit Grund `clear` oder `resume` | keine Änderung (ein `SessionStart` mit neuer Kennung folgt) |
-| `SessionEnd` mit anderem Grund; Ende-Meldung des Starters; Ende der Shell | Tab wird normales Terminal, Claude-Zuordnung entfällt. Ausnahme: Nach einem von TermHub gestarteten Fortsetzen ohne vorheriges `SessionStart` entscheidet erst die Ende-Meldung des Starters (ein fehlgeschlagenes Fortsetzen schickt `SessionEnd` mit Grund `other` etwa 1,5 Sekunden vor dem Prozessende) |
-| Ende-Meldung **ohne** vorheriges `SessionStart` und mit Exit-Code ≠ 0 nach einem von TermHub gestarteten Fortsetzen | zusätzlich Hinweis im Terminal „Claude-Session konnte nicht fortgesetzt werden“. Exit-Code ≠ 0 heisst Fehlstart; `/exit` und zweimal `Ctrl+C` enden mit 0 |
+| `SessionEnd` mit anderem Grund; Ende-Meldung des Starters; Ende der Shell | Tab wird normales Terminal, Claude-Zuordnung entfällt. Ausnahme: Nach einem von THub gestarteten Fortsetzen ohne vorheriges `SessionStart` entscheidet erst die Ende-Meldung des Starters (ein fehlgeschlagenes Fortsetzen schickt `SessionEnd` mit Grund `other` etwa 1,5 Sekunden vor dem Prozessende) |
+| Ende-Meldung **ohne** vorheriges `SessionStart` und mit Exit-Code ≠ 0 nach einem von THub gestarteten Fortsetzen | zusätzlich Hinweis im Terminal „Claude-Session konnte nicht fortgesetzt werden“. Exit-Code ≠ 0 heisst Fehlstart; `/exit` und zweimal `Ctrl+C` enden mit 0 |
 | Tab wird angezeigt bzw. Fenster kommt mit diesem Tab in den Vordergrund | „fertig, noch nicht angeschaut“ löschen; Hinweise zu diesem Tab verschwinden |
-| **TermHub beendet selbst** (App beenden, Tab schliessen, Windows-Abmeldung oder -Neustart) | Claude-Zuordnung wird **eingefroren**: Ereignisse danach (`SessionEnd`, Ende-Meldung, Ende der Shell) ändern den gespeicherten Zustand und die Liste der geschlossenen Tabs nicht mehr |
+| **THub beendet selbst** (App beenden, Tab schliessen, Windows-Abmeldung oder -Neustart) | Claude-Zuordnung wird **eingefroren**: Ereignisse danach (`SessionEnd`, Ende-Meldung, Ende der Shell) ändern den gespeicherten Zustand und die Liste der geschlossenen Tabs nicht mehr |
 
 **„Prozesse laufen“ (blau):**
 - **Technik** (aus dem Spike, `docs/spikes/prozess-sonde.md`): `koffi` in exakt Version 3.3.8 mit **einem asynchronen Aufruf von `NtQuerySystemInformation(SystemProcessInformation)`** pro Abfrage, etwa alle 1,5 Sekunden für alle Tabs zusammen. Kostet rund 7,5 ms auf einem Hilfs-Thread (etwa 0,5 % eines Kerns), unabhängig von der Zahl der Tabs. Es wird kein Prozess gestartet und kein Prozess-Handle geöffnet. Referenzcode: `spikes/prozess-sonde/probes/ntqsi.js`.
@@ -390,7 +392,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Kein Mica, keine Transparenz:** Fenster, Titelleiste, Menüs und Dialoge haben deckende Hintergründe.
   - **Keine Akzentfarbe.** Hervorhebungen sind neutral (Monochrom): der Balken unter dem aktiven Tab, primäre Buttons, Schalter, Fokusrahmen und Cursor nutzen die Textfarbe des jeweiligen Designs.
   - **Terminal als Karte:** Die Terminalfläche ist eine abgerundete Karte mit feinem Rand innerhalb des Fensters, nicht randlos.
-  - **Erster Start maximiert:** Ohne gespeicherte Fensterangaben öffnet TermHub maximiert.
+  - **Erster Start maximiert:** Ohne gespeicherte Fensterangaben öffnet THub maximiert.
   - **Tabs:** Jeder Tab ist eine eigene, abgerundete Fläche mit feinem Rand und etwas Abstand zum Nachbarn; der aktive Tab hebt sich mit stärkerem Rand, fettem Namen und neutralem Balken darunter ab; der Schliessen-Knopf erscheint beim aktiven Tab und beim Überfahren.
   - **Umbenennen:** Der Tab selbst wird zum Eingabefeld, in gleicher Grösse und Schrift, nur mit feinem Rahmen; kein separates Textfeld.
   - **Hinweise:** 320 px breit, Titel 14 px, Text 13 px. Die ganze Karte ist anklickbar und öffnet den Tab; es gibt keinen „Öffnen“-Button. Eine dezente Zeile „Zum Tab wechseln →“ zeigt, dass man klicken kann, und wird beim Überfahren hell. Das × zum Wegklicken erscheint beim Überfahren.
@@ -439,8 +441,8 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Nur eine Instanz:** Ein zweiter Start gibt sofort auf und holt das bestehende Fenster nach vorne, auch aus minimiertem Zustand. Er startet keine Shells und keinen Server, schreibt keine Hook-Datei und keinen Zustand.
 - **Fenster** öffnet mit gespeicherter Grösse, Position und Maximiert-Zustand. Liegt die gespeicherte Position ausserhalb aller Bildschirme (zum Beispiel nach dem Abziehen eines Monitors), wird das Fenster auf dem Hauptbildschirm zentriert.
 - **Beenden:**
-  - Das Schliessen des Fensters wird abgefangen. TermHub friert die Claude-Zuordnungen ein, fordert vom Renderer den aktuellen Verlauf an (mit Zeitlimit von etwa 2 Sekunden) und sichert den Zustand. Danach beendet es alle Shells, wartet wie bisher höchstens einige Sekunden und beendet die App.
-  - Bei einer Windows-Abmeldung oder einem Neustart (die Ereignisse `query-session-end` bzw. `session-end` des Fensters) friert TermHub sofort ein und schreibt synchron mit dem zuletzt periodisch gesicherten Verlauf, weil der Renderer dann womöglich nicht mehr antwortet.
+  - Das Schliessen des Fensters wird abgefangen. THub friert die Claude-Zuordnungen ein, fordert vom Renderer den aktuellen Verlauf an (mit Zeitlimit von etwa 2 Sekunden) und sichert den Zustand. Danach beendet es alle Shells, wartet wie bisher höchstens einige Sekunden und beendet die App.
+  - Bei einer Windows-Abmeldung oder einem Neustart (die Ereignisse `query-session-end` bzw. `session-end` des Fensters) friert THub sofort ein und schreibt synchron mit dem zuletzt periodisch gesicherten Verlauf, weil der Renderer dann womöglich nicht mehr antwortet.
 
 ## Testentscheidungen
 
@@ -449,7 +451,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - Getestet wird **äusseres Verhalten** an der Schnittstelle des Moduls, nicht dessen Innenleben. Ein Test beschreibt, was ein Nutzer erleben würde („nach einem Neustart wird die Claude-Session mit `--resume` im Session-Ordner fortgesetzt“), und bleibt grün, wenn der Kern intern umgebaut wird.
 - Nachgemacht wird nur an den **Systemgrenzen** (die Ports), nie interne Teile des Kerns.
 - Hook-Ereignisse in Tests haben die Form, die Claude Code laut Dokumentation tatsächlich schickt.
-- Tests laufen in Temp-Ordnern mit eigenem Datenordner. Sie setzen die Umgebung gestarteter Prozesse ausdrücklich und entfernen geerbte `TERMHUB_*`-Variablen, damit sie nie eine laufende TermHub-Instanz ansprechen, auch wenn der Testlauf selbst in einem TermHub-Tab läuft.
+- Tests laufen in Temp-Ordnern mit eigenem Datenordner. Sie setzen die Umgebung gestarteter Prozesse ausdrücklich und entfernen geerbte `THUB_*`-Variablen, damit sie nie eine laufende THub-Instanz ansprechen, auch wenn der Testlauf selbst in einem THub-Tab läuft.
 
 ### Teststelle 1: Workspace-Kern (Hauptteil der Tests)
 
@@ -485,7 +487,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Ergänzen:** Fall „neu“ ergänzt `--settings`, `--session-id` und `-n <Tab-Name>`. `--resume x`, `-c`, `-n eigener` erhalten nur `--settings`. Ein eigenes `--settings` bleibt allein.
   - **Durchreichen:** `-p "…"`, `mcp list`, `--version` und `--model opus mcp list` werden ohne Anfrage durchgereicht.
   - **Meldungen:** Start-, Prozess-ID- und Ende-Meldung kommen an, die Ende-Meldung auch nach `Ctrl+C` und bei Exit-Code ≠ 0. Der Exit-Code kommt in der Shell an.
-  - **Ohne TermHub:** Ohne erreichbare Schnittstelle startet `claude` unverändert. Ohne `claude` im PATH kommt eine verständliche Meldung mit Exit-Code 1.
+  - **Ohne THub:** Ohne erreichbare Schnittstelle startet `claude` unverändert. Ohne `claude` im PATH kommt eine verständliche Meldung mit Exit-Code 1.
   - **Ordner:** `cd` in einen Testordner (auch mit Leerzeichen und Umlauten) führt zur Meldung dieses Ordners.
   - **Profil:** Ein Testprofil wird weiterhin geladen.
   - **Startbefehl:** Ein Startbefehl „Starter mit `--resume x`“ erreicht das nachgemachte `claude` mit `--settings`, in allen vier Shells, genau einmal.
@@ -522,7 +524,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **AFK-Tickets und Abnahme:**
   - Ein Agent erfüllt die automatisch prüfbaren Akzeptanzkriterien, liefert einen lauffähigen Stand (`npm start`, bei Bedarf ein gebautes, nicht installiertes Paket) und eine Prüfliste für die Abnahme von Hand.
   - Die Abnahme macht der Nutzer.
-  - Agenten installieren den Installer nicht über eine bestehende TermHub-Installation.
+  - Agenten installieren den Installer nicht über eine bestehende THub-Installation.
 - **Helle Terminalfläche und Claude:** Claude Code hat ein eigenes Farbschema (`/theme`). Ob Claude auf der hellen Fläche gut aussieht, wird im Prototyp bzw. danach an der echten App geprüft. Notfalls kann die Entscheidung „Terminal folgt dem Design“ noch gekippt werden.
 - **Grundlage der Claude-Anbindung** (Claude Code 2.1.328, Dokumentation Stand 2026-11-19):
   - `--session-id`, `--resume` (per Kennung auch ordnerübergreifend), `-n/--name`;
@@ -532,8 +534,8 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - `Stop` läuft nicht, wenn der Nutzer mit Esc unterbricht; auch `idle_prompt` kommt dann nicht;
   - `SessionStart` unterstützt keine HTTP-Hooks;
   - gibt der Nutzer ein eigenes `--settings` an, gilt nur das letzte `--settings` (kein Zusammenführen);
-  - `--resume <Kennung>` aus einem anderen Ordner lässt Claude im aktuellen Ordner laufen, deshalb startet TermHub die Shell im Ordner der Session;
-  - `"disableAllHooks": true` in den Projekt-Einstellungen schaltet auch die TermHub-Hooks ab; `--session-id` wirkt weiter, das Sicherheitsnetz hält (Story 38, im Spike geprüft).
+  - `--resume <Kennung>` aus einem anderen Ordner lässt Claude im aktuellen Ordner laufen, deshalb startet THub die Shell im Ordner der Session;
+  - `"disableAllHooks": true` in den Projekt-Einstellungen schaltet auch die THub-Hooks ab; `--session-id` wirkt weiter, das Sicherheitsnetz hält (Story 38, im Spike geprüft).
   - Alle Befunde: `docs/spikes/claude-hooks.md`.
 - **Offen zu prüfen:** Ob von Administratoren verwaltete Einstellungen mit `allowManagedHooksOnly` auch Hooks aus `--settings` sperren, ist nicht dokumentiert. Das Sicherheitsnetz (selbst vergebene Session-Kennung) deckt diesen Fall für das Fortsetzen ab; nur die Statusanzeige fehlt dann.
 - **README aktualisieren:** Die „Offenen Punkte“ im README sind mit dieser Spezifikation beantwortet und werden bei der Umsetzung durch eine Beschreibung des neuen Verhaltens ersetzt.
@@ -542,11 +544,11 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 
 Diese Punkte wurden nach der Befragung bei einem Review ergänzt oder geschärft. Sie liegen im Sinn der getroffenen Entscheidungen, wurden aber nicht einzeln abgestimmt:
 
-1. **Einfrieren:** Beendet TermHub selbst (App, Tab, Windows-Abmeldung), ändern spätere Ereignisse die Claude-Zuordnung nicht mehr. Sonst käme nach jedem Beenden jeder Claude-Tab als normales Terminal zurück.
+1. **Einfrieren:** Beendet THub selbst (App, Tab, Windows-Abmeldung), ändern spätere Ereignisse die Claude-Zuordnung nicht mehr. Sonst käme nach jedem Beenden jeder Claude-Tab als normales Terminal zurück.
 2. **Ende-Meldung des Starters:** `claude` beendet sich → der Tab wird ein normales Terminal, auch ohne `SessionEnd`, also auch nach einem Absturz von Claude. Nach einem fehlgeschlagenen Fortsetzen erscheint ein Hinweis.
-3. **Drei Fälle beim Start:** neu, mit Kennung, ohne Kennung. Durchgereichte Aufrufe fragen TermHub gar nicht erst an. Gibt der Nutzer selbst `--settings` an, laufen keine TermHub-Hooks.
+3. **Drei Fälle beim Start:** neu, mit Kennung, ohne Kennung. Durchgereichte Aufrufe fragen THub gar nicht erst an. Gibt der Nutzer selbst `--settings` an, laufen keine THub-Hooks.
 4. **Kein Fortsetzen ohne Gespräch:** Eine per Hook bestätigte Session, in der nie ein Prompt geschrieben wurde, wird nach einem Neustart nicht fortgesetzt; der Tab kommt als normales Terminal zurück. Die zuvor angedachte Suche nach Gesprächsprotokollen in Claudes Dateien entfällt.
-5. **Unterbrechung mit Esc:** Nach dem Spike korrigiert: `idle_prompt` kommt nach einer Unterbrechung nicht. Stattdessen setzt TermHub den Zustand auf „ruht“, wenn der Nutzer in einem arbeitenden oder wartenden Claude-Tab Esc drückt und danach etwa 1,5 Sekunden kein Hook-Ereignis kommt. Eine andere Eingabe in einem wartenden Tab setzt ihn auf „arbeitet“.
+5. **Unterbrechung mit Esc:** Nach dem Spike korrigiert: `idle_prompt` kommt nach einer Unterbrechung nicht. Stattdessen setzt THub den Zustand auf „ruht“, wenn der Nutzer in einem arbeitenden oder wartenden Claude-Tab Esc drückt und danach etwa 1,5 Sekunden kein Hook-Ereignis kommt. Eine andere Eingabe in einem wartenden Tab setzt ihn auf „arbeitet“.
 6. **Prozess-Regeln:** zwei Abfragen bis zum Zählen, Startketten und Konsolenprozesse ignoriert. Bei Claude-Tabs zählen nur Prozesse, die seit dem letzten Prompt neu sind (MCP-Server zählen nicht). WSL zeigt nie Blau. `background_tasks` aus `Stop` wird nicht verwendet.
 7. **Rückfrage beim Schliessen** hängt an den eigentlichen Merkmalen, nicht am angezeigten Symbol: Ein grüner Tab mit laufendem Dev-Server fragt nach.
 8. **„Wartet“-Hinweis** verschwindet auch, wenn Claude wieder arbeitet; höchstens ein Hinweis pro Tab.

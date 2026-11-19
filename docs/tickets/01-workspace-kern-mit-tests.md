@@ -15,8 +15,8 @@ Das Fundament für alles Weitere. Für den Nutzer ändert sich nichts: Die beste
   - Er meldet pro Tab „Ansicht bereit“ mit Spalten und Zeilen.
   - Der Kern erteilt die Startaufträge erst danach. Der Renderer startet keine Shells mehr selbst.
 - **Schema Version 2** mit Übernahme aus Version 1 nach der Tabelle in der Spezifikation (Shell-Abbildung, Standardordner = Benutzerordner wird leer). Felder, die erst spätere Tickets nutzen, dürfen optional sein.
-- **Eigener Datenordner für die Entwicklung:** Unpaketiert verwendet TermHub „TermHub-dev“ statt „TermHub“.
-- **Vitest** als Testlauf und das Test-Gerüst für Teststelle 1: alle Ports nachgemacht, Hilfe zum Simulieren eines Neustarts, Tests in Temp-Ordnern ohne geerbte `TERMHUB_*`-Variablen.
+- **Eigener Datenordner für die Entwicklung:** Unpaketiert verwendet THub „THub-dev“ statt „THub“.
+- **Vitest** als Testlauf und das Test-Gerüst für Teststelle 1: alle Ports nachgemacht, Hilfe zum Simulieren eines Neustarts, Tests in Temp-Ordnern ohne geerbte `THUB_*`-Variablen.
 
 ## Akzeptanzkriterien
 
@@ -29,7 +29,7 @@ Das Fundament für alles Weitere. Für den Nutzer ändert sich nichts: Die beste
   - Rückfall auf Standardordner bzw. Benutzerordner, wenn der Ordner eines Tabs fehlt.
 - [ ] Übernahme aus Version 1 mit Tests: Sessions werden zu Tabs, Namen bleiben, `settings.shell` wird nach der Tabelle abgebildet, Standardordner gleich Benutzerordner wird leer.
 - [ ] Eine kaputte Zustandsdatei wird weiterhin beiseitegelegt statt überschrieben.
-- [ ] `npm start` verwendet den Datenordner „TermHub-dev“.
+- [ ] `npm start` verwendet den Datenordner „THub-dev“.
 
 ## Abnahme von Hand
 

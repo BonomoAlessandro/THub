@@ -7,7 +7,7 @@ Spezifikation: „Gespeicherter Zustand“ (Einstellungen), „Oberfläche (Rend
 
 ## Was gebaut wird
 
-- Neues Feld **„Design“** im Einstellungsdialog: System (Standard), Hell oder Dunkel. Die Wahl gilt sofort für Oberfläche, Terminalfläche und Fensterknöpfe. Bei „System“ folgt TermHub weiter live der Windows-Einstellung.
+- Neues Feld **„Design“** im Einstellungsdialog: System (Standard), Hell oder Dunkel. Die Wahl gilt sofort für Oberfläche, Terminalfläche und Fensterknöpfe. Bei „System“ folgt THub weiter live der Windows-Einstellung.
 - Neues Feld **„Schriftgrösse im Terminal“** (8 bis 32) im Einstellungsdialog.
 - **Tastenkürzel** für die Schriftgrösse, für alle Tabs zugleich:
   - `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-`, `Ctrl` `0` setzt zurück.
