@@ -36,7 +36,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 17 | [Befehlspalette](17-befehlspalette.md) | AFK | 15 | offen |
 | 18 | [Design-Wahl und Schriftgrösse](18-design-und-schrift.md) | AFK | 05 | offen |
 | 19 | [README und Abschluss-Prüfung auf einem frischen Rechner](19-readme-und-abschluss.md) | HITL | alle | offen |
-| 20 | [Umbenennen in THub](20-umbenennen-thub.md) | AFK | 04, 08 | in Arbeit |
+| 20 | [Umbenennen in THub](20-umbenennen-thub.md) | AFK | 04, 08 | erledigt |
 
 ```mermaid
 flowchart LR

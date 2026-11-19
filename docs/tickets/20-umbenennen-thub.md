@@ -1,6 +1,6 @@
 # 20 – Umbenennen in THub
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-19, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 04, 08 (nur, um Konflikte mit laufenden Branches zu vermeiden)
 User Stories: –
 Spezifikation: Hinweis „Name“ am Anfang
