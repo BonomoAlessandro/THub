@@ -82,7 +82,7 @@ const mkTab = (o) => ({ id: `t${nextId++}`, custom: false, status: 'idle', claud
 const state = {
   theme: 'system',
   workAnim: 'spark',
-  accent: 'indigo',
+  accent: 'mono',
   fontSize: 14,
   toasts: true,
   defaultFolder: null,
@@ -322,6 +322,7 @@ function renderTab(tab) {
   el.draggable = renaming !== tab.id;
 
   if (renaming === tab.id) {
+    el.classList.add('renaming');
     el.innerHTML = `${tabIcon(tab)}<input class="tab-rename" value="${esc(tab.name)}" spellcheck="false" />`;
     const input = $('input', el);
     queueMicrotask(() => {
@@ -720,10 +721,29 @@ function fakePick() {
   fakeFolderIdx++;
   return f;
 }
-function pickFolderForNewTab() {
+
+/**
+ * Öffnet den Ordner-Dialog von Windows (Explorer). Im Browser liefert er nur den Ordnernamen,
+ * nicht den ganzen Pfad; die App bekommt den vollen Pfad. Gibt null zurück, wenn abgebrochen wurde.
+ */
+async function pickFolder() {
+  if (window.showDirectoryPicker) {
+    try {
+      const handle = await window.showDirectoryPicker({ id: 'termhub', mode: 'read' });
+      log(`Ordner-Dialog: „${handle.name}“ gewählt (im Browser ist nur der Name sichtbar).`);
+      return `…\\${handle.name}`;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return null;
+    }
+  }
   const f = fakePick();
-  log(`(Ordner-Dialog von Windows) gewählt: ${f}`);
-  newTab({ folder: f });
+  log(`(Ordner-Dialog nicht verfügbar) Beispiel gewählt: ${f}`);
+  return f;
+}
+
+async function pickFolderForNewTab() {
+  const f = await pickFolder();
+  if (f) newTab({ folder: f });
 }
 
 // ---------- Overlays: Dialoge und Palette ----------
@@ -867,7 +887,15 @@ function openSettings() {
     const t = e.target.closest('[data-act], [data-v]');
     if (!t) return;
     const act = t.dataset.act ?? t.parentElement.dataset.act;
-    if (act === 'pick') state.defaultFolder = fakePick();
+    if (act === 'pick') {
+      pickFolder().then((f) => {
+        if (!f) return;
+        state.defaultFolder = f;
+        render();
+        renderProto();
+      });
+      return;
+    }
     if (act === 'reset') state.defaultFolder = null;
     if (act === 'theme') {
       state.theme = t.dataset.v;
@@ -1050,6 +1078,18 @@ function openPalette(initialMode = 'root') {
 // ---------- Hinweise ----------
 const toastMap = new Map();
 
+function demoToastTarget() {
+  const candidates = state.tabs.filter((x) => x.id !== state.activeId && !toastMap.has(x.id) && !x.demo);
+  return candidates.find((x) => x.claude) ?? candidates[0] ?? null;
+}
+
+function fireDemoToast(tab, kind) {
+  tab.claude = true;
+  tab.status = kind;
+  renderTabs();
+  pushToast(tab, kind);
+}
+
 function pushToast(tab, kind) {
   if (!state.toasts) return log('Hinweise sind in den Einstellungen abgeschaltet.');
   if (tab.id === state.activeId && document.hasFocus()) return log('Kein Hinweis: Der Tab ist gerade sichtbar.');
@@ -1194,20 +1234,6 @@ function renderProto() {
       'theme',
       'dark',
     )}</div>
-    <h5>Akzentfarbe</h5>
-    <div class="proto-row">${chip('Indigo', state.accent === 'indigo', 'accent', 'indigo')}${chip('Teal', state.accent === 'teal', 'accent', 'teal')}${chip(
-      'Monochrom',
-      state.accent === 'mono',
-      'accent',
-      'mono',
-    )}</div>
-    <h5>Animation „arbeitet“</h5>
-    <div class="proto-row">${chip('Claude-Stern', state.workAnim === 'spark', 'anim', 'spark')}${chip('Drei Punkte', state.workAnim === 'dots', 'anim', 'dots')}${chip(
-      'Bogen',
-      state.workAnim === 'arc',
-      'anim',
-      'arc',
-    )}</div>
     <h5>Fenster</h5>
     <div class="proto-row">${chip('Mica', !b.contains('no-mica'), 'mica')}${chip('Terminal als Karte', !b.contains('edge'), 'edge')}${chip(
       'Maximiert',
@@ -1219,7 +1245,7 @@ function renderProto() {
       .map((s) => chip({ idle: 'Ruht', working: 'Arbeitet', waiting: 'Wartet', processes: 'Prozesse', finished: 'Fertig', paused: 'Pausiert' }[s], t?.status === s, 'status', s))
       .join('')}</div>
     <h5>Hinweise auslösen (für einen Hintergrund-Tab)</h5>
-    <div class="proto-row">${chip('Claude fertig', false, 'toast', 'finished')}${chip('Claude wartet', false, 'toast', 'waiting')}</div>
+    <div class="proto-row">${chip('Claude fertig', false, 'toast', 'finished')}${chip('Claude wartet', false, 'toast', 'waiting')}${chip('Zwei Tabs zugleich', false, 'toast2')}</div>
     <h5>Dialoge und Ansichten</h5>
     <div class="proto-row">${chip('Befehlspalette', false, 'palette')}${chip('Einstellungen', false, 'settings')}${chip('Rückfrage', false, 'confirm')}${chip(
       'Rückfrage (mehrere)',
@@ -1273,13 +1299,17 @@ $('#proto-body').addEventListener('click', (e) => {
       }
       break;
     case 'toast': {
-      const target = state.tabs.find((x) => x.id !== state.activeId && x.claude) ?? state.tabs.find((x) => x.id !== state.activeId);
-      if (!target) return log('Es braucht einen zweiten Tab.');
-      target.claude = true;
-      target.status = v;
-      renderTabs();
-      pushToast(target, v);
-      log(`Hinweis für „${target.name}“`);
+      const target = demoToastTarget();
+      if (!target) return log('Alle Hintergrund-Tabs haben schon einen Hinweis.');
+      fireDemoToast(target, v);
+      return;
+    }
+    case 'toast2': {
+      const a = demoToastTarget();
+      if (a) fireDemoToast(a, 'finished');
+      const b = demoToastTarget();
+      if (b) fireDemoToast(b, 'waiting');
+      if (!a && !b) log('Alle Hintergrund-Tabs haben schon einen Hinweis.');
       return;
     }
     case 'palette':
@@ -1361,6 +1391,9 @@ switch (params.get('demo')) {
     break;
   case 'overflow':
     $('[data-act="overflow"]').click();
+    break;
+  case 'rename':
+    startRename(state.tabs[1].id);
     break;
   case 'tip':
     showTip(els.strip.children[1], tabTipHtml(state.tabs[1]));
