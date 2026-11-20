@@ -18,7 +18,7 @@ export interface Settings {
   theme: Theme;
   /** Terminal-Schriftgrösse, 8 bis 32 (`FONT_SIZE`). */
   fontSize: number;
-  /** Hinweise im Fenster an/aus. */
+  /** Hinweise im Fenster an/aus (Ticket 14). Ausgeschaltet gibt es keine; die Status-Symbole am Tab bleiben. */
   notifications: boolean;
 }
 
@@ -64,6 +64,40 @@ export interface TabSnapshot {
   paused: boolean;
 }
 
+/**
+ * Art eines Hinweises unten rechts im Fenster (Ticket 14):
+ * - `waiting`: Claude wartet in einem nicht sichtbaren Tab auf dich; bleibt, bis der Tab angezeigt wird oder wieder
+ *   arbeitet;
+ * - `finished`: Claude ist in einem nicht sichtbaren Tab fertig geworden; verschwindet nach etwa 6 Sekunden
+ *   Vordergrundzeit oder beim Anzeigen des Tabs.
+ */
+export type ToastKind = 'waiting' | 'finished';
+
+/** Countdown eines Hinweises, der von selbst verschwindet. Er läuft nur, solange das Fenster im Vordergrund ist. */
+export interface ToastCountdown {
+  /** Ganze Dauer in ms. */
+  totalMs: number;
+  /** Was beim Melden noch übrig war, in ms. */
+  remainingMs: number;
+  /** Er läuft gerade: Fenster im Vordergrund, und die Maus steht nicht auf dem Hinweis. */
+  running: boolean;
+}
+
+interface ToastBase {
+  /** Eindeutig; ein neuer Hinweis, der einen alten ersetzt, bekommt eine neue Kennung. */
+  id: string;
+  /** Der Tab, zu dem der Hinweis gehört; ein Klick auf den Hinweis zeigt ihn an. */
+  tabId: string;
+}
+
+/**
+ * Ein Hinweis unten rechts im Fenster. Den Text und den Namen des Tabs setzt die Oberfläche ein. Weitere Arten (etwa
+ * mit einer Liste von Punkten) kommen als weitere Glieder dieser Vereinigung dazu.
+ */
+export type ToastSnapshot =
+  | (ToastBase & { kind: 'waiting' })
+  | (ToastBase & { kind: 'finished'; countdown: ToastCountdown });
+
 /** Eine erkannte Shell, wie sie das Pfeil-Menü und die Einstellungen anbieten. */
 export interface ShellOption {
   /** Stabile Kennung: "pwsh", "powershell", "cmd", "gitbash" oder "wsl:<Distribution>". */
@@ -93,12 +127,16 @@ export interface WorkspaceSnapshot {
   defaultShellId: string;
   /** Benutzerordner, zur Anzeige eines leeren Standardordners. */
   homeDir: string;
+  /** Die Hinweise unten rechts, in der Reihenfolge ihres Erscheinens (ältester zuerst). */
+  toasts: ToastSnapshot[];
 }
 
 /** Änderungsereignisse vom Kern an den Renderer. */
 export type WorkspaceEvent =
   /** Tabs, Reihenfolge, aktiver Tab, Prozess-Zustand, Art oder Status eines Tabs haben sich geändert. */
   | { type: 'tabs'; tabs: TabSnapshot[]; activeTabId: string | null }
+  /** Die Hinweise unten rechts haben sich geändert: alle, die jetzt stehen (siehe `WorkspaceSnapshot`). */
+  | { type: 'toasts'; toasts: ToastSnapshot[] }
   /** Die Einstellungen haben sich geändert; dazu die daraus folgende Standard-Shell (siehe `WorkspaceSnapshot`). */
   | { type: 'settings'; settings: Settings; defaultShellId: string }
   /** Rohe Ausgabe der Shell eines Tabs. */
@@ -146,6 +184,10 @@ export type WorkspaceCommand =
    * Wechsel; der aktive Tab gilt nur im Vordergrund als angeschaut.
    */
   | { type: 'windowForeground'; foreground: boolean }
+  /** Hinweis mit × wegklicken. */
+  | { type: 'dismissToast'; toastId: string }
+  /** Die Maus steht auf dem Hinweis (`hold`) bzw. nicht mehr; solange hält sein Countdown an. */
+  | { type: 'holdToast'; toastId: string; hold: boolean }
   | { type: 'updateSettings'; patch: Partial<Settings> }
   /**
    * Schriftgrösse einen Schritt grösser (1) oder kleiner (-1). Der Kern rechnet vom eigenen Stand aus,
