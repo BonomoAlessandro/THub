@@ -30,7 +30,7 @@ Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Status-Zeilen, „P
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests mit echten HTTP-Hook-Ereignissen und steuerbarer Prozess-Sonde:
+- [x] Kern-Tests mit echten HTTP-Hook-Ereignissen und steuerbarer Prozess-Sonde:
   - Prompt → arbeitet; `PreToolUse`, dann `PermissionRequest` → wartet; Eingabe des Nutzers → arbeitet; `PostToolUse` → arbeitet;
   - Esc während „arbeitet“, danach kein Ereignis → nach 1,5 Sekunden (steuerbare Uhr) ruht, ohne grün; Esc mit folgendem `Stop` → normal über `Stop`;
   - `idle_prompt` ändert nichts; verspätetes `permission_prompt` nach `PostToolUse` setzt nicht wieder auf „wartet“, wenn der Tab inzwischen arbeitet oder ruht;

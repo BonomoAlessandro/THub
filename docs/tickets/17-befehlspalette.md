@@ -17,13 +17,13 @@ Spezifikation: „Oberfläche (Renderer)“, Tastenkürzel
 
 ## Akzeptanzkriterien
 
-- [ ] Die Übersicht der Tastenkürzel listet jedes von THub verarbeitete Kürzel genau einmal; ein Test stellt sicher, dass sie und die Verarbeitung aus derselben Tabelle kommen.
-- [ ] Suche (am besten als reine Funktion getestet):
+- [x] Die Übersicht der Tastenkürzel listet jedes von THub verarbeitete Kürzel genau einmal; ein Test stellt sicher, dass sie und die Verarbeitung aus derselben Tabelle kommen.
+- [x] Suche (am besten als reine Funktion getestet):
   - „termhb“ findet „termhub“, „api“ findet „api-gateway“, „neu term“ findet „Neues Terminal“;
   - bei gleich gutem Treffer stehen Tabs vor Befehlen.
-- [ ] Jeder aufgeführte Befehl hat aus der Palette heraus dieselbe Wirkung wie über Maus oder Tastenkürzel, inklusive Rückfragen beim Schliessen.
-- [ ] „Zuletzt geschlossen“ zeigt die Liste mit Namen und öffnet den gewählten Tab wieder.
-- [ ] `Ctrl+Shift+P` wird nicht an die Shell weitergereicht; mit offener Palette erreichen Eingaben das Terminal nicht.
+- [x] Jeder aufgeführte Befehl hat aus der Palette heraus dieselbe Wirkung wie über Maus oder Tastenkürzel, inklusive Rückfragen beim Schliessen.
+- [x] „Zuletzt geschlossen“ zeigt die Liste mit Namen und öffnet den gewählten Tab wieder.
+- [x] `Ctrl+Shift+P` wird nicht an die Shell weitergereicht; mit offener Palette erreichen Eingaben das Terminal nicht.
 
 ## Abnahme von Hand
 

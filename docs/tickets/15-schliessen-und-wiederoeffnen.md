@@ -25,14 +25,14 @@ Spezifikation: „Wiederherstellen“ (geschlossene Tabs, Beenden), „Gespeiche
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests:
+- [x] Kern-Tests:
   - Rückfrage-Bedarf hängt richtig von den Merkmalen ab, auch grün plus Prozesse → Rückfrage; für einen und für mehrere Tabs;
   - die Liste enthält höchstens zehn Tabs, die neuesten zuerst, und übersteht einen Neustart;
   - Wiederöffnen stellt Position, Name, Shell und Ordner her und gibt den Verlauf zurück;
   - ein Claude-Tab erzeugt beim Wiederöffnen sofort einen Startauftrag mit `--resume <Kennung>`;
   - Einfrieren: Claude-Tab schliessen, danach `SessionEnd` und Ende der Shell → Wiederöffnen setzt trotzdem fort;
   - fällt ein Tab aus der Liste, wird sein Verlauf gelöscht.
-- [ ] `Ctrl+Shift+Z` funktioniert aus jedem Tab heraus und erreicht die Shell nicht.
+- [x] `Ctrl+Shift+Z` funktioniert aus jedem Tab heraus und erreicht die Shell nicht.
 
 ## Abnahme von Hand
 

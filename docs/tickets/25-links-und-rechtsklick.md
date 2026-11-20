@@ -20,10 +20,10 @@ Spezifikation: „Oberfläche (Renderer)“, Kopieren und Einfügen
 
 ## Akzeptanzkriterien
 
-- [ ] Für OSC-8-Links rendert keine gestrichelte Unterstreichung mehr (Test am DOM oder an der Konfiguration von xterm.js).
-- [ ] Ctrl+Klick auf einen http(s)-Link ruft das Öffnen im Hauptprozess genau einmal auf; ohne Ctrl, oder bei `file:`, `javascript:` und Ähnlichem, nicht. Getestet mit einem gefälschten `shell.openExternal`.
-- [ ] Die Ursache des doppelten Einfügens ist belegt. Ein Test zeigt, dass ein Rechtsklick bei eingeschalteter Mausmeldung genau einmal einfügt und ohne Mausmeldung wie bisher kopiert bzw. einfügt.
-- [ ] Typecheck, `npm test` und der Build sind grün.
+- [x] Für OSC-8-Links rendert keine gestrichelte Unterstreichung mehr (Test am DOM oder an der Konfiguration von xterm.js).
+- [x] Ctrl+Klick auf einen http(s)-Link ruft das Öffnen im Hauptprozess genau einmal auf; ohne Ctrl, oder bei `file:`, `javascript:` und Ähnlichem, nicht. Getestet mit einem gefälschten `shell.openExternal`.
+- [x] Die Ursache des doppelten Einfügens ist belegt. Ein Test zeigt, dass ein Rechtsklick bei eingeschalteter Mausmeldung genau einmal einfügt und ohne Mausmeldung wie bisher kopiert bzw. einfügt.
+- [x] Typecheck, `npm test` und der Build sind grün.
 
 ## Abnahme von Hand
 

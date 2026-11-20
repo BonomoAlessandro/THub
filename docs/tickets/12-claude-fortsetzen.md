@@ -18,7 +18,7 @@ Spezifikation: „Wiederherstellen“ (Claude-Tabs), „Claude-Status: Zustandsa
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests mit simuliertem Neustart:
+- [x] Kern-Tests mit simuliertem Neustart:
   - der zuletzt aktive, fortzusetzende Claude-Tab erzeugt nach „Ansicht bereit“ einen Startauftrag im Session-Ordner mit Startbefehl „Starter mit `--resume <Kennung>`“;
   - fehlt der Session-Ordner, greift die Rückfallkette;
   - andere Claude-Tabs sind pausiert ohne Startauftrag, erzeugen ihn beim Anzeigen und bleiben über einen weiteren Neustart pausiert;

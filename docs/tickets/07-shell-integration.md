@@ -26,19 +26,19 @@ Jede Windows-Shell (PowerShell 7, Windows PowerShell, cmd, Git Bash) startet mit
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests zur Ordner-Erkennung:
+- [x] Kern-Tests zur Ordner-Erkennung:
   - Sequenz an jeder Position zwischen zwei Stücken getrennt;
   - beide Endzeichen, mehrere Sequenzen pro Stück;
   - Prozentkodierung, Git-Bash-Pfade;
   - Orte ausserhalb des Dateisystems werden ignoriert;
   - der Ordner übersteht einen Neustart, Wiederherstellen im zuletzt aktiven Ordner, Rückfallkette bei gelöschten Ordnern.
-- [ ] Integrationstests (eigener Befehl, z.B. `npm run test:shells`) für alle vier Windows-Shells, nicht installierte werden übersprungen:
+- [x] Integrationstests (eigener Befehl, z.B. `npm run test:shells`) für alle vier Windows-Shells, nicht installierte werden übersprungen:
   - `cd` in einen Testordner (auch mit Leerzeichen und Umlauten) führt zur Meldung genau dieses Ordners;
   - ein Testprofil wird weiterhin geladen;
   - ein Startbefehl läuft genau einmal, auch wenn danach weitere Prompts erscheinen;
   - die Escape-Sequenzen erscheinen nicht als sichtbarer Text.
-- [ ] Die Tests setzen die Umgebung ausdrücklich und sprechen keine laufende THub-Instanz an.
-- [ ] WSL-Tabs bekommen keine Integration und funktionieren wie bisher.
+- [x] Die Tests setzen die Umgebung ausdrücklich und sprechen keine laufende THub-Instanz an.
+- [x] WSL-Tabs bekommen keine Integration und funktionieren wie bisher.
 
 ## Abnahme von Hand
 

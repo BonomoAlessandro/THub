@@ -17,9 +17,9 @@ Spezifikation: „Oberfläche (Renderer)“ (Fenster und Titelleiste, Design)
 
 ## Akzeptanzkriterien
 
-- [ ] Ein Design-Wechsel (simuliert über die Electron-Schnittstelle für das System-Design) ändert Variablen, Terminal-Farbschema und Farbe der Fensterknöpfe ohne Neustart.
-- [ ] Die Mindestfläche zum Verschieben ist auch bei 30 Tabs vorhanden.
-- [ ] Der Fensterhintergrund ist in hell und dunkel deckend; nichts vom Desktop scheint durch.
+- [x] Ein Design-Wechsel (simuliert über die Electron-Schnittstelle für das System-Design) ändert Variablen, Terminal-Farbschema und Farbe der Fensterknöpfe ohne Neustart.
+- [x] Die Mindestfläche zum Verschieben ist auch bei 30 Tabs vorhanden.
+- [x] Der Fensterhintergrund ist in hell und dunkel deckend; nichts vom Desktop scheint durch.
 
 ## Abnahme von Hand
 

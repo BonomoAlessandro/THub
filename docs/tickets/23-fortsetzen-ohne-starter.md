@@ -28,13 +28,13 @@ Kommt nach einem von THub abgesetzten Fortsetzen innerhalb einer grosszügigen F
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests mit der falschen Uhr:
+- [x] Kern-Tests mit der falschen Uhr:
   - Fortsetzen ohne Start-Meldung → nach der Frist keine Claude-Zuordnung mehr, nach einem Neustart kein Fortsetzen;
   - Start-Meldung innerhalb der Frist → nichts ändert sich;
   - Start-Meldung erst nach der Frist → die Zuordnung ist wieder da;
   - Beenden oder Einfrieren während der Frist → kein Effekt;
   - ein pausierter Tab startet die Frist erst beim Öffnen.
-- [ ] Bestehende Tests zum Fortsetzen (`resume.test.ts`, Shell-Tests) bleiben grün.
+- [x] Bestehende Tests zum Fortsetzen (`resume.test.ts`, Shell-Tests) bleiben grün.
 
 ## Abnahme von Hand
 

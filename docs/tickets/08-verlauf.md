@@ -21,12 +21,12 @@ Spezifikation: „Wiederherstellen“ (normaler Tab, Verlauf sichern), „App-Ve
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests:
+- [x] Kern-Tests:
   - Verlauf wird pro Tab gespeichert und nach einem Neustart dem richtigen Tab zurückgegeben, bevor dessen Startauftrag erteilt wird;
   - beim Schliessen wird der Verlauf gelöscht;
   - die periodische Sicherung (steuerbare Uhr) betrifft nur geänderte Tabs;
   - eine Windows-Abmeldung schreibt sofort, ohne auf den Renderer zu warten.
-- [ ] Das Beenden über das Fenster sichert den Verlauf und bricht nach dem Zeitlimit trotzdem ab, wenn der Renderer nicht antwortet. Das bestehende geordnete Beenden der Shells bleibt.
+- [x] Das Beenden über das Fenster sichert den Verlauf und bricht nach dem Zeitlimit trotzdem ab, wenn der Renderer nicht antwortet. Das bestehende geordnete Beenden der Shells bleibt.
 
 ## Abnahme von Hand
 

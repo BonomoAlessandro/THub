@@ -18,8 +18,8 @@ Spezifikation: „Gespeicherter Zustand“ (Einstellungen), „Oberfläche (Rend
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests: Design und Schriftgrösse werden gespeichert und überstehen einen Neustart; die Schriftgrösse bleibt zwischen 8 und 32.
-- [ ] Die Tastenkürzel erreichen die Shell nicht. `Ctrl` + Mausrad scrollt nicht gleichzeitig den Terminal-Inhalt und zoomt nicht die ganze Oberfläche.
+- [x] Kern-Tests: Design und Schriftgrösse werden gespeichert und überstehen einen Neustart; die Schriftgrösse bleibt zwischen 8 und 32.
+- [x] Die Tastenkürzel erreichen die Shell nicht. `Ctrl` + Mausrad scrollt nicht gleichzeitig den Terminal-Inhalt und zoomt nicht die ganze Oberfläche.
 
 ## Abnahme von Hand
 

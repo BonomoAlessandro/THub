@@ -25,7 +25,7 @@ Spezifikation: „Shell-Integration“ (Punkt 2, Bekannte Grenzen), „Hook-Empf
 
 ## Akzeptanzkriterien
 
-- [ ] Integrationstests (Teststelle 2) mit nachgemachtem `claude`, einmal als `.exe` und einmal als `.cmd`, und einer aufzeichnenden Testattrappe der Schnittstelle, in allen vier Windows-Shells:
+- [x] Integrationstests (Teststelle 2) mit nachgemachtem `claude`, einmal als `.exe` und einmal als `.cmd`, und einer aufzeichnenden Testattrappe der Schnittstelle, in allen vier Windows-Shells:
   - **Gleichheit der Argumente** gegenüber dem direkten Aufruf für: eingebettete Anführungszeichen, leeres Argument, `%PATH%`, `^`, `&`, `!`, Umlaute, führender `/`, Prompt mit Leerzeichen als Positionsargument.
   - `claude` erhält `--settings`, `--session-id` und `-n <Tab-Name>` (auch mit Leerzeichen und Umlauten im Namen).
   - `--resume x` und `-c` erhalten nur `--settings`; `-n eigener` erhält `--settings` und `--session-id`, aber kein zweites `-n`; ein eigenes `--settings` bekommt kein zweites `--settings`, im Fall „neu“ aber `--session-id` und `-n`.
@@ -33,7 +33,7 @@ Spezifikation: „Shell-Integration“ (Punkt 2, Bekannte Grenzen), „Hook-Empf
   - `launch`, `started` und `exit` kommen an, `exit` auch nach `Ctrl+C` und bei Exit-Code ≠ 0; der Exit-Code kommt in der Shell an.
   - Ohne erreichbare Schnittstelle startet `claude` unverändert; ohne `claude` im PATH kommt eine verständliche Meldung mit Exit-Code 1.
   - Ein Startbefehl „Starter mit `--resume x`“ erreicht das nachgemachte `claude` mit `--settings`.
-- [ ] Die Tests sprechen keine laufende THub-Instanz an, auch wenn sie in einem THub-Tab laufen.
+- [x] Die Tests sprechen keine laufende THub-Instanz an, auch wenn sie in einem THub-Tab laufen.
 
 ## Abnahme von Hand (mit echtem Claude Code)
 

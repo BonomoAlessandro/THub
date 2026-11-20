@@ -17,7 +17,7 @@ Spezifikation: „Weitere Hinweise“
 
 ## Akzeptanzkriterien
 
-- [ ] Das README ist aktuell und beschreibt das tatsächliche Verhalten.
+- [x] Das README ist aktuell und beschreibt das tatsächliche Verhalten.
 
 ## Abnahme von Hand
 

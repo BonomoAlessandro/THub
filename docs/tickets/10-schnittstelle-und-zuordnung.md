@@ -30,7 +30,7 @@ Die Seite von THub, die Claude-Sessions erkennt. Der Starter in den Shells folgt
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests mit echtem HTTP-Empfänger und dokumentierten Nutzdaten:
+- [x] Kern-Tests mit echtem HTTP-Empfänger und dokumentierten Nutzdaten:
   - `launch` „neu“ liefert den aktuellen Tab-Namen (auch nach Umbenennen), je Aufruf eine neue Kennung und den Pfad zur Hook-Datei; der Tab ist danach ein unbestätigter Claude-Tab mit Kennung und Ordner;
   - „mit Kennung“ übernimmt die angegebene Kennung, „ohne Kennung“ setzt keine;
   - `SessionStart` bestätigt und übernimmt Kennung und `cwd`;
@@ -39,9 +39,12 @@ Die Seite von THub, die Claude-Sessions erkennt. Der Starter in den Shells folgt
   - Sicherheitsnetz: nach `launch` „neu“ ohne jedes Hook-Ereignis ist die Kennung gespeichert und übersteht einen Neustart;
   - Einfrieren: App beenden bzw. Tab schliessen, danach Ende der Shell und `SessionEnd` `other` → gespeicherte Zuordnung unverändert;
   - ohne bzw. mit falschem Token → 403; unbekannte Tab-Kennung wird ignoriert; Hook-Antworten sind leer und kommen sofort.
-- [ ] Die erzeugte Hook-Datei ist gültiges JSON und entspricht der geprüften Vorlage (Ereignisse, Kopfzeilen, `allowedEnvVars`, curl-Eintrag für `SessionStart`); geprüft per Test gegen die Vorlage. Hinweis: `claude --settings <Datei> --version` prüft nur, ob die Datei existiert, und taugt nicht als Nachweis.
-- [ ] Kern-Test: `/hooks/SessionStart` antwortet mit leerem Inhalt; ein Ereignis mit neuer `session_id` ohne vorheriges `SessionStart` übernimmt die Kennung.
-- [ ] Die zweite Instanz (Ticket 09) startet keinen Server und schreibt keine Hook-Datei.
+- [x] Die erzeugte Hook-Datei ist gültiges JSON und entspricht der geprüften Vorlage (Ereignisse, Kopfzeilen, `allowedEnvVars`, curl-Eintrag für `SessionStart`); geprüft per Test gegen die Vorlage. Hinweis: `claude --settings <Datei> --version` prüft nur, ob die Datei existiert, und taugt nicht als Nachweis.
+- [x] Kern-Test: `/hooks/SessionStart` antwortet mit leerem Inhalt; ein Ereignis mit neuer `session_id` ohne vorheriges `SessionStart` übernimmt die Kennung.
+- [x] Die zweite Instanz (Ticket 09) startet keinen Server und schreibt keine Hook-Datei.
+
+Nachtrag:
+- Seit Ticket 22 antwortet `/hooks/SessionStart` bei eingeschalteter Einstellung „Offene Punkte“ mit der Anweisung an Claude; das Kriterium galt bis dahin.
 
 ## Abnahme von Hand
 

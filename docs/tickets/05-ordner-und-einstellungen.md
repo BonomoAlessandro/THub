@@ -15,11 +15,11 @@ Spezifikation: „Tab-Namen“, „Gespeicherter Zustand“ (Einstellungen, zule
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests:
+- [x] Kern-Tests:
   - Namen aus dem Ordner (normaler Ordner, Benutzerordner, Laufwerk) und bei Gleichstand; der Name bleibt nach dem Umbenennen fest.
   - Ein leerer Standardordner heisst Benutzerordner; eine Änderung des Standardordners betrifft bestehende Tabs nicht.
   - Zuletzt benutzte Ordner: Reihenfolge, keine Doppelten, höchstens acht, Ordner beim Schliessen kommt hinzu, die Liste übersteht einen Neustart, nicht mehr existierende Ordner werden nicht angeboten.
-- [ ] Übernommene Tabs aus Version 1 behalten ihre Namen.
+- [x] Übernommene Tabs aus Version 1 behalten ihre Namen.
 
 ## Abnahme von Hand
 

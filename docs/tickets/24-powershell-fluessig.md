@@ -18,10 +18,10 @@ Spezifikation: „Shell-Integration“, „Terminal-Backend“
 
 ## Akzeptanzkriterien
 
-- [ ] Die Ursache der Verzögerung ist gemessen und benannt (Zahlen vorher/nachher, etwa Zeit von der Taste bis zur gezeichneten Zeile), und die Behebung ist im Code begründet.
-- [ ] Ein automatischer Test sichert die Behebung ab, soweit sie sich messen lässt (etwa ein Shell-Test mit Zeitgrenze oder ein Kern-Test gegen quadratischen Aufwand pro Ausgabe).
-- [ ] Shell-Test: In einem PowerShell-Tab ist nach dem Start `(Get-PSReadLineOption).PredictionSource` gleich `None`, auch mit einem Profil, das die Vorhersage einschaltet.
-- [ ] Typecheck, `npm test`, `npm run test:shells` und der Build sind grün.
+- [x] Die Ursache der Verzögerung ist gemessen und benannt (Zahlen vorher/nachher, etwa Zeit von der Taste bis zur gezeichneten Zeile), und die Behebung ist im Code begründet.
+- [x] Ein automatischer Test sichert die Behebung ab, soweit sie sich messen lässt (etwa ein Shell-Test mit Zeitgrenze oder ein Kern-Test gegen quadratischen Aufwand pro Ausgabe).
+- [x] Shell-Test: In einem PowerShell-Tab ist nach dem Start `(Get-PSReadLineOption).PredictionSource` gleich `None`, auch mit einem Profil, das die Vorhersage einschaltet.
+- [x] Typecheck, `npm test`, `npm run test:shells` und der Build sind grün.
 
 ## Abnahme von Hand
 

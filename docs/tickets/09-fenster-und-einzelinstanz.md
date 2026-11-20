@@ -15,8 +15,8 @@ Spezifikation: „App-Verhalten“, „Gespeicherter Zustand“ (Fenster)
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests: Fensterangaben werden gespeichert und nach einem Neustart zurückgegeben; eine Position ausserhalb der Bildschirme ergibt die zentrierte Position auf dem Hauptbildschirm.
-- [ ] Der zweite Start beendet sich, bevor Zustand geladen, Shells gestartet oder Dateien geschrieben werden (am Code nachvollziehbar, Prüfung mit zwei Starts).
+- [x] Kern-Tests: Fensterangaben werden gespeichert und nach einem Neustart zurückgegeben; eine Position ausserhalb der Bildschirme ergibt die zentrierte Position auf dem Hauptbildschirm.
+- [x] Der zweite Start beendet sich, bevor Zustand geladen, Shells gestartet oder Dateien geschrieben werden (am Code nachvollziehbar, Prüfung mit zwei Starts).
 
 ## Abnahme von Hand
 

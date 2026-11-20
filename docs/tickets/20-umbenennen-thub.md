@@ -17,9 +17,9 @@ Die App heisst ab jetzt **THub** statt „TermHub“, durchgehend:
 
 ## Akzeptanzkriterien
 
-- [ ] Im Quellcode, in Tests, im README und in der Paket-Konfiguration kommt „TermHub“ bzw. `TERMHUB` nur noch dort vor, wo bewusst der alte Name gemeint ist (Übernahme der alten Daten, Entfernen alter Umgebungsvariablen).
-- [ ] Kern- bzw. Adapter-Test: Übernahme aus dem alten Datenordner, wenn der neue leer ist; keine Übernahme, wenn der neue schon eine Zustandsdatei hat.
-- [ ] Typecheck, alle Tests und der Build laufen; `npm run dist` erzeugt „THub Setup <Version>.exe“ (nicht ausführen).
+- [x] Im Quellcode, in Tests, im README und in der Paket-Konfiguration kommt „TermHub“ bzw. `TERMHUB` nur noch dort vor, wo bewusst der alte Name gemeint ist (Übernahme der alten Daten, Entfernen alter Umgebungsvariablen).
+- [x] Kern- bzw. Adapter-Test: Übernahme aus dem alten Datenordner, wenn der neue leer ist; keine Übernahme, wenn der neue schon eine Zustandsdatei hat.
+- [x] Typecheck, alle Tests und der Build laufen; `npm run dist` erzeugt „THub Setup <Version>.exe“ (nicht ausführen).
 
 ## Abnahme von Hand
 

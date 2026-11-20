@@ -18,10 +18,13 @@ Die Oberfläche wird mit **React und TypeScript** neu gebaut. Die Seitenleiste w
 
 ## Akzeptanzkriterien
 
-- [ ] Der Renderer ist eine React-Anwendung, gebündelt mit esbuild; `npm start`, `npm run dev`, `npm run dist` und der Typecheck funktionieren.
-- [ ] Kern-Test: Ein neuer Tab wird rechts neben dem aktiven eingefügt, und die Reihenfolge übersteht einen Neustart.
-- [ ] Die Seitenleiste ist entfernt. Die Einstellung des Standardordners fehlt vorübergehend; sie kommt in Ticket 05 zurück.
-- [ ] Alle heute vorhandenen Tastenkürzel aus der Spezifikation funktionieren. `Ctrl+K` erreicht die Shell.
+- [x] Der Renderer ist eine React-Anwendung, gebündelt mit esbuild; `npm start`, `npm run dev`, `npm run dist` und der Typecheck funktionieren.
+- [x] Kern-Test: Ein neuer Tab wird rechts neben dem aktiven eingefügt, und die Reihenfolge übersteht einen Neustart.
+- [x] Die Seitenleiste ist entfernt. Die Einstellung des Standardordners fehlt vorübergehend; sie kommt in Ticket 05 zurück.
+- [x] Alle heute vorhandenen Tastenkürzel aus der Spezifikation funktionieren. `Ctrl+K` erreicht die Shell.
+
+Nachtrag:
+- Seit Ticket 26 erscheinen neue Tabs am Ende der Leiste statt rechts neben dem aktiven; das Kriterium galt bis dahin.
 
 ## Abnahme von Hand
 

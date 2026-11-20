@@ -20,10 +20,10 @@ Spezifikation: „Oberfläche (Renderer)“, Design-Tokens
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Test: Neue Tabs landen am Ende, auch wenn der erste Tab aktiv ist. Duplizieren und Wiederöffnen behalten ihre Position (bestehende Tests grün).
-- [ ] Im Testmodus geprüft: Ein Klick in die Fläche über einem Tab trifft im maximierten Fenster den Tab. Die freie Fläche bleibt HTCAPTION; im nicht maximierten Fenster bleibt oben der Rand zum Grössenziehen.
-- [ ] CDP-Screenshots der Tab-Leiste in hell und dunkel sowie des aufgeklappten Dropdowns im dunklen Design. Ist ein natives Popup per CDP nicht zu fotografieren, genügt der Nachweis über die berechneten Stile.
-- [ ] Typecheck, `npm test` und der Build sind grün.
+- [x] Kern-Test: Neue Tabs landen am Ende, auch wenn der erste Tab aktiv ist. Duplizieren und Wiederöffnen behalten ihre Position (bestehende Tests grün).
+- [x] Im Testmodus geprüft: Ein Klick in die Fläche über einem Tab trifft im maximierten Fenster den Tab. Die freie Fläche bleibt HTCAPTION; im nicht maximierten Fenster bleibt oben der Rand zum Grössenziehen.
+- [x] CDP-Screenshots der Tab-Leiste in hell und dunkel sowie des aufgeklappten Dropdowns im dunklen Design. Ist ein natives Popup per CDP nicht zu fotografieren, genügt der Nachweis über die berechneten Stile.
+- [x] Typecheck, `npm test` und der Build sind grün.
 
 ## Abnahme von Hand
 

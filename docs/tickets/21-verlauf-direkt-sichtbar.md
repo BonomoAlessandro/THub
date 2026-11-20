@@ -24,6 +24,8 @@ Ausprobiert wird die node-pty-Option `conptyInheritCursor` (Windows-Flag `PSEUDO
 
 ## Akzeptanzkriterien
 
+Nicht erfüllt und nicht weiterverfolgt: Das Ticket ist nach dem Versuch verworfen (siehe oben).
+
 - [ ] Versuchsergebnisse für alle vier Shells dokumentiert (`docs/spikes/verlauf-sichtbar.md`), inklusive Verkleinern und Vergrössern.
 - [ ] Falls eingebaut: automatischer Test mit echter Shell und Terminal-Abbild (Teststelle 2), der prüft, dass nach dem Start und nach einem Verkleinern und Vergrössern die letzten Verlaufszeilen und die Trennlinie noch über dem Prompt stehen; Kern- bzw. Renderer-Tests angepasst.
 - [ ] Ein ausbleibende Antwort auf die Cursor-Abfrage lässt den Start nicht hängen (Zeitlimit oder Rückfall auf das heutige Verhalten).

@@ -20,16 +20,16 @@ Das Fundament für alles Weitere. Für den Nutzer ändert sich nichts: Die beste
 
 ## Akzeptanzkriterien
 
-- [ ] `npm test` startet Vitest; der Typecheck bleibt grün.
-- [ ] Der Kern lässt sich in Node ohne Electron erzeugen, mit nachgemachtem Terminal-Backend (zeichnet Startaufträge auf, nimmt rohe Ausgabestücke und Prozessende entgegen), Speicher im Arbeitsspeicher, steuerbarer Uhr, steuerbarer Prozess-Sonde und nachgemachtem System.
-- [ ] Kern-Tests:
+- [x] `npm test` startet Vitest; der Typecheck bleibt grün.
+- [x] Der Kern lässt sich in Node ohne Electron erzeugen, mit nachgemachtem Terminal-Backend (zeichnet Startaufträge auf, nimmt rohe Ausgabestücke und Prozessende entgegen), Speicher im Arbeitsspeicher, steuerbarer Uhr, steuerbarer Prozess-Sonde und nachgemachtem System.
+- [x] Kern-Tests:
   - Tab anlegen, umbenennen (leere Namen werden ignoriert), aktivieren, schliessen; nach dem Schliessen wird der Nachbar aktiv.
   - Ein Startauftrag wird erst nach „Ansicht bereit“ erteilt, mit der gemeldeten Grösse.
   - Nach einem Neustart sind Tabs, Reihenfolge und aktiver Tab wieder da.
   - Rückfall auf Standardordner bzw. Benutzerordner, wenn der Ordner eines Tabs fehlt.
-- [ ] Übernahme aus Version 1 mit Tests: Sessions werden zu Tabs, Namen bleiben, `settings.shell` wird nach der Tabelle abgebildet, Standardordner gleich Benutzerordner wird leer.
-- [ ] Eine kaputte Zustandsdatei wird weiterhin beiseitegelegt statt überschrieben.
-- [ ] `npm start` verwendet den Datenordner „THub-dev“.
+- [x] Übernahme aus Version 1 mit Tests: Sessions werden zu Tabs, Namen bleiben, `settings.shell` wird nach der Tabelle abgebildet, Standardordner gleich Benutzerordner wird leer.
+- [x] Eine kaputte Zustandsdatei wird weiterhin beiseitegelegt statt überschrieben.
+- [x] `npm start` verwendet den Datenordner „THub-dev“.
 
 ## Abnahme von Hand
 

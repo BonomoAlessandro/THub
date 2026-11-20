@@ -17,11 +17,11 @@ Spezifikation: „Oberfläche (Renderer)“
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests:
+- [x] Kern-Tests:
   - Duplizieren: Position, aktueller Ordner, Shell, Name, keine Claude-Zuordnung;
   - Verschieben eines Tabs an eine neue Position übersteht einen Neustart;
   - „Andere Tabs schliessen“ lässt genau den gewählten Tab übrig.
-- [ ] Das Rechtsklick-Menü lässt sich mit der Tastatur bedienen (Pfeiltasten, Enter, Escape).
+- [x] Das Rechtsklick-Menü lässt sich mit der Tastatur bedienen (Pfeiltasten, Enter, Escape).
 
 ## Abnahme von Hand
 

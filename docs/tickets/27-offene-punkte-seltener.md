@@ -21,15 +21,15 @@ Heute erscheint fast nach jedem Prompt ein Hinweis „Offene Punkte“. Gedacht 
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests mit echten HTTP-Hook-Ereignissen:
+- [x] Kern-Tests mit echten HTTP-Hook-Ereignissen:
   - `/hooks/SessionStart` liefert den neuen Wortlaut (bei eingeschalteter Einstellung);
   - `Stop` mit Schlussfrage ohne Abschnitt ergibt keinen Hinweis;
   - mit Abschnitt ergibt er wie bisher genau die Punkte;
   - ein Klick auf den Hinweis aktiviert den Tab und entfernt den Hinweis, auch aus dem gespeicherten Zustand;
   - das Anzeigen des Tabs allein lässt ihn stehen.
-- [ ] Die Tests der Erkennung sind an die neuen Regeln angepasst; Beispiele mit Schlussfrage stehen ausdrücklich als „kein Hinweis“ drin.
-- [ ] README und Spezifikation beschreiben das neue Verhalten.
-- [ ] Typecheck, `npm test` und der Build sind grün.
+- [x] Die Tests der Erkennung sind an die neuen Regeln angepasst; Beispiele mit Schlussfrage stehen ausdrücklich als „kein Hinweis“ drin.
+- [x] README und Spezifikation beschreiben das neue Verhalten.
+- [x] Typecheck, `npm test` und der Build sind grün.
 
 ## Abnahme von Hand
 

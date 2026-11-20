@@ -19,13 +19,16 @@ Endet eine Antwort von Claude mit offenen Fragen oder Punkten, die der Nutzer en
 
 ## Akzeptanzkriterien
 
-- [ ] Kern-Tests mit echten HTTP-Hook-Ereignissen:
+- [x] Kern-Tests mit echten HTTP-Hook-Ereignissen:
   - `/hooks/SessionStart` liefert den Kontext mit der Anweisung, wenn die Einstellung an ist, und eine leere Antwort, wenn sie aus ist;
   - `Stop` mit Abschnitt „Offene Punkte“ (auch als fette Zeile oder mit Doppelpunkt, auch englisch) ergibt einen Hinweis mit genau diesen Punkten; mit Frage im letzten Absatz ein Hinweis mit dieser Frage; ohne beides keinen;
   - der Hinweis bleibt beim Anzeigen des Tabs, verschwindet nur durch Schliessen; erscheint auch für den sichtbaren Tab; eine neue Antwort mit Punkten ersetzt ihn, eine ohne lässt ihn stehen; er ersetzt den „Fertig“-Hinweis;
   - er übersteht einen Neustart; ausgeschaltete Einstellung erzeugt keinen.
-- [ ] Die Erkennung ist eine reine, gut getestete Funktion mit Beispielen echter Antworten (deutsch und englisch, Markdown-Varianten, Code-Blöcke werden nicht als Punkte gelesen).
-- [ ] Typecheck, alle Tests und der Build sind grün.
+- [x] Die Erkennung ist eine reine, gut getestete Funktion mit Beispielen echter Antworten (deutsch und englisch, Markdown-Varianten, Code-Blöcke werden nicht als Punkte gelesen).
+- [x] Typecheck, alle Tests und der Build sind grün.
+
+Nachtrag:
+- Seit Ticket 27 zählt nur noch der ausdrückliche Abschnitt „Offene Punkte“; die Regel mit der Schlussfrage ist weggefallen. Das Kriterium galt bis dahin.
 
 ## Abnahme von Hand (mit echtem Claude Code)
 

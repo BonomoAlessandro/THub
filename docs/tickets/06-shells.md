@@ -18,13 +18,13 @@ Spezifikation: „Shell-Erkennung“, „Gespeicherter Zustand“ (Übernahme au
 
 ## Akzeptanzkriterien
 
-- [ ] Der Kern bekommt die Liste der erkannten Shells übergeben. Kern-Tests mit verschiedenen Listen:
+- [x] Der Kern bekommt die Liste der erkannten Shells übergeben. Kern-Tests mit verschiedenen Listen:
   - Wahl der Standard-Shell mit und ohne PowerShell 7;
   - ein Tab behält seine Shell über einen Neustart;
   - Rückfall bei fehlender Shell inklusive Hinweis;
   - der Startauftrag enthält Programm und Argumente der gewählten Shell;
   - ein WSL-Tab startet mit `--cd` und dem Ordner.
-- [ ] Die in Ticket 01 übernommenen Shell-Kennungen aus Version 1 passen zu den erkannten Kennungen.
+- [x] Die in Ticket 01 übernommenen Shell-Kennungen aus Version 1 passen zu den erkannten Kennungen.
 
 ## Abnahme von Hand
 
