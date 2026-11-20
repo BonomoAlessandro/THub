@@ -22,6 +22,9 @@ export function expectHookReply(res: ApiResponse, event: string, { openPoints = 
   else expect(res).toMatchObject({ body: '', headers: { 'content-length': '0' } });
 }
 
+/** Ein Hinweis mit offenen Punkten (Ticket 22). */
+type PointsToast = Extract<ToastSnapshot, { kind: 'openPoints' }>;
+
 /** Ein Claude-Tab, gestartet über den Starter; Claude Code schickt seine Hooks mit dieser Session-Kennung. */
 export class ClaudeTab {
   private constructor(
@@ -54,21 +57,38 @@ export class ClaudeTab {
     await this.send('PermissionRequest-Bash');
   }
 
-  /** Claude bearbeitet einen Prompt und wird fertig. */
-  async answer(): Promise<void> {
+  /** Claude bearbeitet einen Prompt und wird fertig; ohne `message` mit der redigierten Antwort aus dem Spike. */
+  async answer(message?: string): Promise<void> {
     await this.send('UserPromptSubmit');
-    await this.send('Stop');
+    await this.stop(message);
   }
 
   /** Eine Hintergrund-Aufgabe endet: Claude meldet sich mit einem eigenen Prompt und wird wieder fertig. */
-  async answerAgain(): Promise<void> {
+  async answerAgain(message?: string): Promise<void> {
     await this.send('UserPromptSubmit-task-notification');
-    await this.send('Stop');
+    await this.stop(message);
   }
 
-  /** Der Hinweis dieses Tabs, falls er einen hat. */
+  /** Claude ist mit der Antwort fertig (`Stop`), mit diesem Text als `last_assistant_message`. */
+  async stop(message?: string): Promise<void> {
+    await this.send('Stop', message === undefined ? {} : { last_assistant_message: message });
+  }
+
+  /** Die Hinweise dieses Tabs, in der Reihenfolge ihres Erscheinens. */
+  toasts(): ToastSnapshot[] {
+    return this.h.snapshot().toasts.filter((t) => t.tabId === this.id);
+  }
+
+  /** Der Hinweis „wartet“ oder „fertig“ dieses Tabs, falls er einen hat; davon gibt es höchstens einen. */
   toast(): ToastSnapshot | undefined {
-    const own = this.h.snapshot().toasts.filter((t) => t.tabId === this.id);
+    const own = this.toasts().filter((t) => t.kind !== 'openPoints');
+    expect(own.length).toBeLessThanOrEqual(1);
+    return own[0];
+  }
+
+  /** Der Hinweis mit offenen Punkten dieses Tabs, falls er einen hat; davon gibt es höchstens einen. */
+  pointsToast(): PointsToast | undefined {
+    const own = this.toasts().filter((t): t is PointsToast => t.kind === 'openPoints');
     expect(own.length).toBeLessThanOrEqual(1);
     return own[0];
   }

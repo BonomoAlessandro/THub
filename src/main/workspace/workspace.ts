@@ -27,7 +27,7 @@ import {
 } from './claude';
 import { CwdReportScanner } from './cwdReport';
 import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
-import { openPointsContext } from './openPoints';
+import { findOpenPoints, openPointsContext } from './openPoints';
 import type { CancelTimer, ShellInfo, StartOrder, WorkspacePorts } from './ports';
 import { ProcessTracker, type ProcessTab, type ShellTree } from './processRules';
 import { resumeCommand, sessionToResume } from './resume';
@@ -42,7 +42,7 @@ import {
   type WindowState,
 } from './schema';
 import { classifyInput, displayedStatus, IDLE_CLAUDE, statusAfterHook, type ClaudeStatus } from './tabStatus';
-import { ToastBoard } from './toasts';
+import { STATUS_TOASTS, ToastBoard } from './toasts';
 import { placeWindow } from './windowPlacement';
 
 /** So lange wartet das Beenden höchstens auf die Shells. */
@@ -170,7 +170,7 @@ export interface Workspace extends ClaudeReceiver {
    */
   windowForeground(foreground: boolean): void;
 
-  /** Nimmt einen Hinweis weg (× am Hinweis). */
+  /** Nimmt einen Hinweis weg (× am Hinweis); offene Punkte sind damit auch im gespeicherten Zustand weg. */
   dismissToast(toastId: string): void;
   /** Die Maus steht auf dem Hinweis bzw. nicht mehr: Solange hält sein Countdown an. */
   holdToast(toastId: string, hold: boolean): void;
@@ -314,6 +314,8 @@ class WorkspaceCore implements Workspace {
       restoredChanged = this.restoreTab(tab, tab.id === this.state.activeTabId) || restoredChanged;
     }
 
+    restoredChanged = this.restoreOpenPoints() || restoredChanged;
+
     // Wie bisher: Ohne gespeicherte Tabs startet THub mit einem neuen Terminal.
     if (this.state.tabs.length === 0) this.createTab();
     else if (loaded.migrated || restoredChanged) this.save();
@@ -407,6 +409,8 @@ class WorkspaceCore implements Workspace {
     // Bis zur Liste der geschlossenen Tabs (Ticket 15) verschwindet der Verlauf mit dem Tab.
     this.deleteHistory(tabId);
     const [tab] = this.state.tabs.splice(index, 1);
+    // Ein geschlossener Tab nimmt seine offenen Punkte mit, auch in die Liste der geschlossenen Tabs (Ticket 15).
+    delete tab.openPoints;
     this.state.recentDirs = rememberDir(this.state.recentDirs, tab.lastCwd ?? tab.startCwd);
     if (this.state.activeTabId === tabId) {
       const neighbour = this.state.tabs[index] ?? this.state.tabs[index - 1];
@@ -789,10 +793,13 @@ class WorkspaceCore implements Workspace {
     const next = normalizeSettings({ ...this.state.settings, ...patch });
     if (JSON.stringify(next) === JSON.stringify(this.state.settings)) return;
     this.state.settings = next;
+    // Offene Punkte ausgeschaltet: Auch die gespeicherten verschwinden; wieder eingeschaltet kommen nur neue.
+    if (!next.openPoints) for (const tab of this.state.tabs) delete tab.openPoints;
     this.save();
     this.emit({ type: 'settings', settings: structuredClone(next), defaultShellId: this.defaultShell().id });
-    // Ausgeschaltet: Auch die Hinweise, die gerade stehen, verschwinden.
-    if (!next.notifications) this.toasts.clear();
+    // Ausgeschaltet: Auch die Hinweise, die gerade stehen, verschwinden; jede Einstellung für ihre Arten.
+    if (!next.notifications) this.toasts.clear(STATUS_TOASTS);
+    if (!next.openPoints) this.toasts.clear(['openPoints']);
   }
 
   stepFontSize(step: number): void {
@@ -829,7 +836,12 @@ class WorkspaceCore implements Workspace {
 
   dismissToast(toastId: string): void {
     if (this.stopping || typeof toastId !== 'string') return;
-    this.toasts.dismiss(toastId);
+    const dismissed = this.toasts.dismiss(toastId);
+    const tab = dismissed?.kind === 'openPoints' ? this.findTab(dismissed.tabId) : undefined;
+    if (tab?.openPoints) {
+      delete tab.openPoints;
+      this.save();
+    }
   }
 
   holdToast(toastId: string, hold: boolean): void {
@@ -838,17 +850,46 @@ class WorkspaceCore implements Workspace {
   }
 
   /**
-   * Hinweis für einen Tab, der gerade nicht sichtbar ist: Claude wartet dort auf dich bzw. ist fertig. Ein Hinweis, den
-   * der Tab schon hat, verschwindet dafür. Ausgeschaltet in den Einstellungen gibt es keine; die Status-Symbole bleiben.
+   * Hinweis für einen Tab, der gerade nicht sichtbar ist: Claude wartet dort auf dich bzw. ist fertig. Ein „wartet“-
+   * oder „fertig“-Hinweis, den der Tab schon hat, verschwindet dafür. Ausgeschaltet in den Einstellungen gibt es keine;
+   * die Status-Symbole bleiben.
    */
-  private notify(tabId: string, kind: ToastKind): void {
+  private notify(tabId: string, kind: Exclude<ToastKind, 'openPoints'>): void {
     if (this.state.settings.notifications && !this.isVisible(tabId)) this.toasts.show(tabId, kind);
   }
 
   /** Ein „wartet“-Hinweis gilt nur, solange Claude im Tab auf dich wartet. */
   private dropStaleWaitingToast(tab: PersistedTab): void {
     if (tab.claude && this.runtimes.get(tab.id)?.claude.activity === 'waiting') return;
-    this.toasts.dismissTab(tab.id, 'waiting');
+    this.toasts.dismissTab(tab.id, ['waiting']);
+  }
+
+  /**
+   * Hinweis mit den offenen Punkten aus Claudes Antwort (Ticket 22): auch für den sichtbaren Tab, bis er mit ×
+   * geschlossen wird, und gespeichert, damit er einen Neustart übersteht. Er ersetzt den bisherigen des Tabs und einen
+   * „fertig“-Hinweis.
+   */
+  private showOpenPoints(tab: PersistedTab, points: string[]): void {
+    tab.openPoints = points;
+    this.save();
+    this.toasts.show(tab.id, 'openPoints', points);
+  }
+
+  /**
+   * Nach einem Neustart: Die gespeicherten offenen Punkte erscheinen wieder. Bei ausgeschalteter Einstellung fallen sie
+   * weg. Liefert, ob sich der gespeicherte Zustand dabei geändert hat.
+   */
+  private restoreOpenPoints(): boolean {
+    let changed = false;
+    for (const tab of this.state.tabs) {
+      if (!tab.openPoints) continue;
+      if (this.state.settings.openPoints) this.toasts.show(tab.id, 'openPoints', tab.openPoints);
+      else {
+        delete tab.openPoints;
+        changed = true;
+      }
+    }
+    return changed;
   }
 
   // ---------- Claude ----------
@@ -919,10 +960,14 @@ class WorkspaceCore implements Workspace {
       const wasWaiting = runtime.claude.activity === 'waiting';
       const step = statusAfterHook(runtime.claude, hook, startsSession(previous, hook), this.ports.clock.now());
       runtime.claude = step.status;
-      if (step.stopped && !this.isVisible(tab.id)) {
-        runtime.finished = true;
-        this.notify(tab.id, 'finished');
-      } else if (!wasWaiting && step.status.activity === 'waiting') this.notify(tab.id, 'waiting');
+      const unseen = step.stopped && !this.isVisible(tab.id);
+      if (unseen) runtime.finished = true;
+      // Eine Antwort mit offenen Punkten zeigt sie an, auch im sichtbaren Tab, statt „fertig“; eine ohne lässt den
+      // bisherigen Hinweis mit offenen Punkten stehen.
+      const points = hook.event === 'Stop' ? this.openPointsIn(hook.lastAssistantMessage) : [];
+      if (points.length > 0) this.showOpenPoints(tab, points);
+      else if (unseen) this.notify(tab.id, 'finished');
+      else if (!wasWaiting && step.status.activity === 'waiting') this.notify(tab.id, 'waiting');
     });
   }
 
@@ -931,6 +976,11 @@ class WorkspaceCore implements Workspace {
     // eingefroren beim Beenden: Sie ändert nur, wie Claude schreibt, nicht den Zustand von THub.
     if (event !== 'SessionStart' || !this.state.settings.openPoints || !this.findTab(tabId)) return undefined;
     return openPointsContext();
+  }
+
+  /** Die offenen Punkte einer fertigen Antwort; bei ausgeschalteter Einstellung keine. */
+  private openPointsIn(message: string | undefined): string[] {
+    return this.state.settings.openPoints ? findOpenPoints(message) : [];
   }
 
   /**
@@ -1056,13 +1106,14 @@ class WorkspaceCore implements Workspace {
 
   /**
    * Der aktive Tab wird gerade angezeigt (Tab gewechselt, auf welchem Weg auch immer, oder Fenster nach vorne
-   * gekommen): Sein „fertig, noch nicht angeschaut“ entfällt, und sein Hinweis verschwindet; die Hinweise der anderen
-   * Tabs bleiben. Liefert, ob sich dabei der Status des Tabs geändert hat (die Hinweise meldet der Kern selbst).
+   * gekommen): Sein „fertig, noch nicht angeschaut“ entfällt, und seine Hinweise „wartet“ und „fertig“ verschwinden;
+   * offene Punkte bleiben, bis sie mit × geschlossen werden, die Hinweise der anderen Tabs ohnehin. Liefert, ob sich
+   * dabei der Status des Tabs geändert hat (die Hinweise meldet der Kern selbst).
    */
   private markShownTabSeen(): boolean {
     const id = this.state.activeTabId;
     if (!id || !this.isVisible(id)) return false;
-    this.toasts.dismissTab(id);
+    this.toasts.dismissTab(id, STATUS_TOASTS);
     const runtime = this.runtimes.get(id);
     if (!runtime?.finished) return false;
     runtime.finished = false;

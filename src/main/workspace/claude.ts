@@ -77,6 +77,8 @@ export interface HookFacts {
   reason?: string;
   /** Art bei `Notification`, z.B. `permission_prompt` oder `idle_prompt`. */
   notificationType?: string;
+  /** Text der fertigen Antwort bei `Stop`, für die offenen Punkte (Ticket 22). */
+  lastAssistantMessage?: string;
 }
 
 /** `SessionEnd` mit diesen Gründen beendet Claude nicht: Es folgt ein `SessionStart` mit neuer Kennung. */
@@ -90,6 +92,7 @@ export function readHook(event: string, payload: unknown): HookFacts {
     cwd: nonEmpty(p.cwd),
     reason: nonEmpty(p.reason),
     notificationType: nonEmpty(p.notification_type),
+    lastAssistantMessage: nonEmpty(p.last_assistant_message),
   };
 }
 

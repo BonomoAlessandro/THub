@@ -73,13 +73,17 @@ export interface TabSnapshot {
 }
 
 /**
- * Art eines Hinweises unten rechts im Fenster (Ticket 14):
+ * Art eines Hinweises unten rechts im Fenster:
  * - `waiting`: Claude wartet in einem nicht sichtbaren Tab auf dich; bleibt, bis der Tab angezeigt wird oder wieder
- *   arbeitet;
+ *   arbeitet (Ticket 14);
  * - `finished`: Claude ist in einem nicht sichtbaren Tab fertig geworden; verschwindet nach etwa 6 Sekunden
- *   Vordergrundzeit oder beim Anzeigen des Tabs.
+ *   Vordergrundzeit oder beim Anzeigen des Tabs (Ticket 14);
+ * - `openPoints`: Claudes letzte Antwort endet mit offenen Fragen oder Punkten; erscheint auch für den sichtbaren Tab
+ *   und bleibt, bis er mit × geschlossen wird, auch über einen Neustart (Ticket 22).
+ *
+ * „Wartet“ und „fertig“ teilen sich einen Platz pro Tab, offene Punkte haben einen eigenen und ersetzen dazu „fertig“.
  */
-export type ToastKind = 'waiting' | 'finished';
+export type ToastKind = 'waiting' | 'finished' | 'openPoints';
 
 /** Countdown eines Hinweises, der von selbst verschwindet. Er läuft nur, solange das Fenster im Vordergrund ist. */
 export interface ToastCountdown {
@@ -99,12 +103,13 @@ interface ToastBase {
 }
 
 /**
- * Ein Hinweis unten rechts im Fenster. Den Text und den Namen des Tabs setzt die Oberfläche ein. Weitere Arten (etwa
- * mit einer Liste von Punkten) kommen als weitere Glieder dieser Vereinigung dazu.
+ * Ein Hinweis unten rechts im Fenster. Den Text und den Namen des Tabs setzt die Oberfläche ein; offene Punkte bringen
+ * ihre Punkte mit, alle, in der Reihenfolge der Antwort (die Oberfläche zeigt davon höchstens vier).
  */
 export type ToastSnapshot =
   | (ToastBase & { kind: 'waiting' })
-  | (ToastBase & { kind: 'finished'; countdown: ToastCountdown });
+  | (ToastBase & { kind: 'finished'; countdown: ToastCountdown })
+  | (ToastBase & { kind: 'openPoints'; points: string[] });
 
 /** Eine erkannte Shell, wie sie das Pfeil-Menü und die Einstellungen anbieten. */
 export interface ShellOption {
