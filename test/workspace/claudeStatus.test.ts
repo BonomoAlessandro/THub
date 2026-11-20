@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ProcessInfo } from '../../src/main/workspace/ports';
 import type { TabSnapshot } from '../../src/shared/types';
 import { hookEvent, hookPayload, type HookSample } from '../support/apiClient';
+import { expectHookReply } from '../support/claudeTab';
 import { settle, startWorkspaceWithApi, type TestWorkspace } from '../support/harness';
 
 // Status-Zeilen des Zustandsautomaten (Ticket 13) über die echte lokale Schnittstelle: Hook-Ereignisse in der Form,
@@ -22,7 +23,7 @@ class ClaudeSession {
     readonly sessionId: string,
   ) {}
 
-  /** Claude Code schickt ein Hook-Ereignis aus den Beispielen des Spikes; die Antwort ist ein leerer Erfolg. */
+  /** Claude Code schickt ein Hook-Ereignis aus den Beispielen des Spikes; die Antwort zeigt `expectHookReply`. */
   async send(sample: HookSample, overrides: Record<string, unknown> = {}): Promise<void> {
     await this.sendAs(hookEvent(sample), sample, overrides);
   }
@@ -35,8 +36,7 @@ class ClaudeSession {
       hook_event_name: event,
       ...overrides,
     });
-    const res = await this.h.api.hook(this.tabId, event, payload);
-    expect(res).toMatchObject({ status: 200, body: '' });
+    expectHookReply(await this.h.api.hook(this.tabId, event, payload), event);
   }
 
   /** Der Nutzer tippt im Terminal des Tabs; der Renderer gibt die Daten so weiter, wie xterm.js sie liefert. */

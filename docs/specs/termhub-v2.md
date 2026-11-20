@@ -257,12 +257,12 @@ Der Starter arbeitet in diesen Schritten:
 | `POST /claude/launch` | Starter, vor dem Start | Tab-Kennung, Fall, angegebene Kennung, aktueller Ordner | Tab-Name, neue Session-Kennung (nur Fall „neu“), Pfad zur Hook-Datei |
 | `POST /claude/started` | Starter, direkt nach dem Start | Tab-Kennung, Prozess-ID von Claude | leer |
 | `POST /claude/exit` | Starter, nach dem Ende | Tab-Kennung, Session-Kennung, Exit-Code | leer |
-| `POST /hooks/<Ereignis>` | Claude Code (HTTP-Hooks; `SessionStart` über `curl.exe`, siehe unten) | Hook-Nutzdaten | immer sofort leerer Erfolg mit leerem Inhalt |
+| `POST /hooks/<Ereignis>` | Claude Code (HTTP-Hooks; `SessionStart` über `curl.exe`, siehe unten) | Hook-Nutzdaten | immer sofort leerer Erfolg mit leerem Inhalt; einzige Ausnahme `SessionStart` mit der Anweisung für offene Punkte (siehe „Offene Punkte aus Claudes Antworten“) |
 
 - Die **Hook-Datei** erzeugt THub bei jedem Start neu im eigenen Datenordner:
   - Hooks vom Typ `http` auf `/hooks/<Ereignis>`, mit den Kopfzeilen `X-THub-Tab: $THUB_TAB_ID` und `X-THub-Token: $THUB_TOKEN`. Beide Variablen stehen in `allowedEnvVars`. Timeout 2 Sekunden.
   - Registrierte Ereignisse per HTTP: `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `Stop`, `StopFailure`, `Notification`.
-  - **`SessionStart` unterstützt keine HTTP-Hooks** (Claude überspringt sie still). Dafür gibt es einen Befehls-Hook ohne Shell (Exec-Form), der die Nutzdaten mit dem `curl.exe` von Windows an `/hooks/SessionStart` weiterleitet. curl liest Tab-Kennung und Token selbst aus der Umgebung (`--variable %VAR` mit `--expand-header`), mit `--connect-timeout 1 -m 2` und Hook-Timeout 3 Sekunden. Die Antwort muss leer sein, weil die Ausgabe dieses Hooks in Claudes Kontext landet. Fehlt `curl.exe`, entfällt der Eintrag; die Zuordnung läuft dann über die Ersatzregel „neue Kennung in einem anderen Ereignis“ (siehe Zustandsautomat).
+  - **`SessionStart` unterstützt keine HTTP-Hooks** (Claude überspringt sie still). Dafür gibt es einen Befehls-Hook ohne Shell (Exec-Form), der die Nutzdaten mit dem `curl.exe` von Windows an `/hooks/SessionStart` weiterleitet. curl liest Tab-Kennung und Token selbst aus der Umgebung (`--variable %VAR` mit `--expand-header`), mit `--connect-timeout 1 -m 2` und Hook-Timeout 3 Sekunden. Die Ausgabe dieses Hooks liest Claude (curl gibt die Antwort unverändert aus); deshalb ist die Antwort leer, ausser THub gibt Claude bei eingeschalteter Einstellung die Anweisung für offene Punkte als JSON mit `additionalContext` mit. Fehlt `curl.exe`, entfällt der Eintrag; die Zuordnung läuft dann über die Ersatzregel „neue Kennung in einem anderen Ereignis“ (siehe Zustandsautomat).
   - Eine geprüfte Vorlage liegt in `spikes/claude-hooks/empfohlene-hook-datei.json`.
 - Relevante Felder der Nutzdaten:
   - alle Ereignisse: `session_id`, `cwd` (kann ein 8.3-Kurzpfad sein, wird normalisiert), `transcript_path`;
@@ -347,7 +347,7 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 - Verwaiste MSYS-Programme zählen nur in normalen Git-Bash-Tabs; in Claude-Tabs zählen allein die Nachfahren des Claude-Prozesses.
 
 **Hinweise im Fenster:**
-- Der Kern löst einen Hinweis aus, wenn ein nicht sichtbarer Tab in „wartet auf dich“ wechselt oder fertig wird. Pro Tab gibt es höchstens einen Hinweis; ein neuer ersetzt den alten. Hinweise verschiedener Tabs stehen gleichzeitig übereinander; wird ein Tab angezeigt (auf welchem Weg auch immer), verschwindet nur dessen Hinweis.
+- Der Kern löst einen Hinweis aus, wenn ein nicht sichtbarer Tab in „wartet auf dich“ wechselt oder fertig wird. Pro Tab gibt es höchstens einen solchen Hinweis; ein neuer ersetzt den alten. Offene Punkte (siehe unten) haben einen eigenen Platz. Hinweise verschiedener Tabs stehen gleichzeitig übereinander; wird ein Tab angezeigt (auf welchem Weg auch immer), verschwindet nur dessen Hinweis.
 - „Fertig“ verschwindet nach etwa 6 Sekunden Vordergrundzeit oder beim Anzeigen des Tabs.
 - „Wartet“ verschwindet beim Anzeigen des Tabs oder wenn der Tab wieder arbeitet.
 - Hinweise nehmen dem Terminal nie den Fokus.
@@ -368,6 +368,16 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 - **Hinweis:** unten rechts mit Tab-Name, „Offene Punkte (n)“ und höchstens vier Punkten (je höchstens zwei Zeilen, darunter „+ k weitere“). Ein Klick springt in den Tab. Er bleibt, bis er mit × geschlossen wird, auch beim Anzeigen des Tabs, und er erscheint auch für den sichtbaren Tab. Pro Tab höchstens einer; eine neue Antwort mit offenen Punkten ersetzt ihn, eine ohne lässt ihn stehen; er ersetzt den „Fertig“-Hinweis desselben Tabs.
 - **Gespeichert:** Nicht geschlossene Hinweise stehen pro Tab im Zustand und erscheinen nach einem Neustart wieder; mit einem geschlossenen Tab verschwindet auch sein Hinweis.
 - **Einstellung** „Offene Punkte aus Claudes Antworten anzeigen“ im Abschnitt „Hinweise“, Standard: an. Ausgeschaltet entfallen Hinweis und Anweisung.
+
+**Präzisierungen aus der Umsetzung (Ticket 22):**
+- Die Antwort auf `SessionStart` ist JSON nur aus ASCII-Zeichen (alles andere als `\uXXXX`), damit sie über die Ausgabe von `curl.exe` unabhängig von jeder Zeichenkodierung unverändert ankommt. Sie kommt für jeden bekannten Tab, auch während die Zuordnungen beim Beenden eingefroren sind; zu unbekannten Tabs bleibt sie leer. Geprüft mit Claude Code 2.1.329 ohne Prompt (Start, Vertrauensdialog, `/exit`) und der echten Hook-Datei: Das Debug-Log meldet „Parsed initial response“ mit korrekt dekodierten Umlauten und „Hook SessionStart (…curl.exe…) provided additionalContext (286 chars)“, genau die Länge des Wortlauts; mit ausgeschalteter Einstellung kein `additionalContext`.
+- Überschriften: Hervorhebung, ein Doppelpunkt am Ende und alles vor dem ersten Buchstaben (Emoji, Nummerierung wie „3.“) zählen nicht; die Überschrift muss mit einem der Begriffe als ganzen Wörtern beginnen („Offene Punkte (2)“ zählt, „Offene Punkteliste“ nicht). Gross- und Kleinschreibung zählen nicht. Dazu „Noch offene Punkte“ und „Noch offene Fragen“, die gebeugte Form von „Noch offen“. Auch unterstrichene Markdown-Überschriften (Setext) zählen.
+- Aufzählungen: `-`, `*`, `+`, `•`, `1.` und `1)`, auch mit Kästchen (`- [ ]`). Es zählen die Punkte der obersten Ebene, mit ihren Fortsetzungszeilen; Unterpunkte, eigene Absätze und eingerückte Code-Blöcke unter einem Punkt gehören zu ihm und zählen nicht einzeln. Die Aufzählung endet an einem Absatz nach einer Leerzeile, an einer Überschrift, einer Trennlinie oder einem nicht eingerückten Code-Block. Mehrere Abschnitte zählen zusammen.
+- Steht unter keiner solchen Überschrift eine Aufzählung, gilt die Regel für die Frage am Ende. Der letzte Absatz beginnt nach einer Leerzeile, einem Code-Block oder einer Überschrift; ist er eine Aufzählung, zählt nur ihr letzter Punkt. Als Frage zählen die Sätze am Ende, die mit „?“ enden, zusammen als ein Punkt („Soll ich X? Oder lieber Y?“); nach dem Fragezeichen dürfen Hervorhebung, Anführungszeichen, Klammern oder ein Emoji stehen. Endet die Antwort mit einem Code-Block, gibt es keine Frage am Ende.
+- Die Punkte kommen ohne Aufzählungszeichen, Kästchen, Hervorhebung, Links (nur ihr Text) und Backticks in den Hinweis. Höchstens 20 Punkte zu je höchstens 300 Zeichen (gekürzt mit „…“).
+- Nur `Stop` zählt, nicht `StopFailure`. Ein Hinweis mit offenen Punkten setzt am Tab weiterhin „fertig, noch nicht angeschaut“, wenn der Tab nicht sichtbar war; nur der „fertig“-Hinweis entfällt. Kommt danach eine Antwort ohne Punkte, erscheint „fertig“ wie bisher neben dem stehenden Hinweis mit offenen Punkten. Neben „wartet“ kann er ebenfalls stehen. Das Anzeigen des Tabs nimmt nur „wartet“ und „fertig“ weg; der Hinweis mit offenen Punkten hat keinen Countdown.
+- Endet Claude im Tab, bleibt der Hinweis. Ein geschlossener Tab kommt ohne seine offenen Punkte in die Liste der geschlossenen Tabs; wieder geöffnet erscheint der Hinweis nicht mehr. Beim Ausschalten der Einstellung verschwinden auch die stehenden und gespeicherten offenen Punkte; ein Zustand mit ausgeschalteter Einstellung und gespeicherten Punkten verliert sie beim Laden. „Hinweise im Fenster“ wirkt nur auf „wartet“ und „fertig“.
+- Die Karte zeigt statt eines Status-Symbols ein neutrales Aufzählungssymbol; jeder Punkt hat seinen ganzen Text im Tooltip.
 
 ### Wiederherstellen
 
@@ -406,10 +416,12 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - Design (System / Hell / Dunkel)
   - Terminal-Schriftgrösse (8 bis 32)
   - Hinweise an/aus
+  - offene Punkte aus Claudes Antworten an/aus
 - **Tabs (geordnet):**
   - Kennung, Name, ob der Name von Hand vergeben wurde
   - Shell-Kennung, Startordner, zuletzt aktiver Ordner
   - bei Claude-Tabs die Claude-Zuordnung (Session-Kennung, Ordner der Session, bestätigt, hatte Prompt)
+  - offene Punkte, deren Hinweis noch nicht geschlossen ist
 - **Weitere Angaben:**
   - aktiver Tab
   - zuletzt benutzte Ordner: Startordner neu angelegter Tabs und der zuletzt aktive Ordner eines Tabs beim Schliessen; höchstens acht, neueste zuerst, ohne Doppelte

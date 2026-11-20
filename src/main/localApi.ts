@@ -7,7 +7,9 @@
 // - /claude/launch   {tabId, case, sessionId?, cwd?} → 200 {tabName, sessionId?, hookFile}; 404 bei unbekanntem Tab
 // - /claude/started  {tabId, pid}                    → 200 leer
 // - /claude/exit     {tabId, sessionId?, exitCode}   → 200 leer
-// - /hooks/<Ereignis> Hook-Nutzdaten, Tab in `X-THub-Tab` → immer sofort 200 leer, nie Entscheidungsfelder
+// - /hooks/<Ereignis> Hook-Nutzdaten, Tab in `X-THub-Tab` → immer sofort 200, nie Entscheidungsfelder; leer, ausser
+//   SessionStart bei eingeschalteter Einstellung „Offene Punkte“: dann die Anweisung als zusätzlicher Kontext für
+//   Claude (Ticket 22). curl gibt sie unverändert an Claude weiter.
 
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import * as http from 'node:http';
@@ -26,6 +28,11 @@ const STARTER_PATHS = new Set(['/claude/launch', '/claude/started', '/claude/exi
 interface Reply {
   status: number;
   json?: object;
+  /**
+   * JSON nur aus ASCII-Zeichen, alles andere als `\uXXXX`: Die Antwort auf SessionStart liest Claude aus der Ausgabe
+   * von curl.exe; so kommt sie unabhängig von jeder Zeichenkodierung unverändert an.
+   */
+  ascii?: boolean;
 }
 
 export class LocalApiServer {
@@ -91,12 +98,12 @@ export class LocalApiServer {
     });
   }
 
-  /** Hook-Ereignis: immer sofort ein leerer Erfolg, erst danach an den Kern. Fehler sieht Claude nie. */
+  /** Hook-Ereignis: immer sofort ein Erfolg, erst danach an den Kern. Fehler sieht Claude nie. */
   private onHook(req: http.IncomingMessage, res: http.ServerResponse, event: string): void {
     const tabId = headerValue(req, TAB_HEADER);
     const body = readBody(req);
     void body.then((text) => {
-      if (text !== null) reply(res, { status: 200 });
+      if (text !== null) reply(res, this.hookReply(tabId, event));
     });
     this.hooksForwarded = this.hooksForwarded
       .then(() => body)
@@ -108,6 +115,18 @@ export class LocalApiServer {
           console.error(`Lokale Schnittstelle: Hook ${event} konnte nicht verarbeitet werden:`, err);
         }
       });
+  }
+
+  /** Antwort auf ein Hook-Ereignis: leer, ausser der Kern gibt Claude etwas mit (siehe `claudeHookReply`). */
+  private hookReply(tabId: string | undefined, event: string): Reply {
+    if (!tabId || !this.receiver) return { status: 200 };
+    try {
+      const json = this.receiver.claudeHookReply(tabId, event);
+      return json ? { status: 200, json, ascii: true } : { status: 200 };
+    } catch (err) {
+      console.error(`Lokale Schnittstelle: Antwort auf Hook ${event} konnte nicht bestimmt werden:`, err);
+      return { status: 200 };
+    }
   }
 
   /** Meldungen des Starters: Inhalt prüfen (sonst 400) und an den Kern weitergeben. */
@@ -148,19 +167,24 @@ export class LocalApiServer {
   }
 }
 
-/** Ohne Inhalt: nur Status und `Content-Length: 0`. Mit Inhalt: JSON in UTF-8. */
-function reply(res: http.ServerResponse, { status, json }: Reply): void {
+/** Ohne Inhalt: nur Status und `Content-Length: 0`. Mit Inhalt: JSON in UTF-8, auf Wunsch nur aus ASCII-Zeichen. */
+function reply(res: http.ServerResponse, { status, json, ascii }: Reply): void {
   if (json === undefined) {
     res.writeHead(status, { 'Content-Length': 0 });
     res.end();
     return;
   }
-  const text = JSON.stringify(json);
+  const text = ascii ? asciiJson(json) : JSON.stringify(json);
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(text),
   });
   res.end(text);
+}
+
+/** JSON, in dem jedes Zeichen ausserhalb von ASCII als `\uXXXX` steht (UTF-16, wie JSON es vorsieht). */
+function asciiJson(value: object): string {
+  return JSON.stringify(value).replace(/[^\x00-\x7f]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
 /**

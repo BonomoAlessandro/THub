@@ -77,8 +77,10 @@ export function hookSettings(apiUrl: string, curlExe: string | null): HookSettin
 
 /**
  * Befehls-Hook in Exec-Form (ohne Shell), der die Nutzdaten von stdin an `url` weiterleitet. curl liest Tab
- * und Token selbst aus der Umgebung (`--variable %NAME=`, ab curl 8.3) und nimmt keinen Proxy. Was curl
- * ausgibt, landet in Claudes Kontext; deshalb antwortet der Empfänger leer.
+ * und Token selbst aus der Umgebung (`--variable %NAME=`, ab curl 8.3) und nimmt keinen Proxy. curl gibt die
+ * Antwort des Empfängers unverändert aus (`-s` ohne Fortschritt, kein `-i`, `-w` oder `--fail`), und diese Ausgabe
+ * liest Claude: Der Empfänger antwortet leer, ausser er gibt die Anweisung für offene Punkte als JSON mit
+ * `additionalContext` mit (Ticket 22).
  */
 function curlForward(curlExe: string, url: string): CommandHook {
   return {

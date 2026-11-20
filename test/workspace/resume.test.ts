@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ShellInfo } from '../../src/main/workspace/ports';
 import { hookEvent, hookPayload, type HookSample } from '../support/apiClient';
+import { expectHookReply } from '../support/claudeTab';
 import { startWorkspaceWithApi, TEST_SHELLS, type TestWorkspace, type TestWorkspaceOptions } from '../support/harness';
 
 // Claude-Sessions nach einem Neustart fortsetzen (Ticket 12): simulierte Neustarts auf demselben gespeicherten Zustand,
@@ -44,8 +45,8 @@ async function launchNew(h: TestWorkspace, tabId: string, cwd: string): Promise<
 
 /** Claude Code schickt ein Hook-Ereignis. */
 async function hook(h: TestWorkspace, tabId: string, sample: HookSample, overrides: Record<string, unknown>): Promise<void> {
-  const res = await h.api.hook(tabId, hookEvent(sample), hookPayload(sample, overrides));
-  expect(res).toMatchObject({ status: 200, body: '' });
+  const event = hookEvent(sample);
+  expectHookReply(await h.api.hook(tabId, event, hookPayload(sample, overrides)), event);
 }
 
 /** `claude` im Tab, mit Hooks und einem Prompt: ein fortzusetzender Claude-Tab. Liefert die Kennung. */

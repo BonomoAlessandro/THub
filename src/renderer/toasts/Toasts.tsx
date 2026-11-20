@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import type { TabSnapshot, TabStatus, ToastCountdown, ToastSnapshot } from '../../shared/types';
-import { ArrowRightIcon, CloseIcon } from '../icons';
+import type { TabSnapshot, ToastCountdown, ToastSnapshot } from '../../shared/types';
+import { ArrowRightIcon, CloseIcon, ListIcon } from '../icons';
 import { TabIcon } from '../tabs/TabIcon';
 import { focusTerminal } from '../terminal/terminalViews';
 
@@ -104,8 +104,8 @@ interface ToastCardProps {
 }
 
 /**
- * Eine Karte: Status-Symbol, Tab-Name, Text der Art und die dezente Zeile „Zum Tab wechseln →“. Die ganze Karte zeigt
- * den Tab an, das × (beim Überfahren) nimmt nur den Hinweis weg. Ein Countdown erscheint als Linie am unteren Rand;
+ * Eine Karte: Symbol, Tab-Name, Inhalt der Art und die dezente Zeile „Zum Tab wechseln →“. Die ganze Karte zeigt den
+ * Tab an, das × (beim Überfahren) nimmt nur den Hinweis weg. Ein Countdown erscheint als Linie am unteren Rand;
  * solange die Maus auf der Karte steht, hält er an.
  */
 function ToastCard({ toast, tabName, active, leaving, onLeft }: ToastCardProps) {
@@ -113,7 +113,7 @@ function ToastCard({ toast, tabName, active, leaving, onLeft }: ToastCardProps) 
     if (toast.kind === 'finished') api.send({ type: 'holdToast', toastId: toast.id, hold: on });
   };
   const open = () => (active ? focusTerminal(toast.tabId) : api.send({ type: 'activateTab', tabId: toast.tabId }));
-  const { status, message } = toastContent(toast);
+  const { icon, message } = toastContent(toast);
 
   return (
     <div
@@ -129,7 +129,7 @@ function ToastCard({ toast, tabName, active, leaving, onLeft }: ToastCardProps) 
         if (leaving && e.target === e.currentTarget) onLeft(toast.id);
       }}
     >
-      <TabIcon kind="claude" status={status} />
+      {icon}
       <div className="t-body">
         <div className="t-title">{tabName}</div>
         {message}
@@ -156,16 +156,50 @@ function ToastCard({ toast, tabName, active, leaving, onLeft }: ToastCardProps) 
   );
 }
 
+/** So viele offene Punkte zeigt eine Karte höchstens; die übrigen fasst „+ k weitere“ zusammen. */
+const SHOWN_POINTS = 4;
+
 /**
- * Was eine Karte je Art zeigt: das Status-Symbol und den Inhalt unter dem Tab-Namen (Wortlaut aus dem Prototyp). Eine
- * neue Art, etwa mit einer Liste von Punkten, bekommt hier ihren Fall.
+ * Was eine Karte je Art zeigt: das Symbol und den Inhalt unter dem Tab-Namen. „Wartet“ und „fertig“ zeigen das
+ * Status-Symbol des Tabs und den Wortlaut aus dem Prototyp; offene Punkte ein Aufzählungssymbol, „Offene Punkte (n)“
+ * und höchstens vier Punkte, jeder höchstens zwei Zeilen (ganz im Tooltip).
  */
-function toastContent(toast: ToastSnapshot): { status: TabStatus; message: ReactNode } {
+function toastContent(toast: ToastSnapshot): { icon: ReactNode; message: ReactNode } {
   switch (toast.kind) {
     case 'waiting':
-      return { status: 'waiting', message: <div className="t-msg">Claude wartet auf deine Bestätigung.</div> };
+      return {
+        icon: <TabIcon kind="claude" status="waiting" />,
+        message: <div className="t-msg">Claude wartet auf deine Bestätigung.</div>,
+      };
     case 'finished':
-      return { status: 'finished', message: <div className="t-msg">Claude ist fertig.</div> };
+      return {
+        icon: <TabIcon kind="claude" status="finished" />,
+        message: <div className="t-msg">Claude ist fertig.</div>,
+      };
+    case 'openPoints': {
+      const { points } = toast;
+      const more = points.length - SHOWN_POINTS;
+      return {
+        icon: (
+          <span className="st" data-s="points" aria-hidden="true">
+            <ListIcon />
+          </span>
+        ),
+        message: (
+          <>
+            <div className="t-msg">Offene Punkte ({points.length})</div>
+            <ul className="t-points">
+              {points.slice(0, SHOWN_POINTS).map((point, k) => (
+                <li key={k} title={point}>
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+            {more > 0 && <div className="t-more">+ {more} weitere</div>}
+          </>
+        ),
+      };
+    }
   }
 }
 

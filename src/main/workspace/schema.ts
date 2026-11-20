@@ -4,6 +4,7 @@
 import * as path from 'node:path';
 import { FONT_SIZE, type Settings, type Theme } from '../../shared/types';
 import { rememberDir, samePath } from './folders';
+import { MAX_OPEN_POINTS } from './openPoints';
 import type { Rect } from './ports';
 
 /** Claude-Zuordnung eines Tabs, soweit sie gespeichert wird (Ticket 10). */
@@ -29,6 +30,11 @@ export interface PersistedTab {
   lastCwd?: string;
   /** Nur bei Claude-Tabs. */
   claude?: PersistedClaudeLink;
+  /**
+   * Offene Punkte aus Claudes Antwort, deren Hinweis noch steht (Ticket 22). Fehlt, sobald er mit × geschlossen ist; mit
+   * einem geschlossenen Tab verschwindet er ebenfalls.
+   */
+  openPoints?: string[];
 }
 
 /** Ein geschlossener Tab, der sich wieder öffnen lässt (Ticket 15). */
@@ -105,6 +111,7 @@ export function normalizeSettings(raw: unknown): Settings {
       ? Math.min(FONT_SIZE.max, Math.max(FONT_SIZE.min, Math.round(s.fontSize)))
       : FONT_SIZE.default,
     notifications: typeof s.notifications === 'boolean' ? s.notifications : true,
+    openPoints: typeof s.openPoints === 'boolean' ? s.openPoints : true,
   };
   if (isNonEmptyString(s.defaultShellId)) settings.defaultShellId = s.defaultShellId;
   return settings;
@@ -196,7 +203,16 @@ function normalizeTab(raw: unknown, ctx: SchemaContext): PersistedTab | null {
   if (isNonEmptyString(raw.lastCwd)) tab.lastCwd = raw.lastCwd;
   const claude = normalizeClaudeLink(raw.claude);
   if (claude) tab.claude = claude;
+  const openPoints = normalizeOpenPoints(raw.openPoints);
+  if (openPoints) tab.openPoints = openPoints;
   return tab;
+}
+
+/** Offene Punkte eines Tabs: nur Texte, höchstens so viele, wie die Erkennung liefert; ohne Punkte keine. */
+function normalizeOpenPoints(raw: unknown): string[] | null {
+  if (!Array.isArray(raw)) return null;
+  const points = raw.filter(isNonEmptyString).slice(0, MAX_OPEN_POINTS);
+  return points.length > 0 ? points : null;
 }
 
 function normalizeClaudeLink(raw: unknown): PersistedClaudeLink | null {

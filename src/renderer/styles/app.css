@@ -1017,6 +1017,56 @@ kbd {
   color: var(--text-muted);
   margin-top: 2px;
 }
+/* Offene Punkte: Aufzählungssymbol in Textfarbe (neutral wie alle Hervorhebungen), darunter höchstens vier Punkte zu
+   je höchstens zwei Zeilen und „+ k weitere“. */
+.st[data-s='points'] {
+  color: var(--text);
+}
+.st svg.ls {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.t-points {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.t-points li {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text);
+}
+.t-points li::before {
+  content: '';
+  flex: none;
+  width: 4px;
+  height: 4px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+.t-points li > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.t-more {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
 /* Zeigt, dass die ganze Karte anklickbar ist, ohne wie ein Button auszusehen; beim Überfahren hell. */
 .t-hint {
   display: inline-flex;
