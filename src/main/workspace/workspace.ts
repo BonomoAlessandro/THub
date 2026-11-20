@@ -21,6 +21,7 @@ import {
   type ClaudeReceiver,
   type LocalApiInfo,
 } from './claude';
+import { CwdReportScanner } from './cwdReport';
 import type { CancelTimer, ShellInfo, StartOrder, WorkspacePorts } from './ports';
 import {
   normalizeSettings,
@@ -320,8 +321,11 @@ class WorkspaceCore implements Workspace {
       cols: view.cols,
       rows: view.rows,
     };
+    if (shell.integration) order.integration = shell.integration;
 
     const run = {};
+    // Pro Prozess neu: Eine angefangene Sequenz eines früheren Prozesses gehört nicht dazu.
+    const cwdReports = new CwdReportScanner();
     const isCurrent = () => !this.stopping && this.runtimes.get(tab.id) === runtime && runtime.run === run;
     runtime.run = run;
     runtime.process = 'running';
@@ -330,7 +334,9 @@ class WorkspaceCore implements Workspace {
         data: (chunk) => {
           if (!isCurrent()) return;
           runtime.output++;
+          // Die Ordner-Meldungen bleiben im Strom; xterm.js ignoriert sie.
           this.emit({ type: 'output', tabId: tab.id, data: chunk });
+          this.takeReportedCwd(tab, cwdReports.feed(chunk));
         },
         exit: (exitCode) => {
           if (!isCurrent()) return;
@@ -367,6 +373,22 @@ class WorkspaceCore implements Workspace {
       env.THUB_TOKEN = this.localApi.token;
     }
     return env;
+  }
+
+  /**
+   * Übernimmt den zuletzt gemeldeten Ordner als zuletzt aktiven Ordner des Tabs. Meldungen von Orten, die
+   * es im Dateisystem nicht (mehr) gibt, zählen nicht.
+   */
+  private takeReportedCwd(tab: PersistedTab, reported: string[]): void {
+    let next = tab.lastCwd;
+    for (const raw of reported) {
+      const dir = this.normalizeDir(raw);
+      // Die Shell meldet bei jedem Prompt; geprüft wird nur ein neuer Ordner.
+      if (dir && dir !== next && this.ports.system.directoryExists(dir)) next = dir;
+    }
+    if (next === tab.lastCwd) return;
+    tab.lastCwd = next;
+    this.tabsChanged();
   }
 
   /** Startordner: zuletzt aktiver Ordner → Startordner → Standardordner → Benutzerordner. */

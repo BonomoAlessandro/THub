@@ -53,9 +53,16 @@ async function stopApi(api: RunningApi): Promise<void> {
 }
 
 export const TEST_SHELLS: ShellInfo[] = [
-  { id: 'pwsh', name: 'PowerShell 7', file: 'pwsh.exe', args: [], capturesClaude: true },
-  { id: 'powershell', name: 'Windows PowerShell', file: 'powershell.exe', args: [], capturesClaude: true },
-  { id: 'cmd', name: 'cmd', file: 'cmd.exe', args: [], capturesClaude: true },
+  { id: 'pwsh', name: 'PowerShell 7', file: 'pwsh.exe', args: [], capturesClaude: true, integration: 'powershell' },
+  {
+    id: 'powershell',
+    name: 'Windows PowerShell',
+    file: 'powershell.exe',
+    args: [],
+    capturesClaude: true,
+    integration: 'powershell',
+  },
+  { id: 'cmd', name: 'cmd', file: 'cmd.exe', args: [], capturesClaude: true, integration: 'cmd' },
 ];
 
 export interface TestWorkspaceOptions extends FakeSystemOptions {
