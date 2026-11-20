@@ -73,6 +73,35 @@ export interface TabSnapshot {
 }
 
 /**
+ * Warum ein Tab vor dem Schliessen nachfragt, nach den eigentlichen Merkmalen, nicht nach dem angezeigten Symbol:
+ * Claude wartet auf dich, Claude arbeitet, oder im Terminal laufen Prozesse (auch neben einem grünen „fertig“).
+ */
+export type BusyReason = 'waiting' | 'working' | 'processes';
+
+/** Ein Tab, in dem beim Schliessen noch etwas läuft, wie ihn die Rückfrage nennt. */
+export interface BusyTab {
+  id: string;
+  name: string;
+  reason: BusyReason;
+  /** Claude-Tab, der beim Wiederöffnen seine Session fortsetzt. */
+  resumes: boolean;
+}
+
+/** Ein zuletzt geschlossener Tab, wie ihn „Zuletzt geschlossen“ in der Befehlspalette anbietet (Ticket 17). */
+export interface ClosedTabInfo {
+  /** Kennung des Tabs; mit ihr öffnet `reopenClosedTab` genau diesen Tab wieder. */
+  id: string;
+  name: string;
+  kind: TabKind;
+  /** Anzeigename der Shell, mit der er wieder startet. */
+  shellName: string;
+  /** Ordner, in dem er wieder startet: bei einem Claude-Tab der Ordner der Session, sonst der zuletzt aktive. */
+  cwd: string;
+  /** Wann er geschlossen wurde, in Millisekunden seit 1970. */
+  closedAt: number;
+}
+
+/**
  * Art eines Hinweises unten rechts im Fenster:
  * - `waiting`: Claude wartet in einem nicht sichtbaren Tab auf dich; bleibt, bis der Tab angezeigt wird oder wieder
  *   arbeitet (Ticket 14);
@@ -167,8 +196,16 @@ export type WorkspaceEvent =
    * Startauftrag, und damit vor der ersten Ausgabe der Shell. `savedAt`: Zeitpunkt der Sicherung.
    */
   | { type: 'restoreHistory'; tabId: string; content: string; savedAt: number }
-  /** Der Kern möchte den aktuellen Verlauf dieser Tabs; der Renderer antwortet je Tab mit `saveHistory`. */
-  | { type: 'requestHistory'; tabIds: string[] };
+  /**
+   * Der Kern möchte den aktuellen Verlauf dieser Tabs; der Renderer antwortet je Tab mit `saveHistory`. Kommt auch
+   * für einen Tab, der gleich geschlossen wird, noch vor dem Ereignis `tabs` ohne ihn.
+   */
+  | { type: 'requestHistory'; tabIds: string[] }
+  /**
+   * Rückfrage vor dem Schliessen von `tabIds`: In den Tabs `busy` läuft noch etwas. Bestätigt der Nutzer, schickt der
+   * Renderer `closeTabs` mit `tabIds`; bricht er ab, bleiben alle offen.
+   */
+  | { type: 'askClose'; tabIds: string[]; busy: BusyTab[] };
 
 /** Befehle vom Renderer an den Kern. */
 export type WorkspaceCommand =
@@ -183,7 +220,17 @@ export type WorkspaceCommand =
   | { type: 'activateRelativeTab'; offset: number }
   /** Zum Tab an Position `index` der Leiste, ab 0 (Ctrl+1 … Ctrl+9). */
   | { type: 'activateTabAt'; index: number }
-  | { type: 'closeTab'; tabId: string }
+  /**
+   * Der Nutzer will diese Tabs schliessen (×, Ctrl+Shift+W). Ruhen sie, schliesst der Kern sie sofort; läuft in einem
+   * etwas, fragt er erst zurück (`askClose`).
+   */
+  | { type: 'requestClose'; tabIds: string[] }
+  /** „Andere Tabs schliessen“: alle ausser diesem, mit höchstens einer gemeinsamen Rückfrage. */
+  | { type: 'closeOtherTabs'; tabId: string }
+  /** Die Rückfrage ist bestätigt: Diese Tabs schliessen ohne weitere Rückfrage. */
+  | { type: 'closeTabs'; tabIds: string[] }
+  /** Den zuletzt geschlossenen Tab (Ctrl+Shift+Z) oder, mit `tabId`, genau diesen wieder öffnen. */
+  | { type: 'reopenClosedTab'; tabId?: string }
   /** Die Ansicht des Tabs ist bereit; erst danach erteilt der Kern den Startauftrag. */
   | { type: 'viewReady'; tabId: string; cols: number; rows: number }
   | { type: 'resizeTab'; tabId: string; cols: number; rows: number }
@@ -220,6 +267,8 @@ export interface THubApi {
   send(command: WorkspaceCommand): void;
   /** Zuletzt benutzte Ordner, die es noch gibt, neueste zuerst; abgefragt beim Öffnen des Pfeil-Menüs. */
   loadRecentDirs(): Promise<RecentDir[]>;
+  /** Die zuletzt geschlossenen Tabs, neueste zuerst, höchstens zehn („Zuletzt geschlossen“, Ticket 17). */
+  loadClosedTabs(): Promise<ClosedTabInfo[]>;
 
   /** Öffnet den Ordner-Dialog von Windows; `null`, wenn er abgebrochen wurde. */
   pickDirectory(purpose: DirectoryPurpose): Promise<string | null>;
@@ -239,6 +288,7 @@ export const IPC = {
   workspaceCommand: 'workspace:command',
   workspaceEvent: 'workspace:event',
   workspaceRecentDirs: 'workspace:recent-dirs',
+  workspaceClosedTabs: 'workspace:closed-tabs',
   dialogPickDirectory: 'dialog:pick-directory',
   clipboardRead: 'clipboard:read',
   clipboardWrite: 'clipboard:write',

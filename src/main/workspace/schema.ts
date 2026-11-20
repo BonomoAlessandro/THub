@@ -184,10 +184,7 @@ function normalizeV2(raw: Record<string, unknown>, ctx: SchemaContext): Persiste
     recentDirs: (Array.isArray(raw.recentDirs) ? raw.recentDirs : [])
       .filter(isNonEmptyString)
       .reduceRight<string[]>(rememberDir, []),
-    closedTabs: (Array.isArray(raw.closedTabs) ? raw.closedTabs : [])
-      .map((item) => normalizeClosedTab(item, ctx))
-      .filter((item): item is ClosedTab => item !== null)
-      .slice(0, MAX_CLOSED_TABS),
+    closedTabs: normalizeClosedTabs(raw.closedTabs, seen, ctx),
   };
   const window = normalizeWindow(raw.window);
   if (window) state.window = window;
@@ -227,6 +224,22 @@ function normalizeClaudeLink(raw: unknown): PersistedClaudeLink | null {
   };
   if (isNonEmptyString(raw.sessionId)) link.sessionId = raw.sessionId;
   return link;
+}
+
+/**
+ * Die zuletzt geschlossenen Tabs, höchstens zehn. Ein Tab ist entweder offen oder geschlossen, und das nur einmal:
+ * Einträge mit der Kennung eines offenen Tabs (`openIds`) oder eines früheren Eintrags fallen weg.
+ */
+function normalizeClosedTabs(raw: unknown, openIds: Set<string>, ctx: SchemaContext): ClosedTab[] {
+  const seen = new Set(openIds);
+  const result: ClosedTab[] = [];
+  for (const item of Array.isArray(raw) ? raw : []) {
+    const entry = normalizeClosedTab(item, ctx);
+    if (!entry || seen.has(entry.tab.id)) continue;
+    seen.add(entry.tab.id);
+    result.push(entry);
+  }
+  return result.slice(0, MAX_CLOSED_TABS);
 }
 
 function normalizeClosedTab(raw: unknown, ctx: SchemaContext): ClosedTab | null {

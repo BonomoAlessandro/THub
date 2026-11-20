@@ -4,6 +4,8 @@
 export type ShortcutAction =
   | { type: 'newTab' }
   | { type: 'closeTab' }
+  /** Den zuletzt geschlossenen Tab wieder öffnen. */
+  | { type: 'reopenTab' }
   | { type: 'copy' }
   | { type: 'paste' }
   | { type: 'nextTab' }
@@ -69,7 +71,18 @@ export function resolveShortcut(e: KeyInput): ShortcutAction | null {
   if (digit) return { type: 'tabAt', index: Number(digit[1]) - 1 };
 
   if (!e.ctrlKey) return null;
+  if (e.shiftKey && isLetter(e, 'z')) return { type: 'reopenTab' };
   // Ctrl+0 in der Zahlenreihe oder auf dem Ziffernblock: Schriftgrösse zurücksetzen.
   if (e.key === '0' && !e.shiftKey) return { type: 'resetFontSize' };
   return CHARACTER_SHORTCUTS.get(e.key) ?? null;
+}
+
+/**
+ * Ob die Taste diesen Buchstaben erzeugt. Für Buchstaben, die je nach Layout woanders liegen: Auf der Schweizer und
+ * der deutschen Tastatur sind Z und Y gegenüber der US-Tastatur vertauscht. Erzeugt die Taste keinen lateinischen
+ * Buchstaben (etwa im russischen Layout), zählt die Tastenposition wie auf der US-Tastatur.
+ */
+function isLetter(e: KeyInput, letter: string): boolean {
+  if (/^[a-z]$/i.test(e.key)) return e.key.toLowerCase() === letter;
+  return e.code === `Key${letter.toUpperCase()}`;
 }

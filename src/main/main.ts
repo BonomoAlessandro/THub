@@ -69,6 +69,9 @@ async function start(detectedShells: Promise<ShellInfo[]>, executionPolicy: Exec
   const [api, shells] = await Promise.all([startLocalApi(), detectedShells]);
   localApi = api?.server ?? null;
   console.log(`Erkannte Shells: ${shells.map((s) => `${s.name} (${s.file})`).join(', ')}`);
+  // Eine Sonde für Kern und Terminal-Backend: Der Kern liest daraus den Status und beendet geschlossene Tabs samt
+  // ihren Nachfahren, das Backend räumt damit den Konsolen-Host einer beendeten Shell weg.
+  const processes = createProcessProbe();
   workspace = createWorkspace(
     {
       // Die Integrationsdateien liegen im Paket ausserhalb des asar-Archivs (extraResources). Den claude-Ersatz
@@ -76,10 +79,11 @@ async function start(detectedShells: Promise<ShellInfo[]>, executionPolicy: Exec
       terminal: new PtyManager({
         shellDir: shellIntegrationDir(app.isPackaged, process.resourcesPath, app.getAppPath()),
         claudeStarter: () => executionPolicy.starterAllowed(),
+        processes,
       }),
       storage: new StateStore(path.join(app.getPath('userData'), STATE_FILE_NAME)),
       clock: systemClock,
-      processes: createProcessProbe(),
+      processes,
       system: hostSystem,
     },
     { shells, localApi: api?.info },
@@ -177,8 +181,17 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
     case 'activateTabAt':
       ws.activateTabAt(command.index);
       return;
-    case 'closeTab':
-      ws.closeTab(command.tabId);
+    case 'requestClose':
+      ws.requestClose(stringList(command.tabIds));
+      return;
+    case 'closeOtherTabs':
+      ws.closeOtherTabs(command.tabId);
+      return;
+    case 'closeTabs':
+      ws.closeTabs(stringList(command.tabIds));
+      return;
+    case 'reopenClosedTab':
+      ws.reopenClosedTab(typeof command.tabId === 'string' ? command.tabId : undefined);
       return;
     case 'viewReady':
       ws.viewReady(command.tabId, command.cols, command.rows);
@@ -213,10 +226,16 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
   }
 }
 
+/** Eine Liste von Kennungen aus dem Renderer; alles andere als Zeichenketten fällt weg. */
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
 function registerIpc(ws: Workspace): void {
   ipcMain.handle(IPC.workspaceSnapshot, () => ws.snapshot());
   ipcMain.on(IPC.workspaceCommand, (_e, command: WorkspaceCommand) => handleCommand(ws, command));
   ipcMain.handle(IPC.workspaceRecentDirs, () => ws.recentDirs());
+  ipcMain.handle(IPC.workspaceClosedTabs, () => ws.closedTabs());
 
   // Ordner-Dialog von Windows. Er startet im Standardordner, ohne ihn im Benutzerordner.
   ipcMain.handle(IPC.dialogPickDirectory, async (_e, purpose: DirectoryPurpose) => {

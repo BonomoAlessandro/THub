@@ -2,7 +2,8 @@
 // NtQuerySystemInformation(SystemProcessInformation) über koffi. Er liefert für alle Prozesse Prozess-ID,
 // Eltern-ID, Programmname und Startzeit, ohne einen Prozess zu starten und ohne Prozess-Handles zu öffnen; der
 // Systemaufruf läuft in einem Hilfs-Thread von koffi, im Hauptthread bleibt nur das Auswerten des Puffers.
-// Nur der Konsolen-Host (für Git-Bash-Shells und Waisen) braucht ein Handle auf den einzelnen Prozess.
+// Nur der Konsolen-Host (für Git-Bash-Shells und Waisen) braucht ein Handle auf den einzelnen Prozess, ebenso das
+// gezielte Beenden einzelner Prozesse (Ticket 15).
 // Befunde und Messungen: docs/spikes/prozess-sonde.md; Referenz: spikes/prozess-sonde/probes/ntqsi.js.
 //
 // Lädt nie Electron. koffi wird erst bei der ersten Abfrage geladen; esbuild bündelt es nicht (external), im
@@ -15,6 +16,7 @@ const SYSTEM_PROCESS_INFORMATION = 5;
 /** Klasse `ProcessConsoleHostProcess` von NtQueryInformationProcess. */
 const PROCESS_CONSOLE_HOST_PROCESS = 49;
 const PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+const PROCESS_TERMINATE = 0x0001;
 const STATUS_INFO_LENGTH_MISMATCH = 0xc0000004 | 0;
 /** Startgrösse des Puffers; er wächst, wenn er nicht reicht (rund 600 Prozesse mit 8600 Threads: etwa 0,8 MB). */
 const INITIAL_BUFFER_BYTES = 1 << 20;
@@ -84,15 +86,19 @@ interface NativeApi {
   /** Adresse eines Puffers im Speicher. */
   address(buf: Buffer): bigint;
   consoleHost(pid: number): number | null;
+  /** Beendet den Prozess, wenn er noch dieselbe Startzeit hat; liefert, ob er beendet wurde. */
+  terminate(pid: number, startTime: number): boolean;
 }
 
 /**
- * Die echte Sonde. Auf anderen Systemen als Windows mit 64 Bit liefert sie keine Prozesse. Lässt sich koffi nicht
- * laden, meldet die erste Abfrage den Fehler, und die Sonde liefert danach keine Prozesse mehr.
+ * Die echte Sonde. Auf anderen Systemen als Windows mit 64 Bit liefert sie keine Prozesse und beendet keine. Lässt
+ * sich koffi nicht laden, meldet die erste Abfrage den Fehler, und die Sonde liefert danach keine Prozesse mehr.
  */
 export function createProcessProbe(): ProcessProbe {
   const supported = process.platform === 'win32' && (process.arch === 'x64' || process.arch === 'arm64');
-  return supported ? new NtProcessProbe() : { snapshot: () => Promise.resolve([]), consoleHost: () => null };
+  return supported
+    ? new NtProcessProbe()
+    : { snapshot: () => Promise.resolve([]), consoleHost: () => null, terminate: () => {} };
 }
 
 class NtProcessProbe implements ProcessProbe {
@@ -114,10 +120,32 @@ class NtProcessProbe implements ProcessProbe {
     return this.loaded?.consoleHost(pid) ?? null;
   }
 
+  /**
+   * Öffnet jeden Prozess einzeln, prüft seine Startzeit und beendet ihn (Exit-Code 1). Meist ist koffi von der Abfrage
+   * davor schon geladen; sonst wird nach dem Laden beendet.
+   */
+  terminate(processes: ProcessInfo[]): void {
+    if (processes.length === 0) return;
+    const run = (api: NativeApi): void => {
+      for (const p of processes) api.terminate(p.pid, p.startTime);
+    };
+    if (this.loaded) {
+      run(this.loaded);
+      return;
+    }
+    this.load().then(run, (err: unknown) => console.error('Prozesse konnten nicht beendet werden:', err));
+  }
+
+  private load(): Promise<NativeApi> {
+    this.api ??= loadNativeApi().then((api) => {
+      this.loaded = api;
+      return api;
+    });
+    return this.api;
+  }
+
   private async query(): Promise<ProcessInfo[]> {
-    this.api ??= loadNativeApi();
-    const api = await this.api;
-    this.loaded = api;
+    const api = await this.load();
     for (;;) {
       const { status, needed } = await api.querySystemProcesses(this.buffer);
       if (status === STATUS_INFO_LENGTH_MISMATCH) {
@@ -149,6 +177,11 @@ async function loadNativeApi(): Promise<NativeApi> {
   const memmove = ntdll.func('void *memmove(void *dst, const void *src, size_t n)');
   const OpenProcess = kernel32.func('void *__stdcall OpenProcess(uint32_t access, int inherit, uint32_t pid)');
   const CloseHandle = kernel32.func('int __stdcall CloseHandle(void *h)');
+  // Die vier FILETIME als 64-Bit-Zahlen: Start, Ende, Kernel- und Benutzerzeit.
+  const GetProcessTimes = kernel32.func(
+    'int __stdcall GetProcessTimes(void *h, _Out_ int64_t *creation, _Out_ int64_t *exit, _Out_ int64_t *kernel, _Out_ int64_t *user)',
+  );
+  const TerminateProcess = kernel32.func('int __stdcall TerminateProcess(void *h, uint32_t exitCode)');
 
   return {
     querySystemProcesses: (buf) =>
@@ -171,6 +204,19 @@ async function loadNativeApi(): Promise<NativeApi> {
         const status = NtQueryInformationProcess(handle, PROCESS_CONSOLE_HOST_PROCESS, info, 8, null);
         // Die unteren zwei Bits sind Kennzeichen, keine Teile der Prozess-ID.
         return status < 0 ? null : Number(BigInt(info[0]) & ~3n) || null;
+      } finally {
+        CloseHandle(handle);
+      }
+    },
+    terminate(pid, startTime) {
+      // Das Handle hält die Prozess-ID fest: Zwischen Prüfen und Beenden kann sie nicht neu vergeben werden.
+      const handle = OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+      if (!handle) return false;
+      try {
+        const creation = [0n];
+        if (!GetProcessTimes(handle, creation, [0n], [0n], [0n])) return false;
+        if (fileTimeToMs(BigInt(creation[0])) !== startTime) return false;
+        return TerminateProcess(handle, 1) !== 0;
       } finally {
         CloseHandle(handle);
       }

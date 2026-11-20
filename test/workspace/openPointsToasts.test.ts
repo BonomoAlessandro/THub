@@ -184,7 +184,7 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       expect(a.pointsToast()?.points).toEqual(SECTION_POINTS);
     });
 
-    it('ein geschlossener Tab nimmt ihn mit', async () => {
+    it('ein geschlossener Tab nimmt ihn mit, auch in die Liste der geschlossenen Tabs; wieder geöffnet kommt er nicht zurück', async () => {
       const { h, a, b } = await startScene();
       await a.answer(WITH_SECTION);
       await b.answer(WITH_QUESTION);
@@ -193,6 +193,13 @@ describe('Offene Punkte aus Claudes Antworten', () => {
 
       expect(toasts(h).map((t) => t.tabId)).toEqual([b.id]);
       expect(h.storedState().tabs.some((t) => t.id === a.id)).toBe(false);
+      expect(h.storedState().closedTabs[0].tab).toMatchObject({ id: a.id });
+      expect(h.storedState().closedTabs[0].tab).not.toHaveProperty('openPoints');
+
+      expect(h.workspace.reopenClosedTab()).toBe(a.id);
+      expect(a.pointsToast()).toBeUndefined();
+      await h.restart();
+      expect(toasts(h).map((t) => t.tabId)).toEqual([b.id]);
     });
   });
 

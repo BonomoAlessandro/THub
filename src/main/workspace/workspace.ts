@@ -4,6 +4,9 @@
 
 import { randomUUID } from 'node:crypto';
 import type {
+  BusyReason,
+  BusyTab,
+  ClosedTabInfo,
   RecentDir,
   Settings,
   TabProcessState,
@@ -28,11 +31,12 @@ import {
 import { CwdReportScanner } from './cwdReport';
 import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
 import { findOpenPoints, openPointsContext } from './openPoints';
-import type { CancelTimer, ShellInfo, StartOrder, WorkspacePorts } from './ports';
-import { ProcessTracker, type ProcessTab, type ShellTree } from './processRules';
+import type { CancelTimer, ProcessInfo, ShellInfo, StartOrder, WorkspacePorts } from './ports';
+import { ProcessTracker, shellProcesses, type ProcessTab, type ShellRoot, type ShellTree } from './processRules';
 import { resumeCommand, sessionToResume } from './resume';
 import { shellLabel, wslDistribution } from './shellIds';
 import {
+  MAX_CLOSED_TABS,
   normalizeSettings,
   normalizeWindow,
   readPersistedState,
@@ -55,6 +59,11 @@ const HISTORY_SAVE_INTERVAL_MS = 30_000;
 const HISTORY_QUIT_TIMEOUT_MS = 2000;
 /** In diesem Abstand fragt der Kern die Prozess-Sonde ab, für alle Tabs zusammen. */
 const PROBE_INTERVAL_MS = 1500;
+/**
+ * So lange wartet das Beenden einer Shell höchstens auf die Prozess-Sonde. Antwortet sie nicht, endet die Shell trotzdem,
+ * nur ohne ihre Nachfahren mit eigener Konsole.
+ */
+const KILL_PROBE_TIMEOUT_MS = 1000;
 /**
  * Kommt nach Esc in einem arbeitenden oder wartenden Claude-Tab so lange kein Hook-Ereignis, ruht Claude: Nach
  * einer Unterbrechung oder einer abgelehnten Rückfrage meldet Claude nichts.
@@ -111,10 +120,33 @@ export interface Workspace extends ClaudeReceiver {
   /** Aktiviert den Tab an Position `index` (ab 0); gibt es dort keinen, bleibt alles, wie es ist. */
   activateTabAt(index: number): void;
   /**
-   * Beendet die Shell und löscht den Verlauf; war der Tab aktiv, wird sein Nachbar aktiv. Der zuletzt
-   * aktive Ordner des Tabs kommt an die Spitze der zuletzt benutzten Ordner.
+   * Der Nutzer will diese Tabs schliessen (×, Ctrl+Shift+W, „Andere Tabs schliessen“). Ruhen alle, schliessen sie
+   * sofort (`closeTabs`), auch ruhende Claude-Tabs. Wartet Claude in einem davon, arbeitet Claude oder laufen darin
+   * Prozesse, schliesst nichts: Der Kern meldet eine einzige Rückfrage (`askClose`) mit den betroffenen Tabs. Massgeblich
+   * sind diese Merkmale, nicht das angezeigte Symbol: Ein grüner Tab mit laufendem Dev-Server fragt nach.
    */
+  requestClose(tabIds: string[]): void;
+  /** „Andere Tabs schliessen“: wie `requestClose` für alle Tabs ausser diesem. */
+  closeOtherTabs(tabId: string): void;
+  /**
+   * Schliesst die Tabs ohne Rückfrage, in dieser Reihenfolge. Jeder wird eingefroren und kommt mit Name, Shell, Ordnern
+   * und Claude-Zuordnung an die Spitze der zuletzt geschlossenen Tabs (höchstens zehn, sie überstehen einen Neustart);
+   * ein normaler Tab bekommt dazu seinen aktuellen Verlauf (`requestHistory`). Fällt ein Tab aus der Liste, wird sein
+   * Verlauf gelöscht. Die Shell endet samt allen Nachfahren, auch denen mit eigener Konsole. War ein geschlossener Tab
+   * aktiv, wird sein Nachbar aktiv; der zuletzt aktive Ordner jedes Tabs kommt an die Spitze der zuletzt benutzten
+   * Ordner.
+   */
+  closeTabs(tabIds: string[]): void;
+  /** Wie `closeTabs` für einen Tab. */
   closeTab(tabId: string): void;
+  /**
+   * Öffnet den zuletzt geschlossenen Tab wieder, mit `tabId` genau diesen. Er kommt an seiner alten Position zurück und
+   * wird aktiv, wie nach einem Neustart: ein normaler Tab mit seinem Verlauf im zuletzt aktiven Ordner, ein
+   * fortzusetzender Claude-Tab setzt seine Session sofort fort. Liefert seine Kennung, leer, wenn es keinen gibt.
+   */
+  reopenClosedTab(tabId?: string): string;
+  /** Die zuletzt geschlossenen Tabs, neueste zuerst, höchstens zehn. */
+  closedTabs(): ClosedTabInfo[];
 
   /**
    * Die zuletzt benutzten Ordner, neueste zuerst, höchstens acht; nur die, die es noch gibt. Gespeichert
@@ -183,7 +215,8 @@ export interface Workspace extends ClaudeReceiver {
   freeze(): void;
   /**
    * Friert die Claude-Zuordnungen ein, fordert den Verlauf geänderter Tabs an und wartet darauf höchstens
-   * 2 Sekunden, sichert den Zustand und beendet alle Shells. Danach nimmt der Kern keine Befehle mehr an.
+   * 2 Sekunden, sichert den Zustand und beendet alle Shells samt ihren Nachfahren. Fragt nie nach, auch nicht, wenn
+   * Claude gerade arbeitet: Alles kommt beim nächsten Start zurück. Danach nimmt der Kern keine Befehle mehr an.
    */
   shutdown(): Promise<void>;
 
@@ -245,6 +278,14 @@ interface TabRuntime {
   saved: number;
 }
 
+/** Die Shell eines geschlossenen Tabs, solange sie noch auf die Prozess-Sonde wartet (siehe `endShells`). */
+interface ClosingShell {
+  tabId: string;
+  root: ShellRoot;
+  /** `kill` ist erteilt. */
+  killed: boolean;
+}
+
 /** Eine offene Antwort auf eine Rückfrage (siehe `ANSWER_QUIET_MS`). */
 interface AnswerCheck {
   /** Zeitpunkt der Antwort (Uhr des Kerns). */
@@ -293,6 +334,10 @@ class WorkspaceCore implements Workspace {
   private probing = false;
   /** Ein Fehler der Sonde wurde schon gemeldet; danach nicht bei jedem Takt wieder. */
   private probeErrorLogged = false;
+  /** Geschlossene Tabs, deren Verlauf beim Schliessen angefordert wurde und noch aussteht. */
+  private readonly closedHistory = new Set<string>();
+  /** Shells geschlossener Tabs, die noch auf die Prozess-Sonde warten, nach Tab. */
+  private readonly closingShells = new Map<string, ClosingShell>();
   /** Die Hinweise unten rechts im Fenster. */
   private readonly toasts: ToastBoard;
 
@@ -396,29 +441,197 @@ class WorkspaceCore implements Workspace {
     if (tab) this.activateTab(tab.id);
   }
 
+  // ---------- Schliessen und wieder öffnen ----------
+
+  requestClose(tabIds: string[]): void {
+    if (this.stopping) return;
+    const tabs = this.openTabs(tabIds);
+    if (tabs.length === 0) return;
+    const busy: BusyTab[] = [];
+    for (const tab of tabs) {
+      const reason = this.busyReason(tab);
+      if (!reason) continue;
+      const resumes = tab.claude !== undefined && sessionToResume(tab.claude) !== undefined;
+      busy.push({ id: tab.id, name: tab.name, reason, resumes });
+    }
+    const ids = tabs.map((t) => t.id);
+    if (busy.length === 0) this.closeTabs(ids);
+    else this.emit({ type: 'askClose', tabIds: ids, busy });
+  }
+
+  closeOtherTabs(tabId: string): void {
+    if (!this.findTab(tabId)) return;
+    this.requestClose(this.state.tabs.filter((t) => t.id !== tabId).map((t) => t.id));
+  }
+
   closeTab(tabId: string): void {
-    const index = this.state.tabs.findIndex((t) => t.id === tabId);
-    if (this.stopping || index < 0) return;
-    // Zuerst austragen: Das Ende der Shell gehört dann zu keinem Tab mehr, ein später eintreffender
-    // Verlauf ebenfalls nicht.
-    const closing = this.runtimes.get(tabId);
-    if (closing) this.cancelClaudeTimers(closing);
-    this.runtimes.delete(tabId);
-    this.toasts.dismissTab(tabId);
-    this.ports.terminal.kill(tabId);
-    // Bis zur Liste der geschlossenen Tabs (Ticket 15) verschwindet der Verlauf mit dem Tab.
-    this.deleteHistory(tabId);
-    const [tab] = this.state.tabs.splice(index, 1);
-    // Ein geschlossener Tab nimmt seine offenen Punkte mit, auch in die Liste der geschlossenen Tabs (Ticket 15).
-    delete tab.openPoints;
-    this.state.recentDirs = rememberDir(this.state.recentDirs, tab.lastCwd ?? tab.startCwd);
-    if (this.state.activeTabId === tabId) {
-      const neighbour = this.state.tabs[index] ?? this.state.tabs[index - 1];
-      this.state.activeTabId = neighbour?.id ?? null;
+    this.closeTabs([tabId]);
+  }
+
+  closeTabs(tabIds: string[]): void {
+    if (this.stopping) return;
+    const tabs = this.openTabs(tabIds);
+    if (tabs.length === 0) return;
+    const shells: { tabId: string; root?: ShellRoot }[] = [];
+    const changed: string[] = [];
+    const activeBefore = this.state.activeTabId;
+    for (const tab of tabs) {
+      const index = this.state.tabs.indexOf(tab);
+      // Zuerst austragen und so einfrieren: Das Ende der Shell und Meldungen von Starter und Claude gehören dann zu
+      // keinem Tab mehr, ein später eintreffender Verlauf ebenfalls nicht.
+      const runtime = this.runtimes.get(tab.id);
+      if (runtime) this.cancelClaudeTimers(runtime);
+      this.runtimes.delete(tab.id);
+      this.toasts.dismissTab(tab.id);
+      shells.push({ tabId: tab.id, root: runtime && shellRoot(runtime) });
+      // Claude-Tabs haben keinen Verlauf; sonst nur, wenn es seit der letzten Sicherung Neues gibt.
+      if (!tab.claude && runtime && runtime.output !== runtime.saved) changed.push(tab.id);
+      this.state.tabs.splice(index, 1);
+      // Ein geschlossener Tab nimmt seine offenen Punkte mit, auch in die Liste der geschlossenen Tabs.
+      delete tab.openPoints;
+      this.state.closedTabs.unshift({ tab: structuredClone(tab), index, closedAt: this.ports.clock.now() });
+      this.state.recentDirs = rememberDir(this.state.recentDirs, tab.lastCwd ?? tab.startCwd);
+      if (this.state.activeTabId === tab.id) {
+        const neighbour = this.state.tabs[index] ?? this.state.tabs[index - 1];
+        this.state.activeTabId = neighbour?.id ?? null;
+      }
+    }
+    this.trimClosedTabs();
+    // Noch vor dem Ereignis ohne die Tabs: Bis dahin zeigt der Renderer ihren Inhalt.
+    const awaited = changed.filter((id) => this.isClosedTab(id));
+    if (awaited.length > 0) {
+      for (const id of awaited) this.closedHistory.add(id);
+      this.emit({ type: 'requestHistory', tabIds: awaited });
+    }
+    this.endShells(shells);
+    if (this.state.activeTabId !== activeBefore) {
       this.showTab(this.state.activeTabId);
       this.markShownTabSeen();
     }
     this.tabsChanged();
+  }
+
+  reopenClosedTab(tabId?: string): string {
+    if (this.stopping) return '';
+    const { closedTabs } = this.state;
+    const at = tabId === undefined ? 0 : closedTabs.findIndex((entry) => entry.tab.id === tabId);
+    const entry = closedTabs[at];
+    if (!entry) return '';
+    closedTabs.splice(at, 1);
+    const { tab } = entry;
+    // Ein später eintreffender Verlauf gehört jetzt wieder dem offenen Tab.
+    this.closedHistory.delete(tab.id);
+    // Wartet die alte Shell noch auf die Sonde, endet sie jetzt; die neue startet erst nach „Ansicht bereit“.
+    const closing = this.closingShells.get(tab.id);
+    if (closing) this.killClosingShell(closing);
+    if (this.findTab(tab.id)) {
+      // Beschädigter Zustand: Der Tab ist schon offen.
+      this.save();
+      return '';
+    }
+    this.state.tabs.splice(Math.min(entry.index, this.state.tabs.length), 0, tab);
+    // Wie nach einem Neustart, als angezeigter Tab: Verlauf bzw. sofortiges Fortsetzen der Claude-Session.
+    this.restoreTab(tab, true);
+    this.state.activeTabId = tab.id;
+    this.showTab(tab.id);
+    this.markShownTabSeen();
+    this.tabsChanged();
+    return tab.id;
+  }
+
+  closedTabs(): ClosedTabInfo[] {
+    return this.state.closedTabs.map(({ tab, closedAt }) => ({
+      id: tab.id,
+      name: tab.name,
+      kind: tab.claude ? 'claude' : 'terminal',
+      shellName: this.shellFor(tab).name,
+      cwd: tab.claude?.cwd || (tab.lastCwd ?? tab.startCwd),
+      closedAt,
+    }));
+  }
+
+  /** Die offenen Tabs zu diesen Kennungen, in dieser Reihenfolge, ohne Doppelte und Unbekannte. */
+  private openTabs(tabIds: string[]): PersistedTab[] {
+    if (!Array.isArray(tabIds)) return [];
+    const tabs: PersistedTab[] = [];
+    for (const id of tabIds) {
+      const tab = typeof id === 'string' ? this.findTab(id) : undefined;
+      if (tab && !tabs.includes(tab)) tabs.push(tab);
+    }
+    return tabs;
+  }
+
+  /**
+   * Warum der Tab vor dem Schliessen nachfragt, nach den eigentlichen Merkmalen: Claude wartet oder arbeitet, oder es
+   * laufen Prozesse. „Fertig, noch nicht angeschaut“ zählt nicht, ein pausierter Tab hat keinen Prozess.
+   */
+  private busyReason(tab: PersistedTab): BusyReason | undefined {
+    const runtime = this.runtimes.get(tab.id);
+    if (!runtime) return undefined;
+    const activity = tab.claude ? runtime.claude.activity : 'idle';
+    if (activity !== 'idle') return activity;
+    return runtime.processes ? 'processes' : undefined;
+  }
+
+  private isClosedTab(tabId: string): boolean {
+    return this.state.closedTabs.some((entry) => entry.tab.id === tabId);
+  }
+
+  /** Höchstens zehn geschlossene Tabs: Wer aus der Liste fällt, verliert seinen Verlauf. */
+  private trimClosedTabs(): void {
+    for (const { tab } of this.state.closedTabs.splice(MAX_CLOSED_TABS)) {
+      this.closedHistory.delete(tab.id);
+      this.deleteHistory(tab.id);
+    }
+  }
+
+  /**
+   * Beendet die Shells geschlossener Tabs samt allen Nachfahren. `kill` erreicht Prozesse mit eigener Konsole nicht (etwa
+   * per `Start-Process` gestartet); die beendet die Sonde gezielt. Dafür wird vor dem Beenden noch einmal abgefragt:
+   * Nach dem Ende der Shell sind ihre Nachfahren nicht mehr sicher über die Eltern zu finden.
+   */
+  private endShells(shells: { tabId: string; root?: ShellRoot }[]): void {
+    const closing: ClosingShell[] = [];
+    for (const { tabId, root } of shells) {
+      if (!root) {
+        this.ports.terminal.kill(tabId);
+        continue;
+      }
+      const shell: ClosingShell = { tabId, root, killed: false };
+      this.closingShells.set(tabId, shell);
+      closing.push(shell);
+    }
+    if (closing.length === 0) return;
+    void this.snapshotForKill().then((snapshot) => {
+      const doomed = closing.flatMap((shell) => shellProcesses(snapshot, shell.root));
+      for (const shell of closing) this.killClosingShell(shell);
+      if (doomed.length > 0) this.ports.processes.terminate(doomed);
+    });
+  }
+
+  private killClosingShell(shell: ClosingShell): void {
+    if (this.closingShells.get(shell.tabId) === shell) this.closingShells.delete(shell.tabId);
+    if (shell.killed) return;
+    shell.killed = true;
+    this.ports.terminal.kill(shell.tabId);
+  }
+
+  /** Eine Abfrage der Sonde zum Beenden; scheitert sie oder dauert sie zu lange, eine leere. */
+  private snapshotForKill(): Promise<ProcessInfo[]> {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (snapshot: ProcessInfo[]): void => {
+        if (done) return;
+        done = true;
+        cancel();
+        resolve(snapshot);
+      };
+      const cancel = this.ports.clock.schedule(KILL_PROBE_TIMEOUT_MS, () => finish([]));
+      this.ports.processes.snapshot().then(finish, (err: unknown) => {
+        console.error('Prozess-Sonde: Abfrage zum Beenden fehlgeschlagen:', err);
+        finish([]);
+      });
+    });
   }
 
   // ---------- Ordner und Namen ----------
@@ -675,13 +888,15 @@ class WorkspaceCore implements Workspace {
     const runtime = this.runtimes.get(tabId);
     const quit = this.quitHistory;
     const awaited = quit?.pending.has(tabId) ?? false;
+    // Ein geschlossener Tab bekommt nur noch den Verlauf, der beim Schliessen angefordert wurde.
+    const closed = !runtime && this.closedHistory.delete(tabId);
     // Beim Beenden zählen nur noch die Antworten, auf die das Beenden wartet.
-    if (!runtime || typeof content !== 'string' || (this.stopping && !awaited)) return;
+    if ((!runtime && !closed) || typeof content !== 'string' || (this.stopping && !awaited)) return;
     // Claude-Tabs bekommen keinen Verlauf, auch nicht aus einer Antwort, die erst nach dem Start von Claude eintrifft.
-    if (!this.findTab(tabId)?.claude) {
+    if (closed || !this.findTab(tabId)?.claude) {
       this.withHistoryStorage('Verlauf konnte nicht gesichert werden', () => {
         this.ports.storage.saveHistory(tabId, { content, savedAt: this.ports.clock.now() });
-        runtime.saved = runtime.requested;
+        if (runtime) runtime.saved = runtime.requested;
       });
     }
     if (quit && awaited) {
@@ -731,10 +946,14 @@ class WorkspaceCore implements Workspace {
     this.emit({ type: 'requestHistory', tabIds });
   }
 
-  /** Beim Beenden: fordert den Verlauf geänderter Tabs an und wartet auf alle Antworten, höchstens 2 s. */
+  /**
+   * Beim Beenden: fordert den Verlauf geänderter Tabs an und wartet auf alle Antworten, höchstens 2 s; ebenso auf den
+   * Verlauf eben geschlossener Tabs, der noch aussteht.
+   */
   private collectHistory(): Promise<void> {
     const tabIds = this.changedTabIds();
-    if (tabIds.length === 0) return Promise.resolve();
+    const pending = new Set([...tabIds, ...this.closedHistory]);
+    if (pending.size === 0) return Promise.resolve();
     return new Promise((resolve) => {
       const finish = (): void => {
         cancelTimeout();
@@ -743,7 +962,7 @@ class WorkspaceCore implements Workspace {
       };
       // Antwortet der Renderer nicht (mehr), geht das Beenden nach dem Zeitlimit trotzdem weiter.
       const cancelTimeout = this.ports.clock.schedule(HISTORY_QUIT_TIMEOUT_MS, finish);
-      this.quitHistory = { pending: new Set(tabIds), finish };
+      this.quitHistory = { pending, finish };
       this.requestHistory(tabIds);
     });
   }
@@ -1269,12 +1488,31 @@ class WorkspaceCore implements Workspace {
         } catch (err) {
           saveError = err;
         }
-        return this.ports.terminal.killAll(SHUTDOWN_TIMEOUT_MS).then(() => {
+        return this.endAllShells().then(() => {
           if (saveError) throw saveError;
         });
       });
     }
     return this.stopping;
+  }
+
+  /**
+   * Beim Beenden: alle Shells samt ihren Nachfahren, auch denen mit eigener Konsole und denen geschlossener Tabs, die
+   * noch auf die Sonde warten. Wie beim Schliessen eines Tabs wird vorher noch einmal abgefragt.
+   */
+  private endAllShells(): Promise<void> {
+    const roots: ShellRoot[] = [...this.closingShells.values()].map((shell) => shell.root);
+    for (const runtime of this.runtimes.values()) {
+      const root = shellRoot(runtime);
+      if (root) roots.push(root);
+    }
+    const snapshot = roots.length > 0 ? this.snapshotForKill() : Promise.resolve([]);
+    return snapshot.then((processes) => {
+      const doomed = roots.flatMap((root) => shellProcesses(processes, root));
+      const killed = this.ports.terminal.killAll(SHUTDOWN_TIMEOUT_MS);
+      if (doomed.length > 0) this.ports.processes.terminate(doomed);
+      return killed;
+    });
   }
 
   sessionEnding(): void {
@@ -1334,6 +1572,12 @@ class WorkspaceCore implements Workspace {
  */
 function shellArgs(shell: ShellInfo, cwd: string): string[] {
   return wslDistribution(shell.id) ? [...shell.args, '--cd', cwd] : [...shell.args];
+}
+
+/** Die Wurzel des Prozessbaums einer laufenden Shell, zum Beenden; keine, solange keine Shell läuft. */
+function shellRoot(runtime: TabRuntime): ShellRoot | undefined {
+  if (runtime.process !== 'running' || !runtime.pid || runtime.startedAt === undefined) return undefined;
+  return { pid: runtime.pid, startedAt: runtime.startedAt };
 }
 
 /** Wie der Prozessbaum einer Shell aussieht: Git Bash startet über einen Starter, WSL bleibt unsichtbar. */

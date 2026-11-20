@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { startWorkspace } from '../support/harness';
+import { settle, startWorkspace } from '../support/harness';
 
 describe('Tabs', () => {
   it('startet ohne gespeicherten Zustand mit einem Terminal im Benutzerordner', () => {
@@ -182,7 +182,7 @@ describe('Tabs', () => {
     expect(h.snapshot()).toEqual(before);
   });
 
-  it('schliesst einen Tab und beendet seine Shell', () => {
+  it('schliesst einen Tab und beendet seine Shell, sobald die Prozess-Sonde den Prozessbaum geliefert hat', async () => {
     const h = startWorkspace();
     const keep = h.activeTab()!.id;
     const close = h.workspace.createTab();
@@ -190,8 +190,9 @@ describe('Tabs', () => {
     expect(h.terminal.isRunning(close)).toBe(true);
 
     h.workspace.closeTab(close);
-
     expect(h.tabs().map((t) => t.id)).toEqual([keep]);
+    await settle();
+
     expect(h.terminal.kills).toEqual([close]);
     expect(h.terminal.isRunning(close)).toBe(false);
     expect(h.eventsOfType('exit')).toEqual([]);

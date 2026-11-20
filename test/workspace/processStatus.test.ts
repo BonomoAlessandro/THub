@@ -384,10 +384,13 @@ describe('Prozesse laufen', () => {
       terminal(h, 'pwsh', 19996);
 
       await h.workspace.shutdown();
+      // Eine Abfrage gehört zum Beenden selbst: Sie liefert die Nachfahren der Shells.
+      const atShutdown = h.processes.queries;
       h.clock.advance(10 * PROBE_INTERVAL_MS);
       await settle();
 
-      expect(h.processes.queries).toBe(0);
+      expect(atShutdown).toBe(1);
+      expect(h.processes.queries).toBe(atShutdown);
     });
   });
 });
