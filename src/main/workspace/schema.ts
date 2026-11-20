@@ -2,7 +2,7 @@
 // Gelesen wird tolerant: Unbrauchbare Felder fallen auf Standardwerte zurück, statt den Start zu verhindern.
 
 import * as path from 'node:path';
-import type { Settings, Theme } from '../../shared/types';
+import { FONT_SIZE, type Settings, type Theme } from '../../shared/types';
 import { rememberDir, samePath } from './folders';
 import type { Rect } from './ports';
 
@@ -60,9 +60,6 @@ export interface PersistedState {
 }
 
 export const MAX_CLOSED_TABS = 10;
-export const MIN_FONT_SIZE = 8;
-export const MAX_FONT_SIZE = 32;
-const DEFAULT_FONT_SIZE = 14;
 const THEMES: readonly Theme[] = ['system', 'light', 'dark'];
 
 /** Was das Lesen des Zustands von der Umgebung braucht. */
@@ -105,8 +102,8 @@ export function normalizeSettings(raw: unknown): Settings {
     defaultCwd: typeof s.defaultCwd === 'string' ? s.defaultCwd.trim() : '',
     theme: THEMES.includes(s.theme as Theme) ? (s.theme as Theme) : 'system',
     fontSize: isFiniteNumber(s.fontSize)
-      ? Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Math.round(s.fontSize)))
-      : DEFAULT_FONT_SIZE,
+      ? Math.min(FONT_SIZE.max, Math.max(FONT_SIZE.min, Math.round(s.fontSize)))
+      : FONT_SIZE.default,
     notifications: typeof s.notifications === 'boolean' ? s.notifications : true,
   };
   if (isNonEmptyString(s.defaultShellId)) settings.defaultShellId = s.defaultShellId;

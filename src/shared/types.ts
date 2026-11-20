@@ -7,13 +7,16 @@ export type Theme = 'system' | 'light' | 'dark';
 /** Das Design, das gerade gilt: hell oder dunkel; „System“ ist dabei schon aufgelöst. */
 export type ResolvedTheme = 'light' | 'dark';
 
+/** Terminal-Schriftgrösse in px: kleinste, grösste und Standardgrösse (`Ctrl+0` setzt darauf zurück). */
+export const FONT_SIZE = { min: 8, max: 32, default: 14 } as const;
+
 export interface Settings {
   /** Standardordner für neue Tabs; leer heisst Benutzerordner. */
   defaultCwd: string;
   /** Kennung der Standard-Shell (z.B. "pwsh"); fehlt sie, wählt der Kern selbst. */
   defaultShellId?: string;
   theme: Theme;
-  /** Terminal-Schriftgrösse, 8 bis 32. */
+  /** Terminal-Schriftgrösse, 8 bis 32 (`FONT_SIZE`). */
   fontSize: number;
   /** Hinweise im Fenster an/aus. */
   notifications: boolean;
@@ -117,7 +120,12 @@ export type WorkspaceCommand =
   | { type: 'restartTab'; tabId: string }
   /** Antwort auf `requestHistory`: der serialisierte Inhalt des Terminals eines Tabs. */
   | { type: 'saveHistory'; tabId: string; content: string }
-  | { type: 'updateSettings'; patch: Partial<Settings> };
+  | { type: 'updateSettings'; patch: Partial<Settings> }
+  /**
+   * Schriftgrösse einen Schritt grösser (1) oder kleiner (-1). Der Kern rechnet vom eigenen Stand aus,
+   * damit bei schnellen Schritten (Mausrad, gehaltene Taste) keiner verloren geht.
+   */
+  | { type: 'stepFontSize'; step: number };
 
 export type Unsubscribe = () => void;
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { startWorkspace } from '../support/harness';
+import type { ShellInfo } from '../../src/main/workspace/ports';
+import { startWorkspace, TEST_SHELLS } from '../support/harness';
 
 describe('Startaufträge', () => {
   it('erteilt keinen Startauftrag, bevor die Ansicht des Tabs bereit ist', () => {
@@ -116,6 +117,51 @@ describe('Startaufträge', () => {
     h.workspace.restartTab(id);
 
     expect(h.terminal.starts).toHaveLength(1);
+  });
+
+  describe('Shell-Integration', () => {
+    const shells: ShellInfo[] = [
+      ...TEST_SHELLS,
+      { id: 'gitbash', name: 'Git Bash', file: 'C:\\Git\\bin\\bash.exe', args: ['--login', '-i'], capturesClaude: true, integration: 'bash' },
+      { id: 'wsl:Ubuntu', name: 'Ubuntu', file: 'wsl.exe', args: ['-d', 'Ubuntu'], capturesClaude: false },
+    ];
+
+    it.each([
+      ['pwsh', 'powershell'],
+      ['powershell', 'powershell'],
+      ['cmd', 'cmd'],
+      ['gitbash', 'bash'],
+    ])('startet %s mit der Integration %s', (shellId, integration) => {
+      const h = startWorkspace({ shells });
+      h.workspace.updateSettings({ defaultShellId: shellId });
+      const id = h.workspace.createTab();
+
+      h.workspace.viewReady(id, 80, 24);
+
+      expect(h.terminal.startsFor(id)[0].order).toMatchObject({ integration });
+    });
+
+    it('startet WSL ohne Integration, mit seinen eigenen Argumenten und dem Ordner', () => {
+      const h = startWorkspace({ shells });
+      h.workspace.updateSettings({ defaultShellId: 'wsl:Ubuntu' });
+      const id = h.workspace.createTab();
+
+      h.workspace.viewReady(id, 80, 24);
+
+      const { order } = h.terminal.startsFor(id)[0];
+      expect(order).toMatchObject({ file: 'wsl.exe', args: ['-d', 'Ubuntu', '--cd', 'C:\\Users\\tester'] });
+      expect(order).not.toHaveProperty('integration');
+    });
+
+    it('gibt einem normalen Tab keinen Startbefehl mit', () => {
+      const h = startWorkspace();
+      const id = h.activeTab()!.id;
+
+      h.workspace.viewReady(id, 80, 24);
+
+      expect(h.terminal.startsFor(id)[0].order).not.toHaveProperty('startCommand');
+      expect(h.terminal.startsFor(id)[0].order.env).not.toHaveProperty('THUB_START_CMD');
+    });
   });
 
   it('meldet einen gescheiterten Start als Hinweis im Terminal; die nächste Taste versucht es erneut', () => {

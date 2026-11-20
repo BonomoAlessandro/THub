@@ -186,7 +186,7 @@ THub startet jede Windows-Shell mit einer mitgelieferten Integration. Sie lädt 
 
 **Robust laden:**
 - PowerShell bekommt den Integrationscode per `-EncodedCommand`, nicht als Skriptdatei, damit eine restriktive Execution Policy ihn nicht blockiert. cmd lädt seine Integration per `/k`. Git Bash lädt über eine eigene Startdatei, was auch eine Login-Shell von Git Bash lädt (`/etc/profile`, dann `~/.bash_profile`, `~/.bash_login` oder `~/.profile`, sonst `~/.bashrc`), und danach die Integration.
-- Fertige, geprüfte Skripte aus dem Spike: `resources/shell/` (`starter.ps1`, `integration.ps1`, `integration.cmd`, `integration.bash`); wie das Terminal-Backend jede Shell startet, zeigt `buildLaunch` in `test/shells/harness.ts`. Befunde: `docs/spikes/starter.md`. Die Skripte liegen im Paket ausserhalb des asar-Archivs (`extraResources`).
+- Fertige, geprüfte Skripte aus dem Spike: `resources/shell/` (`starter.ps1`, `integration.ps1`, `integration.cmd`, `integration.bash`); wie das Terminal-Backend jede Shell startet, steht in `src/main/shellLaunch.ts` (Ticket 07, nach der Vorlage `buildLaunch` aus dem Spike). Befunde: `docs/spikes/starter.md`. Die Skripte liegen im Paket ausserhalb des asar-Archivs (`extraResources`).
 - Mitgelieferte Skripte sind reines ASCII oder UTF-8 mit BOM, weil Windows PowerShell 5 UTF-8 ohne BOM falsch liest.
 - Scheitert die Integration (Gruppenrichtlinie, Constrained Language Mode), startet die Shell trotzdem normal, nur ohne Integration.
 
@@ -352,6 +352,7 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 - **Beim Start**, pro Tab in gespeicherter Reihenfolge:
   - **Normaler Tab:** Shell im zuletzt aktiven Ordner starten, mit Rückfall auf Startordner, Standardordner und Benutzerordner.
     - Vor dem Start der Shell schreibt der Renderer den gespeicherten Verlauf ausgegraut ins Terminal, dazu eine Trennlinie „Wiederhergestellt · <Datum, Uhrzeit>“ und so viele Leerzeilen, dass alles im Scrollback liegt. ConPTY leert beim Start den sichtbaren Bereich.
+    - Den Verlauf mit `conptyInheritCursor` direkt über dem neuen Prompt stehen zu lassen, wurde versucht und verworfen (Ticket 21): ConPTY zeichnet beim Ändern der Fenstergrösse seinen Bereich an festen Zeilen neu und überschreibt dabei Trennlinie, Verlauf oder Zeilen der Shell, und ohne Antwort auf die Cursor-Abfrage startet die Shell gar nicht. Befunde: `docs/spikes/verlauf-sichtbar.md`.
     - Das Ausgrauen muss auch über Farb-Resets im gespeicherten Inhalt hinweg wirken.
   - **Claude-Tab, der fortgesetzt werden soll:** Er hat eine Session-Kennung und entweder einen Prompt erlebt oder ist unbestätigt (Sicherheitsnetz ohne Hooks).
     - Ist er der zuletzt aktive Tab, startet die Shell sofort im Ordner der Session (Rückfallkette, falls er fehlt) mit dem Startbefehl „Starter mit `--resume <Kennung>`“. Kein alter Verlauf.

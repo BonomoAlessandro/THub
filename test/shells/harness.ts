@@ -1,16 +1,40 @@
 // Werkzeuge fuer die Shell-Integrationstests (Teststelle 2): nachgemachtes claude, aufzeichnende
-// Testattrappe der lokalen Schnittstelle und echte Shells ueber node-pty (ConPTY).
+// Testattrappe der lokalen Schnittstelle und echte Shells ueber das echte Terminal-Backend von THub
+// (PtyManager: node-pty/ConPTY mit der mitgelieferten Integration), auf Wunsch samt Workspace-Kern.
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo, Socket } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
-import * as pty from 'node-pty';
+import { PtyManager } from '../../src/main/ptyManager';
+import { shellEnv } from '../../src/main/shellEnv';
+import type {
+  Clock,
+  HostSystem,
+  ShellInfo,
+  ShellIntegration,
+  StartOrder,
+  TerminalBackend,
+} from '../../src/main/workspace/ports';
+import type { PersistedState } from '../../src/main/workspace/schema';
+import { createWorkspace as createCore, type Workspace as Core } from '../../src/main/workspace/workspace';
+import { MemoryStorage } from '../support/fakes';
 
 export const REPO = path.resolve(__dirname, '..', '..');
-const SYSTEM_ROOT = process.env.SystemRoot ?? 'C:\\Windows';
+export const SYSTEM_ROOT = process.env.SystemRoot ?? 'C:\\Windows';
 const POWERSHELL_EXE = path.join(SYSTEM_ROOT, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 const CSC = path.join(SYSTEM_ROOT, 'Microsoft.NET', 'Framework64', 'v4.0.30319', 'csc.exe');
 
@@ -232,6 +256,8 @@ export async function closedPort(): Promise<number> {
 export interface ShellDef {
   id: ShellId;
   exe: string | null;
+  /** Integration, mit der das Terminal-Backend die Shell startet */
+  integration: ShellIntegration;
   /** Anhang an eine getippte Zeile, der "<nonce> <Exit-Code>" in $TH_MARK schreibt */
   markSuffix(nonce: string): string;
   /** Eigenstaendige Zeile, die "<nonce> <Exit-Code>" in $TH_MARK schreibt */
@@ -285,7 +311,10 @@ function findGitBash(): string | null {
   return null;
 }
 
-const psMark = (nonce: string) => `Set-Content -LiteralPath $env:TH_MARK -Value ('${nonce} ' + [int]$LASTEXITCODE)`;
+// Liest der Test die Datei gerade, scheitert Set-Content unter Last mit „wird von einem anderen Prozess
+// verwendet“: darum einige Male wiederholen. Der Exit-Code wird vorher festgehalten.
+const psMark = (nonce: string) =>
+  `$__m = [int]$LASTEXITCODE; foreach ($__i in 1..50) { try { Set-Content -LiteralPath $env:TH_MARK -Value ('${nonce} ' + $__m) -ErrorAction Stop; break } catch { Start-Sleep -Milliseconds 20 } }`;
 const psStart = (args: string) =>
   `& "$env:SystemRoot\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -NoLogo -ExecutionPolicy Bypass -File $env:THUB_STARTER ${args}`;
 
@@ -293,6 +322,7 @@ export const SHELLS: Record<ShellId, ShellDef> = {
   pwsh: {
     id: 'pwsh',
     exe: findPwsh(),
+    integration: 'powershell',
     markSuffix: (n) => `; ${psMark(n)}`,
     markLine: psMark,
     startCommand: psStart,
@@ -300,6 +330,7 @@ export const SHELLS: Record<ShellId, ShellDef> = {
   powershell: {
     id: 'powershell',
     exe: existsSync(POWERSHELL_EXE) ? POWERSHELL_EXE : null,
+    integration: 'powershell',
     markSuffix: (n) => `; ${psMark(n)}`,
     markLine: psMark,
     startCommand: psStart,
@@ -307,6 +338,7 @@ export const SHELLS: Record<ShellId, ShellDef> = {
   cmd: {
     id: 'cmd',
     exe: path.join(SYSTEM_ROOT, 'System32', 'cmd.exe'),
+    integration: 'cmd',
     // %^ERRORLEVEL% ueberlebt die erste Auswertung, `call` wertet es nach dem Befehl aus.
     markSuffix: (n) => ` & (call echo ${n} %^ERRORLEVEL%)> "%TH_MARK%"`,
     markLine: (n) => `(call echo ${n} %^ERRORLEVEL%)> "%TH_MARK%"`,
@@ -316,6 +348,7 @@ export const SHELLS: Record<ShellId, ShellDef> = {
   gitbash: {
     id: 'gitbash',
     exe: findGitBash(),
+    integration: 'bash',
     markSuffix: (n) => `; echo "${n} $?" > "$TH_MARK"`,
     markLine: (n) => `echo "${n} $?" > "$TH_MARK"`,
     startCommand: (args) => `__thub_starter ${args}`,
@@ -323,7 +356,7 @@ export const SHELLS: Record<ShellId, ShellDef> = {
 };
 
 // ---------------------------------------------------------------------------------------------
-// Start einer Shell mit Integration (Referenz fuer THubs Terminal-Backend)
+// Start einer Shell ueber das echte Terminal-Backend
 
 export interface LaunchOptions {
   /** Ordner im PATH vor den Systemordnern (z.B. das nachgemachte claude); null = keiner */
@@ -333,24 +366,33 @@ export interface LaunchOptions {
   tabId: string;
   /** Startbefehl, bereits fuer die Shell formuliert (SHELLS[x].startCommand) */
   startCommand?: string;
+  /** Zusaetzliche Zeilen am Ende des Testprofils (PowerShell, Git Bash) */
+  profileExtra?: string[];
+  /** Zusaetzliche Variablen der Grundumgebung */
+  env?: Record<string, string>;
 }
 
-export interface Launch {
-  file: string;
-  args: string[] | string;
-  env: Record<string, string>;
+export interface TestStart {
+  /** Startauftrag, wie ihn der Kern erteilt; THUB_* der Schnittstelle stehen in `order.env`. */
+  order: StartOrder;
+  /** Ausdruecklich gesetzte Grundumgebung fuer das Terminal-Backend (statt der eigenen des Testlaufs). */
+  baseEnv: Record<string, string>;
 }
 
-export function buildLaunch(def: ShellDef, ws: Workspace, opts: LaunchOptions): Launch {
+/**
+ * Baut Startauftrag und Grundumgebung fuer eine Shell mit Testprofil. Das Terminal-Backend (`PtyManager`)
+ * macht daraus den Start mit Integration (`shellLaunch` in src/main).
+ */
+export function buildStart(def: ShellDef, ws: Workspace, opts: LaunchOptions): TestStart {
   if (!def.exe) throw new Error(`${def.id} ist nicht installiert`);
 
-  // Umgebung ausdruecklich setzen: geerbte THUB_*-Variablen (und die alten TERMHUB_*) sowie
-  // npm-/Node-Interna entfernen.
-  const env: Record<string, string> = {};
+  // Umgebung ausdruecklich setzen: npm-/Node-Interna entfernen; geerbte THUB_*- und TERMHUB_*-Variablen
+  // entfernt shellEnv aus dem Terminal-Backend, das auch NO_PROXY ergaenzt.
+  const inherited: Record<string, string> = {};
   for (const [k, v] of Object.entries(process.env)) {
     if (v === undefined) continue;
-    if (/^(THUB_|TERMHUB_|npm_|NODE_|VITEST|ELECTRON_)/i.test(k)) continue;
-    env[k] = v;
+    if (/^(NODE_|VITEST)/i.test(k)) continue;
+    inherited[k] = v;
   }
   // PATH ohne die Ordner des Nutzers: so wird nie ein echtes claude gefunden.
   const sysPath = [
@@ -359,18 +401,19 @@ export function buildLaunch(def: ShellDef, ws: Workspace, opts: LaunchOptions): 
     path.join(SYSTEM_ROOT, 'System32', 'Wbem'),
     path.join(SYSTEM_ROOT, 'System32', 'WindowsPowerShell', 'v1.0'),
   ];
-  delete env.Path;
-  env.PATH = [...(opts.claudeDir ? [opts.claudeDir] : []), ...sysPath].join(';');
-  env.HOME = ws.home;
-  env.NO_PROXY = [env.NO_PROXY, '127.0.0.1', 'localhost'].filter(Boolean).join(',');
-  env.THUB_TAB_ID = opts.tabId;
-  env.THUB_TOKEN = opts.token;
+  delete inherited.Path;
+  inherited.PATH = [...(opts.claudeDir ? [opts.claudeDir] : []), ...sysPath].join(';');
+  inherited.HOME = ws.home;
+  const baseEnv = shellEnv(inherited);
+  baseEnv.STUB_OUT = ws.stubOut;
+  baseEnv.STUB_CONFIG = ws.stubConfig;
+  baseEnv.TH_MARK = ws.mark;
+  baseEnv.TH_PROFILE_LOADED = ws.profileLoaded;
+
+  const env: Record<string, string> = { THUB_TAB_ID: opts.tabId, THUB_TOKEN: opts.token };
   if (opts.api) env.THUB_API = opts.api;
+  // THUB_STARTER setzt THub erst mit Ticket 11; die Tests des Starters brauchen ihn schon.
   env.THUB_STARTER = ws.starter;
-  env.STUB_OUT = ws.stubOut;
-  env.STUB_CONFIG = ws.stubConfig;
-  env.TH_MARK = ws.mark;
-  env.TH_PROFILE_LOADED = ws.profileLoaded;
 
   switch (def.id) {
     case 'pwsh':
@@ -384,76 +427,89 @@ export function buildLaunch(def: ShellDef, ws: Workspace, opts: LaunchOptions): 
           '# Getippte Testzeilen nie in den echten PSReadLine-Verlauf schreiben',
           "if (Get-Module PSReadLine) { Set-PSReadLineOption -HistorySaveStyle SaveNothing -HistorySavePath (Join-Path $env:HOME 'history.txt') }",
           "function global:prompt { 'TH-PROMPT> ' }",
+          ...(opts.profileExtra ?? []),
         ].join('\r\n'),
       );
-      env.THUB_TEST_PROFILE = profile;
-      if (opts.startCommand) env.THUB_START_CMD = opts.startCommand;
-      const code = readFileSync(path.join(ws.shellDir, 'integration.ps1'), 'utf8');
-      const encoded = Buffer.from(code, 'utf16le').toString('base64');
-      return { file: def.exe, args: ['-NoLogo', '-NoProfile', '-NoExit', '-EncodedCommand', encoded], env };
+      // Nur fuer Tests: ersetzt die Profile des Nutzers. Steht in der Grundumgebung, damit auch ein
+      // Kern, der die Umgebung selbst setzt, das Testprofil laedt.
+      baseEnv.THUB_TEST_PROFILE = profile;
+      break;
     }
-    case 'cmd': {
-      env.PROMPT = 'TH-PROMPT$G ';
-      const init = path.join(ws.shellDir, 'integration.cmd');
-      const line = opts.startCommand ? `"${init}" & ${opts.startCommand}` : `"${init}"`;
-      return { file: def.exe, args: `/s /k "${line}"`, env };
-    }
-    case 'gitbash': {
+    case 'cmd':
+      baseEnv.PROMPT = 'TH-PROMPT$G ';
+      break;
+    case 'gitbash':
       writeFileSync(
         path.join(ws.home, '.bashrc'),
-        ['# Testprofil', 'echo ja > "$TH_PROFILE_LOADED"', "PS1='TH-PROMPT> '", 'HISTFILE=/dev/null', ''].join('\n'),
+        [
+          '# Testprofil',
+          'echo ja > "$TH_PROFILE_LOADED"',
+          "PS1='TH-PROMPT> '",
+          'HISTFILE=/dev/null',
+          ...(opts.profileExtra ?? []),
+          '',
+        ].join('\n'),
       );
       writeFileSync(path.join(ws.home, '.bash_profile'), 'test -f ~/.bashrc && . ~/.bashrc\n');
-      if (opts.startCommand) env.THUB_START_CMD = opts.startCommand;
-      const rc = path.join(ws.shellDir, 'integration.bash').replace(/\\/g, '/');
-      return { file: def.exe, args: ['--rcfile', rc, '-i'], env };
-    }
+      break;
   }
+
+  Object.assign(baseEnv, opts.env);
+
+  const order: StartOrder = {
+    file: def.exe,
+    args: [],
+    cwd: ws.root,
+    env,
+    cols: 200,
+    rows: 50,
+    integration: def.integration,
+  };
+  if (opts.startCommand) order.startCommand = opts.startCommand;
+  return { order, baseEnv };
 }
 
 // ---------------------------------------------------------------------------------------------
 // Laufende Shell
 
+const SESSION_TAB = 'tab';
+
 export class ShellSession {
   output = '';
   exited = false;
   private counter = 0;
+  private procPid = 0;
 
   private constructor(
     readonly def: ShellDef,
     readonly ws: Workspace,
-    private readonly proc: pty.IPty,
-  ) {
-    proc.onData((d) => {
-      this.output += d;
-    });
-    proc.onExit(() => {
-      this.exited = true;
-    });
-  }
+    private readonly backend: PtyManager,
+  ) {}
 
+  /** Startet die Shell ueber das echte Terminal-Backend, mit Integration und Testprofil. */
   static async start(def: ShellDef, ws: Workspace, opts: LaunchOptions): Promise<ShellSession> {
-    const launch = buildLaunch(def, ws, opts);
-    const proc = pty.spawn(launch.file, launch.args, {
-      name: 'xterm-256color',
-      cols: 200,
-      rows: 50,
-      cwd: ws.root,
-      env: launch.env,
-      useConpty: true,
+    const { order, baseEnv } = buildStart(def, ws, opts);
+    const backend = new PtyManager({ shellDir: ws.shellDir, baseEnv: () => baseEnv });
+    const s = new ShellSession(def, ws, backend);
+    s.procPid = backend.start(SESSION_TAB, order, {
+      data: (d) => {
+        s.output += d;
+      },
+      exit: () => {
+        s.exited = true;
+      },
     });
-    const s = new ShellSession(def, ws, proc);
     // Bereit, sobald eine Markierungszeile ausgefuehrt wurde.
     await s.mark(30000);
     return s;
   }
 
   get pid(): number {
-    return this.proc.pid;
+    return this.procPid;
   }
 
   write(data: string): void {
-    this.proc.write(data);
+    this.backend.write(SESSION_TAB, data);
   }
 
   private nonce(): string {
@@ -482,7 +538,7 @@ export class ShellSession {
       if (existsSync(this.ws.mark)) {
         let text = '';
         try {
-          text = readFileSync(this.ws.mark, 'utf8').replace(/^\uFEFF/, '').trim();
+          text = readFileSync(this.ws.mark, 'utf8').replace(/^﻿/, '').trim();
         } catch {
           // wird gerade geschrieben
         }
@@ -518,7 +574,7 @@ export class ShellSession {
     return stripEscapes(this.output);
   }
 
-  /** Beendet die Shell zuerst mit `exit`, erst danach hart (node-pty kill). */
+  /** Beendet die Shell zuerst mit `exit`, erst danach hart (Terminal-Backend, node-pty kill). */
   async close(): Promise<void> {
     if (!this.exited) {
       this.write('exit\r');
@@ -526,15 +582,204 @@ export class ShellSession {
       while (!this.exited && Date.now() < soft) await sleep(50);
     }
     if (!this.exited) {
-      try {
-        this.proc.kill();
-      } catch {
-        // schon beendet
-      }
+      this.backend.kill(SESSION_TAB);
       const hard = Date.now() + 5000;
       while (!this.exited && Date.now() < hard) await sleep(50);
     }
   }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Workspace-Kern mit echtem Terminal-Backend
+
+const realClock: Clock = {
+  now: () => Date.now(),
+  schedule(ms, callback) {
+    const timer = setTimeout(callback, ms);
+    return () => clearTimeout(timer);
+  },
+};
+
+/** Echtes Dateisystem; der Benutzerordner ist der Arbeitsordner des Tests. */
+function testSystem(home: string): HostSystem {
+  return {
+    directoryExists(dir) {
+      try {
+        return statSync(dir).isDirectory();
+      } catch {
+        return false;
+      }
+    },
+    homeDir: () => home,
+    userName: () => 'tester',
+    displays: () => [
+      { bounds: { x: 0, y: 0, width: 1920, height: 1080 }, workArea: { x: 0, y: 0, width: 1920, height: 1040 }, primary: true },
+    ],
+    longPath(p) {
+      if (!p.includes('~')) return p;
+      try {
+        return realpathSync.native(p);
+      } catch {
+        return p;
+      }
+    },
+  };
+}
+
+/**
+ * Ein Workspace-Kern, wie THub ihn startet, mit dem echten Terminal-Backend und einer echten Shell mit
+ * Integration. Nachgemacht sind nur Speicher (im Arbeitsspeicher) und Oberflaeche; die Umgebung der Shell
+ * ist ausdruecklich gesetzt. Der Kern hat genau einen Tab im Arbeitsordner des Tests.
+ */
+export class CoreShell {
+  /** Rohe Ausgabe der Shell, so wie sie der Kern an die Oberflaeche gibt. */
+  output = '';
+  /** Angezeigter Ordner des Tabs nach jeder Aenderung, ohne direkte Wiederholungen. */
+  readonly shownCwds: string[] = [];
+  private exited = false;
+
+  private constructor(
+    readonly def: ShellDef,
+    readonly storage: MemoryStorage,
+    readonly core: Core,
+    /** Startauftraege, die der Kern dem Terminal-Backend erteilt hat. */
+    readonly orders: StartOrder[],
+  ) {}
+
+  /**
+   * Startet den Kern; mit `storage` auf dem gespeicherten Zustand eines frueheren Kerns (Neustart), mit
+   * `extra` mit angepasstem Testprofil oder zusaetzlicher Umgebung.
+   */
+  static start(
+    def: ShellDef,
+    ws: Workspace,
+    storage = new MemoryStorage(),
+    extra: Pick<LaunchOptions, 'profileExtra' | 'env'> = {},
+  ): CoreShell {
+    if (!def.exe) throw new Error(`${def.id} ist nicht installiert`);
+    const { baseEnv } = buildStart(def, ws, { claudeDir: null, api: null, token: '', tabId: '', ...extra });
+    const backend = new PtyManager({ shellDir: ws.shellDir, baseEnv: () => baseEnv });
+    const orders: StartOrder[] = [];
+    const recording: TerminalBackend = {
+      start: (tabId, order, listener) => {
+        orders.push(structuredClone(order));
+        return backend.start(tabId, order, listener);
+      },
+      write: (tabId, data) => backend.write(tabId, data),
+      resize: (tabId, cols, rows) => backend.resize(tabId, cols, rows),
+      kill: (tabId) => backend.kill(tabId),
+      killAll: (timeoutMs) => backend.killAll(timeoutMs),
+    };
+    const shell: ShellInfo = {
+      id: def.id,
+      name: def.id,
+      file: def.exe,
+      args: [],
+      capturesClaude: true,
+      integration: def.integration,
+    };
+    const core = createCore(
+      {
+        terminal: recording,
+        storage,
+        clock: realClock,
+        processes: { snapshot: () => Promise.resolve([]) },
+        system: testSystem(ws.root),
+      },
+      { shells: [shell] },
+    );
+    const s = new CoreShell(def, storage, core, orders);
+    core.subscribe((event) => {
+      if (event.type === 'output') s.output += event.data;
+      if (event.type === 'exit') s.exited = true;
+      if (event.type === 'requestHistory') for (const id of event.tabIds) core.saveHistory(id, '');
+      if (event.type === 'tabs' && event.tabs[0] && event.tabs[0].cwd !== s.shownCwds.at(-1)) {
+        s.shownCwds.push(event.tabs[0].cwd);
+      }
+    });
+    // Wie die Oberflaeche: Die Ansicht meldet „bereit“, erst dann startet der Kern die Shell.
+    core.viewReady(s.tabId, 200, 50);
+    return s;
+  }
+
+  get tabId(): string {
+    return this.core.snapshot().tabs[0].id;
+  }
+
+  /** Zuletzt aktiver Ordner des Tabs, so wie er gespeichert ist. */
+  lastCwd(): string | undefined {
+    return (this.storage.stored as PersistedState | null)?.tabs[0]?.lastCwd;
+  }
+
+  write(data: string): void {
+    this.core.writeToTab(this.tabId, data);
+  }
+
+  /** Wartet, bis der gespeicherte zuletzt aktive Ordner `dir` ist. */
+  async waitForCwd(dir: string, timeoutMs = 20000): Promise<void> {
+    const end = Date.now() + timeoutMs;
+    while (Date.now() < end) {
+      if (this.lastCwd() === dir) return;
+      if (this.exited) break;
+      await sleep(50);
+    }
+    throw new Error(
+      `Ordner ${dir} wurde nicht gemeldet in ${this.def.id}; zuletzt: ${this.lastCwd()}. Ausgabe:\n` +
+        visibleText(this.output).slice(-3000),
+    );
+  }
+
+  /**
+   * Wartet auf sichtbaren Text. ConPTY reicht die Ordner-Meldung sofort durch, den Text des Prompts
+   * zeichnet es oft erst etwas spaeter.
+   */
+  async waitForVisible(re: RegExp, timeoutMs = 15000): Promise<void> {
+    const end = Date.now() + timeoutMs;
+    while (Date.now() < end) {
+      if (re.test(visibleText(this.output))) return;
+      await sleep(50);
+    }
+    throw new Error(`Ausgabe ${re} kam nicht in ${this.def.id}. Ausgabe:\n${visibleText(this.output).slice(-3000)}`);
+  }
+
+  /**
+   * Beendet die Shell mit `exit` und den Kern geordnet, wie beim Beenden von THub. Mit `typeExit = false`
+   * wird nichts getippt (etwa wenn das Testprofil den PSReadLine-Verlauf nicht abschalten konnte); das
+   * Terminal-Backend beendet die Shell dann hart.
+   */
+  async shutdown(typeExit = true): Promise<void> {
+    if (!this.exited && typeExit) {
+      this.write('exit\r');
+      const soft = Date.now() + 5000;
+      while (!this.exited && Date.now() < soft) await sleep(50);
+    }
+    await this.core.shutdown();
+  }
+}
+
+/**
+ * Ob eine Gruppenrichtlinie die Execution Policy festlegt (MachinePolicy oder UserPolicy). Dann wirkt eine
+ * Richtlinie im Prozessbereich (PSExecutionPolicyPreference) nicht.
+ */
+export function executionPolicyFromGroupPolicy(): boolean {
+  const out = execFileSync(
+    POWERSHELL_EXE,
+    ['-NoProfile', '-NonInteractive', '-Command', 'Get-ExecutionPolicy -Scope MachinePolicy; Get-ExecutionPolicy -Scope UserPolicy'],
+    { encoding: 'utf8' },
+  );
+  return out.split(/\r?\n/).some((line) => line.trim() !== '' && line.trim() !== 'Undefined');
+}
+
+/**
+ * Der sichtbare Text einer rohen Ausgabe: vollstaendige Escape-Sequenzen (OSC mit BEL oder ESC \, CSI,
+ * kurze ESC-Sequenzen) entfernt. Bleibt dabei ein ESC oder BEL uebrig, waere eine Sequenz kaputt und als
+ * Text sichtbar.
+ */
+export function visibleText(raw: string): string {
+  return raw
+    .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '')
+    .replace(/\x1b[ -/]*[0-~]/g, '');
 }
 
 function stripEscapes(s: string): string {

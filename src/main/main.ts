@@ -5,12 +5,14 @@ import { dataFolders, takeOverLegacyData, type DataFolders } from './dataFolder'
 import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
 import { LocalApiServer } from './localApi';
 import { PtyManager } from './ptyManager';
+import { shellIntegrationDir } from './shellLaunch';
 import { detectShells } from './shells';
 import { STATE_FILE_NAME, StateStore } from './store';
 import { hostSystem, noProcessProbe, systemClock } from './system';
+import { DEV_MENU } from './devMenu';
 import type { LocalApiInfo } from './workspace/claude';
 import type { ShellInfo } from './workspace/ports';
-import { createThemeSource, followTheme, windowChrome, type ThemeSource } from './theme';
+import { createThemeSource, followTheme, followThemeSetting, windowChrome, type ThemeSource } from './theme';
 import { createWorkspace, type Workspace } from './workspace/workspace';
 
 // Datenordner %APPDATA%\THub, unpaketiert (npm start) %APPDATA%\THub-dev, damit die Entwicklung die
@@ -43,8 +45,8 @@ if (app.requestSingleInstanceLock()) {
  * @param detectedShells die laufende Shell-Erkennung
  */
 async function start(detectedShells: Promise<ShellInfo[]>): Promise<void> {
-  // Im Dev-Modus Menü behalten (DevTools, Reload); in der installierten App ausblenden.
-  if (app.isPackaged) Menu.setApplicationMenu(null);
+  // Im Dev-Modus ein Menü mit DevTools und Neu laden, aber ohne Zoom; die installierte App hat keines.
+  Menu.setApplicationMenu(app.isPackaged ? null : Menu.buildFromTemplate(DEV_MENU));
 
   // Erst nach der Einzelinstanz-Sperre, damit nie zwei Starts zugleich übernehmen, und vor dem Laden.
   takeOverOldData(folders);
@@ -53,7 +55,10 @@ async function start(detectedShells: Promise<ShellInfo[]>): Promise<void> {
   console.log(`Erkannte Shells: ${shells.map((s) => `${s.name} (${s.file})`).join(', ')}`);
   workspace = createWorkspace(
     {
-      terminal: new PtyManager(),
+      // Die Integrationsdateien liegen im Paket ausserhalb des asar-Archivs (extraResources).
+      terminal: new PtyManager({
+        shellDir: shellIntegrationDir(app.isPackaged, process.resourcesPath, app.getAppPath()),
+      }),
       storage: new StateStore(path.join(app.getPath('userData'), STATE_FILE_NAME)),
       clock: systemClock,
       processes: noProcessProbe,
@@ -64,8 +69,10 @@ async function start(detectedShells: Promise<ShellInfo[]>): Promise<void> {
   localApi?.connect(workspace);
   workspace.subscribe((event) => sendToRenderer(IPC.workspaceEvent, event));
 
-  // Design hell/dunkel: folgt Windows (nativeTheme) und zieht bei jedem Wechsel sofort mit.
+  // Design hell/dunkel nach der Wahl in den Einstellungen; bei „System“ folgt es Windows (nativeTheme)
+  // und zieht bei jedem Wechsel sofort mit. Vor dem Fenster, damit es gleich richtig erscheint.
   const theme = createThemeSource(nativeTheme);
+  followThemeSetting(theme, workspace);
   ipcMain.handle(IPC.themeCurrent, () => theme.current());
 
   registerIpc(workspace);
@@ -172,6 +179,9 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
       return;
     case 'updateSettings':
       ws.updateSettings(command.patch);
+      return;
+    case 'stepFontSize':
+      ws.stepFontSize(command.step);
       return;
   }
 }

@@ -1,6 +1,6 @@
 # 18 – Design-Wahl und Schriftgrösse
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 05
 User Stories: 74, 75 (Design, Schriftgrösse), 76, 77
 Spezifikation: „Gespeicherter Zustand“ (Einstellungen), „Oberfläche (Renderer)“ (Design, Tastenkürzel)

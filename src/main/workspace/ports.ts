@@ -6,17 +6,32 @@ import type { PersistedState } from './schema';
 
 // ---------- Terminal-Backend ----------
 
+/**
+ * Welche mitgelieferte Shell-Integration eine Shell bekommt (Ticket 07): Profil des Nutzers, danach
+ * Ordner-Meldungen und Startbefehl.
+ */
+export type ShellIntegration = 'powershell' | 'cmd' | 'bash';
+
 /** Startauftrag für eine Shell. */
 export interface StartOrder {
   /** Programm, z.B. "C:\Program Files\PowerShell\7\pwsh.exe". */
   file: string;
+  /**
+   * Startargumente ohne Integration. Mit Integration bestimmt das Backend die Argumente selbst; diese hier
+   * gelten dann nur, wenn die Integration fehlt (Rückfall).
+   */
   args: string[];
   cwd: string;
   /** Zusätzliche Umgebungsvariablen; das Backend ergänzt sie zur eigenen, bereinigten Umgebung. */
   env: Record<string, string>;
   cols: number;
   rows: number;
-  /** Befehl, den die Shell-Integration genau einmal ausführt, sobald die Shell bereit ist. */
+  /** Mit dieser Integration starten; fehlt sie (etwa bei WSL), startet die Shell ohne. */
+  integration?: ShellIntegration;
+  /**
+   * Befehl, den die Shell-Integration genau einmal ausführt, sobald die Shell bereit ist, in der Sprache
+   * der Shell. Ohne Integration entfällt er.
+   */
   startCommand?: string;
 }
 
@@ -130,10 +145,15 @@ export interface ShellInfo {
   name: string;
   /** Programm, wie es die Erkennung gefunden hat, meist mit vollem Pfad. */
   file: string;
-  /** Startargumente; bei WSL `-d <Distribution>`, den Ordner ergänzt der Kern mit `--cd <Ordner>`. */
+  /**
+   * Startargumente ohne Integration, auch für den Rückfall, wenn die Integration fehlt. Bei WSL
+   * `-d <Distribution>`; den Ordner ergänzt der Kern mit `--cd <Ordner>`.
+   */
   args: string[];
   /** Ob Claude in dieser Shell erfasst wird (alle ausser WSL). */
   capturesClaude: boolean;
+  /** Mitgelieferte Integration; alle Windows-Shells haben eine, WSL keine. */
+  integration?: ShellIntegration;
 }
 
 /** Alle Ports zusammen, wie sie der Kern beim Erzeugen bekommt. */

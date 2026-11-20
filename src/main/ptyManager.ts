@@ -1,21 +1,42 @@
 import * as pty from 'node-pty';
 import { shellEnv } from './shellEnv';
+import { shellLaunch } from './shellLaunch';
 import type { StartOrder, TerminalBackend, TerminalListener } from './workspace/ports';
 
-/** Terminal-Backend über node-pty/ConPTY: verwaltet die laufenden Shells, eine pro Tab. */
+export interface PtyManagerOptions {
+  /** Ordner mit den Integrationsdateien (`resources/shell`), siehe `shellIntegrationDir`. */
+  shellDir: string;
+  /**
+   * Grundumgebung jeder Shell, zu der der Startauftrag seine Variablen ergänzt. Standard: die eigene,
+   * bereinigte Umgebung (`shellEnv`). Die Shell-Integrationstests setzen sie ausdrücklich.
+   */
+  baseEnv?: () => Record<string, string>;
+}
+
+/**
+ * Terminal-Backend über node-pty/ConPTY: verwaltet die laufenden Shells, eine pro Tab, und startet jede
+ * Windows-Shell mit ihrer Integration (`shellLaunch`).
+ */
 export class PtyManager implements TerminalBackend {
   private readonly ptys = new Map<string, pty.IPty>();
+  private readonly shellDir: string;
+  private readonly baseEnv: () => Record<string, string>;
+
+  constructor(options: PtyManagerOptions) {
+    this.shellDir = options.shellDir;
+    this.baseEnv = options.baseEnv ?? (() => shellEnv());
+  }
 
   start(tabId: string, order: StartOrder, listener: TerminalListener): number {
     if (this.ptys.has(tabId)) throw new Error(`Für diesen Tab läuft bereits eine Shell: ${tabId}`);
 
-    // Den Startbefehl (order.startCommand) führt erst die Shell-Integration aus Ticket 07 aus.
-    const proc = pty.spawn(order.file, order.args, {
+    const launch = shellLaunch(order, { ...this.baseEnv(), ...order.env }, this.shellDir);
+    const proc = pty.spawn(launch.file, launch.args, {
       name: 'xterm-256color',
       cols: order.cols,
       rows: order.rows,
       cwd: order.cwd,
-      env: { ...shellEnv(), ...order.env },
+      env: launch.env,
       useConpty: true,
     });
 

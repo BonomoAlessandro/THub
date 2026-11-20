@@ -22,6 +22,7 @@ npm start          # bauen + App starten
 npm run dev        # wie start, mit Sourcemaps und unminifiziert
 npm run typecheck  # TypeScript prüfen
 npm test           # Kern-Tests mit Vitest
+npm run test:shells  # Shell-Integration mit echten Shells (rund 3 Minuten)
 npm run dist       # Installer bauen -> release\THub Setup <version>.exe
 ```
 
@@ -42,16 +43,21 @@ src/
     folders.ts              Tab-Namen nach dem Ordner und Liste der zuletzt benutzten Ordner
     windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
     claude.ts               Claude-Zuordnung pro Tab: Vertrag von Starter und Hooks, Regeln
+    cwdReport.ts            Ordner-Meldungen der Shell (OSC 7, OSC 9;9) im rohen Ausgabestrom erkennen
     shellIds.ts             Shell-Kennungen (pwsh, powershell, cmd, gitbash, wsl:<Distribution>) und Anzeigenamen
   main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
   main/hookFile.ts          Hook-Datei für Claude Code (claude-hooks.json im Datenordner)
   main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
-  main/shellEnv.ts          Umgebung der Shells: ohne geerbte THUB_*/TERMHUB_* und Interna des Dev-Starts
+  main/shellLaunch.ts       Start jeder Windows-Shell mit der mitgelieferten Integration (resources/shell)
+  main/shellEnv.ts          Umgebung der Shells: ohne geerbte THUB_*/TERMHUB_* und Interna des Dev-Starts,
+                            NO_PROXY um 127.0.0.1,localhost ergänzt
   main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json; Verlauf pro Tab unter history\
   main/dataFolder.ts        Datenordner (THub bzw. THub-dev) und einmalige Übernahme aus dem alten Ordner
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
   main/shells.ts            Shell-Erkennung: PowerShell 7 (auch aus dem Store), Windows PowerShell, cmd, Git Bash, WSL
-  main/theme.ts             Design hell/dunkel: folgt Windows (nativeTheme), zieht Fensterfarbe, Fensterknöpfe und Oberfläche nach
+  main/theme.ts             Design hell/dunkel nach der Wahl in den Einstellungen, bei „System“ nach Windows (nativeTheme);
+                            zieht Fensterfarbe, Fensterknöpfe und Oberfläche nach
+  main/devMenu.ts           Menü der Entwicklungsversion (Neu laden, DevTools), ohne Zoom
   preload/preload.ts        Stellt dem Renderer die API `window.thub` bereit
   renderer/                 React-Oberfläche: zeigt an und schickt Befehle, die Tab-Logik liegt im Kern
     main.tsx                Einstieg; übernimmt zuerst das Design (hell/dunkel), dann wird gezeichnet
@@ -59,6 +65,7 @@ src/
     App.tsx                 Fenster: Tab-Leiste und Terminal-Fläche, Tastenkürzel
     useWorkspace.ts         Schnappschuss und Ereignisse des Kerns
     shortcuts.ts            Zuordnung der Tastenkürzel (alles andere geht ans Terminal)
+    fontSize.ts             Ctrl + Mausrad in Schritte der Schriftgrösse umrechnen
     tabs/                   Titelleiste mit Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf, Zieh-Fläche,
                             Pfeil-Menü mit den Shells und „Neues Terminal in …“
     popup/                  Menü und Dialog wie im Prototyp, Bedienung mit der Tastatur (menuKeys.ts)
@@ -70,9 +77,12 @@ src/
 test/
   support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
   workspace/                Kern-Tests (Teststelle 1)
-  renderer/                 Zuordnung der Tastenkürzel und der Tasten im Menü; Verlauf mit echtem xterm.js in Node
-  main/                     Hauptprozess ohne Electron: Design hell/dunkel, Datenordner und Übernahme, Umgebung der Shells,
-                            Shell-Erkennung mit nachgemachtem Rechner
+  renderer/                 Zuordnung der Tastenkürzel (auch Schweizer Tastatur, Ziffernblock), Ctrl + Mausrad, Tasten im Menü;
+                            Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node
+  main/                     Hauptprozess ohne Electron: Design hell/dunkel samt Wahl aus den Einstellungen, Entwicklermenü,
+                            Datenordner und Übernahme, Umgebung der Shells, Shell-Erkennung mit nachgemachtem Rechner
+  shells/                   Teststelle 2: echte Shells über das echte Terminal-Backend (npm run test:shells)
+resources/shell/            Shell-Integration und claude-Starter; im Paket als echte Dateien unter resources\shell
 build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
 
@@ -104,14 +114,19 @@ Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung
 - THub erkennt die Shells selbst: PowerShell 7 (auch die Store-Version), Windows PowerShell, cmd („Eingabeaufforderung“), Git Bash (Standardort oder laut Registry) und jede WSL-Distribution einzeln, ohne die internen von Docker Desktop. Standard-Shell ist PowerShell 7, sonst Windows PowerShell; in den Einstellungen wählbar. Jeder Tab behält seine Shell, auch über einen Neustart. Fehlt sie beim Wiederherstellen (etwa nach einer Deinstallation), startet der Tab mit der Standard-Shell und zeigt einen Hinweis über der ersten Zeile; seine Shell behält er, sobald es sie wieder gibt, startet er wieder mit ihr. WSL-Tabs starten mit `wsl.exe -d <Distribution> --cd <Ordner>`.
 - Neue Tabs heissen wie ihr Ordner, im Benutzerordner wie der Benutzer, auf einem Laufwerk wie das Laufwerk (`D:`); bei Gleichstand mit „ 2“, „ 3“ usw. Der Name wird beim Anlegen festgelegt und ändert sich danach nicht von selbst; ein von Hand vergebener Name wird nie überschrieben. Aus Version 1 übernommene Tabs behalten ihre Namen.
 - Pfeil neben `+` („Shell oder Ordner wählen“): zuerst die erkannten Shells, die Standard-Shell mit dem Etikett „Standard“; ein Klick öffnet einen Tab mit dieser Shell im Standardordner. Darunter „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter der Pfad) und „Ordner wählen …“ (Ordner-Dialog von Windows). Zuletzt benutzt sind die Startordner neuer Tabs und der letzte Ordner eines Tabs beim Schliessen: höchstens acht, neueste zuerst, ohne Doppelte; angeboten werden nur Ordner, die es noch gibt. Bedienung auch mit Pfeiltasten, Enter und Escape.
-- Zahnrad: Einstellungen mit Standardordner und Standard-Shell. „Ändern …“ öffnet den Ordner-Dialog, „Zurücksetzen“ stellt auf den Benutzerordner zurück. `+` und `Ctrl+Shift+T` öffnen neue Terminals dort und mit der Standard-Shell; offene Tabs bleiben, wie sie sind. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
+- Zahnrad: Einstellungen mit Standardordner, Standard-Shell, Design und Schriftgrösse; jede Änderung wirkt sofort. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
+  - Standardordner: „Ändern …“ öffnet den Ordner-Dialog, „Zurücksetzen“ stellt auf den Benutzerordner zurück. `+` und `Ctrl+Shift+T` öffnen neue Terminals dort; offene Tabs bleiben, wo sie sind.
+  - Standard-Shell: die Shell für `+` und `Ctrl+Shift+T`, wählbar unter den erkannten; offene Tabs behalten ihre Shell.
+  - Design: System (Standard), Hell oder Dunkel. Die Wahl gilt für Oberfläche, Terminalfläche, Fensterknöpfe und die Dialoge von Windows; bei „System“ zieht ein Wechsel in Windows sofort mit.
+  - Schriftgrösse im Terminal: 8 bis 32, Standard 14.
+- Schriftgrösse für alle Tabs zugleich auch mit `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-` und `Ctrl` `0` (zurück auf 14). `+` und `-` werden am erzeugten Zeichen erkannt, nicht an der Tastenposition: Die Schweizer Tastatur (`+` auf Shift+1) und der Ziffernblock funktionieren, `Ctrl` `=` zählt wie `Ctrl` `+`. Die Terminals passen danach Spalten und Zeilen an, die Shells erfahren die neue Grösse. Der Zoom der ganzen Oberfläche ist abgeschaltet, `Ctrl` + Mausrad scrollt das Terminal nicht.
 - Bei vielen Tabs werden die Tabs schmaler und die Leiste scrollbar (auch mit dem Mausrad)
 - Tooltip mit Name, Ordner und Shell; Schliessen mit `×` oder der mittleren Maustaste
 - Tabs umbenennen (Doppelklick auf den Tab oder `F2`; Enter übernimmt, Escape bricht ab)
 - Beim Beenden werden alle Tabs gespeichert und beim nächsten Start in ihrem Verzeichnis neu gestartet; der zuletzt aktive Tab wird wieder angezeigt
 - Eigene Titelleiste ohne Windows-Rahmen: Die Tabs sitzen direkt in der Titelleiste, rechts die nativen Fensterknöpfe mit den Andock-Layouts von Windows 11. Die freie Fläche neben den Tabs (mindestens 56 px, auch bei vielen Tabs) verschiebt das Fenster, Doppelklick maximiert.
 - Der frühere Inhalt jedes Terminals steht nach einem Neustart ausgegraut über der neuen Eingabezeile, mit der Trennlinie „Wiederhergestellt · <Datum, Uhrzeit der Sicherung>“; er liegt im Scrollback, eine Mausrad-Bewegung nach oben zeigt ihn. Nach einem Absturz fehlen höchstens die letzten etwa 30 Sekunden.
-- Hell oder dunkel nach dem Design von Windows, auch die Terminalfläche und die Fensterknöpfe; ein Wechsel in Windows wirkt sofort
+- Hell oder dunkel, standardmässig nach dem Design von Windows, auch die Terminalfläche und die Fensterknöpfe; ein Wechsel in Windows wirkt sofort
 - Beendete Shell (z.B. `exit`): Hinweis im Terminal, beliebige Taste startet sie neu
 - Kopieren/Einfügen: Rechtsklick (mit Auswahl kopieren, sonst einfügen), `Ctrl+Shift+C` / `Ctrl+Shift+V`
 - Das Fenster öffnet mit gespeicherter Grösse, Position und Maximiert-Zustand; beim allerersten Start maximiert. Liegt es ausserhalb aller Bildschirme (etwa nach dem Abziehen eines Monitors), öffnet es zentriert auf dem Hauptbildschirm.
@@ -125,6 +140,20 @@ Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem
 - Die Hook-Datei `claude-hooks.json` schreibt THub bei jedem Start neu in seinen Datenordner, nach der im Spike geprüften Vorlage (`spikes/claude-hooks/empfohlene-hook-datei.json`). `SessionStart` läuft über `curl.exe`, weil Claude dafür keine HTTP-Hooks kennt. Die globale Claude-Konfiguration bleibt unberührt.
 - Beendet THub sich selbst (App beenden, Tab schliessen, Windows-Abmeldung), wird die Zuordnung eingefroren: Spätere Ereignisse ändern sie nicht mehr.
 - Ein zweiter Start öffnet keinen Server und schreibt keine Hook-Datei.
+
+### Shell-Integration
+
+Jede Windows-Shell startet mit der mitgelieferten Integration aus `resources/shell/` (im installierten Paket ausserhalb des asar-Archivs unter `resources\shell`). Sie lädt zuerst das normale Profil des Nutzers und meldet danach bei jedem Prompt den aktuellen Ordner; ein eigener Prompt (etwa oh-my-posh) bleibt, wie er ist.
+
+| Shell | Start | Ordner-Meldung |
+|---|---|---|
+| PowerShell 7, Windows PowerShell | `-NoLogo -NoProfile -NoExit -EncodedCommand <integration.ps1>`; die Integration lädt die Profile selbst. Kein Skript, darum blockiert eine Execution Policy sie nicht. | OSC 9;9, nur für Orte im Dateisystem |
+| cmd | `/s /k ""…\integration.cmd""`, ohne `/d`: AutoRun läuft wie gewohnt | OSC 9;9 vorne im `PROMPT` |
+| Git Bash | `--rcfile …/integration.bash -i`; lädt, was eine Login-Shell lädt (`/etc/profile`, dann `~/.bash_profile` usw.) | OSC 7 (`file://…`, prozentkodiert) per `PROMPT_COMMAND` |
+
+- Der Kern erkennt die Meldungen im rohen Ausgabestrom (auch über Stückgrenzen, Endzeichen BEL oder `ESC \`), wandelt sie in Windows-Pfade (Prozentkodierung, `/c/…` → `C:\…`, 8.3-Kurznamen) und merkt sich den Ordner als zuletzt aktiven Ordner des Tabs, wenn es ihn gibt. Der Tooltip zeigt ihn; nach einem Neustart startet der Tab dort (sonst Startordner, Standardordner, Benutzerordner). Die Sequenzen bleiben im Strom, xterm.js zeigt sie nicht an.
+- Startbefehl (für das Fortsetzen von Claude, Ticket 12): läuft genau einmal, sobald die Shell bereit ist; PowerShell und Git Bash bekommen ihn über `THUB_START_CMD` (vor dem Ausführen entfernt), cmd in der `/k`-Zeile hinter der Integration.
+- Fehlt die Integration oder scheitert sie, startet die Shell trotzdem. Shells ohne Integration (WSL) starten wie bisher.
 
 ### Tastenkürzel
 
@@ -142,7 +171,7 @@ Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem
 
 ## Offene Punkte (zum Ausspezifizieren)
 
-- **Was heisst „wiederherstellen“?** Aktuell: neue Shell im *Startverzeichnis* der Session, darüber der frühere Inhalt ausgegraut. Nicht erhalten bleiben: laufende Programme und ein später per `cd` gewechseltes Verzeichnis.
+- **Was heisst „wiederherstellen“?** Aktuell: neue Shell im zuletzt aktiven Ordner des Tabs, darüber der frühere Inhalt ausgegraut. Nicht erhalten bleiben laufende Programme.
 - **Schliessen:** ohne Rückfrage. Bestätigung, wenn noch ein Programm läuft?
 - **Darstellung:** Sidebar vs. Tabs oben, Reihenfolge per Drag & Drop, Gruppen, Farben/Icons, Theme, Schriftgrösse
 - **Fenster:** mehrere Fenster, Split-Ansicht (mehrere Terminals nebeneinander)

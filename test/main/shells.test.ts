@@ -77,10 +77,17 @@ describe('Shell-Erkennung', () => {
     const { source } = machine(FULL_MACHINE);
 
     expect(await detectShells(source)).toEqual([
-      { id: 'pwsh', name: 'PowerShell 7', file: PWSH_MSI, args: [], capturesClaude: true },
-      { id: 'powershell', name: 'Windows PowerShell', file: POWERSHELL_EXE, args: [], capturesClaude: true },
-      { id: 'cmd', name: 'Eingabeaufforderung', file: CMD_EXE, args: [], capturesClaude: true },
-      { id: 'gitbash', name: 'Git Bash', file: GIT_BASH, args: ['--login', '-i'], capturesClaude: true },
+      { id: 'pwsh', name: 'PowerShell 7', file: PWSH_MSI, args: [], capturesClaude: true, integration: 'powershell' },
+      {
+        id: 'powershell',
+        name: 'Windows PowerShell',
+        file: POWERSHELL_EXE,
+        args: [],
+        capturesClaude: true,
+        integration: 'powershell',
+      },
+      { id: 'cmd', name: 'Eingabeaufforderung', file: CMD_EXE, args: [], capturesClaude: true, integration: 'cmd' },
+      { id: 'gitbash', name: 'Git Bash', file: GIT_BASH, args: ['--login', '-i'], capturesClaude: true, integration: 'bash' },
       { id: 'wsl:Ubuntu', name: 'Ubuntu (WSL)', file: WSL_EXE, args: ['-d', 'Ubuntu'], capturesClaude: false },
       { id: 'wsl:Debian', name: 'Debian (WSL)', file: WSL_EXE, args: ['-d', 'Debian'], capturesClaude: false },
     ]);
@@ -199,7 +206,14 @@ describe('Shell-Erkennung', () => {
     const { source } = machine();
 
     expect(await detectShells(source)).toEqual([
-      { id: 'powershell', name: 'Windows PowerShell', file: 'powershell.exe', args: [], capturesClaude: true },
+      {
+        id: 'powershell',
+        name: 'Windows PowerShell',
+        file: 'powershell.exe',
+        args: [],
+        capturesClaude: true,
+        integration: 'powershell',
+      },
     ]);
   });
 

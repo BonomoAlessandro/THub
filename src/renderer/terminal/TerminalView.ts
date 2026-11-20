@@ -19,10 +19,11 @@ export class TerminalView {
   constructor(
     readonly tabId: string,
     private readonly host: HTMLElement,
+    fontSize: number,
   ) {
     this.term = new Terminal({
       fontFamily: cssVar('--font-mono'),
-      fontSize: 14,
+      fontSize,
       cursorBlink: true,
       scrollback: 5000,
       windowsPty: { backend: 'conpty' },
@@ -113,6 +114,16 @@ export class TerminalView {
   /** Das Design hat gewechselt: Farbschema neu aus den Design-Variablen übernehmen. */
   updateTheme(): void {
     this.term.options.theme = terminalTheme();
+  }
+
+  /**
+   * Neue Schriftgrösse: Spalten und Zeilen passen sich der Fläche an, und die Shell erfährt die neue
+   * Grösse (über `onResize`). Auch verdeckte Ansichten lassen sich messen, sie sind nur unsichtbar.
+   */
+  setFontSize(size: number): void {
+    if (this.term.options.fontSize === size) return;
+    this.term.options.fontSize = size;
+    this.fit();
   }
 
   fit(): void {

@@ -1,0 +1,9 @@
+{
+  "name": "spike-verlauf-sichtbar",
+  "private": true,
+  "type": "module",
+  "description": "Spike zu Ticket 21: Verlauf mit conptyInheritCursor direkt sichtbar? node-pty und xterm.js kommen aus dem Wurzelordner.",
+  "scripts": {
+    "versuch": "node versuch.mts"
+  }
+}

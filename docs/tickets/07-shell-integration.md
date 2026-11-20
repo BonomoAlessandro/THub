@@ -1,6 +1,6 @@
 # 07 – Shell-Integration: Profil, aktueller Ordner, Startbefehl
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 06
 User Stories: 11, 17 (aktueller Ordner im Tooltip), 57, 65
 Spezifikation: „Shell-Integration“ (Robust laden, Punkte 1 und 3, Umgebung), „Wiederherstellen“ (normaler Tab), „Testentscheidungen → Teststelle 1 und 2“

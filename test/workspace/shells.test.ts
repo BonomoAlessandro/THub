@@ -10,6 +10,7 @@ const PWSH: ShellInfo = {
   file: 'C:\\Program Files\\PowerShell\\7\\pwsh.exe',
   args: [],
   capturesClaude: true,
+  integration: 'powershell',
 };
 const POWERSHELL: ShellInfo = {
   id: 'powershell',
@@ -17,6 +18,7 @@ const POWERSHELL: ShellInfo = {
   file: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',
   args: [],
   capturesClaude: true,
+  integration: 'powershell',
 };
 const CMD: ShellInfo = {
   id: 'cmd',
@@ -24,6 +26,7 @@ const CMD: ShellInfo = {
   file: 'C:\\Windows\\System32\\cmd.exe',
   args: [],
   capturesClaude: true,
+  integration: 'cmd',
 };
 const GIT_BASH: ShellInfo = {
   id: 'gitbash',
@@ -31,6 +34,7 @@ const GIT_BASH: ShellInfo = {
   file: 'C:\\Program Files\\Git\\bin\\bash.exe',
   args: ['--login', '-i'],
   capturesClaude: true,
+  integration: 'bash',
 };
 const UBUNTU: ShellInfo = {
   id: 'wsl:Ubuntu',
@@ -133,7 +137,7 @@ describe('Shells', () => {
 
       expect(h.activeTab()).toMatchObject({ id, name: 'work', shellId: 'gitbash', shellName: 'Git Bash', cwd: 'D:\\work' });
       expect(h.terminal.startsFor(id)).toMatchObject([
-        { order: { file: GIT_BASH.file, args: ['--login', '-i'], cwd: 'D:\\work', cols: 100, rows: 30 } },
+        { order: { file: GIT_BASH.file, args: ['--login', '-i'], integration: 'bash', cwd: 'D:\\work', cols: 100, rows: 30 } },
       ]);
     });
 
@@ -166,7 +170,7 @@ describe('Shells', () => {
       await h.restart({ shells: WITHOUT_GIT_BASH });
       h.workspace.viewReady(id, 80, 24);
 
-      expect(h.terminal.startsFor(id)).toMatchObject([{ order: { file: PWSH.file, args: [] } }]);
+      expect(h.terminal.startsFor(id)).toMatchObject([{ order: { file: PWSH.file, args: [], integration: 'powershell' } }]);
       expect(h.eventsOfType('notice')).toEqual([
         {
           type: 'notice',

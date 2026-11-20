@@ -1,13 +1,13 @@
 # 11 – Starter und `claude`-Ersatz
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 07, 10
 User Stories: 30, 33, 34, 35, 37, 39, 40
 Spezifikation: „Shell-Integration“ (Punkt 2, Bekannte Grenzen), „Hook-Empfänger und lokale Schnittstelle“ (Endpunkte), „Testentscheidungen → Teststelle 2“
 
 ## Was gebaut wird
 
-- **Ausgangspunkt:** Der Starter-Spike hat Starter, Ersatz und Tests bereits gebaut und in allen vier Shells grün getestet (`resources/shell/`, `test/shells/`, 333 Tests; Befunde in `docs/spikes/starter.md`). Dieses Ticket bindet sie in die App ein: Terminal-Backend startet die Shells wie `buildLaunch`, setzt `THUB_STARTER`, prüft beim Start die Execution Policy, und der Starter spricht die echte lokale Schnittstelle aus Ticket 10 an. Die Regeln unten gelten weiter.
+- **Ausgangspunkt:** Der Starter-Spike hat Starter, Ersatz und Tests bereits gebaut und in allen vier Shells grün getestet (`resources/shell/`, `test/shells/`, 333 Tests; Befunde in `docs/spikes/starter.md`). Dieses Ticket bindet sie in die App ein: Terminal-Backend startet die Shells schon mit Integration (Ticket 07, `src/main/shellLaunch.ts`), setzt `THUB_STARTER`, prüft beim Start die Execution Policy, und der Starter spricht die echte lokale Schnittstelle aus Ticket 10 an. Die Regeln unten gelten weiter.
 - **`claude`-Ersatz** in allen vier Windows-Shells:
   - PowerShell-Funktion (7 und 5), Bash-Funktion in Git Bash, doskey-Makro in cmd.
   - Das Makro ruft `powershell.exe` direkt auf, ohne Batch-Datei, damit `Ctrl+C` keine Rückfrage „Batchvorgang abbrechen?“ auslöst.

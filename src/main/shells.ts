@@ -8,7 +8,7 @@
 import { execFile } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { ShellInfo } from './workspace/ports';
+import type { ShellInfo, ShellIntegration } from './workspace/ports';
 import { shellLabel, wslShellId } from './workspace/shellIds';
 
 /** So lange darf `wsl.exe -l -q` höchstens brauchen; meist antwortet es nach wenigen Zehntelsekunden. */
@@ -40,22 +40,26 @@ export async function detectShells(source: ShellDetectionSource = systemShellSou
 
   const shells: ShellInfo[] = [];
   const pwsh = findPwsh(source);
-  if (pwsh) shells.push(windowsShell('pwsh', pwsh));
+  if (pwsh) shells.push(windowsShell('pwsh', pwsh, 'powershell'));
   const powershell = path.win32.join(system32, 'WindowsPowerShell', 'v1.0', 'powershell.exe');
-  if (source.fileExists(powershell)) shells.push(windowsShell('powershell', powershell));
+  if (source.fileExists(powershell)) shells.push(windowsShell('powershell', powershell, 'powershell'));
   const cmd = path.win32.join(system32, 'cmd.exe');
-  if (source.fileExists(cmd)) shells.push(windowsShell('cmd', cmd));
+  if (source.fileExists(cmd)) shells.push(windowsShell('cmd', cmd, 'cmd'));
   const gitBash = await findGitBash(source);
-  // Wie in Git Bash selbst als Login-Shell, damit /etc/profile und ~/.bash_profile laden.
-  if (gitBash) shells.push(windowsShell('gitbash', gitBash, ['--login', '-i']));
+  // Ohne Integration (Rückfall) wie in Git Bash selbst als Login-Shell; die Integration lädt dasselbe.
+  if (gitBash) shells.push(windowsShell('gitbash', gitBash, 'bash', ['--login', '-i']));
   shells.push(...(await wsl));
 
   // Unter Windows gibt es immer wenigstens Windows PowerShell; ohne festen Pfad sucht der Start im PATH.
-  return shells.length > 0 ? shells : [windowsShell('powershell', 'powershell.exe')];
+  return shells.length > 0 ? shells : [windowsShell('powershell', 'powershell.exe', 'powershell')];
 }
 
-function windowsShell(id: string, file: string, args: string[] = []): ShellInfo {
-  return { id, name: shellLabel(id), file, args, capturesClaude: true };
+/**
+ * Eine Windows-Shell mit der mitgelieferten Integration (Ticket 07). `args` gelten nur ohne Integration,
+ * etwa wenn die Integrationsdatei fehlt.
+ */
+function windowsShell(id: string, file: string, integration: ShellIntegration, args: string[] = []): ShellInfo {
+  return { id, name: shellLabel(id), file, args, capturesClaude: true, integration };
 }
 
 /**
@@ -103,7 +107,7 @@ async function findWslShells(source: ShellDetectionSource, wslExe: string): Prom
   if (!output) return [];
   return parseWslList(output).map((distribution) => {
     const id = wslShellId(distribution);
-    // Ohne Integration (Claude in WSL wird nicht erfasst); den Ordner ergänzt der Kern mit `--cd`.
+    // Ohne Integration, Claude in WSL wird nicht erfasst; den Ordner ergänzt der Kern mit `--cd`.
     return { id, name: shellLabel(id), file: wslExe, args: ['-d', distribution], capturesClaude: false };
   });
 }

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { FONT_SIZE } from '../shared/types';
+import { WheelSteps } from './fontSize';
 import { isPopupOpen } from './popup/popups';
 import { SettingsDialog } from './settings/SettingsDialog';
 import { resolveShortcut, type ShortcutAction } from './shortcuts';
@@ -50,6 +52,22 @@ export function App() {
     return () => window.removeEventListener('keydown', onKeyDown, true);
   }, []);
 
+  // Ctrl + Mausrad ändert die Schriftgrösse aller Terminals. Abgefangen wird es überall und vor xterm.js:
+  // Sonst scrollte das Terminal mit, und Chromium zoomte die ganze Oberfläche. Solange ein Menü oder
+  // Dialog offen ist, ruht es wie die Tastenkürzel.
+  useEffect(() => {
+    const wheel = new WheelSteps();
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const step = wheel.add(e.deltaY, e.deltaMode);
+      if (step !== 0 && !isPopupOpen()) api.send({ type: 'stepFontSize', step });
+    };
+    window.addEventListener('wheel', onWheel, { capture: true, passive: false });
+    return () => window.removeEventListener('wheel', onWheel, { capture: true });
+  }, []);
+
   if (!view) return null;
 
   // Ein inzwischen geschlossener Tab wird nicht mehr umbenannt.
@@ -67,7 +85,7 @@ export function App() {
         onFinishRename={finishRename}
         onOpenSettings={() => setSettingsOpen(true)}
       />
-      <TerminalArea tabs={view.tabs} activeTabId={view.activeTabId} />
+      <TerminalArea tabs={view.tabs} activeTabId={view.activeTabId} fontSize={view.settings.fontSize} />
       {settingsOpen && (
         <SettingsDialog
           settings={view.settings}
@@ -108,6 +126,13 @@ function runShortcut(action: ShortcutAction, view: WorkspaceView, startRename: (
       return;
     case 'renameTab':
       if (activeId) startRename(activeId);
+      return;
+    // Die Schriftgrösse aller Terminals speichert der Kern; er meldet sie zurück, dann passen sich die Terminals an.
+    case 'fontSize':
+      api.send({ type: 'stepFontSize', step: action.step });
+      return;
+    case 'resetFontSize':
+      api.send({ type: 'updateSettings', patch: { fontSize: FONT_SIZE.default } });
       return;
   }
 }

@@ -390,6 +390,17 @@ svg.i {
   font-size: 12px;
 }
 
+/* Taste in einem Text, z.B. „Auch mit Ctrl + Mausrad.“ */
+kbd {
+  font: 11px var(--font-ui);
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  background: var(--kbd-bg);
+  color: var(--text-muted);
+}
+
 /* ---------- Menüs ---------- */
 /*
  * Menüs und Dialoge liegen im Code ausserhalb der Titelleiste, ragen aber über sie (das Pfeil-Menü
@@ -520,7 +531,11 @@ svg.i {
 }
 
 /* ---------- Einstellungen ---------- */
-/* Abschnitte mit Zeilen: links Bezeichnung und Beschreibung, rechts das Bedienelement. */
+/*
+ * Abschnitte mit Zeilen: links Bezeichnung und Beschreibung, rechts das Bedienelement. Links bleibt
+ * die volle Breite des Textes (höchstens 60 % der Zeile), damit die Beschreibung nicht umbricht.
+ * Fehlt Platz, wird das Bedienelement schmaler: Ein langer Ordnerpfad endet dann mit „…“.
+ */
 .set-section {
   padding: 2px 0 6px;
 }
@@ -541,6 +556,10 @@ svg.i {
 .set-section h4 + .set-row {
   border-top: 0;
 }
+.set-row > :first-child {
+  flex: 0 0 auto;
+  max-width: 60%;
+}
 .set-label {
   color: var(--text);
   font-weight: 500;
@@ -553,12 +572,19 @@ svg.i {
 .set-ctl {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.set-ctl > * {
   flex: none;
 }
 
-/* Ordnerpfad zum Ansehen; ohne Standardordner steht gedämpft „Benutzerordner“ darin. */
+/* Ordnerpfad zum Ansehen; ohne Standardordner steht gedämpft „Benutzerordner“ darin. Er schrumpft als Einziges. */
 .path-box {
+  flex: 0 1 auto;
+  min-width: 0;
   max-width: 210px;
   padding: 5px 8px;
   font: 12px var(--font-mono);
@@ -575,6 +601,67 @@ svg.i {
   color: var(--text-faint);
 }
 
+/* Wahl aus wenigen Möglichkeiten (Design: System, Hell, Dunkel); die gewählte hebt sich neutral ab. */
+.seg {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--seg-bg);
+  border: 1px solid var(--border);
+}
+.seg button {
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 5px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast);
+}
+.seg button:hover:not(.on) {
+  color: var(--text);
+}
+.seg button.on {
+  background: var(--seg-on);
+  color: var(--text);
+  box-shadow: var(--seg-shadow);
+}
+
+/* Zahl mit − und + (Schriftgrösse); an den Grenzen ist der jeweilige Knopf abgeschaltet. */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.stepper button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+}
+.stepper button:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text);
+}
+.stepper button:disabled {
+  opacity: 0.4;
+}
+.stepper span {
+  min-width: 34px;
+  text-align: center;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+/* Der Fokusrahmen liegt innen, sonst schnitte ihn der abgerundete Rand ab. */
+.seg button:focus-visible,
+.stepper button:focus-visible {
+  outline-offset: -2px;
+}
+
 /* Auswahlfeld, z.B. die Standard-Shell; der Pfeil ist ein eingebettetes Symbol wie im Prototyp. */
 .select {
   height: 30px;
@@ -588,17 +675,6 @@ svg.i {
   border-radius: var(--r-sm);
   -webkit-appearance: none;
   appearance: none;
-}
-
-/* Tasten in Beschreibungen, z.B. „Für + und Ctrl+Shift+T“. */
-kbd {
-  font: 11px var(--font-ui);
-  padding: 1px 5px;
-  border-radius: var(--r-xs);
-  border: 1px solid var(--border-strong);
-  border-bottom-width: 2px;
-  background: var(--kbd-bg);
-  color: var(--text-muted);
 }
 
 /* ---------- Tooltip ---------- */
