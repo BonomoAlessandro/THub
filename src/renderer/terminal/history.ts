@@ -46,6 +46,16 @@ export function restoredHistory(content: string, savedAt: number, cols: number, 
 }
 
 /**
+ * Ein Hinweis direkt vor dem ersten Start der Shell, etwa dass die gespeicherte Shell fehlt. Wie der
+ * Verlauf kommt er in den Scrollback, weil ConPTY beim Start den sichtbaren Bereich leert: direkt unter
+ * die Trennlinie (bzw. ganz oben) und über die erste Zeile der Shell. Setzt voraus, dass der sichtbare
+ * Bereich noch leer ist: eine frische Ansicht, höchstens mit `restoredHistory` davor.
+ */
+export function noticeBeforeStart(line: string, rows: number): string {
+  return `\x1b[H${line}${'\r\n'.repeat(rows)}`;
+}
+
+/**
  * Graut Inhalt aus (SGR 2, „gedämpft“). Jede SGR-Sequenz im Inhalt setzt „gedämpft“ danach erneut,
  * damit auch ein Reset wie `ESC[0m` oder `ESC[22m` das Ausgrauen nicht aufhebt.
  */
