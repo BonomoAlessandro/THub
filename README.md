@@ -160,7 +160,7 @@ Links vom Tab-Namen zeigt ein Symbol, was im Tab los ist; der Tooltip nennt es a
 
 | Symbol | Status | Wann |
 |---|---|---|
-| violetter Stern, rotiert und pulsiert | Claude arbeitet | `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`; eine Eingabe in einem wartenden Tab (nach einer Bestätigung kommt bis `PostToolUse` kein Ereignis) |
+| violetter Stern, rotiert und pulsiert | Claude arbeitet | `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`; Enter oder eine Ziffer (die Antwort) in einem wartenden Tab, weil nach einer Bestätigung bis `PostToolUse` kein Ereignis kommt |
 | oranger Punkt mit Ping-Ring | Claude wartet auf dich | `PermissionRequest` (sofort, auch bei Rückfragen); `Notification` `permission_prompt`/`elicitation_dialog` nur, wenn der Tab noch arbeitet und seit `PreToolUse` weder `PermissionRequest` noch `PostToolUse` kam |
 | grüner Punkt | Claude ist fertig, noch nicht angeschaut | `Stop`/`StopFailure`, während der Tab nicht sichtbar war (nicht aktiv oder Fenster nicht im Vordergrund); verschwindet, sobald der Tab angezeigt wird |
 | blauer, atmender Punkt | Prozesse laufen | siehe unten |
@@ -168,6 +168,7 @@ Links vom Tab-Namen zeigt ein Symbol, was im Tab los ist; der Tooltip nennt es a
 
 - Vorrang, wenn mehreres zutrifft: pausiert → wartet → arbeitet → fertig → Prozesse laufen → nichts.
 - `Stop` und `StopFailure` setzen Claude auf „ruht“. Esc in einem arbeitenden oder wartenden Claude-Tab setzt ihn nach etwa 1,5 Sekunden ohne weiteres Hook-Ereignis ebenfalls auf „ruht“, ohne grün: Nach einer Unterbrechung oder abgelehnten Rückfrage meldet Claude nichts. `idle_prompt` ändert nichts.
+- Pfeil- und andere Navigationstasten in einer Rückfrage ändern nichts. Kommt nach der Antwort (Enter oder Ziffer) etwa 3 Sekunden lang weder ein Hook-Ereignis noch ein neuer Prozess unter Claude, ruht Claude, ohne grün: So endet eine Ablehnung mit „No“ und Enter; ein bestätigter langer Befehl bleibt violett, weil sein Prozess läuft. Ohne Prozess-Sonde bleibt es dann bei violett, bis ein Hook kommt.
 - Antworten des Terminals (Fokus-Meldungen, Maus, Cursor-Position, Farben) zählen nicht als Eingabe.
 - Der Renderer meldet dem Kern beim Laden und bei jedem Fokuswechsel, ob das Fenster im Vordergrund ist.
 - Bei reduzierter Bewegung (Windows-Einstellung) stehen die Animationen still; nur der Stern dreht sich langsam.

@@ -11,6 +11,7 @@
 //   der Host des Tabs ist.
 // - Normale Tabs: jeder Nachfahre der innersten Shell. Claude-Tabs: nur Nachfahren des Claude-Prozesses, die nach
 //   dem letzten Prompt gestartet sind, und nur, solange Claude ruht. WSL: nie.
+// Dazu meldet jede Abfrage für offene Antworten auf Rückfragen, ob Claude seit der Antwort einen Prozess gestartet hat.
 
 import type { ProcessInfo } from './ports';
 
@@ -42,6 +43,23 @@ export interface ClaudeProcess {
   promptAt?: number;
   /** Claude ruht; nur dann zählen Prozesse. */
   idle: boolean;
+  /**
+   * Zeitpunkt einer Antwort auf eine Rückfrage (Enter oder Ziffer), solange offen ist, ob Claude danach weiterarbeitet:
+   * Die Abfrage meldet dann, ob der Claude-Prozess seither einen Nachfahren gestartet hat (`ProcessReport.answers`).
+   */
+  answeredAt?: number;
+}
+
+/** Ergebnis einer Abfrage. */
+export interface ProcessReport {
+  /** Tabs, in denen Prozesse laufen. */
+  running: Set<string>;
+  /**
+   * Claude-Tabs mit offener Antwort (`answeredAt`), deren Claude-Prozess in der Abfrage zu sehen war: `true`, wenn er
+   * seit der Antwort einen Nachfahren gestartet hat (ausser Konsolen-Hosts), sonst `false`. Fehlt ein Tab, liess sich
+   * sein Claude-Prozess nicht finden.
+   */
+  answers: Map<string, boolean>;
 }
 
 /** Konsolen-Host eines Prozesses (Port „Prozess-Sonde“); `null`, wenn nicht lesbar. */
@@ -90,10 +108,10 @@ export class ProcessTracker {
   }
 
   /**
-   * Wertet eine Abfrage aus und liefert die Kennungen der Tabs, in denen Prozesse laufen. Tabs, die nicht
-   * übergeben werden, vergisst der Tracker.
+   * Wertet eine Abfrage aus: in welchen Tabs Prozesse laufen und, für offene Antworten auf Rückfragen, ob Claude seither
+   * einen Prozess gestartet hat. Tabs, die nicht übergeben werden, vergisst der Tracker.
    */
-  update(snapshot: ProcessInfo[], tabs: ProcessTab[], consoleHost: ConsoleHostLookup): Set<string> {
+  update(snapshot: ProcessInfo[], tabs: ProcessTab[], consoleHost: ConsoleHostLookup): ProcessReport {
     const tree = new ProcessTree(snapshot);
     for (const id of [...this.tracks.keys()]) {
       if (!tabs.some((t) => t.id === id)) this.tracks.delete(id);
@@ -112,20 +130,33 @@ export class ProcessTracker {
     const orphans = this.orphansByHost(tabs, shells, tree, consoleHost);
 
     const running = new Set<string>();
+    const answers = new Map<string, boolean>();
     for (const tab of tabs) {
       const shell = shells.get(tab.id);
       const track = this.tracks.get(tab.id);
       if (!shell || !track) continue;
       // Ein normales Terminal vergisst den Claude-Prozess; ein späteres Claude kann dieselbe Prozess-ID haben.
-      if (!tab.claude) track.claudePid = track.claude = undefined;
-      const candidates = tab.claude
-        ? this.claudeCandidates(track, tab.claude, shell, tree)
-        : this.shellCandidates(track, tab, shell, tree, orphans);
-      if (candidates.some((p) => this.counts(p))) running.add(tab.id);
+      if (!tab.claude) {
+        track.claudePid = track.claude = undefined;
+        if (this.shellCandidates(track, tab, shell, tree, orphans).some((p) => this.counts(p))) running.add(tab.id);
+        continue;
+      }
+      const claude = this.claudeProcess(track, tab.claude, shell, tree);
+      if (!claude) continue;
+      if (this.claudeCandidates(tab.claude, claude, tree).some((p) => this.counts(p))) running.add(tab.id);
+      const { answeredAt } = tab.claude;
+      if (answeredAt !== undefined) {
+        // Ein Nachfahre, der nach der Antwort gestartet ist, zeigt schon in einer einzigen Abfrage, dass Claude
+        // weiterarbeitet (etwa ein bestätigter Befehl).
+        const spawned = tree.descendants([claude]).some(
+          (p) => p.startTime >= answeredAt && !CONSOLE_HOSTS.has(p.name.toLowerCase()),
+        );
+        answers.set(tab.id, spawned);
+      }
     }
 
     this.previous = new Set(snapshot.map(key));
-    return running;
+    return { running, answers };
   }
 
   /** Ein Prozess zählt, wenn er schon in der vorigen Abfrage vorkam und kein Konsolen-Host ist. */
@@ -217,21 +248,28 @@ export class ProcessTracker {
     return [...adopted, ...tree.descendants([...roots, ...adopted])];
   }
 
-  /** Claude-Tabs: Nachfahren des Claude-Prozesses, die nach dem letzten Prompt gestartet sind, solange Claude ruht. */
-  private claudeCandidates(track: TabTrack, claude: ClaudeProcess, shell: ProcessInfo, tree: ProcessTree): ProcessInfo[] {
+  /**
+   * Der Claude-Prozess in dieser Abfrage. Seine Startzeit wird bei der ersten Abfrage festgehalten, in der er als
+   * Nachfahre der Shell vorkommt; keiner, solange die Prozess-ID fehlt oder er nicht (mehr) da ist.
+   */
+  private claudeProcess(track: TabTrack, claude: ClaudeProcess, shell: ProcessInfo, tree: ProcessTree): ProcessInfo | undefined {
     if (track.claudePid !== claude.pid) {
       track.claudePid = claude.pid;
       track.claude = undefined;
     }
-    if (claude.pid === undefined) return [];
+    if (claude.pid === undefined) return undefined;
     if (!track.claude) {
       const candidate = tree.byPid.get(claude.pid);
-      if (!candidate || !tree.isDescendant(candidate, shell)) return [];
+      if (!candidate || !tree.isDescendant(candidate, shell)) return undefined;
       track.claude = identity(candidate);
     }
-    const process = tree.find(track.claude);
+    return tree.find(track.claude);
+  }
+
+  /** Claude-Tabs: Nachfahren des Claude-Prozesses, die nach dem letzten Prompt gestartet sind, solange Claude ruht. */
+  private claudeCandidates(claude: ClaudeProcess, process: ProcessInfo, tree: ProcessTree): ProcessInfo[] {
     const { promptAt } = claude;
-    if (!process || !claude.idle || promptAt === undefined) return [];
+    if (!claude.idle || promptAt === undefined) return [];
     return tree.descendants([process]).filter((p) => p.startTime >= promptAt);
   }
 }

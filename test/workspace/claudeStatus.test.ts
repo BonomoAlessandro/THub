@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import type { ProcessInfo } from '../../src/main/workspace/ports';
 import type { TabSnapshot } from '../../src/shared/types';
 import { hookEvent, hookPayload, type HookSample } from '../support/apiClient';
-import { startWorkspaceWithApi, type TestWorkspace } from '../support/harness';
+import { settle, startWorkspaceWithApi, type TestWorkspace } from '../support/harness';
 
 // Status-Zeilen des Zustandsautomaten (Ticket 13) über die echte lokale Schnittstelle: Hook-Ereignisse in der Form,
 // wie sie Claude Code 2.1.328 im Spike geschickt hat (spikes/claude-hooks/samples), Eingaben des Nutzers über
@@ -10,6 +11,8 @@ import { startWorkspaceWithApi, type TestWorkspace } from '../support/harness';
 const SID_AFTER_CLEAR = '0f54d6f0-5e3c-45e6-aabf-d76021219bad';
 const ESC = '\x1b';
 const ESC_QUIET_MS = 1500;
+const ANSWER_QUIET_MS = 3000;
+const CLAUDE_PID = 30000;
 
 /** Ein Claude-Tab, gestartet über den Starter; Claude Code schickt seine Hooks mit dieser Session-Kennung. */
 class ClaudeSession {
@@ -290,6 +293,8 @@ describe('Claude-Status am Tab', () => {
 
       c.type(ESC);
       c.type('mach');
+      expect(c.status()).toBe('waiting');
+      c.type('\r');
       expect(c.status()).toBe('working');
       c.h.clock.advance(ESC_QUIET_MS);
 
@@ -315,6 +320,206 @@ describe('Claude-Status am Tab', () => {
       c.h.clock.advance(ESC_QUIET_MS);
 
       expect(c.status()).toBe('working');
+    });
+  });
+
+  describe('Antwort auf eine Rückfrage', () => {
+    it.each([
+      ['Enter', '\r'],
+      ['Ziffer 1', '1'],
+      ['Ziffer 2', '2'],
+      ['Ziffer 3', '3'],
+    ])('%s in einem wartenden Tab → arbeitet', async (_label, key) => {
+      const c = await startClaude();
+      await askPermission(c);
+
+      c.type(key);
+
+      expect(c.status()).toBe('working');
+    });
+
+    it('Pfeil- und andere Navigationstasten (Pos1, Ende, Bild auf/ab, Tab) und Text ändern nichts', async () => {
+      const c = await startClaude();
+      await askPermission(c);
+
+      for (const key of ['\x1b[B', '\x1b[A', '\x1bOB', '\x1b[H', '\x1b[F', '\x1b[1~', '\x1b[4~', '\x1b[5~', '\x1b[6~', '\t', 'y', 'nein']) {
+        c.type(key);
+      }
+
+      expect(c.status()).toBe('waiting');
+      c.type('\r');
+      expect(c.status()).toBe('working');
+    });
+
+    it('Ablehnung mit „No“ und Enter: kein Hook, kein neuer Prozess → nach etwa 3 s ruht Claude, ohne grün', async () => {
+      const c = await startClaude();
+      const tree = await claudeProcess(c);
+      c.h.processes.set(tree);
+      await askPermission(c);
+      await elapse(c.h, 700);
+
+      c.type('\x1b[B');
+      c.type('\x1b[B');
+      c.type('\r');
+      expect(c.status()).toBe('working');
+      await elapse(c.h, ANSWER_QUIET_MS - 200);
+      expect(c.status()).toBe('working');
+      // Auch wenn der Tab inzwischen nicht mehr sichtbar ist: Wer selbst ablehnt, braucht kein „fertig“.
+      c.h.workspace.windowForeground(false);
+      await elapse(c.h, 300);
+
+      expect(c.status()).toBe('idle');
+    });
+
+    it('Ablehnung mit der Ziffer 3 wirkt genauso', async () => {
+      const c = await startClaude();
+      c.h.processes.set(await claudeProcess(c));
+      await askPermission(c);
+
+      c.type('3');
+      await elapse(c.h, ANSWER_QUIET_MS + 100);
+
+      expect(c.status()).toBe('idle');
+    });
+
+    it('ein bestätigter langer Befehl hält „arbeitet“: Claude startet nach der Antwort einen Prozess', async () => {
+      const c = await startClaude();
+      const tree = await claudeProcess(c);
+      c.h.processes.set(tree);
+      await askPermission(c);
+      await elapse(c.h, 700);
+
+      c.type('1');
+      const answeredAt = c.h.clock.now();
+      // Claude führt den bestätigten Befehl über die Shell des Bash-Werkzeugs aus, mit eigener Konsole.
+      c.h.processes.set([
+        ...tree,
+        { pid: 30100, ppid: CLAUDE_PID, name: 'bash.exe', startTime: answeredAt + 150 },
+        { pid: 30104, ppid: 30100, name: 'conhost.exe', startTime: answeredAt + 160 },
+        { pid: 30108, ppid: 30100, name: 'npm.cmd', startTime: answeredAt + 400 },
+      ]);
+      await elapse(c.h, 3 * ANSWER_QUIET_MS);
+      expect(c.status()).toBe('working');
+
+      await c.send('PostToolUse-Bash');
+      await c.send('Stop');
+      expect(c.status()).toBe('idle');
+    });
+
+    it('ein einmal gesehener neuer Prozess genügt, auch wenn er bei der nächsten Abfrage schon beendet ist', async () => {
+      const c = await startClaude();
+      const tree = await claudeProcess(c);
+      c.h.processes.set(tree);
+      await askPermission(c);
+      await elapse(c.h, 700);
+
+      c.type('1');
+      c.h.processes.set([...tree, { pid: 30100, ppid: CLAUDE_PID, name: 'git.exe', startTime: c.h.clock.now() + 100 }]);
+      // Bis zum nächsten Takt der Sonde (alle 1,5 s), dann ist der Befehl vorbei.
+      await elapse(c.h, 900);
+      c.h.processes.set(tree);
+      await elapse(c.h, 2 * ANSWER_QUIET_MS);
+
+      expect(c.status()).toBe('working');
+    });
+
+    it('nur ein Konsolen-Host als neues Kind zeigt nicht, dass Claude weiterarbeitet', async () => {
+      const c = await startClaude();
+      const tree = await claudeProcess(c);
+      await askPermission(c);
+      await elapse(c.h, 700);
+
+      c.type('\r');
+      c.h.processes.set([...tree, { pid: 30104, ppid: CLAUDE_PID, name: 'conhost.exe', startTime: c.h.clock.now() + 50 }]);
+      await elapse(c.h, ANSWER_QUIET_MS + 100);
+
+      expect(c.status()).toBe('idle');
+    });
+
+    it('Prozesse, die vor der Antwort gestartet sind (MCP-Server), zählen nicht', async () => {
+      const c = await startClaude();
+      const tree = await claudeProcess(c);
+      const mcp = { pid: 30008, ppid: CLAUDE_PID, name: 'uv.exe', startTime: c.h.clock.now() + 400 };
+      await elapse(c.h, 1000);
+      c.h.processes.set([...tree, mcp]);
+      await askPermission(c);
+
+      c.type('\r');
+      await elapse(c.h, ANSWER_QUIET_MS + 100);
+
+      expect(c.status()).toBe('idle');
+    });
+
+    it('ein Hook innerhalb der Wartezeit entscheidet wie sonst, auch ohne neuen Prozess', async () => {
+      const c = await startClaude();
+      c.h.processes.set(await claudeProcess(c));
+      await askPermission(c);
+
+      c.type('1');
+      await elapse(c.h, 1000);
+      // Ein bestätigtes Lesen braucht keinen Prozess; PostToolUse kommt gleich.
+      await c.send('PostToolUse-Read');
+      await elapse(c.h, 2 * ANSWER_QUIET_MS);
+
+      expect(c.status()).toBe('working');
+    });
+
+    it('eine verspätete Benachrichtigung zählt nicht als Hook', async () => {
+      const c = await startClaude();
+      c.h.processes.set(await claudeProcess(c));
+      await askPermission(c);
+
+      c.type('\r');
+      await elapse(c.h, 1000);
+      await c.send('Notification-permission_prompt');
+      await elapse(c.h, ANSWER_QUIET_MS);
+
+      expect(c.status()).toBe('idle');
+    });
+
+    it('ohne brauchbare Sonde (Claude-Prozess nicht zu finden) bleibt es bei „arbeitet“, bis ein Hook kommt', async () => {
+      const c = await startClaude();
+      // Die Sonde liefert nichts, wie auf einem System ohne koffi.
+      c.h.processes.set([]);
+      await askPermission(c);
+
+      c.type('\r');
+      await elapse(c.h, 3 * ANSWER_QUIET_MS);
+      expect(c.status()).toBe('working');
+
+      await c.send('Stop');
+      expect(c.status()).toBe('idle');
+    });
+
+    it('ohne gemeldete Prozess-ID von Claude bleibt es ebenfalls bei „arbeitet“', async () => {
+      const c = await startClaude();
+      const shellPid = c.h.terminal.startsFor(c.tabId)[0].pid;
+      const now = c.h.clock.now();
+      c.h.processes.set([
+        { pid: shellPid, ppid: 29248, name: 'pwsh.exe', startTime: now + 50 },
+        { pid: CLAUDE_PID, ppid: shellPid, name: 'claude.exe', startTime: now + 300 },
+      ]);
+      await askPermission(c);
+
+      c.type('\r');
+      await elapse(c.h, 3 * ANSWER_QUIET_MS);
+
+      expect(c.status()).toBe('working');
+    });
+
+    it('die Prüfung endet mit dem Ende von Claude', async () => {
+      const c = await startClaude();
+      const tree = await claudeProcess(c);
+      c.h.processes.set(tree);
+      await askPermission(c);
+
+      c.type('\r');
+      await c.h.api.exit(c.tabId, c.sessionId, 0);
+      // Claude ist beendet; die Sonde sieht nur noch die Shell.
+      c.h.processes.set(tree.filter((p) => p.pid !== CLAUDE_PID && p.ppid !== CLAUDE_PID));
+      await elapse(c.h, ANSWER_QUIET_MS + 100);
+
+      expect(c.tab()).toMatchObject({ kind: 'terminal', status: 'idle' });
     });
   });
 
@@ -593,3 +798,28 @@ describe('Claude-Status am Tab', () => {
     });
   });
 });
+
+/**
+ * Claude läuft als Prozess 30000 unter der Shell des Tabs; der Starter hat die Prozess-ID gemeldet. Liefert den
+ * Prozessbaum, wie ihn die Sonde sieht.
+ */
+async function claudeProcess(c: ClaudeSession): Promise<ProcessInfo[]> {
+  await c.h.api.started(c.tabId, CLAUDE_PID);
+  const shellPid = c.h.terminal.startsFor(c.tabId)[0].pid;
+  // Die Shell startete zum Zeitpunkt, an dem die Uhr noch steht.
+  const start = c.h.clock.now();
+  return [
+    { pid: 29248, ppid: 1200, name: 'electron.exe', startTime: start - 600_000 },
+    { pid: shellPid, ppid: 29248, name: 'pwsh.exe', startTime: start + 50 },
+    { pid: CLAUDE_PID, ppid: shellPid, name: 'claude.exe', startTime: start + 300 },
+    { pid: 30004, ppid: CLAUDE_PID, name: 'conhost.exe', startTime: start + 310 },
+  ];
+}
+
+/** Die Zeit läuft in kleinen Schritten, damit Antworten der Sonde dazwischen ausgewertet werden, wie im Betrieb. */
+async function elapse(h: TestWorkspace, ms: number): Promise<void> {
+  for (let done = 0; done < ms; done += 100) {
+    h.clock.advance(Math.min(100, ms - done));
+    await settle();
+  }
+}

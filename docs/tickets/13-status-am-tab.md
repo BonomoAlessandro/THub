@@ -8,7 +8,7 @@ Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Status-Zeilen, „P
 ## Was gebaut wird
 
 - **Status-Zeilen des Zustandsautomaten:**
-  - „arbeitet“: `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`; ausserdem jede Eingabe des Nutzers (ausser Esc) in einem wartenden Claude-Tab, weil nach einer Bestätigung bis `PostToolUse` kein Ereignis kommt
+  - „arbeitet“: `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`; ausserdem Enter oder eine Zifferntaste (die Antwort) in einem wartenden Claude-Tab, weil nach einer Bestätigung bis `PostToolUse` kein Ereignis kommt; kommt danach innerhalb von etwa 3 Sekunden weder ein Hook-Ereignis noch ein neuer Nachfahre des Claude-Prozesses, ruht Claude ohne grün (Ablehnung mit „No“ und Enter). Pfeil- und andere Navigationstasten ändern nichts (Entscheid des Nutzers vom 2026-11-20)
   - „wartet auf dich“: `PermissionRequest` (sofort); `Notification` mit `permission_prompt` oder `elicitation_dialog` nur als Rückfallebene (kommt etwa 6 Sekunden später)
   - „ruht“: `Stop`, `StopFailure`; ausserdem Esc in einem arbeitenden oder wartenden Claude-Tab, wenn danach etwa 1,5 Sekunden kein Hook-Ereignis kommt (ohne grünes „fertig“), weil Claude nach einer Unterbrechung oder Ablehnung nichts meldet
   - `Notification` mit `idle_prompt` ändert nichts

@@ -91,11 +91,12 @@ export function statusAfterHook(
 /**
  * Was eine Eingabe aus dem Terminal für den Status bedeutet:
  * - `escape`: die Taste Esc allein (Unterbrechung oder abgelehnte Rückfrage);
+ * - `answer`: Enter oder eine Zifferntaste, also die eigentliche Antwort auf eine Rückfrage („1“, „2“, „3“);
  * - `report`: nur Antworten des Terminals, die xterm.js von selbst schickt (Fokus, Maus, Cursor-Position,
  *   Geräteattribute, OSC- und DCS-Antworten); keine Eingabe des Nutzers;
- * - `input`: alles andere, also Tasten, Text und Einfügen.
+ * - `other`: alles andere: Pfeil- und andere Navigationstasten (Home, End, Bild auf/ab, Tab), Text, Einfügen.
  */
-export type InputKind = 'escape' | 'report' | 'input';
+export type InputKind = 'escape' | 'answer' | 'report' | 'other';
 
 /** Antworten des Terminals; sie kommen über denselben Weg wie Tasten, sind aber keine Eingabe des Nutzers. */
 const TERMINAL_REPORTS = new RegExp(
@@ -117,7 +118,8 @@ const TERMINAL_REPORTS = new RegExp(
 
 export function classifyInput(data: string): InputKind {
   if (/^\x1b+$/.test(data)) return 'escape';
-  return data.replace(TERMINAL_REPORTS, '') === '' ? 'report' : 'input';
+  if (/^(?:\r\n?|\n|[0-9])$/.test(data)) return 'answer';
+  return data.replace(TERMINAL_REPORTS, '') === '' ? 'report' : 'other';
 }
 
 /** Die Merkmale eines Tabs, aus denen der angezeigte Status folgt. */

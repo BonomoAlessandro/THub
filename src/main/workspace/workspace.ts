@@ -57,6 +57,12 @@ const PROBE_INTERVAL_MS = 1500;
  * einer Unterbrechung oder einer abgelehnten Rückfrage meldet Claude nichts.
  */
 const ESC_QUIET_MS = 1500;
+/**
+ * Nach einer Antwort (Enter oder Ziffer) in einem wartenden Claude-Tab: Kommt so lange weder ein Hook-Ereignis noch
+ * ein neuer Nachfahre des Claude-Prozesses, ruht Claude. So endet eine Ablehnung mit „No“ und Enter, nach der Claude
+ * nichts meldet; ein bestätigter langer Befehl hält „arbeitet“, weil sein Prozess läuft.
+ */
+const ANSWER_QUIET_MS = 3000;
 
 export interface WorkspaceOptions {
   /** Die erkannten Shells (Shell-Erkennung), in der Reihenfolge des Pfeil-Menüs; mindestens eine. */
@@ -206,6 +212,8 @@ interface TabRuntime {
   processes: boolean;
   /** Läuft nach Esc: Kommt bis dahin kein Hook-Ereignis, ruht Claude. */
   cancelEsc?: CancelTimer;
+  /** Offene Antwort auf eine Rückfrage: Arbeitet Claude danach weiter? Entschieden über Hooks und die Prozess-Sonde. */
+  answer?: AnswerCheck;
   /** Der Tab kommt aus dem gespeicherten Zustand: Vor dem ersten Start bekommt die Ansicht seinen Verlauf. */
   restorePending: boolean;
   /**
@@ -226,6 +234,17 @@ interface TabRuntime {
   requested: number;
   /** Stand von `output`, den der gesicherte Verlauf enthält. */
   saved: number;
+}
+
+/** Eine offene Antwort auf eine Rückfrage (siehe `ANSWER_QUIET_MS`). */
+interface AnswerCheck {
+  /** Zeitpunkt der Antwort (Uhr des Kerns). */
+  at: number;
+  cancel: CancelTimer;
+  /** Eine Abfrage nach der Antwort hat den Claude-Prozess gesehen, ohne neuen Nachfahren. */
+  seen: boolean;
+  /** Die Wartezeit ist um; entschieden wird mit der laufenden Abfrage. */
+  due: boolean;
 }
 
 function newRuntime(restorePending: boolean): TabRuntime {
@@ -367,7 +386,8 @@ class WorkspaceCore implements Workspace {
     if (this.stopping || index < 0) return;
     // Zuerst austragen: Das Ende der Shell gehört dann zu keinem Tab mehr, ein später eintreffender
     // Verlauf ebenfalls nicht.
-    this.runtimes.get(tabId)?.cancelEsc?.();
+    const closing = this.runtimes.get(tabId);
+    if (closing) this.cancelClaudeTimers(closing);
     this.runtimes.delete(tabId);
     this.ports.terminal.kill(tabId);
     // Bis zur Liste der geschlossenen Tabs (Ticket 15) verschwindet der Verlauf mit dem Tab.
@@ -805,7 +825,7 @@ class WorkspaceCore implements Workspace {
       this.setClaudeLink(tab, linkAfterLaunch(tab.claude, sessionId, reported || (tab.lastCwd ?? tab.startCwd)));
       // Ein neu gestartetes Claude ruht, auch wenn das vorige ohne Ende-Meldung verschwunden ist.
       if (runtime) {
-        this.cancelEscTimer(runtime);
+        this.cancelClaudeTimers(runtime);
         runtime.claude = IDLE_CLAUDE;
       }
     });
@@ -852,7 +872,7 @@ class WorkspaceCore implements Workspace {
       if (!link || !runtime) return;
       // Jedes Hook-Ereignis zeigt, dass Claude nach Esc weitermacht. Ausgenommen sind Benachrichtigungen: Sie
       // kommen verzögert (Rückfrage nach etwa 6 s, idle_prompt nach etwa 60 s) und sagen darüber nichts.
-      if (hook.event !== 'Notification') this.cancelEscTimer(runtime);
+      if (hook.event !== 'Notification') this.cancelClaudeTimers(runtime);
       const step = statusAfterHook(runtime.claude, hook, startsSession(previous, hook), this.ports.clock.now());
       runtime.claude = step.status;
       if (step.stopped && !this.isVisible(tab.id)) runtime.finished = true;
@@ -861,8 +881,10 @@ class WorkspaceCore implements Workspace {
 
   /**
    * Eingabe des Nutzers in einem Claude-Tab: Esc während „arbeitet“ oder „wartet“ startet die Wartezeit, nach der
-   * Claude ruht; jede andere Eingabe in einem wartenden Tab heisst „arbeitet“, weil nach einer Bestätigung bis
-   * `PostToolUse` kein Ereignis kommt. Antworten des Terminals (Fokus, Maus usw.) zählen nicht als Eingabe.
+   * Claude ruht. Enter oder eine Ziffer in einem wartenden Tab ist die Antwort auf die Rückfrage und heisst
+   * „arbeitet“, weil nach einer Bestätigung bis `PostToolUse` kein Ereignis kommt; ob Claude wirklich weiterarbeitet,
+   * entscheiden danach Hooks und Prozess-Sonde (`startAnswerCheck`). Pfeil- und andere Navigationstasten, Text und
+   * Antworten des Terminals (Fokus, Maus usw.) ändern nichts.
    */
   private takeInput(tabId: string, runtime: TabRuntime, data: string): void {
     const tab = this.findTab(tabId);
@@ -879,16 +901,61 @@ class WorkspaceCore implements Workspace {
           runtime.claude = { ...runtime.claude, activity: 'idle', toolUnanswered: false };
         });
       });
-    } else if (kind === 'input' && activity === 'waiting') {
+    } else if (kind === 'answer' && activity === 'waiting') {
       this.updateTab(tab, () => {
         runtime.claude = { ...runtime.claude, activity: 'working' };
       });
+      this.startAnswerCheck(tabId, runtime);
     }
+  }
+
+  /**
+   * Nach einer Antwort auf eine Rückfrage: Kommt innerhalb von `ANSWER_QUIET_MS` weder ein Hook-Ereignis noch ein
+   * Nachfahre des Claude-Prozesses, der nach der Antwort gestartet ist, ruht Claude (ohne „fertig“). Ohne brauchbare
+   * Abfrage der Sonde (Sonde fehlt, Claude-Prozess nicht zu finden) bleibt es bei „arbeitet“, bis ein Hook kommt.
+   */
+  private startAnswerCheck(tabId: string, runtime: TabRuntime): void {
+    this.cancelAnswerCheck(runtime);
+    const check: AnswerCheck = {
+      at: this.ports.clock.now(),
+      seen: false,
+      due: false,
+      cancel: () => {},
+    };
+    check.cancel = this.ports.clock.schedule(ANSWER_QUIET_MS, () => {
+      if (runtime.answer !== check) return;
+      check.due = true;
+      // Eine laufende Abfrage entscheidet mit; ihr Ergebnis kommt gleich.
+      if (!this.probing) this.settleAnswer(tabId, runtime);
+    });
+    runtime.answer = check;
+  }
+
+  /** Die Wartezeit nach einer Antwort ist um: Sah die Sonde Claude ohne neuen Prozess, ruht Claude. */
+  private settleAnswer(tabId: string, runtime: TabRuntime): void {
+    const check = runtime.answer;
+    const tab = this.findTab(tabId);
+    this.cancelAnswerCheck(runtime);
+    if (!check?.seen || !tab?.claude || runtime.claude.activity !== 'working') return;
+    this.updateTab(tab, () => {
+      runtime.claude = { ...runtime.claude, activity: 'idle', toolUnanswered: false };
+    });
+  }
+
+  private cancelAnswerCheck(runtime: TabRuntime): void {
+    runtime.answer?.cancel();
+    runtime.answer = undefined;
   }
 
   private cancelEscTimer(runtime: TabRuntime): void {
     runtime.cancelEsc?.();
     runtime.cancelEsc = undefined;
+  }
+
+  /** Beendet die Wartezeiten nach Esc und nach einer Antwort. */
+  private cancelClaudeTimers(runtime: TabRuntime): void {
+    this.cancelEscTimer(runtime);
+    this.cancelAnswerCheck(runtime);
   }
 
   /** Der Tab, für den eine Meldung von Starter oder Claude gilt; keiner, wenn unbekannt oder eingefroren. */
@@ -914,7 +981,7 @@ class WorkspaceCore implements Workspace {
         runtime.resuming = undefined;
         runtime.claude = IDLE_CLAUDE;
         runtime.finished = false;
-        this.cancelEscTimer(runtime);
+        this.cancelClaudeTimers(runtime);
       }
     }
     this.save();
@@ -981,22 +1048,47 @@ class WorkspaceCore implements Workspace {
       return;
     }
     this.probing = true;
+    const requestedAt = this.ports.clock.now();
     this.ports.processes.snapshot().then(
       (processes) => {
         this.probing = false;
         if (this.stopping) return;
         // Ausgewertet wird mit dem Stand von jetzt: Während der Abfrage kann sich ein Tab geändert haben.
         const tabs = this.processTabs();
-        const running = this.processTracker.update(processes, tabs, (pid) => this.ports.processes.consoleHost(pid));
-        this.setProcesses(running);
+        const report = this.processTracker.update(processes, tabs, (pid) => this.ports.processes.consoleHost(pid));
+        this.setProcesses(report.running);
+        this.takeAnswers(report.answers, requestedAt);
       },
       (err: unknown) => {
         this.probing = false;
+        this.takeAnswers(new Map(), requestedAt);
         if (this.probeErrorLogged) return;
         this.probeErrorLogged = true;
         console.error('Prozess-Sonde: Abfrage fehlgeschlagen:', err);
       },
     );
+  }
+
+  /**
+   * Offene Antworten auf Rückfragen nach einer Abfrage: Hat Claude seit der Antwort einen Prozess gestartet, arbeitet
+   * er weiter, und die Prüfung ist erledigt. Zählt nur eine Abfrage, die nach der Antwort angefordert wurde. Ist die
+   * Wartezeit schon um, wird jetzt entschieden.
+   */
+  private takeAnswers(answers: Map<string, boolean>, requestedAt: number): void {
+    for (const tab of this.state.tabs) {
+      const runtime = this.runtimes.get(tab.id);
+      const check = runtime?.answer;
+      if (!runtime || !check) continue;
+      if (requestedAt > check.at) {
+        const spawned = answers.get(tab.id);
+        if (spawned === true) {
+          this.cancelAnswerCheck(runtime);
+          continue;
+        }
+        if (spawned === false) check.seen = true;
+      }
+      if (check.due) this.settleAnswer(tab.id, runtime);
+    }
   }
 
   /**
@@ -1016,6 +1108,7 @@ class WorkspaceCore implements Workspace {
           promptAt: runtime.claude.promptAt,
           idle: runtime.claude.activity === 'idle',
         };
+        if (runtime.answer) entry.claude.answeredAt = runtime.answer.at;
       }
       result.push(entry);
     }
@@ -1049,7 +1142,7 @@ class WorkspaceCore implements Workspace {
       this.cancelHistoryTimer = null;
       this.cancelProbeTimer?.();
       this.cancelProbeTimer = null;
-      for (const runtime of this.runtimes.values()) this.cancelEscTimer(runtime);
+      for (const runtime of this.runtimes.values()) this.cancelClaudeTimers(runtime);
       // Sofort einfrieren: Ab jetzt ändern Meldungen von Starter und Claude die Zuordnungen nicht mehr.
       this.frozen = true;
       // Erst den Verlauf, solange die Shells noch laufen und der Renderer ihn zeigt; dann sichern und beenden.
