@@ -157,6 +157,44 @@ Den Installer auf einem zweiten Rechner oder unter einem frischen Windows-Benutz
 
 - [ ] Alle Abschnitte dieser Liste sind durchgeklickt; jede Abweichung steht unten und ist als neues Ticket erfasst. (T19)
 
+## Nachprüfung nach den Korrekturen (Tickets 23 bis 27)
+
+Nach der Installation des neuen Installers. Die Abweichungen unten sind in diesen Tickets behoben.
+
+**PowerShell (T24)**
+
+- [ ] In einem PowerShell-7-Tab mit dem echten Profil mit den Pfeiltasten durch den Verlauf blättern, auch mit gedrückt gehaltener Pfeiltaste → so flüssig wie im Windows Terminal. (T24)
+- [ ] `cd` tippen → keine graue Vorschau, keine Vorschlagsliste. (T24)
+- [ ] THub neu starten → im wiederhergestellten Tab steht der Prompt oben, die Trennlinie „Wiederhergestellt“ direkt darüber im Scrollback; Tippen und Pfeiltasten zeichnen in der richtigen Zeile. (T24)
+- [ ] `exit` in einem Tab, dann eine Taste → die neue Shell beginnt oben, der alte Inhalt steht im Scrollback. (T24)
+- [ ] Fenster- und Schriftgrösse in einem PowerShell-Tab und einem **[Claude]** Claude-Tab ändern → der Inhalt bleibt intakt. (T24)
+- [ ] cmd, Git Bash, WSL und Windows PowerShell starten und funktionieren normal; **[Claude]** Claude Code im Tab läuft normal (Darstellung, Status, Esc). (T24)
+
+**Links und Rechtsklick (T25)**
+
+- [ ] **[Claude]** Claude gibt eine URL aus → keine gestrichelte Linie; beim Überfahren Hand und durchgezogene Linie; Ctrl+Klick öffnet sie im Browser, ein normaler Klick nicht. Auch im Vollbild von Claude öffnet Ctrl+Klick den Link genau einmal. (T25)
+- [ ] Eine Dev-Server-Adresse in einer normalen Shell → Ctrl+Klick öffnet sie. (T25)
+- [ ] **[Claude]** Rechtsklick in Claude fügt die Zwischenablage genau einmal ein, Shift+Rechtsklick ebenfalls; mit einer Auswahl in Claude kopiert der Rechtsklick. (T25)
+- [ ] In PowerShell und cmd verhält sich der Rechtsklick wie bisher (mit Auswahl kopieren, sonst einfügen). (T25)
+
+**Tab-Leiste, Farben, Dropdown (T26)**
+
+- [ ] Die Tabs sind etwas höher. Im maximierten Fenster wählt ein Klick ganz oben am Bildschirmrand den Tab darunter; Rechtsklick, Ziehen und Tooltip gehen dort auch. (T26)
+- [ ] Im nicht maximierten Fenster lässt sich das Fenster am oberen Rand weiterhin vergrössern; die freie Fläche verschiebt es, ein Doppelklick maximiert, das Überfahren von „Maximieren“ zeigt die Andock-Layouts. (T26)
+- [ ] Mit dem ersten Tab aktiv: `+`, `Ctrl+Shift+T`, Pfeil-Menü und Palette öffnen den neuen Tab am Ende; „Duplizieren“ legt weiterhin rechts neben der Quelle an. (T26)
+- [ ] Im dunklen Design ist die aufgeklappte Liste „Standard-Shell“ dunkel und lesbar. (T26)
+- [ ] **[Claude]** Der Claude-Stern „arbeitet“ ist im dunklen Design gut sichtbar. (T26)
+
+**Offene Punkte (T27)**
+
+- [ ] **[Claude]** In einer neuen Session (oder nach `/clear`) einige normale Prompts → nur noch selten ein Hinweis, und nur bei echten Rückfragen, nicht bei Angeboten wie „Soll ich auch noch …?“. (T27)
+- [ ] **[Claude]** Ein Klick auf einen Hinweis „Offene Punkte“ öffnet den Tab und schliesst den Hinweis, auch im gerade aktiven Tab; `×` schliesst ihn ohne Wechsel. (T27)
+- [ ] **[Claude]** THub neu starten → ein per Klick geschlossener Hinweis kommt nicht zurück, ein stehen gelassener schon. (T27)
+
+**Fortsetzen ohne Starter (T23, optional)**
+
+- [ ] **[Frisch] [Claude]** Auf einem Testbenutzer: Claude-Tab erfassen, Ausführungsrichtlinie `AllSigned` setzen, THub neu starten → die Session läuft weiter, nach etwa 30 s wird der Tab ein normales Terminal; nach `/exit` und einem weiteren Neustart wird sie nicht wieder fortgesetzt. (T23)
+
 ## Gefundene Abweichungen
 
 Pro Abweichung einen Eintrag; daraus wird später ein Ticket in [docs/tickets](tickets/README.md).
