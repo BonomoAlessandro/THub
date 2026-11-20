@@ -130,6 +130,26 @@ svg.i {
     color var(--dur-fast),
     box-shadow var(--dur-fast);
   animation: tab-in var(--dur) var(--ease);
+  /* Eigene Stapelebene, damit die Klickfläche (::before) hinter dem Inhalt des Tabs liegt, aber vor der Leiste. */
+  isolation: isolate;
+}
+/*
+ * Unsichtbare Klickfläche (Ticket 26): Sie reicht vom Tab bis an den oberen und unteren Rand der Titelleiste, damit ein
+ * Klick knapp über (oder unter) der Karte nicht ins Leere geht. Sie gehört zum Tab: Klick, Rechtsklick, mittlere Taste,
+ * Ziehen, Überfahren und Tooltip wirken auch dort. Gemessen wird weiterhin die Karte (getBoundingClientRect zählt das
+ * Pseudo-Element nicht mit), also bleiben Tooltip, Abbild und Einfügemarke beim Ziehen wo sie waren.
+ * Im maximierten Fenster reicht sie so bis zur obersten Pixelreihe des Bildschirms. Im nicht maximierten Fenster
+ * meldet Electron die oberen Pixel vor der Seite als Rand zum Grössenziehen (HTTOP); dort bleibt das Fenster ziehbar
+ * wie bei Chrome. z-index -1 in der eigenen Stapelebene: über dem Hintergrund des Tabs, unter Name, Symbol und ×.
+ */
+.tab::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc((var(--tab-h) - var(--titlebar-h)) / 2);
+  bottom: calc((var(--tab-h) - var(--titlebar-h)) / 2);
+  z-index: -1;
 }
 .tab:hover {
   background: var(--tab-hover);
@@ -243,8 +263,9 @@ svg.i {
 }
 .drop-mark {
   position: absolute;
-  top: 8px;
-  bottom: 8px;
+  /* 3 px kürzer als die Karte, oben und unten. */
+  top: calc((var(--titlebar-h) - var(--tab-h)) / 2 + 3px);
+  bottom: calc((var(--titlebar-h) - var(--tab-h)) / 2 + 3px);
   width: 2px;
   border-radius: 2px;
   background: var(--accent);

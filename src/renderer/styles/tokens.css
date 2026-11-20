@@ -15,7 +15,8 @@
   --r-term: 10px;
 
   --titlebar-h: 44px;
-  --tab-h: 30px;
+  /* Ticket 26: 34 statt 30 px. Die Klickfläche reicht unsichtbar über die ganze Höhe der Titelleiste (app.css). */
+  --tab-h: 34px;
   --tab-w: 200px;
   --tab-min-w: 112px;
   --drag-min-w: 56px;
