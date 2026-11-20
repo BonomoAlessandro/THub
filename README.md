@@ -462,7 +462,7 @@ Für automatische Prüfungen der echten App (`npm start`, `electron .` oder die 
   - Grösse und Lage des Fensters werden nicht gespeichert, und ein zweiter Start holt es nicht nach vorne.
   - „Ordner im Explorer öffnen“ öffnet kein Explorer-Fenster; der Ordner steht nur in der Ausgabe.
   - Kopieren, Einfügen und „Pfad kopieren“ benutzen eine eigene Zwischenablage im Speicher statt der echten des Nutzers.
-  - Nicht abgefangen ist der Ordner-Dialog von Windows („Ordner wählen …“, „Ändern …“, „Standardordner ändern“): Er öffnet auch im Testmodus.
+  - Der Ordner-Dialog von Windows („Ordner wählen …“, „Ändern …“, „Standardordner ändern“) geht nicht auf: Als gewählter Ordner gilt `THUB_TEST_PICK_DIR`, ohne diese Variable ein Abbruch.
 
 ### Installer
 

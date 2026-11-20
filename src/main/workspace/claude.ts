@@ -1,7 +1,7 @@
 // Claude-Zuordnung (Ticket 10): welche Claude-Session in einem Tab läuft.
 // Hier stehen der Vertrag der Eingänge (Meldungen des Starters, Hook-Ereignisse von Claude Code) und die
 // reinen Regeln nach der Tabelle „Claude-Status: Zustandsautomat pro Tab“ der Spezifikation. Die Status-Zeilen
-// (arbeitet, wartet, ruht) stehen in `claudeStatus.ts`. Der Workspace-Kern wendet beides an.
+// (arbeitet, wartet, ruht) stehen in `tabStatus.ts`. Der Workspace-Kern wendet beides an.
 
 import * as path from 'node:path';
 import type { PersistedClaudeLink } from './schema';

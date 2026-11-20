@@ -245,7 +245,13 @@ function registerIpc(ws: Workspace): void {
   ipcMain.handle(IPC.workspaceClosedTabs, () => ws.closedTabs());
 
   // Ordner-Dialog von Windows. Er startet im Standardordner, ohne ihn im Benutzerordner.
+  // Im Testmodus geht kein Dialog auf dem Desktop auf: Die Wahl ist `THUB_TEST_PICK_DIR`, sonst abgebrochen.
   ipcMain.handle(IPC.dialogPickDirectory, async (_e, purpose: DirectoryPurpose) => {
+    if (TEST_HIDDEN) {
+      const picked = process.env.THUB_TEST_PICK_DIR || null;
+      console.log(`Testmodus: Ordner-Dialog (${purpose}) liefert ${picked ?? 'Abbruch'}.`);
+      return picked;
+    }
     if (!mainWindow) return null;
     const defaultCwd = ws.snapshot().settings.defaultCwd;
     const result = await dialog.showOpenDialog(mainWindow, {
