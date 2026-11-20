@@ -50,7 +50,9 @@ src/
   main/dataFolder.ts        Datenordner (THub bzw. THub-dev) und einmalige Übernahme aus dem alten Ordner
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
   main/shells.ts            Feste Shell-Liste (pwsh, powershell, cmd), bis die Shell-Erkennung kommt
-  main/theme.ts             Design hell/dunkel: folgt Windows (nativeTheme), zieht Fensterfarbe, Fensterknöpfe und Oberfläche nach
+  main/theme.ts             Design hell/dunkel nach der Wahl in den Einstellungen, bei „System“ nach Windows (nativeTheme);
+                            zieht Fensterfarbe, Fensterknöpfe und Oberfläche nach
+  main/devMenu.ts           Menü der Entwicklungsversion (Neu laden, DevTools), ohne Zoom
   preload/preload.ts        Stellt dem Renderer die API `window.thub` bereit
   renderer/                 React-Oberfläche: zeigt an und schickt Befehle, die Tab-Logik liegt im Kern
     main.tsx                Einstieg; übernimmt zuerst das Design (hell/dunkel), dann wird gezeichnet
@@ -58,6 +60,7 @@ src/
     App.tsx                 Fenster: Tab-Leiste und Terminal-Fläche, Tastenkürzel
     useWorkspace.ts         Schnappschuss und Ereignisse des Kerns
     shortcuts.ts            Zuordnung der Tastenkürzel (alles andere geht ans Terminal)
+    fontSize.ts             Ctrl + Mausrad in Schritte der Schriftgrösse umrechnen
     tabs/                   Titelleiste mit Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf, Zieh-Fläche,
                             Pfeil-Menü „Neues Terminal in …“
     popup/                  Menü und Dialog wie im Prototyp, Bedienung mit der Tastatur (menuKeys.ts)
@@ -69,8 +72,10 @@ src/
 test/
   support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
   workspace/                Kern-Tests (Teststelle 1)
-  renderer/                 Zuordnung der Tastenkürzel und der Tasten im Menü; Verlauf mit echtem xterm.js in Node
-  main/                     Hauptprozess ohne Electron: Design hell/dunkel, Datenordner und Übernahme, Umgebung der Shells
+  renderer/                 Zuordnung der Tastenkürzel (auch Schweizer Tastatur, Ziffernblock), Ctrl + Mausrad, Tasten im Menü;
+                            Verlauf mit echtem xterm.js in Node
+  main/                     Hauptprozess ohne Electron: Design hell/dunkel samt Wahl aus den Einstellungen, Entwicklermenü,
+                            Datenordner und Übernahme, Umgebung der Shells
 build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
 
@@ -101,14 +106,18 @@ Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung
 - Mehrere Terminals (PowerShell) als Tabs in einer Tab-Leiste oben; neue Tabs erscheinen rechts neben dem aktiven
 - Neue Tabs heissen wie ihr Ordner, im Benutzerordner wie der Benutzer, auf einem Laufwerk wie das Laufwerk (`D:`); bei Gleichstand mit „ 2“, „ 3“ usw. Der Name wird beim Anlegen festgelegt und ändert sich danach nicht von selbst; ein von Hand vergebener Name wird nie überschrieben. Aus Version 1 übernommene Tabs behalten ihre Namen.
 - Pfeil neben `+`: „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter der Pfad) und „Ordner wählen …“ (Ordner-Dialog von Windows). Zuletzt benutzt sind die Startordner neuer Tabs und der letzte Ordner eines Tabs beim Schliessen: höchstens acht, neueste zuerst, ohne Doppelte; angeboten werden nur Ordner, die es noch gibt. Bedienung auch mit Pfeiltasten, Enter und Escape.
-- Zahnrad: Einstellungen mit dem Standardordner. „Ändern …“ öffnet den Ordner-Dialog, „Zurücksetzen“ stellt auf den Benutzerordner zurück. `+` und `Ctrl+Shift+T` öffnen neue Terminals dort; offene Tabs bleiben, wo sie sind. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
+- Zahnrad: Einstellungen mit Standardordner, Design und Schriftgrösse; jede Änderung wirkt sofort. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
+  - Standardordner: „Ändern …“ öffnet den Ordner-Dialog, „Zurücksetzen“ stellt auf den Benutzerordner zurück. `+` und `Ctrl+Shift+T` öffnen neue Terminals dort; offene Tabs bleiben, wo sie sind.
+  - Design: System (Standard), Hell oder Dunkel. Die Wahl gilt für Oberfläche, Terminalfläche, Fensterknöpfe und die Dialoge von Windows; bei „System“ zieht ein Wechsel in Windows sofort mit.
+  - Schriftgrösse im Terminal: 8 bis 32, Standard 14.
+- Schriftgrösse für alle Tabs zugleich auch mit `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-` und `Ctrl` `0` (zurück auf 14). `+` und `-` werden am erzeugten Zeichen erkannt, nicht an der Tastenposition: Die Schweizer Tastatur (`+` auf Shift+1) und der Ziffernblock funktionieren, `Ctrl` `=` zählt wie `Ctrl` `+`. Die Terminals passen danach Spalten und Zeilen an, die Shells erfahren die neue Grösse. Der Zoom der ganzen Oberfläche ist abgeschaltet, `Ctrl` + Mausrad scrollt das Terminal nicht.
 - Bei vielen Tabs werden die Tabs schmaler und die Leiste scrollbar (auch mit dem Mausrad)
 - Tooltip mit Name, Ordner und Shell; Schliessen mit `×` oder der mittleren Maustaste
 - Tabs umbenennen (Doppelklick auf den Tab oder `F2`; Enter übernimmt, Escape bricht ab)
 - Beim Beenden werden alle Tabs gespeichert und beim nächsten Start in ihrem Verzeichnis neu gestartet; der zuletzt aktive Tab wird wieder angezeigt
 - Eigene Titelleiste ohne Windows-Rahmen: Die Tabs sitzen direkt in der Titelleiste, rechts die nativen Fensterknöpfe mit den Andock-Layouts von Windows 11. Die freie Fläche neben den Tabs (mindestens 56 px, auch bei vielen Tabs) verschiebt das Fenster, Doppelklick maximiert.
 - Der frühere Inhalt jedes Terminals steht nach einem Neustart ausgegraut über der neuen Eingabezeile, mit der Trennlinie „Wiederhergestellt · <Datum, Uhrzeit der Sicherung>“; er liegt im Scrollback, eine Mausrad-Bewegung nach oben zeigt ihn. Nach einem Absturz fehlen höchstens die letzten etwa 30 Sekunden.
-- Hell oder dunkel nach dem Design von Windows, auch die Terminalfläche und die Fensterknöpfe; ein Wechsel in Windows wirkt sofort
+- Hell oder dunkel, standardmässig nach dem Design von Windows, auch die Terminalfläche und die Fensterknöpfe; ein Wechsel in Windows wirkt sofort
 - Beendete Shell (z.B. `exit`): Hinweis im Terminal, beliebige Taste startet sie neu
 - Kopieren/Einfügen: Rechtsklick (mit Auswahl kopieren, sonst einfügen), `Ctrl+Shift+C` / `Ctrl+Shift+V`
 - Das Fenster öffnet mit gespeicherter Grösse, Position und Maximiert-Zustand; beim allerersten Start maximiert. Liegt es ausserhalb aller Bildschirme (etwa nach dem Abziehen eines Monitors), öffnet es zentriert auf dem Hauptbildschirm.
