@@ -86,6 +86,8 @@ Rechtsklick auf einen Tab öffnet sein Menü an der Stelle des Klicks, ohne den 
 - Standard-Shell ist PowerShell 7, sonst Windows PowerShell; in den Einstellungen wählbar.
 - Jeder Tab behält seine Shell, auch über einen Neustart. Fehlt sie beim Start (etwa nach einer Deinstallation), läuft der Tab mit der Standard-Shell und zeigt einen Hinweis über der ersten Zeile; gibt es sie wieder, startet er wieder mit ihr.
 - Profile laden wie gewohnt: die PowerShell-Profile, das AutoRun von cmd, bei Git Bash `/etc/profile` und `~/.bash_profile` usw. Ein eigener Prompt (etwa oh-my-posh) bleibt, wie er ist.
+- In PowerShell-Tabs ist die Befehlsvorschau von PSReadLine aus (die graue Vorschau beim Tippen und die Listenansicht), auch wenn das Profil sie einschaltet. Das Profil selbst bleibt unverändert; ausserhalb von THub gilt es wie bisher.
+- Die Shells laufen über dieselbe ConPTY wie im Windows Terminal (`OpenConsole.exe`, mit node-pty geliefert): Was eine Shell neu zeichnet, etwa beim Blättern im Befehlsverlauf mit den Pfeiltasten, kommt nach wenigen Millisekunden an statt erst nach rund 16.
 - WSL-Tabs starten mit `wsl.exe -d <Distribution> --cd <Ordner>`, ohne Integration.
 
 ### Nach einem Neustart
@@ -265,7 +267,7 @@ Ausführlich in der Spezifikation unter [„Shell-Integration“ → „Bekannte
 - Claude über den vollen Pfad oder per `npx` wird nicht erfasst.
 - Claude in WSL wird nicht erfasst; WSL-Tabs sind normale Terminals und zeigen nie „Prozesse laufen“.
 - Laufende Programme ausser Claude kommen nach einem Neustart nicht zurück, nur die Shell im zuletzt aktiven Ordner.
-- Der frühere Inhalt steht nach einem Neustart im Scrollback, nicht direkt über dem neuen Prompt: ConPTY leert beim Start den sichtbaren Bereich. Der Versuch mit `conptyInheritCursor` wurde verworfen (Ticket 21, `docs/spikes/verlauf-sichtbar.md`).
+- Der frühere Inhalt steht nach einem Neustart im Scrollback, nicht direkt über dem neuen Prompt: ConPTY gehört der sichtbare Bereich, die Shell beginnt oben links. Der Versuch mit `conptyInheritCursor` wurde verworfen (Ticket 21, `docs/spikes/verlauf-sichtbar.md`).
 - Aus der Shell oder von Claude geöffnete GUI-Programme halten den Tab blau, solange sie offen sind; ein Prompt, der länger als 1,5 Sekunden rechnet, kann kurz blau aufblitzen. Vollständig abgekoppelte Prozesse lassen sich keinem Tab zuordnen.
 - Eigenheiten des Ersatzes: `claude --% …` (Stop-Parsing in PowerShell) wirkt anders als direkt; ein Argument, das nur aus `-` besteht oder mit `-:` beginnt, lässt `powershell.exe -File` abbrechen; Zeilenumbrüche in Argumenten erreichen `claude.cmd` nicht; in Git Bash wandelt MSYS Prompts um, die mit `/` beginnen (wie bei einem direkten Aufruf); ein Pfad zum Starter mit `$` funktioniert in cmd nicht; im Constrained Language Mode scheitert der Starter. Jeder Start über den Ersatz kostet rund 0,5 Sekunden.
 
@@ -287,7 +289,7 @@ Ausführlich in der Spezifikation unter [„Shell-Integration“ → „Bekannte
 | App-Hülle | [Electron](https://www.electronjs.org/) 45 |
 | Oberfläche | [React](https://react.dev/) 19 mit TypeScript, normales CSS mit Design-Variablen (hell/dunkel) |
 | Terminal-Darstellung | [xterm.js](https://xtermjs.org/) 6 (`@xterm/xterm`, `addon-fit`, `addon-serialize`) |
-| Shell-Prozesse | [node-pty](https://github.com/microsoft/node-pty) über Windows ConPTY |
+| Shell-Prozesse | [node-pty](https://github.com/microsoft/node-pty) über ConPTY, und zwar die mitgelieferte (`conpty.dll`, `OpenConsole.exe` wie im Windows Terminal) |
 | Prozess-Sonde | [koffi](https://koffi.dev/) 3.3.8 (exakt gepinnt) |
 | Build | esbuild (Bündeln), TypeScript (nur Typecheck), electron-builder (NSIS-Installer) |
 | Tests | Vitest |
@@ -304,6 +306,8 @@ Nach aussen hängt der Kern nur an schmalen **Ports** ([`ports.ts`](src/main/wor
 | Speicher: Zustand und Verlauf pro Tab | [`store.ts`](src/main/store.ts): `state.json` entprellt und atomar, Verlauf unter `history\` |
 | Uhr, System (Ordner, Benutzer, Bildschirme, 8.3-Kurznamen) | [`system.ts`](src/main/system.ts) |
 | Prozess-Sonde: alle Prozesse in einer Abfrage, gezieltes Beenden | [`processProbe.ts`](src/main/processProbe.ts) |
+
+**ConPTY:** Das Terminal-Backend startet jede Shell über die mit node-pty gelieferte ConPTY (`useConptyDll`), dieselbe wie im Windows Terminal. Die ConPTY von Windows schickte, was eine Shell neu zeichnet, erst mit ihrem nächsten Bild, rund 16 ms nach der Taste; das machte das Blättern im Befehlsverlauf träge (Ticket 24, Messungen in der Spezifikation unter „Shell-Integration“). Lässt sich die mitgelieferte nicht starten, nimmt das Backend für den Rest der Sitzung die von Windows. Die mitgelieferte fragt beim Start nach den Merkmalen des Terminals (DA1), worauf xterm.js antwortet, und leert den sichtbaren Bereich nicht selbst: Die Oberfläche setzt den Cursor vor jedem Start oben links in einen leeren Bereich (`startArea`), das Bisherige bleibt im Scrollback.
 
 Die reinen Regeln liegen in eigenen Modulen neben dem Kern, alle ohne Electron:
 
@@ -347,7 +351,7 @@ Die Hook-Datei schreibt [`hookFile.ts`](src/main/hookFile.ts) bei jedem Start ne
 
 ### Shell-Integration und Starter
 
-Jede Windows-Shell startet mit der mitgelieferten Integration aus [`resources/shell/`](resources/shell) (im Paket als echte Dateien unter `resources\shell`). Sie lädt zuerst das normale Profil des Nutzers, meldet danach bei jedem Prompt den aktuellen Ordner, richtet den `claude`-Ersatz ein (nur mit `THUB_STARTER`) und führt bei Bedarf einmal einen Startbefehl aus.
+Jede Windows-Shell startet mit der mitgelieferten Integration aus [`resources/shell/`](resources/shell) (im Paket als echte Dateien unter `resources\shell`). Sie lädt zuerst das normale Profil des Nutzers, schaltet in PowerShell die Befehlsvorschau von PSReadLine ab (`PredictionSource None`, nur wenn PSReadLine die Option kennt), meldet danach bei jedem Prompt den aktuellen Ordner, richtet den `claude`-Ersatz ein (nur mit `THUB_STARTER`) und führt bei Bedarf einmal einen Startbefehl aus.
 
 | Shell | Start | Ordner-Meldung |
 |---|---|---|
@@ -422,10 +426,10 @@ npm run typecheck    # TypeScript prüfen
 **`npm test`** ([`vitest.config.mts`](vitest.config.mts)) läuft in Node, ohne Electron und ohne Fenster; lädt getesteter Code doch Electron, schlägt der Test laut fehl.
 
 - `test/workspace/`: der Workspace-Kern mit allen Ports nachgemacht ([`test/support/`](test/support)): ein Terminal-Backend, das Startaufträge aufzeichnet und Ausgabe und Prozessende einspeisen lässt, Speicher im Arbeitsspeicher, steuerbare Uhr, steuerbare Prozess-Sonde mit Prozessbäumen, nachgemachtes System. Die lokale Schnittstelle läuft echt auf `127.0.0.1`; die Tests schicken echte HTTP-Anfragen mit Meldungen des Starters und dokumentierten Hook-Nutzdaten. Ein Neustart ist ein neuer Kern auf demselben gespeicherten Zustand. Geprüft wird äusseres Verhalten: Tabs, Startaufträge, Ordner-Erkennung, Rückfrage, geschlossene Tabs, Claude-Zuordnung und Status, Einfrieren, Prozess-Regeln, Hinweise, offene Punkte, Wiederherstellen, Übernahme aus Version 1.
-- `test/renderer/`: reine Logik der Oberfläche ohne DOM: Zuordnung der Tastenkürzel (auch Schweizer Tastatur und Ziffernblock), Übersicht aus derselben Tabelle, `Ctrl` + Mausrad, Tasten im Menü, Suche und Wirkung jedes Befehls der Palette (auch mit dem Kern), gekürzte Pfade, Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node, Einfügestelle und Scrollen beim Ziehen; mit echtem xterm.js auch Rechtsklick mit und ohne Mausmeldung, `Ctrl` + Klick auf Links und Links ohne gestrichelte Linie.
+- `test/renderer/`: reine Logik der Oberfläche ohne DOM: Zuordnung der Tastenkürzel (auch Schweizer Tastatur und Ziffernblock), Übersicht aus derselben Tabelle, `Ctrl` + Mausrad, Tasten im Menü, Suche und Wirkung jedes Befehls der Palette (auch mit dem Kern), gekürzte Pfade, Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node (für die Startsequenzen beider ConPTYs), Einfügestelle und Scrollen beim Ziehen; mit echtem xterm.js auch Rechtsklick mit und ohne Mausmeldung, `Ctrl` + Klick auf Links und Links ohne gestrichelte Linie.
 - `test/main/`: Hauptprozess ohne Electron: Design hell/dunkel, Entwicklermenü, Datenordner und Übernahme, Umgebung der Shells, Shell-Erkennung mit nachgemachtem Rechner, Start der Shells mit Integration, Prüfung der Execution Policy, Auswertung der Prozess-Sonde, „Ordner im Explorer öffnen“, Links öffnen mit nachgemachtem `shell.openExternal`.
 
-**`npm run test:shells`** ([`test/shells/`](test/shells)) startet über das echte Terminal-Backend die echten Shells mit der echten Integration: PowerShell 7, Windows PowerShell, cmd und Git Bash; nicht installierte Shells werden übersprungen. Im PATH liegt ein nachgemachtes `claude` (als `.exe`, aus `ClaudeStub.cs` mit dem `csc.exe` von .NET Framework gebaut, und als `.cmd`), das Argumente und Umgebung in eine Datei schreibt. Geprüft werden: Gleichheit der Argumente mit einem direkten Aufruf, Ergänzen und Durchreichen, die Meldungen des Starters (auch nach `Ctrl+C` und bei Exit-Code ungleich 0), ohne THub und ohne `claude`, Ordner-Meldungen (auch mit Leerzeichen und Umlauten), Laden des Profils, Startbefehl genau einmal, Ende zu Ende mit dem echten Kern und der echten lokalen Schnittstelle (auch mit nachgemachter Gruppenrichtlinie `AllSigned`), Fortsetzen nach einem Neustart (auch ohne `THUB_STARTER`, mit verkürzter Frist für die Start-Meldung) sowie das Beenden aller Nachfahren beim Schliessen mit der echten Prozess-Sonde. Dazu die Einordnung des Starters allein (`classify.test.ts`, mit `THUB_STARTER_DRYRUN`).
+**`npm run test:shells`** ([`test/shells/`](test/shells)) startet über das echte Terminal-Backend die echten Shells mit der echten Integration: PowerShell 7, Windows PowerShell, cmd und Git Bash; nicht installierte Shells werden übersprungen. Im PATH liegt ein nachgemachtes `claude` (als `.exe`, aus `ClaudeStub.cs` mit dem `csc.exe` von .NET Framework gebaut, und als `.cmd`), das Argumente und Umgebung in eine Datei schreibt. Geprüft werden: Gleichheit der Argumente mit einem direkten Aufruf, Ergänzen und Durchreichen, die Meldungen des Starters (auch nach `Ctrl+C` und bei Exit-Code ungleich 0), ohne THub und ohne `claude`, Ordner-Meldungen (auch mit Leerzeichen und Umlauten), Laden des Profils, Startbefehl genau einmal, Ende zu Ende mit dem echten Kern und der echten lokalen Schnittstelle (auch mit nachgemachter Gruppenrichtlinie `AllSigned`), Fortsetzen nach einem Neustart (auch ohne `THUB_STARTER`, mit verkürzter Frist für die Start-Meldung) das Beenden aller Nachfahren beim Schliessen mit der echten Prozess-Sonde, die abgeschaltete Befehlsvorschau von PSReadLine sowie eine Zeitgrenze für die Pfeiltasten: Die Zeile aus dem Verlauf muss im Median nach weniger als 10 ms beim Terminal-Backend sein, und der Konsolen-Host jeder Shell ist `OpenConsole.exe`. Wie xterm.js in der App beantwortet das Testgerüst die Abfrage der Terminal-Merkmale (DA1). Dazu die Einordnung des Starters allein (`classify.test.ts`, mit `THUB_STARTER_DRYRUN`).
 
 **Warum kein Test eine laufende THub-Instanz anspricht,** auch wenn der Testlauf selbst in einem THub-Tab läuft:
 

@@ -5,6 +5,8 @@ Blockiert durch: –
 Herkunft: Abnahme von Hand (Ticket 19), „Verwendung von Tastaturpfeilen im Terminal“ und „Die Befehlspreview“ in [docs/abnahme.md](../abnahme.md)
 Spezifikation: „Shell-Integration“, „Terminal-Backend“
 
+> **Ergebnis (2026-11-20):** Ursache war die ConPTY von Windows: Sie schickt die neu gezeichnete Zeile erst mit ihrem nächsten Bild, rund 16 ms nach der Taste. THub startet die Shells jetzt über die mit node-pty gelieferte ConPTY (`OpenConsole.exe`, wie das Windows Terminal), die nach 1 bis 5 ms liefert. In der App kommt die Zeile im Renderer nach 3,2 statt 14,3 ms an und ist nach 11,5 statt 17,2 ms gezeichnet (Median). Kern, IPC und xterm.js waren nicht die Ursache. Die Befehlsvorschau schaltet die Integration nach dem Profil ab. Zahlen und Entscheidungen: Spezifikation, „Shell-Integration“ → „Präzisierungen aus der Umsetzung (Ticket 24)“.
+
 ## Was gebaut wird
 
 - **Flüssiges Blättern im Befehlsverlauf.** In einem PowerShell-7-Tab fühlt sich das Blättern mit den Pfeiltasten durch frühere Befehle träge an, im Windows Terminal mit demselben Profil dagegen flüssig. Die Verzögerung entsteht also in THub. Ursache messen und beheben. Mögliche Stellen:
