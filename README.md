@@ -42,6 +42,7 @@ src/
     folders.ts              Tab-Namen nach dem Ordner und Liste der zuletzt benutzten Ordner
     windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
     claude.ts               Claude-Zuordnung pro Tab: Vertrag von Starter und Hooks, Regeln
+    shellIds.ts             Shell-Kennungen (pwsh, powershell, cmd, gitbash, wsl:<Distribution>) und Anzeigenamen
   main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
   main/hookFile.ts          Hook-Datei für Claude Code (claude-hooks.json im Datenordner)
   main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
@@ -49,7 +50,7 @@ src/
   main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json; Verlauf pro Tab unter history\
   main/dataFolder.ts        Datenordner (THub bzw. THub-dev) und einmalige Übernahme aus dem alten Ordner
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
-  main/shells.ts            Feste Shell-Liste (pwsh, powershell, cmd), bis die Shell-Erkennung kommt
+  main/shells.ts            Shell-Erkennung: PowerShell 7 (auch aus dem Store), Windows PowerShell, cmd, Git Bash, WSL
   main/theme.ts             Design hell/dunkel: folgt Windows (nativeTheme), zieht Fensterfarbe, Fensterknöpfe und Oberfläche nach
   preload/preload.ts        Stellt dem Renderer die API `window.thub` bereit
   renderer/                 React-Oberfläche: zeigt an und schickt Befehle, die Tab-Logik liegt im Kern
@@ -59,7 +60,7 @@ src/
     useWorkspace.ts         Schnappschuss und Ereignisse des Kerns
     shortcuts.ts            Zuordnung der Tastenkürzel (alles andere geht ans Terminal)
     tabs/                   Titelleiste mit Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf, Zieh-Fläche,
-                            Pfeil-Menü „Neues Terminal in …“
+                            Pfeil-Menü mit den Shells und „Neues Terminal in …“
     popup/                  Menü und Dialog wie im Prototyp, Bedienung mit der Tastatur (menuKeys.ts)
     settings/               Einstellungsdialog
     terminal/               Ein xterm.js pro Tab, inaktive ausgeblendet; meldet „Ansicht bereit“;
@@ -70,7 +71,8 @@ test/
   support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
   workspace/                Kern-Tests (Teststelle 1)
   renderer/                 Zuordnung der Tastenkürzel und der Tasten im Menü; Verlauf mit echtem xterm.js in Node
-  main/                     Hauptprozess ohne Electron: Design hell/dunkel, Datenordner und Übernahme, Umgebung der Shells
+  main/                     Hauptprozess ohne Electron: Design hell/dunkel, Datenordner und Übernahme, Umgebung der Shells,
+                            Shell-Erkennung mit nachgemachtem Rechner
 build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
 
@@ -83,9 +85,9 @@ Gespeichert wird in `%APPDATA%\THub\state.json`, im Schema Version 2. Eine Datei
 ```json
 {
   "version": 2,
-  "settings": { "defaultCwd": "", "theme": "system", "fontSize": 14, "notifications": true },
+  "settings": { "defaultCwd": "", "defaultShellId": "pwsh", "theme": "system", "fontSize": 14, "notifications": true },
   "tabs": [
-    { "id": "…", "name": "Mein Projekt", "nameIsManual": true, "shellId": "powershell", "startCwd": "C:\\…" }
+    { "id": "…", "name": "Mein Projekt", "nameIsManual": true, "shellId": "gitbash", "startCwd": "C:\\…" }
   ],
   "activeTabId": "…",
   "recentDirs": ["C:\\…\\Mein Projekt"],
@@ -98,10 +100,11 @@ Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung
 
 ## Was das Grundgerüst kann
 
-- Mehrere Terminals (PowerShell) als Tabs in einer Tab-Leiste oben; neue Tabs erscheinen rechts neben dem aktiven
+- Mehrere Terminals als Tabs in einer Tab-Leiste oben; neue Tabs erscheinen rechts neben dem aktiven
+- THub erkennt die Shells selbst: PowerShell 7 (auch die Store-Version), Windows PowerShell, cmd („Eingabeaufforderung“), Git Bash (Standardort oder laut Registry) und jede WSL-Distribution einzeln, ohne die internen von Docker Desktop. Standard-Shell ist PowerShell 7, sonst Windows PowerShell; in den Einstellungen wählbar. Jeder Tab behält seine Shell, auch über einen Neustart. Fehlt sie beim Wiederherstellen (etwa nach einer Deinstallation), startet der Tab mit der Standard-Shell und zeigt einen Hinweis über der ersten Zeile; seine Shell behält er, sobald es sie wieder gibt, startet er wieder mit ihr. WSL-Tabs starten mit `wsl.exe -d <Distribution> --cd <Ordner>`.
 - Neue Tabs heissen wie ihr Ordner, im Benutzerordner wie der Benutzer, auf einem Laufwerk wie das Laufwerk (`D:`); bei Gleichstand mit „ 2“, „ 3“ usw. Der Name wird beim Anlegen festgelegt und ändert sich danach nicht von selbst; ein von Hand vergebener Name wird nie überschrieben. Aus Version 1 übernommene Tabs behalten ihre Namen.
-- Pfeil neben `+`: „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter der Pfad) und „Ordner wählen …“ (Ordner-Dialog von Windows). Zuletzt benutzt sind die Startordner neuer Tabs und der letzte Ordner eines Tabs beim Schliessen: höchstens acht, neueste zuerst, ohne Doppelte; angeboten werden nur Ordner, die es noch gibt. Bedienung auch mit Pfeiltasten, Enter und Escape.
-- Zahnrad: Einstellungen mit dem Standardordner. „Ändern …“ öffnet den Ordner-Dialog, „Zurücksetzen“ stellt auf den Benutzerordner zurück. `+` und `Ctrl+Shift+T` öffnen neue Terminals dort; offene Tabs bleiben, wo sie sind. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
+- Pfeil neben `+` („Shell oder Ordner wählen“): zuerst die erkannten Shells, die Standard-Shell mit dem Etikett „Standard“; ein Klick öffnet einen Tab mit dieser Shell im Standardordner. Darunter „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter der Pfad) und „Ordner wählen …“ (Ordner-Dialog von Windows). Zuletzt benutzt sind die Startordner neuer Tabs und der letzte Ordner eines Tabs beim Schliessen: höchstens acht, neueste zuerst, ohne Doppelte; angeboten werden nur Ordner, die es noch gibt. Bedienung auch mit Pfeiltasten, Enter und Escape.
+- Zahnrad: Einstellungen mit Standardordner und Standard-Shell. „Ändern …“ öffnet den Ordner-Dialog, „Zurücksetzen“ stellt auf den Benutzerordner zurück. `+` und `Ctrl+Shift+T` öffnen neue Terminals dort und mit der Standard-Shell; offene Tabs bleiben, wie sie sind. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
 - Bei vielen Tabs werden die Tabs schmaler und die Leiste scrollbar (auch mit dem Mausrad)
 - Tooltip mit Name, Ordner und Shell; Schliessen mit `×` oder der mittleren Maustaste
 - Tabs umbenennen (Doppelklick auf den Tab oder `F2`; Enter übernimmt, Escape bricht ab)
@@ -140,7 +143,6 @@ Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem
 ## Offene Punkte (zum Ausspezifizieren)
 
 - **Was heisst „wiederherstellen“?** Aktuell: neue Shell im *Startverzeichnis* der Session, darüber der frühere Inhalt ausgegraut. Nicht erhalten bleiben: laufende Programme und ein später per `cd` gewechseltes Verzeichnis.
-- **Shell-Auswahl:** fest `powershell.exe` (in `state.json` änderbar). PowerShell 7, cmd, Git Bash, WSL? Pro Session wählbar?
 - **Schliessen:** ohne Rückfrage. Bestätigung, wenn noch ein Programm läuft?
 - **Darstellung:** Sidebar vs. Tabs oben, Reihenfolge per Drag & Drop, Gruppen, Farben/Icons, Theme, Schriftgrösse
 - **Fenster:** mehrere Fenster, Split-Ansicht (mehrere Terminals nebeneinander)
