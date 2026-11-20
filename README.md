@@ -134,7 +134,7 @@ Wartet Claude in einem Tab, den du gerade nicht siehst, auf dich oder wird dort 
 
 Braucht Claude für den nächsten Schritt eine Entscheidung, Antwort oder Handlung von dir, schreibt es sie am Ende der Antwort in einen Abschnitt „Offene Punkte“, und THub zeigt sie unten rechts als eigenen Hinweis an: Aufzählungssymbol, Tab-Name, „Offene Punkte (n)“ und höchstens vier Punkte zu je höchstens zwei Zeilen (der ganze Text im Tooltip), darunter „+ k weitere“. Das ist die Ausnahme: Die meisten Antworten haben keine offenen Punkte, und eine blosse Frage oder ein Angebot am Ende („Soll ich auch noch …?“) ergibt keinen Hinweis.
 
-- Der Hinweis bleibt, bis du ihn mit `×` schliesst, auch wenn du den Tab anzeigst, und er erscheint auch für den Tab, den du gerade siehst. Ein Klick zeigt den Tab an.
+- Ein Klick auf den Hinweis zeigt den Tab an und schliesst den Hinweis; `×` schliesst ihn, ohne den Tab anzuzeigen. Wechselst du nur zum Tab, bleibt er stehen, und er erscheint auch für den Tab, den du gerade siehst.
 - Pro Tab höchstens einer: Eine neue Antwort mit offenen Punkten ersetzt ihn, eine ohne lässt ihn stehen. Er ersetzt den „Fertig“-Hinweis desselben Tabs (der grüne Punkt am Tab bleibt); kommt danach eine Antwort ohne Punkte, erscheint „fertig“ daneben. Neben „wartet“ kann er ebenfalls stehen.
 - Nicht geschlossene Hinweise erscheinen nach einem Neustart wieder. Ein geschlossener Tab nimmt seinen Hinweis mit, auch beim Wiederöffnen kommt er nicht zurück. Endet Claude im Tab, bleibt er.
 - Abschaltbar in den Einstellungen („Offene Punkte aus Claudes Antworten anzeigen“), unabhängig von „Hinweise im Fenster“. Ausgeschaltet verschwinden auch die stehenden Hinweise, und THub gibt Claude die Anweisung nicht mehr mit.

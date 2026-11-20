@@ -133,7 +133,7 @@ describe('Offene Punkte aus Claudes Antworten', () => {
     });
   });
 
-  describe('der Hinweis bleibt, bis er mit × geschlossen wird', () => {
+  describe('der Hinweis bleibt, bis er mit × oder einem Klick geschlossen wird', () => {
     it('erscheint auch für den sichtbaren Tab; der Tab ist dann nicht „fertig“', async () => {
       const { h, a } = await startScene();
       h.workspace.activateTab(a.id);
@@ -195,6 +195,72 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       expect(a.pointsToast()).toBeUndefined();
       expect(b.pointsToast()).toBeDefined();
       expect(h.storedTab(a.id)).not.toHaveProperty('openPoints');
+    });
+
+    it('× zeigt den Tab nicht an', async () => {
+      const { h, shownId, a } = await startScene();
+      await a.answer(WITH_SECTION);
+
+      h.workspace.dismissToast(a.pointsToast()!.id);
+
+      expect(h.activeTab()?.id).toBe(shownId);
+      expect(a.status()).toBe('finished');
+    });
+
+    it('ein Klick zeigt den Tab an und nimmt den Hinweis weg, auch im gespeicherten Zustand; andere Hinweise bleiben', async () => {
+      const { h, a, b } = await startScene();
+      await a.answer(WITH_SECTION);
+      await b.answer(WITH_OTHER_SECTION);
+      expect(h.storedTab(a.id)?.openPoints).toEqual(SECTION_POINTS);
+
+      h.workspace.openToast(a.pointsToast()!.id);
+
+      expect(h.activeTab()?.id).toBe(a.id);
+      expect(a.status()).toBe('idle');
+      expect(a.pointsToast()).toBeUndefined();
+      expect(b.pointsToast()?.points).toEqual(OTHER_POINTS);
+      expect(h.eventsOfType('toasts').at(-1)?.toasts.map((t) => t.tabId)).toEqual([b.id]);
+      expect(h.storedTab(a.id)).not.toHaveProperty('openPoints');
+      await h.restart();
+      expect(toasts(h).map((t) => t.tabId)).toEqual([b.id]);
+    });
+
+    it('ein Klick auf den Hinweis des sichtbaren Tabs nimmt ihn ebenso weg', async () => {
+      const { h, a } = await startScene();
+      h.workspace.activateTab(a.id);
+      await a.answer(WITH_SECTION);
+
+      h.workspace.openToast(a.pointsToast()!.id);
+
+      expect(h.activeTab()?.id).toBe(a.id);
+      expect(a.pointsToast()).toBeUndefined();
+      expect(h.storedTab(a.id)).not.toHaveProperty('openPoints');
+    });
+
+    it('ein Klick auf „wartet“ desselben Tabs zeigt den Tab nur an: die offenen Punkte bleiben', async () => {
+      const { h, a } = await startScene();
+      await a.answer(WITH_SECTION);
+      await a.askPermission();
+
+      h.workspace.openToast(a.toast()!.id);
+
+      expect(h.activeTab()?.id).toBe(a.id);
+      expect(a.toasts().map((t) => t.kind)).toEqual(['openPoints']);
+      expect(h.storedTab(a.id)?.openPoints).toEqual(SECTION_POINTS);
+    });
+
+    it('ein Klick auf einen Hinweis, der nicht mehr steht, ändert nichts', async () => {
+      const { h, shownId, a } = await startScene();
+      await a.answer(WITH_SECTION);
+      const replaced = a.pointsToast()!;
+      await a.answerAgain(WITH_OTHER_SECTION);
+
+      h.workspace.openToast(replaced.id);
+      h.workspace.openToast('gibt-es-nicht');
+
+      expect(h.activeTab()?.id).toBe(shownId);
+      expect(a.pointsToast()?.points).toEqual(OTHER_POINTS);
+      expect(h.storedTab(a.id)?.openPoints).toEqual(OTHER_POINTS);
     });
 
     it('bleibt, wenn Claude im Tab endet', async () => {
@@ -292,12 +358,15 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       expect(toasts(h)).toEqual([{ id: expect.any(String), tabId: a.id, kind: 'openPoints', points: SECTION_POINTS }]);
     });
 
-    it('× nach dem Neustart: Er ist auch beim nächsten Start weg', async () => {
+    it.each([
+      ['×', (h: TestWorkspace, toastId: string) => h.workspace.dismissToast(toastId)],
+      ['Klick', (h: TestWorkspace, toastId: string) => h.workspace.openToast(toastId)],
+    ])('%s nach dem Neustart: Er ist auch beim nächsten Start weg', async (_way, close) => {
       const { h, a } = await startScene();
       await a.answer(WITH_SECTION);
       await h.restart();
 
-      h.workspace.dismissToast(toasts(h)[0].id);
+      close(h, toasts(h)[0].id);
       await h.restart();
 
       expect(toasts(h)).toEqual([]);
