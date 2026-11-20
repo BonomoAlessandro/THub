@@ -22,8 +22,9 @@ afterAll(() => {
 });
 
 function classify(tail: string): any {
+  // Ohne geerbte THUB_* und ohne PSModulePath (laeuft der Test aus PowerShell 7, stehen dort dessen Module).
   const env: Record<string, string> = {};
-  for (const [k, v] of Object.entries(process.env)) if (v !== undefined && !/^THUB_/i.test(k)) env[k] = v;
+  for (const [k, v] of Object.entries(process.env)) if (v !== undefined && !/^(THUB_|PSMODULEPATH$)/i.test(k)) env[k] = v;
   delete env.Path;
   env.PATH = `${dir};${path.dirname(POWERSHELL)}`;
   env.THUB_STARTER_DRYRUN = '1';
@@ -73,6 +74,31 @@ describe('Einordnung', () => {
     ['-c', { case: 'withoutId', id: null }],
     ['--continue "noch was"', { case: 'withoutId', id: null }],
     ['--from-pr 12', { case: 'withoutId', id: null }],
+    ['--from-pr', { case: 'withoutId', id: null }],
+    ['--teleport', { case: 'withoutId', id: null }],
+    ['--teleport abc', { case: 'withoutId', id: null }],
+    // Session laeuft nicht in diesem Terminal: durchreichen
+    ['--bg', { pass: true }],
+    ['--background "fix it"', { pass: true }],
+    ['--model opus --bg', { pass: true }],
+    ['--desktop', { pass: true }],
+    ['--cloud', { pass: true }],
+    ['--cloud "fix the bug"', { pass: true }],
+    // --fork-session mit --resume: Die neue Session bekommt eine eigene Kennung
+    ['--fork-session --resume x', { case: 'withoutId', id: null }],
+    ['-r x --fork-session', { case: 'withoutId', id: null }],
+    ['--resume=x --fork-session', { case: 'withoutId', id: null }],
+    ['--resume --fork-session', { case: 'withoutId', id: null }],
+    ['-c --fork-session', { case: 'withoutId', id: null }],
+    ['--fork-session', { case: 'new', id: null }],
+    // --session-id bestimmt die Kennung der laufenden Session, auch beim Abzweigen
+    ['--resume x --fork-session --session-id abc', { case: 'withId', id: 'abc' }],
+    ['--session-id abc --resume x', { case: 'withId', id: 'abc' }],
+    ['--resume x --session-id abc', { case: 'withId', id: 'abc' }],
+    // --remote-control aendert den Fall nicht
+    ['--remote-control', { case: 'new', id: null }],
+    ['--remote-control -c', { case: 'withoutId', id: null }],
+    ['--remote-control name --resume x', { case: 'withId', id: 'x' }],
     ['--settings s.json', { case: 'new', settings: true }],
     ['--settings=s.json', { case: 'new', settings: true }],
     ['--model --settings', { case: 'new', settings: false }],

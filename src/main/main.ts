@@ -2,6 +2,7 @@ import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme } fro
 import * as path from 'node:path';
 import { IPC, type DirectoryPurpose, type WorkspaceCommand } from '../shared/types';
 import { dataFolders, takeOverLegacyData, type DataFolders } from './dataFolder';
+import { checkExecutionPolicy, type ExecutionPolicyCheck } from './executionPolicy';
 import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
 import { LocalApiServer } from './localApi';
 import { PtyManager } from './ptyManager';
@@ -32,8 +33,11 @@ let shutdown: 'running' | 'stopping' | 'done' = 'running';
 if (app.requestSingleInstanceLock()) {
   // Die Shell-Erkennung läuft sofort an, parallel zum Start von Electron und der lokalen Schnittstelle.
   const shells = detectShells();
+  // Ob eine Gruppenrichtlinie den claude-Starter blockiert, prüft ein verstecktes powershell.exe, ebenfalls
+  // parallel. Darauf wartet der Start nicht: Die Shells fragen das Ergebnis erst ab, wenn sie starten.
+  const executionPolicy = checkExecutionPolicy();
   app.on('second-instance', bringWindowToFront);
-  app.whenReady().then(() => start(shells));
+  app.whenReady().then(() => start(shells, executionPolicy));
   app.on('before-quit', onBeforeQuit);
   app.on('window-all-closed', () => app.quit());
 } else {
@@ -43,8 +47,9 @@ if (app.requestSingleInstanceLock()) {
 /**
  * Start der einzigen Instanz: lokale Schnittstelle und Hook-Datei, Zustand laden, Fenster öffnen.
  * @param detectedShells die laufende Shell-Erkennung
+ * @param executionPolicy die laufende Prüfung, ob die Shells den claude-Ersatz bekommen
  */
-async function start(detectedShells: Promise<ShellInfo[]>): Promise<void> {
+async function start(detectedShells: Promise<ShellInfo[]>, executionPolicy: ExecutionPolicyCheck): Promise<void> {
   // Im Dev-Modus ein Menü mit DevTools und Neu laden, aber ohne Zoom; die installierte App hat keines.
   Menu.setApplicationMenu(app.isPackaged ? null : Menu.buildFromTemplate(DEV_MENU));
 
@@ -55,9 +60,11 @@ async function start(detectedShells: Promise<ShellInfo[]>): Promise<void> {
   console.log(`Erkannte Shells: ${shells.map((s) => `${s.name} (${s.file})`).join(', ')}`);
   workspace = createWorkspace(
     {
-      // Die Integrationsdateien liegen im Paket ausserhalb des asar-Archivs (extraResources).
+      // Die Integrationsdateien liegen im Paket ausserhalb des asar-Archivs (extraResources). Den claude-Ersatz
+      // bekommen die Shells nur, wenn keine Gruppenrichtlinie den Starter blockiert.
       terminal: new PtyManager({
         shellDir: shellIntegrationDir(app.isPackaged, process.resourcesPath, app.getAppPath()),
+        claudeStarter: () => executionPolicy.starterAllowed(),
       }),
       storage: new StateStore(path.join(app.getPath('userData'), STATE_FILE_NAME)),
       clock: systemClock,

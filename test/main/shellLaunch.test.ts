@@ -5,8 +5,8 @@ import { shellIntegrationDir, shellLaunch } from '../../src/main/shellLaunch';
 import type { StartOrder } from '../../src/main/workspace/ports';
 import { makeTempDir } from '../support/tempDir';
 
-// Wie das Terminal-Backend die Shells mit der mitgelieferten Integration startet. Ob die Shells damit
-// wirklich laufen, prüft Teststelle 2 (npm run test:shells) mit echten Shells.
+// Wie das Terminal-Backend die Shells mit der mitgelieferten Integration und dem claude-Ersatz startet. Ob die
+// Shells damit wirklich laufen, prüft Teststelle 2 (npm run test:shells) mit echten Shells.
 
 const REPO = path.resolve(__dirname, '..', '..');
 const SHIPPED = path.join(REPO, 'resources', 'shell');
@@ -37,7 +37,7 @@ describe('Start der Shells mit Integration', () => {
       expect(launch.file).toBe('pwsh.exe');
       expect(launch.args).toEqual(['-NoLogo', '-NoProfile', '-NoExit', '-EncodedCommand', expect.any(String)]);
       expect(decodedCommand(launch.args)).toBe(fs.readFileSync(path.join(shellDir, 'integration.ps1'), 'utf8'));
-      expect(launch.env).toEqual(ENV);
+      expect(launch.env).toEqual({ ...ENV, THUB_STARTER: path.join(shellDir, 'starter.ps1') });
     });
 
     it('gibt den Startbefehl über THUB_START_CMD mit', () => {
@@ -47,7 +47,11 @@ describe('Start der Shells mit Integration', () => {
         shellDir,
       );
 
-      expect(launch.env).toEqual({ ...ENV, THUB_START_CMD: "Write-Host 'äöü'" });
+      expect(launch.env).toEqual({
+        ...ENV,
+        THUB_STARTER: path.join(shellDir, 'starter.ps1'),
+        THUB_START_CMD: "Write-Host 'äöü'",
+      });
     });
   });
 
@@ -56,7 +60,7 @@ describe('Start der Shells mit Integration', () => {
       const launch = shellLaunch(order({ file: 'cmd.exe', integration: 'cmd' }), ENV, shellDir);
 
       expect(launch.args).toBe(`/s /k ""${path.join(shellDir, 'integration.cmd')}""`);
-      expect(launch.env).toEqual(ENV);
+      expect(launch.env).toEqual({ ...ENV, THUB_STARTER: path.join(shellDir, 'starter.ps1') });
     });
 
     it('hängt den Startbefehl in der /k-Zeile hinter die Integration, nicht als Variable', () => {
@@ -73,7 +77,8 @@ describe('Start der Shells mit Integration', () => {
 
       expect(launch.file).toBe('C:\\Git\\bin\\bash.exe');
       expect(launch.args).toEqual(['--rcfile', path.join(shellDir, 'integration.bash').replace(/\\/g, '/'), '-i']);
-      expect(launch.env).toEqual(ENV);
+      // Der Starter bleibt ein Windows-Pfad: Ihn bekommt powershell.exe, nicht Bash.
+      expect(launch.env).toEqual({ ...ENV, THUB_STARTER: path.join(shellDir, 'starter.ps1') });
     });
 
     it('gibt den Startbefehl über THUB_START_CMD mit', () => {
@@ -89,6 +94,50 @@ describe('Start der Shells mit Integration', () => {
     for (const integration of ['powershell', 'cmd', 'bash'] as const) {
       expect(shellLaunch(order({ integration }), env, shellDir).env).not.toHaveProperty('THUB_START_CMD');
     }
+  });
+
+  describe('claude-Ersatz (THUB_STARTER)', () => {
+    it.each(['powershell', 'cmd', 'bash'] as const)('%s: voller Pfad zum mitgelieferten Starter', (integration) => {
+      const launch = shellLaunch(order({ integration }), ENV, shellDir, { claudeStarter: true });
+
+      expect(launch.env.THUB_STARTER).toBe(path.join(shellDir, 'starter.ps1'));
+      expect(fs.existsSync(launch.env.THUB_STARTER)).toBe(true);
+    });
+
+    it.each(['powershell', 'cmd', 'bash'] as const)('%s: abgeschaltet ohne THUB_STARTER', (integration) => {
+      const launch = shellLaunch(order({ integration }), ENV, shellDir, { claudeStarter: false });
+
+      expect(launch.env).not.toHaveProperty('THUB_STARTER');
+    });
+
+    it('setzt das Backend selbst; eine Vorgabe aus Umgebung oder Startauftrag zählt nicht', () => {
+      const env = { ...ENV, THUB_STARTER: 'C:\\fremd\\starter.ps1' };
+
+      expect(shellLaunch(order({ integration: 'cmd' }), env, shellDir).env.THUB_STARTER).toBe(
+        path.join(shellDir, 'starter.ps1'),
+      );
+      expect(shellLaunch(order({ integration: 'cmd' }), env, shellDir, { claudeStarter: false }).env).not.toHaveProperty(
+        'THUB_STARTER',
+      );
+    });
+
+    it('fehlt bei einer Shell ohne Integration (WSL)', () => {
+      expect(shellLaunch(order({ file: 'wsl.exe' }), ENV, shellDir).env).not.toHaveProperty('THUB_STARTER');
+    });
+
+    it('fehlt, wenn starter.ps1 fehlt; die Shell startet trotzdem mit Integration', () => {
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      try {
+        fs.rmSync(path.join(shellDir, 'starter.ps1'));
+
+        const launch = shellLaunch(order({ file: 'cmd.exe', integration: 'cmd' }), ENV, shellDir);
+
+        expect(launch.args).toBe(`/s /k ""${path.join(shellDir, 'integration.cmd')}""`);
+        expect(launch.env).not.toHaveProperty('THUB_STARTER');
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
   });
 
   it('startet eine Shell ohne Integration (WSL) unverändert und ohne Startbefehl', () => {

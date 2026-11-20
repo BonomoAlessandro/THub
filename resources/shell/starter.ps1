@@ -58,6 +58,8 @@ $script:Subcommands = @(
     'plugin', 'plugins', 'purge', 'respawn', 'rm', 'setup-token', 'stop', 'kill', 'ultrareview',
     'update', 'upgrade'
 )
+# Optionen, mit denen die Session nicht in diesem Terminal laeuft: durchreichen wie -p
+$script:PassThroughOptions = @('--print', '--version', '--help', '--bg', '--background', '--desktop', '--cloud')
 
 # --- Befehlszeile zerlegen ---------------------------------------------------------------------
 
@@ -192,10 +194,16 @@ function Find-Claude {
 
 # --- Schritt 2: einordnen ------------------------------------------------------------------------
 
+# Faelle (docs/specs/termhub-v2.md, "Shell-Integration", Punkt 2):
+#   withId     --session-id <x> (bestimmt die Kennung, auch mit --fork-session), sonst --resume <x> / -r <x>
+#   withoutId  --resume <x> mit --fork-session (die neue Session bekommt eine eigene Kennung), --continue / -c,
+#              --resume ohne Wert, --from-pr, --teleport
+#   new        sonst; --remote-control aendert den Fall nicht
 function Get-Classification([string[]]$Argv) {
     $c = @{
         PassThrough = $false; Case = 'new'; GivenId = $null
         HasSettings = $false; HasName = $false; Continue = $false; ResumePick = $false
+        ResumeId = $null; SessionId = $null; Fork = $false
     }
     $first = $null
     $i = 0
@@ -231,21 +239,20 @@ function Get-Classification([string[]]$Argv) {
             continue
         }
 
+        if ($script:PassThroughOptions -ccontains $opt) { $c.PassThrough = $true }
         switch -CaseSensitive ($opt) {
-            '--print' { $c.PassThrough = $true }
-            '--version' { $c.PassThrough = $true }
-            '--help' { $c.PassThrough = $true }
             '--continue' { $c.Continue = $true }
             '--settings' { $c.HasSettings = $true }
             '--name' { $c.HasName = $true }
             '--resume' {
-                if ($inline -ne $null -and $inline -ne '') { $c.GivenId = $inline }
-                elseif ($inline -eq $null -and $nextIsValue) { $c.GivenId = $next }
+                if ($inline -ne $null -and $inline -ne '') { $c.ResumeId = $inline }
+                elseif ($inline -eq $null -and $nextIsValue) { $c.ResumeId = $next }
                 else { $c.ResumePick = $true }
             }
             '--session-id' {
-                if ($inline -ne $null) { $c.GivenId = $inline } elseif ($next -ne $null) { $c.GivenId = $next }
+                if ($inline -ne $null) { $c.SessionId = $inline } elseif ($next -ne $null) { $c.SessionId = $next }
             }
+            '--fork-session' { $c.Fork = $true }
             # setzen eine bestehende Session fort, deren Kennung der Starter nicht kennt
             '--from-pr' { $c.ResumePick = $true }
             '--teleport' { $c.ResumePick = $true }
@@ -264,8 +271,9 @@ function Get-Classification([string[]]$Argv) {
     }
     if ($first -ne $null -and $script:Subcommands -ccontains $first) { $c.PassThrough = $true }
 
-    if ($c.GivenId -ne $null) { $c.Case = 'withId' }
-    elseif ($c.Continue -or $c.ResumePick) { $c.Case = 'withoutId' }
+    if ($c.SessionId -ne $null) { $c.Case = 'withId'; $c.GivenId = $c.SessionId }
+    elseif ($c.ResumeId -ne $null -and -not $c.Fork) { $c.Case = 'withId'; $c.GivenId = $c.ResumeId }
+    elseif ($c.ResumeId -ne $null -or $c.Continue -or $c.ResumePick) { $c.Case = 'withoutId' }
     else { $c.Case = 'new' }
     return $c
 }

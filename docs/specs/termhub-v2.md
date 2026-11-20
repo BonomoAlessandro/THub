@@ -210,8 +210,8 @@ Der Starter arbeitet in diesen Schritten:
    - **Durchreichen:** Der Aufruf geht unverändert und ohne Anfrage an THub an `claude`, wenn `-p`/`--print`, `-v`/`--version` oder `-h`/`--help` vorkommt oder wenn das erste Argument, das kein Optionswert ist und nicht mit `-` beginnt, ein bekannter Unterbefehl ist. Bekannte Unterbefehle, Stand Claude Code 2.1.328 (bei Updates nachziehen): `agents`, `attach`, `auth`, `auto-mode`, `doctor`, `gateway`, `import`, `install`, `logs`, `mcp`, `plugin`, `plugins`, `purge`, `respawn`, `rm`, `setup-token`, `stop`, `kill`, `ultrareview`, `update`, `upgrade`. `--bg`/`--background`, `--desktop` und `--cloud` werden ebenfalls durchgereicht, weil die Session dann nicht in diesem Terminal läuft. Optionswerte werden übersprungen wie in commander (die Bibliothek, mit der `claude` seine Optionen liest): `<x>` genau ein Wert, `<x...>` alle Werte bis zur nächsten Option, `[x]` der nächste Wert, falls er nicht mit `-` beginnt; dazu `--opt=wert`, `-rWERT` und gebündelte Kurzformen. Folge: `claude --debug mcp list` ist interaktiv, weil `--debug` den Wert `mcp` verbraucht.
    - Sonst ist es ein interaktiver Aufruf, und zwar einer von drei **Fällen**:
      - **neu:** keine der Optionen `--resume`/`-r`, `--continue`/`-c`, `--session-id`;
-     - **mit Kennung:** `--resume <Kennung>` / `-r <Kennung>` oder `--session-id <Kennung>`;
-     - **ohne Kennung:** `--continue`/`-c`, `--resume` ohne Wert (Claudes Auswahlliste), `--from-pr`, `--teleport` sowie `--fork-session` zusammen mit `--resume` (die neue Session bekommt eine eigene Kennung).
+     - **mit Kennung:** `--resume <Kennung>` / `-r <Kennung>` oder `--session-id <Kennung>`; ein eigenes `--session-id` bestimmt die Kennung, auch zusammen mit `--resume` und `--fork-session`;
+     - **ohne Kennung:** `--continue`/`-c`, `--resume` ohne Wert (Claudes Auswahlliste), `--from-pr`, `--teleport` sowie `--fork-session` zusammen mit `--resume` ohne eigenes `--session-id` (die neue Session bekommt eine eigene Kennung).
      - `--remote-control` ändert den Fall nicht.
 3. **Startparameter holen:** Anfrage an THub mit Tab-Kennung, Fall, angegebener Kennung und aktuellem Ordner, ohne Proxy und mit etwa 1 Sekunde Zeitlimit. Antwort: aktueller Tab-Name, im Fall „neu“ eine neue Session-Kennung, Pfad zur Hook-Datei. Ist THub nicht erreichbar, startet `claude` unverändert.
 4. **Optionen ergänzen:**
@@ -226,7 +226,10 @@ Der Starter arbeitet in diesen Schritten:
 **Umgebung jedes Terminals:**
 - `THUB_TAB_ID` (Tab-Kennung), `THUB_API` (Adresse der lokalen Schnittstelle), `THUB_TOKEN` (pro App-Start zufällig) und `THUB_STARTER` (Pfad zum Starter).
 - **Execution Policy:** THub prüft einmal beim Start die Richtlinien-Ebenen (`Get-ExecutionPolicy -Scope MachinePolicy` und `UserPolicy`). Steht dort `AllSigned` oder `Restricted`, lässt THub `THUB_STARTER` weg: `claude` läuft dann direkt, ohne Erfassung, aber ohne Fehler.
+  - Die Prüfung läuft versteckt (`powershell.exe -NoProfile -NonInteractive`, ohne `PSModulePath`, sonst scheitert sie, wenn THub aus PowerShell 7 gestartet wurde) und parallel zum übrigen Start; jede Shell fragt das Ergebnis erst beim eigenen Start ab (`src/main/executionPolicy.ts`).
+  - Solange die Prüfung läuft, nach 10 Sekunden ohne Antwort oder wenn PowerShell mit einem Fehler endet, bekommen die Shells den Ersatz. Lässt sich `powershell.exe` gar nicht starten (fehlt oder gesperrt), fehlt `THUB_STARTER` ebenfalls, weil der Starter selbst ein `powershell.exe` ist.
 - `NO_PROXY` wird um `127.0.0.1,localhost` ergänzt, damit Claudes HTTP-Hooks nicht über einen Firmen-Proxy laufen.
+- `PSModulePath` verliert die Modulordner von PowerShell 7 (`…\PowerShell\Modules` und `$PSHOME\Modules`, erkannt am `pwsh.exe` daneben). Wurde THub aus PowerShell 7 gestartet, stehen sie vorne, und Windows PowerShell 5.1 (Tab, Starter, `powershell.exe` aus cmd oder Git Bash) kann dann Module wie `Microsoft.PowerShell.Security` nicht laden. PowerShell 7 tut dasselbe, wenn es `powershell.exe` startet, und ergänzt seine Ordner beim eigenen Start wieder.
 - `THUB_*`-Variablen aus der eigenen Umgebung von THub (etwa wenn es aus einem THub-Tab gestartet wurde) werden vorher entfernt.
 
 **WSL-Tabs** bekommen keine Integration und starten mit `wsl.exe -d <Distribution> --cd <Windows-Pfad>`.
@@ -520,6 +523,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Ordner:** `cd` in einen Testordner (auch mit Leerzeichen und Umlauten) führt zur Meldung dieses Ordners.
   - **Profil:** Ein Testprofil wird weiterhin geladen.
   - **Startbefehl:** Ein Startbefehl „Starter mit `--resume x`“ erreicht das nachgemachte `claude` mit `--settings`, in allen vier Shells, genau einmal.
+  - **Ende zu Ende:** mit dem echten Kern und der echten lokalen Schnittstelle statt der Testattrappe. `claude` im Tab macht ihn zum unbestätigten Claude-Tab mit der Kennung, die der Kern vergeben hat; das Ende macht ihn wieder normal. Tab-Name und Ordner mit Umlauten kommen richtig an. Mit nachgemachter Gruppenrichtlinie `AllSigned` fehlt der Ersatz, und `claude` läuft direkt.
 - Diese Tests sind langsamer und laufen in einem eigenen Testlauf, getrennt von Teststelle 1.
 
 ### Nicht automatisch getestet

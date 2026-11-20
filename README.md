@@ -48,9 +48,11 @@ src/
   main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
   main/hookFile.ts          Hook-Datei für Claude Code (claude-hooks.json im Datenordner)
   main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
-  main/shellLaunch.ts       Start jeder Windows-Shell mit der mitgelieferten Integration (resources/shell)
+  main/shellLaunch.ts       Start jeder Windows-Shell mit der mitgelieferten Integration (resources/shell) und
+                            dem claude-Ersatz (THUB_STARTER)
+  main/executionPolicy.ts   Prüfung beim Start, ob eine Gruppenrichtlinie den claude-Starter blockiert
   main/shellEnv.ts          Umgebung der Shells: ohne geerbte THUB_*/TERMHUB_* und Interna des Dev-Starts,
-                            NO_PROXY um 127.0.0.1,localhost ergänzt
+                            NO_PROXY um 127.0.0.1,localhost ergänzt, PSModulePath ohne Ordner von PowerShell 7
   main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json; Verlauf pro Tab unter history\
   main/dataFolder.ts        Datenordner (THub bzw. THub-dev) und einmalige Übernahme aus dem alten Ordner
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
@@ -134,7 +136,7 @@ Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung
 
 ### Lokale Schnittstelle und Claude-Zuordnung (Grundlage)
 
-Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem zufälligen freien Port und mit einem pro Start zufälligen Token. Jedes Terminal bekommt `THUB_TAB_ID`, `THUB_API` (Adresse) und `THUB_TOKEN`. Über diese Schnittstelle melden der `claude`-Starter (folgt in Ticket 11) und die Hooks von Claude Code, welche Claude-Session in welchem Tab läuft; THub merkt sich das als Claude-Zuordnung im gespeicherten Zustand (Session-Kennung, Ordner, bestätigt, hatte Prompt).
+Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem zufälligen freien Port und mit einem pro Start zufälligen Token. Jedes Terminal bekommt `THUB_TAB_ID`, `THUB_API` (Adresse) und `THUB_TOKEN`. Über diese Schnittstelle melden der `claude`-Starter (siehe „Shell-Integration“) und die Hooks von Claude Code, welche Claude-Session in welchem Tab läuft; THub merkt sich das als Claude-Zuordnung im gespeicherten Zustand (Session-Kennung, Ordner, bestätigt, hatte Prompt).
 
 - Endpunkte: `POST /claude/launch`, `/claude/started`, `/claude/exit` und `/hooks/<Ereignis>`. Ohne gültiges Token (`X-THub-Token`) antwortet der Server mit 403. Hook-Antworten sind immer sofort leer; THub hört nur zu und beeinflusst Claude nie.
 - Die Hook-Datei `claude-hooks.json` schreibt THub bei jedem Start neu in seinen Datenordner, nach der im Spike geprüften Vorlage (`spikes/claude-hooks/empfohlene-hook-datei.json`). `SessionStart` läuft über `curl.exe`, weil Claude dafür keine HTTP-Hooks kennt. Die globale Claude-Konfiguration bleibt unberührt.
@@ -154,6 +156,13 @@ Jede Windows-Shell startet mit der mitgelieferten Integration aus `resources/she
 - Der Kern erkennt die Meldungen im rohen Ausgabestrom (auch über Stückgrenzen, Endzeichen BEL oder `ESC \`), wandelt sie in Windows-Pfade (Prozentkodierung, `/c/…` → `C:\…`, 8.3-Kurznamen) und merkt sich den Ordner als zuletzt aktiven Ordner des Tabs, wenn es ihn gibt. Der Tooltip zeigt ihn; nach einem Neustart startet der Tab dort (sonst Startordner, Standardordner, Benutzerordner). Die Sequenzen bleiben im Strom, xterm.js zeigt sie nicht an.
 - Startbefehl (für das Fortsetzen von Claude, Ticket 12): läuft genau einmal, sobald die Shell bereit ist; PowerShell und Git Bash bekommen ihn über `THUB_START_CMD` (vor dem Ausführen entfernt), cmd in der `/k`-Zeile hinter der Integration.
 - Fehlt die Integration oder scheitert sie, startet die Shell trotzdem. Shells ohne Integration (WSL) starten wie bisher.
+
+**`claude`-Ersatz:** In jeder Windows-Shell überdeckt die Integration `claude` (PowerShell- und Bash-Funktion, doskey-Makro in cmd). Alle rufen denselben Starter auf, `powershell.exe -NoProfile -NoLogo -ExecutionPolicy Bypass -File …\starter.ps1` mit den Argumenten wie getippt; der Starter liest seine rohe Befehlszeile, so kommen bei `claude` genau dieselben Argumente an wie bei einem direkten Aufruf.
+
+- Der Starter findet das echte `claude` im PATH (`claude.exe` vor `claude.cmd`) und ordnet den Aufruf ein: Unterbefehle, `-p`, `--version`, `--help`, `--bg`, `--desktop` und `--cloud` gehen unverändert durch. Sonst fragt er THub (`/claude/launch`, ohne Proxy, etwa 1 s Zeitlimit) und ergänzt `--settings <Hook-Datei>`, bei einer neuen Session dazu `--session-id <Kennung von THub>` und `-n <Tab-Name>`. Danach meldet er die Prozess-ID (`/claude/started`) und am Ende Kennung und Exit-Code (`/claude/exit`), auch nach `Ctrl+C`. Ist THub nicht erreichbar, startet `claude` unverändert.
+- Den Ersatz gibt es nur, wenn das Terminal-Backend `THUB_STARTER` (Pfad zu `starter.ps1`) setzt. Beim Start prüft THub versteckt, ob eine Gruppenrichtlinie die Execution Policy auf `AllSigned` oder `Restricted` setzt; dann fehlt `THUB_STARTER`, und `claude` läuft direkt, ohne Erfassung. Die Prüfung läuft parallel zum Start und verzögert ihn nicht.
+- Hilfen zur Fehlersuche: `THUB_STARTER_DEBUG=1` zeigt die gebaute Befehlszeile, `THUB_STARTER_DRYRUN=1` nur die Einordnung.
+- Bekannte Grenzen: siehe Spezifikation, „Shell-Integration“; etwa wird `claude` in cmd nur am Anfang einer getippten Zeile erfasst, und Claude über den vollen Pfad oder `npx` gar nicht.
 
 ### Tastenkürzel
 
