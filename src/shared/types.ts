@@ -214,7 +214,14 @@ export type WorkspaceCommand =
    * Standardordner, ohne Shell (oder wenn sie nicht erkannt ist) mit der Standard-Shell.
    */
   | { type: 'createTab'; cwd?: string; shellId?: string }
+  /**
+   * „Duplizieren“ im Rechtsklick-Menü: neuer Tab rechts neben diesem, im aktuellen Ordner, mit derselben Shell und
+   * automatischem Namen; ohne Claude-Session.
+   */
+  | { type: 'duplicateTab'; tabId: string }
   | { type: 'renameTab'; tabId: string; name: string }
+  /** Den Tab an Position `index` der Leiste verschieben, ab 0 (Ziehen in der Tab-Leiste). */
+  | { type: 'moveTab'; tabId: string; index: number }
   | { type: 'activateTab'; tabId: string }
   /** Zum Tab `offset` Plätze weiter, im Kreis (Ctrl+Tab: 1, Ctrl+Shift+Tab: -1). */
   | { type: 'activateRelativeTab'; offset: number }
@@ -272,6 +279,8 @@ export interface THubApi {
 
   /** Öffnet den Ordner-Dialog von Windows; `null`, wenn er abgebrochen wurde. */
   pickDirectory(purpose: DirectoryPurpose): Promise<string | null>;
+  /** „Ordner im Explorer öffnen“: öffnet den aktuellen Ordner des Tabs im Explorer. */
+  openTabFolder(tabId: string): Promise<void>;
 
   readClipboard(): Promise<string>;
   writeClipboard(text: string): Promise<void>;
@@ -290,6 +299,7 @@ export const IPC = {
   workspaceRecentDirs: 'workspace:recent-dirs',
   workspaceClosedTabs: 'workspace:closed-tabs',
   dialogPickDirectory: 'dialog:pick-directory',
+  tabOpenFolder: 'tab:open-folder',
   clipboardRead: 'clipboard:read',
   clipboardWrite: 'clipboard:write',
   themeCurrent: 'theme:current',

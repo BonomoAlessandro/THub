@@ -52,6 +52,7 @@ src/
     shellIds.ts             Shell-Kennungen (pwsh, powershell, cmd, gitbash, wsl:<Distribution>) und Anzeigenamen
   main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
   main/hookFile.ts          Hook-Datei für Claude Code (claude-hooks.json im Datenordner)
+  main/openFolder.ts        „Ordner im Explorer öffnen“: den aktuellen Ordner eines Tabs über shell.openPath
   main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
   main/shellLaunch.ts       Start jeder Windows-Shell mit der mitgelieferten Integration (resources/shell) und
                             dem claude-Ersatz (THUB_STARTER)
@@ -77,7 +78,8 @@ src/
     commands.ts             Befehle, die Tastenkürzel, Maus und Befehlspalette gemeinsam auslösen
     fontSize.ts             Ctrl + Mausrad in Schritte der Schriftgrösse umrechnen
     tabs/                   Titelleiste mit Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf, Zieh-Fläche,
-                            Pfeil-Menü mit den Shells und „Neues Terminal in …“
+                            Pfeil-Menü mit den Shells und „Neues Terminal in …“, Rechtsklick-Menü (tabMenu.tsx),
+                            Umsortieren per Ziehen (useTabDrag.ts, Rechnungen in tabDrag.ts)
     popup/                  Menü und Dialog wie im Prototyp, Bedienung mit der Tastatur (menuKeys.ts)
     palette/                Befehlspalette: Einträge (paletteEntries.ts), unscharfe Suche (search.ts), Anzeige
     settings/               Einstellungsdialog und Übersicht der Tastenkürzel
@@ -91,9 +93,11 @@ test/
   workspace/                Kern-Tests (Teststelle 1)
   renderer/                 Zuordnung der Tastenkürzel (auch Schweizer Tastatur, Ziffernblock), Ctrl + Mausrad, Tasten im Menü;
                             Übersicht der Tastenkürzel aus derselben Tabelle; Befehlspalette: Suche und Wirkung jedes
-                            Befehls (auch mit dem Kern); Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node
+                            Befehls (auch mit dem Kern); Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node;
+                            Einfügestelle, Marke und Scrollen beim Ziehen von Tabs
   main/                     Hauptprozess ohne Electron: Design hell/dunkel samt Wahl aus den Einstellungen, Entwicklermenü,
-                            Datenordner und Übernahme, Umgebung der Shells, Shell-Erkennung mit nachgemachtem Rechner
+                            Datenordner und Übernahme, Umgebung der Shells, Shell-Erkennung mit nachgemachtem Rechner,
+                            „Ordner im Explorer öffnen“ mit nachgemachtem shell.openPath
   shells/                   Teststelle 2: echte Shells über das echte Terminal-Backend (npm run test:shells)
 resources/shell/            Shell-Integration und claude-Starter; im Paket als echte Dateien unter resources\shell
 build.mjs                   esbuild-Skript, schreibt nach dist/
@@ -140,7 +144,13 @@ Der Inhalt jedes normalen Terminals liegt daneben in `%APPDATA%\THub\history\<Ta
 - Schriftgrösse für alle Tabs zugleich auch mit `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-` und `Ctrl` `0` (zurück auf 14). `+` und `-` werden am erzeugten Zeichen erkannt, nicht an der Tastenposition: Die Schweizer Tastatur (`+` auf Shift+1) und der Ziffernblock funktionieren, `Ctrl` `=` zählt wie `Ctrl` `+`. Die Terminals passen danach Spalten und Zeilen an, die Shells erfahren die neue Grösse. Der Zoom der ganzen Oberfläche ist abgeschaltet, `Ctrl` + Mausrad scrollt das Terminal nicht.
 - Bei vielen Tabs werden die Tabs schmaler und die Leiste scrollbar (auch mit dem Mausrad)
 - Tooltip mit Name, Ordner, Shell und Status; Schliessen mit `×` oder der mittleren Maustaste
-- Tabs umbenennen (Doppelklick auf den Tab oder `F2`; Enter übernimmt, Escape bricht ab)
+- Tabs umbenennen (Doppelklick auf den Tab, `F2` oder Rechtsklick-Menü; Enter übernimmt, Escape bricht ab)
+- Rechtsklick auf einen Tab öffnet sein Menü an der Stelle des Klicks, ohne den Tab zu aktivieren; nie das Fenstermenü von Windows. Bedienung auch mit Pfeiltasten, Pos1/Ende, Enter und Escape.
+  - Umbenennen: wie Doppelklick oder `F2`.
+  - Duplizieren: neuer Tab rechts daneben, im aktuellen Ordner des Tabs (gibt es ihn nicht mehr, wie beim Start der Shell im Startordner, Standardordner oder Benutzerordner), mit derselben Shell und einem automatischen Namen nach dem Ordner; er wird aktiv und startet eine eigene Shell ohne Verlauf. Von einem Claude-Tab nur das Terminal, ohne Claude-Session und ohne offene Punkte.
+  - Ordner im Explorer öffnen und Pfad kopieren: der aktuelle Ordner des Tabs, wie im Tooltip, also auch nach `cd`. Den Ordner bestimmt der Hauptprozess, geöffnet wird nur ein Ordner, den es gibt.
+  - Schliessen und Andere Tabs schliessen: mit den Rückfragen wie beim `×` bzw. in der Befehlspalette.
+- Tabs per Ziehen umsortieren: Ein Abbild des Tabs folgt der Maus, der Tab selbst steht blass an seinem Platz, eine Marke zeigt, wo er landet. Am Rand einer überlaufenden Leiste scrollt sie von selbst weiter (oder mit dem Mausrad). Losgelassen ausserhalb der Leiste (Fensterknöpfe, freie Fläche, Terminal, ausserhalb des Fensters), mit Escape oder bei Fokusverlust bricht das Ziehen ab. Die Reihenfolge übersteht einen Neustart, `Ctrl+1` … `Ctrl+9` folgen ihr. Ein Klick ohne Bewegung aktiviert den Tab wie bisher, das Terminal behält dabei den Fokus.
 - Beim Beenden werden alle Tabs gespeichert und beim nächsten Start in ihrem Verzeichnis neu gestartet; der zuletzt aktive Tab wird wieder angezeigt
 - Eigene Titelleiste ohne Windows-Rahmen: Die Tabs sitzen direkt in der Titelleiste, rechts die nativen Fensterknöpfe mit den Andock-Layouts von Windows 11. Die freie Fläche neben den Tabs (mindestens 56 px, auch bei vielen Tabs) verschiebt das Fenster, Doppelklick maximiert.
 - Der frühere Inhalt jedes normalen Terminals steht nach einem Neustart ausgegraut über der neuen Eingabezeile, mit der Trennlinie „Wiederhergestellt · <Datum, Uhrzeit der Sicherung>“; er liegt im Scrollback, eine Mausrad-Bewegung nach oben zeigt ihn. Nach einem Absturz fehlen höchstens die letzten etwa 30 Sekunden.
@@ -220,7 +230,7 @@ Endet eine Antwort von Claude mit Fragen oder Punkten, die du entscheiden, prüf
 ### Schliessen und wieder öffnen
 
 - **Rückfrage nur, wenn noch etwas läuft:** Ein ruhender Tab, auch ein ruhender Claude-Tab, schliesst sofort (`×`, mittlere Maustaste, `Ctrl+Shift+W`). Wartet Claude auf dich, arbeitet Claude oder laufen im Terminal Prozesse, fragt THub nach, mit dem Grund, dem Hinweis auf `Ctrl+Shift+Z` und dem Gefahr-Knopf „Schliessen“; den Fokus hat „Abbrechen“. Massgeblich ist, was wirklich läuft, nicht das Symbol: Ein grüner Tab mit einem noch laufenden Dev-Server fragt nach; grün allein oder pausiert nicht.
-- **Mehrere Tabs** („Andere Tabs schliessen“ in der Befehlspalette, im Menü ab Ticket 16): höchstens eine gemeinsame Rückfrage mit der Liste der Tabs, in denen noch etwas läuft; Abbrechen lässt alle offen.
+- **Mehrere Tabs** („Andere Tabs schliessen“ im Rechtsklick-Menü und in der Befehlspalette): höchstens eine gemeinsame Rückfrage mit der Liste der Tabs, in denen noch etwas läuft; Abbrechen lässt alle offen.
 - **Fenster schliessen oder THub beenden** fragt nie nach, auch nicht, wenn Claude gerade arbeitet: Alles kommt beim nächsten Start zurück.
 - **Alles endet mit dem Tab:** die Shell und alle ihre Nachfahren, auch Programme mit eigener Konsole (etwa per `Start-Process` gestartet), die das Schliessen der Pseudokonsole überleben würden. THub fragt dazu vorher die Prozessliste ab und beendet jeden Prozess nur, wenn Prozess-ID und Startzeit noch stimmen. Dasselbe beim Beenden von THub. Endet eine Shell von selbst (`exit`), beendet THub auch ihren Konsolen-Host, den node-pty sonst bis zum Ende von THub stehen liesse.
 - **Zuletzt geschlossen:** Ein geschlossener Tab wird eingefroren und kommt mit Name, Shell, Ordnern, Verlauf bzw. Claude-Zuordnung an die Spitze einer Liste der letzten zehn (`closedTabs` im Zustand), die einen Neustart übersteht. Ein normaler Tab sichert dabei noch seinen aktuellen Inhalt. Fällt ein Tab aus der Liste, wird seine Verlaufsdatei gelöscht.
@@ -276,6 +286,6 @@ Jede Windows-Shell startet mit der mitgelieferten Integration aus `resources/she
 ## Offene Punkte (zum Ausspezifizieren)
 
 - **Was heisst „wiederherstellen“?** Aktuell: neue Shell im zuletzt aktiven Ordner des Tabs, darüber der frühere Inhalt ausgegraut. Nicht erhalten bleiben laufende Programme.
-- **Darstellung:** Sidebar vs. Tabs oben, Reihenfolge per Drag & Drop, Gruppen, Farben/Icons, Theme, Schriftgrösse
+- **Darstellung:** Sidebar vs. Tabs oben, Gruppen, Farben/Icons, Theme, Schriftgrösse
 - **Fenster:** mehrere Fenster, Split-Ansicht (mehrere Terminals nebeneinander)
 - **Installation/Updates:** Installer (NSIS) für den eigenen Benutzer, Auto-Update, Autostart, Code-Signing

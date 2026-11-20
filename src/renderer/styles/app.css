@@ -219,6 +219,38 @@ svg.i {
   background: var(--hover-strong);
 }
 
+/* ---------- Umsortieren per Ziehen ---------- */
+/* Der gezogene Tab bleibt blass an seinem Platz, ein Abbild folgt der Maus, die Marke zeigt, wo er landet. */
+.tab.dragging {
+  opacity: 0.4;
+}
+/* Das Abbild schwebt auch über der Terminal-Fläche, darum deckend auf der Fensterfarbe. */
+.tab-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 80;
+  opacity: 0.85;
+  pointer-events: none;
+  animation: none;
+  background:
+    linear-gradient(var(--tab-active-bg), var(--tab-active-bg)),
+    var(--win-solid);
+  color: var(--tab-active-fg);
+  box-shadow:
+    var(--tab-active-shadow),
+    var(--shadow-lg);
+}
+.drop-mark {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  pointer-events: none;
+}
+
 .newtab {
   display: flex;
   align-items: center;

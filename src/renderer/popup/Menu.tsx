@@ -15,10 +15,18 @@ export type MenuEntry =
       icon?: ReactNode;
       /** Kleines Etikett rechts, z.B. „Standard“ bei der Standard-Shell. */
       badge?: string;
+      /** Tastenkürzel rechts, z.B. „F2“. */
+      kbd?: string;
       run(): void;
     };
 
 type MenuItem = Extract<MenuEntry, { kind: 'item' }>;
+
+/** Ein Punkt im Fenster, an dem ein Menü aufgeht, etwa die Stelle eines Rechtsklicks. */
+export interface MenuPoint {
+  x: number;
+  y: number;
+}
 
 /** Abstand des Menüs zum Fensterrand und zum Element darüber. */
 const MARGIN = 6;
@@ -28,8 +36,11 @@ interface MenuProps {
   /** Name des Menüs für Screenreader. */
   label: string;
   entries: MenuEntry[];
-  /** Element, unter dem das Menü aufgeht. Ein Klick darauf schliesst das Menü nicht; das regelt das Element selbst. */
-  anchor: HTMLElement;
+  /**
+   * Wo das Menü aufgeht: unter einem Element, oder mit der linken oberen Ecke an einem Punkt (Rechtsklick). Ein Klick auf
+   * das Element schliesst das Menü nicht; das regelt das Element selbst.
+   */
+  anchor: HTMLElement | MenuPoint;
   /** Den ersten Eintrag gleich hervorheben, etwa wenn das Menü per Tastatur geöffnet wurde. */
   highlightFirst?: boolean;
   /** Das Menü schliesst sich (Escape, Klick daneben, Fenster verliert den Fokus, Eintrag gewählt). */
@@ -37,7 +48,8 @@ interface MenuProps {
 }
 
 /**
- * Menü wie im Prototyp, unter einem Element. Bedienung mit der Maus oder mit Pfeiltasten, Enter und Escape.
+ * Menü wie im Prototyp, unter einem Element oder an einem Punkt. Bedienung mit der Maus oder mit Pfeiltasten, Enter und
+ * Escape.
  * Das Menü hält den Fokus, solange es offen ist; danach gibt `onClose` ihn zurück. Ein gewählter Eintrag
  * läuft erst, nachdem sich das Menü geschlossen hat.
  */
@@ -57,13 +69,14 @@ export function Menu({ label, entries, anchor, highlightFirst = false, onClose }
     item.run();
   };
 
-  // Unter dem Element aufgehen, im Fenster gehalten; dann den Fokus übernehmen, damit Tasten nicht ins Terminal gehen.
+  // Unter dem Element bzw. am Punkt aufgehen, im Fenster gehalten; dann den Fokus übernehmen, damit Tasten nicht ins
+  // Terminal gehen.
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const a = anchor.getBoundingClientRect();
-    const top = clamp(a.bottom + GAP, MARGIN, window.innerHeight - el.offsetHeight - MARGIN);
-    el.style.left = `${clamp(a.left, MARGIN, rightLimit(top) - el.offsetWidth)}px`;
+    const corner = preferredCorner(anchor);
+    const top = clamp(corner.y, MARGIN, window.innerHeight - el.offsetHeight - MARGIN);
+    el.style.left = `${clamp(corner.x, MARGIN, rightLimit(top) - el.offsetWidth)}px`;
     el.style.top = `${top}px`;
     el.focus({ preventScroll: true });
   }, [anchor]);
@@ -82,7 +95,8 @@ export function Menu({ label, entries, anchor, highlightFirst = false, onClose }
     };
     const onMouseDown = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (!ref.current?.contains(target) && !anchor.contains(target)) current.current.onClose();
+      const onAnchor = anchor instanceof HTMLElement && anchor.contains(target);
+      if (!ref.current?.contains(target) && !onAnchor) current.current.onClose();
     };
     const close = () => current.current.onClose();
     window.addEventListener('keydown', onKeyDown, true);
@@ -139,12 +153,20 @@ export function Menu({ label, entries, anchor, highlightFirst = false, onClose }
               {entry.sub && <small>{entry.sub}</small>}
             </span>
             {entry.badge && <span className="mi-badge">{entry.badge}</span>}
+            {entry.kbd && <span className="mi-kbd">{entry.kbd}</span>}
           </button>
         );
       })}
     </div>,
     document.body,
   );
+}
+
+/** Wo die linke obere Ecke des Menüs hin möchte: unter dem Element bzw. am Punkt. */
+function preferredCorner(anchor: HTMLElement | MenuPoint): MenuPoint {
+  if (!(anchor instanceof HTMLElement)) return anchor;
+  const r = anchor.getBoundingClientRect();
+  return { x: r.left, y: r.bottom + GAP };
 }
 
 /** Die nativen Fensterknöpfe als Overlay über der Seite (Window Controls Overlay), soweit hier gebraucht. */

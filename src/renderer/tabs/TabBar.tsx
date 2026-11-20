@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
 import type { RecentDir, ShellOption, TabSnapshot } from '../../shared/types';
 import { ChevronIcon, GearIcon, PlusIcon } from '../icons';
-import { Menu } from '../popup/Menu';
+import { Menu, type MenuPoint } from '../popup/Menu';
 import { focusTerminal } from '../terminal/terminalViews';
 import { newTabMenuEntries } from './newTabMenu';
 import { Tab } from './Tab';
 import { STATUS_TEXT } from './TabIcon';
+import { tabMenuEntries } from './tabMenu';
 import { Tooltip } from './Tooltip';
+import { useTabDrag } from './useTabDrag';
 
 const api = window.thub;
 
@@ -37,14 +39,20 @@ interface NewTabMenuState {
   viaKeyboard: boolean;
 }
 
+/** Das offene Rechtsklick-Menü: für welchen Tab und wo im Fenster. */
+interface TabMenuState {
+  tabId: string;
+  at: MenuPoint;
+}
+
 type TooltipContent = { kind: 'tab'; tabId: string } | { kind: 'text'; text: string };
 type TooltipState = TooltipContent & { anchor: DOMRect };
 
 /**
  * Titelleiste mit der Tab-Leiste, gestaltet wie im Prototyp: Tabs, `+` mit Pfeil-Menü, freie Fläche zum
  * Verschieben des Fensters, Zahnrad; rechts daneben liegen die nativen Fensterknöpfe. Bei vielen Tabs
- * werden die Tabs schmaler und die Leiste scrollbar. Die Leiste zeigt nur an und schickt Befehle;
- * die Tab-Logik liegt im Kern.
+ * werden die Tabs schmaler und die Leiste scrollbar. Rechtsklick auf einen Tab öffnet sein Menü, Ziehen
+ * sortiert die Tabs um. Die Leiste zeigt nur an und schickt Befehle; die Tab-Logik liegt im Kern.
  */
 export function TabBar({
   tabs,
@@ -60,8 +68,12 @@ export function TabBar({
   const chevronRef = useRef<HTMLButtonElement>(null);
   const [fade, setFade] = useState({ left: false, right: false });
   const [menu, setMenu] = useState<NewTabMenuState | null>(null);
+  const [tabMenu, setTabMenu] = useState<TabMenuState | null>(null);
   const tooltip = useTooltip();
   const hideTooltip = tooltip.hide;
+  // Die Reihenfolge ändert der Kern; die Leiste zeigt sie mit dem nächsten Ereignis.
+  const drag = useTabDrag(stripRef, (tabId, index) => api.send({ type: 'moveTab', tabId, index }), hideTooltip);
+  const draggingId = drag.state.draggingId;
 
   // Die Ordner werden bei jedem Öffnen frisch abgefragt: Der Kern bietet nur an, was es noch gibt.
   // Ein zweiter Klick auf den Pfeil schliesst das Menü wieder.
@@ -79,6 +91,25 @@ export function TabBar({
     setMenu(null);
     focusTerminal(activeTabId);
   };
+
+  // Rechtsklick auf einen Tab: sein Menü an der Stelle des Klicks. Der Tab wird dabei nicht aktiv.
+  const openTabMenu = (tabId: string, at: MenuPoint) => {
+    if (draggingId) return;
+    hideTooltip();
+    setMenu(null);
+    setTabMenu({ tabId, at });
+  };
+
+  const closeTabMenu = () => {
+    setTabMenu(null);
+    focusTerminal(activeTabId);
+  };
+
+  // Ein inzwischen geschlossener Tab hat kein Menü mehr.
+  const menuTab = tabMenu ? tabs.find((t) => t.id === tabMenu.tabId) : undefined;
+  useEffect(() => {
+    if (tabMenu && !menuTab) setTabMenu(null);
+  }, [tabMenu, menuTab]);
 
   const updateFades = useCallback(() => {
     const strip = stripRef.current;
@@ -152,15 +183,24 @@ export function TabBar({
             tab={tab}
             active={tab.id === activeTabId}
             renaming={tab.id === renamingId}
+            dragging={tab.id === draggingId}
             onActivate={() =>
               tab.id === activeTabId ? focusTerminal(tab.id) : api.send({ type: 'activateTab', tabId: tab.id })
             }
             onClose={() => api.send({ type: 'requestClose', tabIds: [tab.id] })}
             onStartRename={() => onStartRename(tab.id)}
             onFinishRename={(name) => onFinishRename(tab.id, name)}
-            onHover={(el) => (el && !renamingId ? tooltip.schedule(el, { kind: 'tab', tabId: tab.id }) : hideTooltip())}
+            onHover={(el) =>
+              el && !renamingId && !tabMenu && !draggingId
+                ? tooltip.schedule(el, { kind: 'tab', tabId: tab.id })
+                : hideTooltip()
+            }
+            onPointerDown={(e) => drag.startDrag(e, tab.id)}
+            onContextMenu={(x, y) => openTabMenu(tab.id, { x, y })}
           />
         ))}
+        {/* Einfügemarke beim Ziehen: Hier landet der Tab beim Loslassen. */}
+        {drag.state.markLeft !== null && <div className="drop-mark" style={{ left: drag.state.markLeft }} />}
       </div>
       <div className="newtab">
         <button
@@ -216,6 +256,14 @@ export function TabBar({
           anchor={chevronRef.current}
           highlightFirst={menu.viaKeyboard}
           onClose={closeMenu}
+        />
+      )}
+      {tabMenu && menuTab && (
+        <Menu
+          label={`Tab „${menuTab.name}“`}
+          entries={tabMenuEntries(menuTab, () => onStartRename(menuTab.id))}
+          anchor={tabMenu.at}
+          onClose={closeTabMenu}
         />
       )}
 
