@@ -168,7 +168,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
   - Der Kern erteilt die Startaufträge, nicht der Renderer.
   - Ein Startauftrag wird erst ausgeführt, wenn der Renderer die Ansicht des Tabs als bereit gemeldet hat. Verdeckte Ansichten melden ihre beste bekannte Grösse und passen sie beim Anzeigen an. So geht keine Ausgabe verloren, und ein wiederhergestellter Verlauf steht immer vor der ersten Shell-Ausgabe.
   - Pausierte Claude-Tabs bekommen ihre Ansicht erst beim ersten Anzeigen.
-- **Entwicklung getrennt von der installierten App:** Unpaketiert (`npm start`, Tests) verwendet THub einen eigenen Datenordner („THub-dev“) und damit eine eigene Zustandsdatei, eigene Hook-Datei und eigene Einzelinstanz-Sperre.
+- **Entwicklung getrennt von der installierten App:** Unpaketiert (`npm start`, `npm run dev`) verwendet THub einen eigenen Datenordner („THub-dev“) und damit eine eigene Zustandsdatei, eigene Hook-Datei und eigene Einzelinstanz-Sperre. Die Tests starten die App nicht und arbeiten in eigenen Temp-Ordnern.
 - Die bestehenden Module (Zustandsspeicher mit entprelltem, atomarem Schreiben; Shell-Verwaltung mit geordnetem Beenden) bleiben erhalten und werden zum Speicher bzw. Terminal-Backend erweitert.
 
 ### Shell-Erkennung
@@ -468,7 +468,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Umbenennen:** Der Tab selbst wird zum Eingabefeld, in gleicher Grösse und Schrift, nur mit feinem Rahmen; kein separates Textfeld.
   - **Hinweise:** 320 px breit, Titel 14 px, Text 13 px. Die ganze Karte ist anklickbar und öffnet den Tab; es gibt keinen „Öffnen“-Button. Eine dezente Zeile „Zum Tab wechseln →“ zeigt, dass man klicken kann, und wird beim Überfahren hell. Das × zum Wegklicken erscheint beim Überfahren.
   - **Symbol-Platz links vom Tab-Namen:** Im Ruhezustand zeigt er gedämpft den Typ des Tabs (`>_` für ein normales Terminal, ein Stern für einen Claude-Tab), sonst den Status.
-  - **Status-Animationen:** „arbeitet“ = violetter Claude-Stern, der rotiert und pulsiert; „wartet auf dich“ = oranger Punkt mit Ping-Ring; „Prozesse laufen“ = blauer, ruhig atmender Punkt; „fertig“ = grüner Punkt; „pausiert“ = graues Pause-Symbol. Bei reduzierter Bewegung (Windows-Einstellung) laufen die Animationen stark verlangsamt.
+  - **Status-Animationen:** „arbeitet“ = violetter Claude-Stern, der rotiert und pulsiert; „wartet auf dich“ = oranger Punkt mit Ping-Ring; „Prozesse laufen“ = blauer, ruhig atmender Punkt; „fertig“ = grüner Punkt; „pausiert“ = graues Pause-Symbol. Bei reduzierter Bewegung (Windows-Einstellung) stehen die Animationen still; nur der Claude-Stern dreht sich langsam weiter.
 - **Design-Variablen** (vom Nutzer am 2026-11-19 freigegeben; vollständige Liste mit allen Werten in `prototype/styles.css`):
 
 | Zweck | Variable | Dunkel | Hell |
