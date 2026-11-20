@@ -441,7 +441,7 @@ class WorkspaceCore implements Workspace {
     this.state.tabs.splice(index, 0, tab);
     this.runtimes.set(tab.id, newRuntime(false));
     this.state.activeTabId = tab.id;
-    this.state.recentDirs = rememberDir(this.state.recentDirs, startCwd);
+    this.rememberRecentDir(startCwd);
     this.tabsChanged();
     return tab.id;
   }
@@ -541,7 +541,7 @@ class WorkspaceCore implements Workspace {
       // Ein geschlossener Tab nimmt seine offenen Punkte mit, auch in die Liste der geschlossenen Tabs.
       delete tab.openPoints;
       this.state.closedTabs.unshift({ tab: structuredClone(tab), index, closedAt: this.ports.clock.now() });
-      this.state.recentDirs = rememberDir(this.state.recentDirs, tab.lastCwd ?? tab.startCwd);
+      this.rememberRecentDir(tab.lastCwd ?? tab.startCwd);
       if (this.state.activeTabId === tab.id) {
         const neighbour = this.state.tabs[index] ?? this.state.tabs[index - 1];
         this.state.activeTabId = neighbour?.id ?? null;
@@ -689,9 +689,17 @@ class WorkspaceCore implements Workspace {
 
   recentDirs(): RecentDir[] {
     const ctx = this.namingContext();
+    // Ein älterer Stand kann denselben Ordner als Kurz- und Langform enthalten; angeboten wird er nur einmal.
     return this.state.recentDirs
+      .map((dir) => this.ports.system.longPath(dir))
+      .reduceRight<string[]>(rememberDir, [])
       .filter((dir) => this.ports.system.directoryExists(dir))
       .map((dir) => ({ path: dir, name: folderName(dir, ctx) }));
+  }
+
+  /** Setzt einen Ordner an die Spitze der zuletzt benutzten, mit aufgelösten 8.3-Kurznamen (sonst stünde er doppelt da). */
+  private rememberRecentDir(dir: string): void {
+    this.state.recentDirs = rememberDir(this.state.recentDirs, this.ports.system.longPath(dir));
   }
 
   /** Startordner eines neuen Tabs: gewünschter Ordner → Standardordner → Benutzerordner, der erste, den es gibt. */

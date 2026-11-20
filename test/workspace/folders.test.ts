@@ -300,6 +300,35 @@ describe('Zuletzt benutzte Ordner', () => {
     expect(recentPaths(h)).toEqual(['c:\\A\\', 'C:\\b', HOME]);
   });
 
+  it('enthalten einen Ordner nicht doppelt, nur weil er einmal als 8.3-Kurzname kam', () => {
+    // Wie unter Windows gibt es den Ordner unter beiden Namen.
+    const h = startWorkspace({
+      directories: ['C:\\Users\\anna.mueller\\proj', 'C:\\Users\\ANNA~1\\proj'],
+      shortPaths: { 'C:\\Users\\ANNA~1': 'C:\\Users\\anna.mueller' },
+    });
+
+    createTabsIn(h, ['C:\\Users\\anna.mueller\\proj', 'C:\\Users\\ANNA~1\\proj']);
+
+    expect(recentPaths(h)).toEqual(['C:\\Users\\anna.mueller\\proj', HOME]);
+  });
+
+  it('fassen Kurz- und Langform aus einem älteren Stand beim Anbieten zusammen', () => {
+    const h = startWorkspace({
+      directories: ['C:\\Users\\anna.mueller\\proj', 'C:\\b'],
+      shortPaths: { 'C:\\Users\\ANNA~1': 'C:\\Users\\anna.mueller' },
+      state: {
+        version: 2,
+        settings: { defaultCwd: '', theme: 'system', fontSize: 14, notifications: true },
+        tabs: [{ id: 'a', name: 'b', nameIsManual: false, shellId: 'cmd', startCwd: 'C:\\b' }],
+        activeTabId: 'a',
+        recentDirs: ['C:\\Users\\ANNA~1\\proj', 'C:\\b', 'C:\\Users\\anna.mueller\\proj'],
+        closedTabs: [],
+      },
+    });
+
+    expect(recentPaths(h)).toEqual(['C:\\Users\\anna.mueller\\proj', 'C:\\b']);
+  });
+
   it('sind höchstens acht', () => {
     const dirs = Array.from({ length: 10 }, (_, i) => `D:\\p${i + 1}`);
     const h = startWorkspace({ directories: dirs });
