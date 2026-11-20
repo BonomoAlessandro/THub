@@ -1,10 +1,19 @@
 import { FitAddon } from '@xterm/addon-fit';
 import { SerializeAddon } from '@xterm/addon-serialize';
+import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Terminal } from '@xterm/xterm';
 import { cssVar, terminalTheme } from '../theme';
 import { noticeBeforeStart, restoredHistory, serializeHistory } from './history';
+import { removeLinkUnderline } from './linkUnderline';
+import { copySelection, linkToOpen, pasteClipboard, rightClick, type TerminalClipboard } from './mouse';
 
 const api = window.thub;
+
+/** Die Zwischenablage über den Hauptprozess (im Testmodus eine eigene im Speicher). */
+const clipboard: TerminalClipboard = {
+  read: () => api.readClipboard(),
+  write: (text) => api.writeClipboard(text),
+};
 
 /**
  * Ein xterm.js-Terminal, gekoppelt an die Shell eines Tabs. Die Shell startet der Kern.
@@ -30,9 +39,15 @@ export class TerminalView {
       scrollback: 5000,
       windowsPty: { backend: 'conpty' },
       theme: terminalTheme(),
+      // OSC-8-Links (etwa von Claude) öffnet Ctrl+Klick; ersetzt die Rückfrage per window.confirm von xterm.js.
+      // Links mit anderen Protokollen als http und https erkennt xterm.js gar nicht erst (allowNonHttpProtocols).
+      linkHandler: { activate: this.openLink },
     });
     this.term.loadAddon(this.fitAddon);
     this.term.loadAddon(this.serializeAddon);
+    // URLs im Klartext, etwa die Adresse eines Dev-Servers.
+    this.term.loadAddon(new WebLinksAddon(this.openLink));
+    if (!removeLinkUnderline(this.term)) console.warn('xterm.js: Die gestrichelte Linie unter Links bleibt.');
     this.term.open(host);
 
     this.term.onData((data) => {
@@ -44,7 +59,8 @@ export class TerminalView {
     });
     this.term.onResize(({ cols, rows }) => api.send({ type: 'resizeTab', tabId: this.tabId, cols, rows }));
 
-    // Rechtsklick wie in der Windows-Konsole: mit Auswahl kopieren, sonst einfügen.
+    // Rechtsklick wie in der Windows-Konsole: mit Auswahl kopieren, sonst einfügen. Hat das Programm die Mausmeldung
+    // eingeschaltet (Claude), gehört er ihm, ausser mit Shift (`rightClickAction`).
     host.addEventListener('contextmenu', this.onContextMenu);
   }
 
@@ -142,15 +158,12 @@ export class TerminalView {
     }
   }
 
-  async copySelection(): Promise<void> {
-    if (!this.term.hasSelection()) return;
-    await api.writeClipboard(this.term.getSelection());
-    this.term.clearSelection();
+  copySelection(): Promise<void> {
+    return copySelection(this.term, clipboard);
   }
 
-  async paste(): Promise<void> {
-    const text = await api.readClipboard();
-    if (text) this.term.paste(text);
+  paste(): Promise<void> {
+    return pasteClipboard(this.term, clipboard);
   }
 
   dispose(): void {
@@ -161,7 +174,15 @@ export class TerminalView {
 
   private readonly onContextMenu = (e: MouseEvent): void => {
     e.preventDefault();
-    if (this.term.hasSelection()) void this.copySelection();
-    else void this.paste();
+    void rightClick(this.term, e, clipboard);
+  };
+
+  /**
+   * Klick auf einen Link (OSC 8 oder URL im Klartext). xterm.js meldet das Loslassen jeder Maustaste; geöffnet wird nur
+   * bei Ctrl mit der linken Taste, nur http und https und nur, wenn der Klick nicht dem Programm gehört (`linkToOpen`).
+   */
+  private readonly openLink = (event: MouseEvent, uri: string): void => {
+    const url = linkToOpen(this.term, event, uri);
+    if (url) void api.openLink(url);
   };
 }

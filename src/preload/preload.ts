@@ -18,6 +18,8 @@ const api: THubApi = {
   readClipboard: () => ipcRenderer.invoke(IPC.clipboardRead),
   writeClipboard: (text) => ipcRenderer.invoke(IPC.clipboardWrite, text),
 
+  openLink: (url) => ipcRenderer.invoke(IPC.linkOpen, url),
+
   loadTheme: () => ipcRenderer.invoke(IPC.themeCurrent),
   onThemeChange: (listener) => {
     const handler = (_e: IpcRendererEvent, theme: ResolvedTheme) => listener(theme);

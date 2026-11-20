@@ -6,6 +6,7 @@ import { checkExecutionPolicy, type ExecutionPolicyCheck } from './executionPoli
 import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
 import { LocalApiServer } from './localApi';
 import { openTabFolder } from './openFolder';
+import { openWebLink } from './openLink';
 import { PtyManager } from './ptyManager';
 import { shellIntegrationDir } from './shellLaunch';
 import { detectShells } from './shells';
@@ -282,6 +283,19 @@ function registerIpc(ws: Workspace): void {
   ipcMain.handle(IPC.clipboardWrite, (_e, text: string) => {
     if (TEST_HIDDEN) testClipboard = String(text);
     else clipboard.writeText(text);
+  });
+
+  // Ctrl+Klick auf einen Link im Terminal. Die Adresse prüft der Hauptprozess selbst noch einmal (nur http und https),
+  // bevor er sie im Standardbrowser öffnet. Im Testmodus geht kein Browser auf dem Desktop auf; die Adresse steht nur
+  // in der Ausgabe.
+  ipcMain.handle(IPC.linkOpen, async (_e, url: unknown) => {
+    await openWebLink(url, {
+      openExternal: (link) => {
+        if (!TEST_HIDDEN) return shell.openExternal(link);
+        console.log(`Testmodus: Der Browser würde ${link} öffnen.`);
+        return Promise.resolve();
+      },
+    });
   });
 }
 
