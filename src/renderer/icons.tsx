@@ -119,6 +119,16 @@ export function ArrowRightIcon() {
   );
 }
 
+/** Aufzählung: Symbol des Hinweises mit offenen Punkten aus Claudes Antwort. */
+export function ListIcon() {
+  return (
+    <svg className="ls" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 6h.01M4 12h.01M4 18h.01" />
+      <path d="M9 6h11M9 12h11M9 18h11" />
+    </svg>
+  );
+}
+
 /** Typ-Symbol eines normalen Terminals: `>_`. */
 export function TerminalTypeIcon() {
   return (

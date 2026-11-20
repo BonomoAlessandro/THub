@@ -49,6 +49,12 @@ export interface ClaudeReceiver {
   claudeExit(tabId: string, sessionId: string | undefined, exitCode: number): void;
   /** Hook-Ereignis von Claude Code (`event` wie `hook_event_name`), mit den rohen Nutzdaten. */
   claudeHook(tabId: string, event: string, payload: unknown): void;
+  /**
+   * Was der Empfänger Claude auf ein Hook-Ereignis antwortet, bevor es verarbeitet wird; `undefined` heisst leer. Einzige
+   * Ausnahme von der leeren Antwort: `SessionStart` bei eingeschalteter Einstellung „Offene Punkte“ (Ticket 22) liefert
+   * die Anweisung als zusätzlichen Kontext. Nie Entscheidungsfelder.
+   */
+  claudeHookReply(tabId: string, event: string): object | undefined;
 }
 
 /** Die laufende lokale Schnittstelle, wie der Kern sie an Terminals und Starter weitergibt. */
@@ -71,6 +77,8 @@ export interface HookFacts {
   reason?: string;
   /** Art bei `Notification`, z.B. `permission_prompt` oder `idle_prompt`. */
   notificationType?: string;
+  /** Text der fertigen Antwort bei `Stop`, für die offenen Punkte (Ticket 22). */
+  lastAssistantMessage?: string;
 }
 
 /** `SessionEnd` mit diesen Gründen beendet Claude nicht: Es folgt ein `SessionStart` mit neuer Kennung. */
@@ -84,6 +92,7 @@ export function readHook(event: string, payload: unknown): HookFacts {
     cwd: nonEmpty(p.cwd),
     reason: nonEmpty(p.reason),
     notificationType: nonEmpty(p.notification_type),
+    lastAssistantMessage: nonEmpty(p.last_assistant_message),
   };
 }
 
