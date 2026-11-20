@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { isPopupOpen } from './popup/popups';
+import { SettingsDialog } from './settings/SettingsDialog';
 import { resolveShortcut, type ShortcutAction } from './shortcuts';
 import { TabBar } from './tabs/TabBar';
 import { TerminalArea } from './terminal/TerminalArea';
@@ -7,10 +9,11 @@ import { useWorkspace, type WorkspaceView } from './useWorkspace';
 
 const api = window.thub;
 
-/** Das Fenster: Tab-Leiste oben, darunter die Terminal-Fläche. */
+/** Das Fenster: Tab-Leiste oben, darunter die Terminal-Fläche; darüber bei Bedarf die Einstellungen. */
 export function App() {
   const { view, renameTab } = useWorkspace();
   const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Für die Handler ausserhalb von React (Tastenkürzel): immer der zuletzt angezeigte Zustand.
   const viewRef = useRef(view);
@@ -26,10 +29,16 @@ export function App() {
     [renameTab],
   );
 
-  // Tastenkürzel in der Capture-Phase, also bevor xterm.js die Taste sieht.
+  const closeSettings = useCallback(() => {
+    setSettingsOpen(false);
+    focusTerminal(viewRef.current?.activeTabId ?? null);
+  }, []);
+
+  // Tastenkürzel in der Capture-Phase, also bevor xterm.js die Taste sieht. Solange ein Menü oder
+  // Dialog offen ist, gehören die Tasten ihm.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return;
+      if (e.target instanceof HTMLInputElement || isPopupOpen()) return;
       const current = viewRef.current;
       const action = current ? resolveShortcut(e) : null;
       if (!current || !action) return;
@@ -54,8 +63,10 @@ export function App() {
         renamingId={renaming}
         onStartRename={setRenamingId}
         onFinishRename={finishRename}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
       <TerminalArea tabs={view.tabs} activeTabId={view.activeTabId} />
+      {settingsOpen && <SettingsDialog settings={view.settings} homeDir={view.homeDir} onClose={closeSettings} />}
     </>
   );
 }

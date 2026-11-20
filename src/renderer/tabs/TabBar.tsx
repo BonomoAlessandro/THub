@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
-import type { TabSnapshot } from '../../shared/types';
+import type { RecentDir, TabSnapshot } from '../../shared/types';
 import { ChevronIcon, GearIcon, PlusIcon } from '../icons';
+import { Menu } from '../popup/Menu';
 import { focusTerminal } from '../terminal/terminalViews';
+import { newTabMenuEntries } from './newTabMenu';
 import { Tab } from './Tab';
 import { Tooltip } from './Tooltip';
 
@@ -20,22 +22,49 @@ interface TabBarProps {
   onStartRename(tabId: string): void;
   /** Ende des Umbenennens: der eingegebene Name, oder `null` bei Abbruch. */
   onFinishRename(tabId: string, name: string | null): void;
+  /** Das Zahnrad öffnet die Einstellungen. */
+  onOpenSettings(): void;
+}
+
+/** Das offene Pfeil-Menü: die beim Öffnen abgefragten Ordner, und ob es per Tastatur geöffnet wurde. */
+interface NewTabMenuState {
+  recentDirs: RecentDir[];
+  viaKeyboard: boolean;
 }
 
 type TooltipContent = { kind: 'tab'; tabId: string } | { kind: 'text'; text: string };
 type TooltipState = TooltipContent & { anchor: DOMRect };
 
 /**
- * Titelleiste mit der Tab-Leiste, gestaltet wie im Prototyp: Tabs, `+` mit Pfeil, freie Fläche zum
+ * Titelleiste mit der Tab-Leiste, gestaltet wie im Prototyp: Tabs, `+` mit Pfeil-Menü, freie Fläche zum
  * Verschieben des Fensters, Zahnrad; rechts daneben liegen die nativen Fensterknöpfe. Bei vielen Tabs
  * werden die Tabs schmaler und die Leiste scrollbar. Die Leiste zeigt nur an und schickt Befehle;
  * die Tab-Logik liegt im Kern.
  */
-export function TabBar({ tabs, activeTabId, renamingId, onStartRename, onFinishRename }: TabBarProps) {
+export function TabBar({ tabs, activeTabId, renamingId, onStartRename, onFinishRename, onOpenSettings }: TabBarProps) {
   const stripRef = useRef<HTMLDivElement>(null);
+  const chevronRef = useRef<HTMLButtonElement>(null);
   const [fade, setFade] = useState({ left: false, right: false });
+  const [menu, setMenu] = useState<NewTabMenuState | null>(null);
   const tooltip = useTooltip();
   const hideTooltip = tooltip.hide;
+
+  // Die Ordner werden bei jedem Öffnen frisch abgefragt: Der Kern bietet nur an, was es noch gibt.
+  // Ein zweiter Klick auf den Pfeil schliesst das Menü wieder.
+  const toggleMenu = (viaKeyboard: boolean) => {
+    hideTooltip();
+    if (menu) {
+      closeMenu();
+      return;
+    }
+    void api.loadRecentDirs().then((recentDirs) => setMenu({ recentDirs, viaKeyboard }));
+  };
+
+  // Nach dem Menü gehört der Fokus wieder dem Terminal; ein neuer Tab holt ihn sich beim Anzeigen selbst.
+  const closeMenu = () => {
+    setMenu(null);
+    focusTerminal(activeTabId);
+  };
 
   const updateFades = useCallback(() => {
     const strip = stripRef.current;
@@ -130,18 +159,49 @@ export function TabBar({ tabs, activeTabId, renamingId, onStartRename, onFinishR
         >
           <PlusIcon />
         </button>
-        {/* Pfeil-Menü mit Shells und Ordnern folgt mit Ticket 05; bis dahin ohne Funktion. */}
-        <button className="icon-btn chevron" aria-label="Shell oder Ordner wählen" disabled>
+        {/* Pfeil-Menü: „Neues Terminal in …“; die Shells kommen mit Ticket 06 dazu („Shell oder Ordner wählen“). */}
+        <button
+          ref={chevronRef}
+          className={menu ? 'icon-btn chevron open' : 'icon-btn chevron'}
+          aria-label="Neues Terminal in …"
+          aria-haspopup="menu"
+          aria-expanded={menu !== null}
+          // Per Tastatur ausgelöst (Enter, Leertaste) ist `detail` 0: dann gleich den ersten Eintrag hervorheben.
+          onClick={(e) => toggleMenu(e.detail === 0)}
+          onMouseEnter={(e) => !menu && tooltip.schedule(e.currentTarget, { kind: 'text', text: 'Neues Terminal in …' })}
+          onMouseLeave={hideTooltip}
+          onMouseDown={hideTooltip}
+        >
           <ChevronIcon />
         </button>
       </div>
       {/* Freie Fläche zum Verschieben des Fensters; Doppelklick maximiert. Sie bleibt mindestens
           56 px breit, auch wenn die Tab-Leiste überläuft. */}
       <div className="titlebar-space" />
-      {/* Einstellungsdialog folgt mit Ticket 05; bis dahin ohne Funktion. */}
-      <button className="icon-btn" aria-label="Einstellungen" disabled>
+      <button
+        className="icon-btn"
+        aria-label="Einstellungen"
+        aria-haspopup="dialog"
+        onClick={() => {
+          hideTooltip();
+          onOpenSettings();
+        }}
+        onMouseEnter={(e) => tooltip.schedule(e.currentTarget, { kind: 'text', text: 'Einstellungen' })}
+        onMouseLeave={hideTooltip}
+        onMouseDown={hideTooltip}
+      >
         <GearIcon />
       </button>
+
+      {menu && chevronRef.current && (
+        <Menu
+          label="Neues Terminal in …"
+          entries={newTabMenuEntries(menu.recentDirs)}
+          anchor={chevronRef.current}
+          highlightFirst={menu.viaKeyboard}
+          onClose={closeMenu}
+        />
+      )}
 
       {tip?.kind === 'text' && <Tooltip anchor={tip.anchor}>{tip.text}</Tooltip>}
       {tip && tipTab && (
