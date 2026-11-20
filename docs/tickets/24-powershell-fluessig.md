@@ -1,6 +1,6 @@
 # 24 – PowerShell in THub: flüssige Pfeiltasten, keine Befehlsvorschau
 
-Status: `in Arbeit` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: –
 Herkunft: Abnahme von Hand (Ticket 19), „Verwendung von Tastaturpfeilen im Terminal“ und „Die Befehlspreview“ in [docs/abnahme.md](../abnahme.md)
 Spezifikation: „Shell-Integration“, „Terminal-Backend“
