@@ -2,7 +2,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { SerializeAddon } from '@xterm/addon-serialize';
 import { Terminal } from '@xterm/xterm';
 import { cssVar, terminalTheme } from '../theme';
-import { noticeBeforeStart, restoredHistory, serializeHistory } from './history';
+import { noticeBeforeStart, restoredHistory, serializeHistory, startArea } from './history';
 
 const api = window.thub;
 
@@ -15,6 +15,8 @@ export class TerminalView {
   private readonly fitAddon = new FitAddon();
   private readonly serializeAddon = new SerializeAddon();
   private exited = false;
+  /** Seit dem Ende der Shell hat eine Taste den Neustart schon angefordert. */
+  private restartRequested = false;
   /** Angeforderte Verläufe, die auf die Verarbeitung der bisherigen Ausgabe warten (`serializeHistory`). */
   private readonly pendingHistory = new Set<() => void>();
 
@@ -37,6 +39,10 @@ export class TerminalView {
 
     this.term.onData((data) => {
       if (this.exited) {
+        // Die neue Shell beginnt oben links in einem leeren Bereich; das Bisherige bleibt im Scrollback. Weitere
+        // Tasten bis zum Start schicken nur noch die Anfrage.
+        if (!this.restartRequested) this.term.write(startArea(this.term.rows));
+        this.restartRequested = true;
         api.send({ type: 'restartTab', tabId: this.tabId });
         return;
       }
@@ -60,6 +66,7 @@ export class TerminalView {
   /** Beendete Shells startet die nächste Taste über den Kern neu. */
   setExited(exited: boolean): void {
     this.exited = exited;
+    this.restartRequested = false;
   }
 
   write(data: string): void {

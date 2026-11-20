@@ -181,6 +181,36 @@ export function shellSuite(id: ShellId): void {
       });
     });
 
+    describe.runIf(flavor === 'ps')('Pfeiltasten im Befehlsverlauf (Ticket 24)', () => {
+      /** Pfeil nach oben und unten, wie xterm.js sie schickt. */
+      const UP = '\x1b[A';
+      const DOWN = '\x1b[B';
+      const PRESSES = 15;
+
+      it('zeichnet die Zeile aus dem Verlauf in wenigen Millisekunden, nicht erst im nächsten Bild von ConPTY', async () => {
+        const s = await start({});
+        // Ohne Markierung, damit die Zeile im Verlauf kurz bleibt; die Markierung danach zeigt, dass sie gelaufen ist.
+        s.write('echo verlauf-abcdefghijklmnopqrstuvwxyz\r');
+        await s.mark();
+        const times: number[] = [];
+        for (let n = 0; n < PRESSES; n++) {
+          // Zweimal hoch, an der Markierung vorbei. Gemessen wird der zweite Schritt: Dann schickt jede ConPTY die
+          // ganze Zeile, weil sie sich ab dem Anfang ändert, nicht nur einzelne geänderte Zeichen.
+          await s.writeAndTime(UP, /TH_MARK/);
+          // `\s*`: Die ConPTY von Windows überspringt ein unverändertes Leerzeichen per Cursorbewegung.
+          times.push(await s.writeAndTime(UP, /echo\s*verlauf-abcdefghijklmnopqrstuvwxyz/));
+          // Zurück auf die leere Zeile; danach soll nichts mehr unterwegs sein.
+          s.write(DOWN + DOWN);
+          await sleep(150);
+        }
+        times.sort((a, b) => a - b);
+        const median = times[Math.floor(times.length / 2)];
+        // Die ConPTY von Windows schickt die Zeile erst mit ihrem nächsten Bild, rund 16 ms nach der Taste; die
+        // mitgelieferte (wie im Windows Terminal) nach 1 bis 5 ms.
+        expect(median, `Zeiten in ms: ${times.map((t) => t.toFixed(1)).join(', ')}`).toBeLessThan(10);
+      });
+    });
+
     for (const variant of ['exe', 'cmd'] as Variant[]) {
       const direct = variant === 'exe' ? 'claude.exe' : 'claude-impl.exe';
 
@@ -913,6 +943,18 @@ export function shellSuite(id: ShellId): void {
         core.core.closeTab(core.tabId);
 
         await waitUntil(() => !alive(pid), 'ping.exe lief nach dem Schliessen weiter');
+      });
+
+      it('läuft über die mitgelieferte ConPTY: Konsolen-Host ist OpenConsole.exe wie im Windows Terminal (Ticket 24)', async () => {
+        const before = new Set(await ownHosts());
+        const core = CoreShell.start(def, ws, undefined, { realProcesses: true });
+        cores.push(core);
+        await core.mark();
+        const hosts = (await probe.snapshot()).filter(
+          (p) => p.ppid === process.pid && !before.has(p.pid) && /^(conhost|openconsole)\.exe$/i.test(p.name),
+        );
+        expect(hosts.map((p) => p.name)).toEqual(['OpenConsole.exe']);
+        core.write('exit\r');
       });
 
       it('endet die Shell mit exit, endet auch ihr Konsolen-Host (node-pty 1.1.0 liesse ihn stehen)', async () => {

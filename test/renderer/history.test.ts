@@ -1,7 +1,8 @@
 import { SerializeAddon } from '@xterm/addon-serialize';
 import { Terminal } from '@xterm/xterm';
 import { describe, expect, it } from 'vitest';
-import { dimmed, HISTORY_LINES, restoredHistory, serializeHistory } from '../../src/renderer/terminal/history';
+import { dimmed, HISTORY_LINES, restoredHistory, serializeHistory, startArea } from '../../src/renderer/terminal/history';
+import { BUNDLED_CONPTY_START, CONPTY_STARTS } from './conptyStart';
 
 // Verlauf im Renderer, mit einem echten xterm.js (ohne Bildschirm): serialisieren und ausgegraut
 // wiederherstellen.
@@ -38,8 +39,6 @@ async function restore(content: string): Promise<{ term: Terminal; serializer: S
   return fresh;
 }
 
-/** So meldet sich ConPTY beim Start einer Shell: sichtbaren Bereich leeren, Cursor nach oben links. */
-const CONPTY_START = '\x1b[?25l\x1b[2J\x1b[m\x1b[H\x1b[?25h';
 
 describe('Verlauf im Renderer', () => {
   describe('sichern', () => {
@@ -123,30 +122,56 @@ describe('Verlauf im Renderer', () => {
       expect(separator.length).toBeLessThan(COLS);
     });
 
-    it('legt Verlauf und Trennlinie ganz in den Scrollback, sodass das Leeren durch ConPTY nichts löscht', async () => {
-      const { term } = await restore('PS C:\\> git status\r\nOn branch main');
-      expect(term.buffer.normal.baseY).toBe(3);
+    describe.each(CONPTY_STARTS)('mit der %s', (_name, conptyStart) => {
+      it('legt Verlauf und Trennlinie ganz in den Scrollback; die Shell beginnt oben links', async () => {
+        const { term } = await restore('PS C:\\> git status\r\nOn branch main');
+        expect(term.buffer.normal.baseY).toBe(3);
+        expect([term.buffer.normal.cursorX, term.buffer.normal.cursorY]).toEqual([0, 0]);
 
-      await write(term, `${CONPTY_START}PS C:\\> `);
+        await write(term, `${conptyStart}PS C:\\> `);
 
-      const [first, second, separator, prompt] = lines(term);
-      expect([first, second]).toEqual(['PS C:\\> git status', 'On branch main']);
-      expect(separator).toContain(SEPARATOR_TEXT);
-      expect(prompt).toBe('PS C:\\> ');
+        const [first, second, separator, prompt] = lines(term);
+        expect([first, second]).toEqual(['PS C:\\> git status', 'On branch main']);
+        expect(separator).toContain(SEPARATOR_TEXT);
+        expect(prompt).toBe('PS C:\\> ');
+      });
+
+      it('sichert danach den alten Verlauf, die Trennlinie und die neue Ausgabe ohne Leerzeilen dazwischen', async () => {
+        const { term, serializer } = await restore('PS C:\\> git status');
+        await write(term, `${conptyStart}PS C:\\> npm test\r\nalles grün\r\nPS C:\\> `);
+
+        const { term: again } = await restore(serializeHistory(term, serializer));
+
+        expect(lines(again).slice(0, 4)).toEqual([
+          'PS C:\\> git status',
+          expect.stringContaining(SEPARATOR_TEXT),
+          'PS C:\\> npm test',
+          'alles grün',
+        ]);
+      });
+
+      it('zeichnet die Shell an absoluten Positionen dort, wo ConPTY sie vermutet', async () => {
+        const { term } = await restore('PS C:\\> git status');
+        await write(term, `${conptyStart}PS C:\\> `);
+
+        // PSReadLine zeichnet die Eingabezeile neu, etwa beim Blättern im Verlauf: Cursor in Zeile 1, Spalte 9.
+        await write(term, '\x1b[1;9Hgit log\x1b[K');
+
+        expect(lines(term).at(-1)).toBe('PS C:\\> git log');
+      });
     });
 
-    it('sichert danach den alten Verlauf, die Trennlinie und die neue Ausgabe ohne Leerzeilen dazwischen', async () => {
-      const { term, serializer } = await restore('PS C:\\> git status');
-      await write(term, `${CONPTY_START}PS C:\\> npm test\r\nalles grün\r\nPS C:\\> `);
+    it('beim Neustart nach dem Ende der Shell: Das Bisherige rutscht in den Scrollback, die neue Shell beginnt oben links', async () => {
+      const { term } = createTerminal();
+      await write(term, 'PS C:\\> exit\r\n\r\n[Prozess beendet mit Code 0]\r\n');
 
-      const { term: again } = await restore(serializeHistory(term, serializer));
+      await write(term, startArea(ROWS));
+      expect([term.buffer.normal.cursorX, term.buffer.normal.cursorY]).toEqual([0, 0]);
+      await write(term, `${BUNDLED_CONPTY_START}PS C:\\> `);
+      await write(term, '\x1b[1;9Hdir\x1b[K');
 
-      expect(lines(again).slice(0, 4)).toEqual([
-        'PS C:\\> git status',
-        expect.stringContaining(SEPARATOR_TEXT),
-        'PS C:\\> npm test',
-        'alles grün',
-      ]);
+      // Die leere Zeile unter dem Hinweis bleibt als Abstand zur neuen Shell.
+      expect(lines(term)).toEqual(['PS C:\\> exit', '', '[Prozess beendet mit Code 0]', '', 'PS C:\\> dir']);
     });
 
     it('setzt „gedämpft“ nach jeder SGR-Sequenz erneut', () => {
