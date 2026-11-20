@@ -1,6 +1,6 @@
 # 17 – Befehlspalette
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 15
 User Stories: 70, 71, 72, 83
 Spezifikation: „Oberfläche (Renderer)“, Tastenkürzel

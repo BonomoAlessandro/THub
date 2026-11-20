@@ -1,6 +1,6 @@
 # 15 – Tabs schliessen mit Rückfrage und wieder öffnen
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 12, 13
 User Stories: 24–29
 Spezifikation: „Wiederherstellen“ (geschlossene Tabs, Beenden), „Gespeicherter Zustand“ (zuletzt geschlossene Tabs), „Claude-Status“ (Einfrieren)

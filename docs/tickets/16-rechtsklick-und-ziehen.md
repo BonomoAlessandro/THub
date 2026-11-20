@@ -1,6 +1,6 @@
 # 16 – Rechtsklick-Menü und Umsortieren per Ziehen
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 15
 User Stories: 16, 20–23
 Spezifikation: „Oberfläche (Renderer)“
