@@ -30,6 +30,20 @@ export interface Settings {
  */
 export type TabProcessState = 'pending' | 'running' | 'exited';
 
+/** Art des Tabs: normales Terminal oder Claude-Tab (mit Claude-Zuordnung, auch unbestätigt). */
+export type TabKind = 'terminal' | 'claude';
+
+/**
+ * Angezeigter Status am Tab, nach Vorrang von oben nach unten (der erste zutreffende gilt):
+ * - `paused`: Claude-Session nach einem Neustart noch nicht fortgesetzt (Ticket 12);
+ * - `waiting`: Claude wartet auf dich;
+ * - `working`: Claude arbeitet;
+ * - `finished`: Claude ist fertig, der Tab wurde seither nicht angeschaut;
+ * - `processes`: im Terminal laufen Prozesse;
+ * - `idle`: nichts davon; der Symbol-Platz zeigt dann gedämpft die Art des Tabs.
+ */
+export type TabStatus = 'paused' | 'waiting' | 'working' | 'finished' | 'processes' | 'idle';
+
 /** Ein Tab, wie ihn der Renderer anzeigt. */
 export interface TabSnapshot {
   id: string;
@@ -41,6 +55,8 @@ export interface TabSnapshot {
   /** Ordner zur Anzeige: zuletzt aktiver Ordner, sonst Startordner. */
   cwd: string;
   process: TabProcessState;
+  kind: TabKind;
+  status: TabStatus;
   /**
    * Pausierter Claude-Tab nach einem Neustart: Seine Session wird erst fortgesetzt, wenn er angezeigt wird. Bis dahin
    * gibt es keinen Prozess, und der Renderer legt noch keine Ansicht an.
@@ -81,7 +97,7 @@ export interface WorkspaceSnapshot {
 
 /** Änderungsereignisse vom Kern an den Renderer. */
 export type WorkspaceEvent =
-  /** Tabs, Reihenfolge, aktiver Tab oder Prozess-Zustand haben sich geändert. */
+  /** Tabs, Reihenfolge, aktiver Tab, Prozess-Zustand, Art oder Status eines Tabs haben sich geändert. */
   | { type: 'tabs'; tabs: TabSnapshot[]; activeTabId: string | null }
   /** Die Einstellungen haben sich geändert; dazu die daraus folgende Standard-Shell (siehe `WorkspaceSnapshot`). */
   | { type: 'settings'; settings: Settings; defaultShellId: string }
@@ -125,6 +141,11 @@ export type WorkspaceCommand =
   | { type: 'restartTab'; tabId: string }
   /** Antwort auf `requestHistory`: der serialisierte Inhalt des Terminals eines Tabs. */
   | { type: 'saveHistory'; tabId: string; content: string }
+  /**
+   * Das Fenster ist im Vordergrund (hat den Fokus) bzw. nicht mehr. Gemeldet beim Laden und bei jedem
+   * Wechsel; der aktive Tab gilt nur im Vordergrund als angeschaut.
+   */
+  | { type: 'windowForeground'; foreground: boolean }
   | { type: 'updateSettings'; patch: Partial<Settings> }
   /**
    * Schriftgrösse einen Schritt grösser (1) oder kleiner (-1). Der Kern rechnet vom eigenen Stand aus,

@@ -814,7 +814,7 @@ export class CoreShell {
         terminal: recording,
         storage: recordingStorage,
         clock: realClock,
-        processes: { snapshot: () => Promise.resolve([]) },
+        processes: { snapshot: () => Promise.resolve([]), consoleHost: () => null },
         system: testSystem(ws.root),
       },
       { shells: [shell], localApi: api?.info },

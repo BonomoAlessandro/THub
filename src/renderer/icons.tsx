@@ -70,10 +70,10 @@ export function TerminalTypeIcon() {
   );
 }
 
-/** Pause-Symbol eines pausierten Claude-Tabs, gefüllt im 10er-Raster wie im Prototyp. */
+/** Pause-Symbol für „pausiert“: zwei gefüllte, abgerundete Balken im 10er-Raster. */
 export function PauseIcon() {
   return (
-    <svg viewBox="0 0 10 10" aria-hidden="true">
+    <svg className="pause" viewBox="0 0 10 10" aria-hidden="true">
       <rect x="1.5" y="1" width="2.6" height="8" rx="0.8" />
       <rect x="5.9" y="1" width="2.6" height="8" rx="0.8" />
     </svg>

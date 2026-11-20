@@ -304,7 +304,9 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 | `Notification` mit Typ `permission_prompt` oder `elicitation_dialog` | Zustand „wartet auf dich“, aber nur als Rückfallebene: wenn der Tab noch „arbeitet“ und seit dem letzten `PreToolUse` weder `PermissionRequest` noch `PostToolUse` kam. Das Ereignis kommt etwa 6 Sekunden verzögert und darf einen inzwischen weiterarbeitenden oder ruhenden Tab nicht zurücksetzen |
 | `Notification` mit Typ `idle_prompt` | keine Änderung |
 | Nutzer drückt Esc in einem Claude-Tab, der „arbeitet“ oder „wartet“, und innerhalb von etwa 1,5 Sekunden kommt kein Hook-Ereignis | Zustand „ruht“, ohne „fertig, noch nicht angeschaut“. Nach einer Unterbrechung oder einer abgelehnten Rückfrage schickt Claude kein Ereignis |
-| Andere Eingabe des Nutzers in einem Claude-Tab, der „wartet“ | Zustand „arbeitet“. Nach einer Bestätigung kommt bis `PostToolUse` kein Ereignis; ein langer bestätigter Befehl bliebe sonst orange |
+| Nutzer drückt Enter oder eine Zifferntaste (die eigentliche Antwort, etwa „1“, „2“, „3“) in einem Claude-Tab, der „wartet“ | Zustand „arbeitet“. Nach einer Bestätigung kommt bis `PostToolUse` kein Ereignis; ein langer bestätigter Befehl bliebe sonst orange |
+| Nach dieser Antwort kommt innerhalb von etwa 3 Sekunden weder ein Hook-Ereignis (ausser `Notification`) noch ein neuer Nachfahre des Claude-Prozesses, der nach der Antwort gestartet ist (Prozess-Sonde; Konsolen-Hosts zählen nicht) | Zustand „ruht“, ohne „fertig, noch nicht angeschaut“. So endet eine Ablehnung mit „No“ und Enter, nach der Claude nichts meldet; ein bestätigter langer Befehl bleibt „arbeitet“, weil sein Prozess läuft. Liefert die Sonde nichts Brauchbares (keine Sonde, Prozess-ID von Claude unbekannt oder Claude nicht zu finden), bleibt es bei „arbeitet“, bis ein Hook kommt |
+| Pfeiltasten, andere Navigationstasten (Pos1, Ende, Bild auf/ab, Tab) und andere Tasten in einem Claude-Tab, der „wartet“ | keine Änderung: Sie wählen nur in der Rückfrage aus |
 | `Stop`, `StopFailure` | Zustand „ruht“; war der Tab dabei nicht sichtbar (nicht aktiv oder Fenster nicht im Vordergrund), „fertig, noch nicht angeschaut“ setzen |
 | `SessionEnd` mit Grund `clear` oder `resume` | keine Änderung (ein `SessionStart` mit neuer Kennung folgt) |
 | `SessionEnd` mit anderem Grund; Ende-Meldung des Starters; Ende der Shell | Tab wird normales Terminal, Claude-Zuordnung entfällt. Ausnahme: Nach einem von THub gestarteten Fortsetzen ohne vorheriges `SessionStart` entscheidet erst die Ende-Meldung des Starters (ein fehlgeschlagenes Fortsetzen schickt `SessionEnd` mit Grund `other` etwa 1,5 Sekunden vor dem Prozessende) |
@@ -334,6 +336,14 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 4. fertig, noch nicht angeschaut (grün)
 5. Prozesse laufen (blau)
 6. nichts
+
+**Präzisierungen aus der Umsetzung (Ticket 13):**
+- Antworten des Terminals, die über denselben Weg wie Tasten kommen (Fokus-Meldungen, Maus, Cursor-Position, Geräteattribute, OSC- und DCS-Antworten), sind keine Eingabe des Nutzers; Claude Code schaltet etwa Fokus-Meldungen ein. Esc ist genau die Taste Esc allein; eine Antwort ist genau Enter oder eine einzelne Ziffer.
+- Die Wartezeiten nach Esc und nach einer Antwort beendet jedes Hook-Ereignis ausser `Notification`: Benachrichtigungen kommen verzögert (Rückfrage nach etwa 6 Sekunden) und zeigen nicht, dass Claude weitermacht.
+- Für die Wartezeit nach einer Antwort zählt nur eine Abfrage der Sonde, die nach der Antwort angefordert wurde; ein dabei gesehener neuer Prozess genügt, auch wenn er bei der nächsten Abfrage schon beendet ist. Läuft beim Ablauf der Wartezeit gerade eine Abfrage, entscheidet ihr Ergebnis mit.
+- Bis der Renderer zum ersten Mal meldet, ob das Fenster im Vordergrund ist, gilt es als im Hintergrund.
+- Mit der Claude-Zuordnung entfallen auch Zustand und „fertig, noch nicht angeschaut“. Ein neuer Start von Claude beginnt bei „ruht“. Der Zeitpunkt des letzten Prompts bleibt bei einer neuen Session (`/clear`) stehen, weil der Claude-Prozess derselbe bleibt.
+- Verwaiste MSYS-Programme zählen nur in normalen Git-Bash-Tabs; in Claude-Tabs zählen allein die Nachfahren des Claude-Prozesses.
 
 **Hinweise im Fenster:**
 - Der Kern löst einen Hinweis aus, wenn ein nicht sichtbarer Tab in „wartet auf dich“ wechselt oder fertig wird. Pro Tab gibt es höchstens einen Hinweis; ein neuer ersetzt den alten. Hinweise verschiedener Tabs stehen gleichzeitig übereinander; wird ein Tab angezeigt (auf welchem Weg auch immer), verschwindet nur dessen Hinweis.

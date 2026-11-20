@@ -35,12 +35,13 @@ export class FakeTerminalBackend implements TerminalBackend {
   killAllCalls = 0;
   private readonly running = new Map<string, TerminalListener>();
   private nextPid = 1000;
+  private readonly chosenPids: number[] = [];
   private startError: Error | null = null;
 
   start(tabId: string, order: StartOrder, listener: TerminalListener): number {
     if (this.startError) throw this.startError;
     if (this.running.has(tabId)) throw new Error(`Für diesen Tab läuft bereits eine Shell: ${tabId}`);
-    const pid = this.nextPid++;
+    const pid = this.chosenPids.shift() ?? this.nextPid++;
     this.running.set(tabId, listener);
     this.starts.push({ tabId, order: structuredClone(order), pid });
     return pid;
@@ -80,6 +81,11 @@ export class FakeTerminalBackend implements TerminalBackend {
     if (!listener) return;
     this.running.delete(tabId);
     listener.exit(exitCode);
+  }
+
+  /** Die nächsten Starts melden diese Prozess-IDs, etwa die aus einem aufgezeichneten Prozessbaum. */
+  usePids(...pids: number[]): void {
+    this.chosenPids.push(...pids);
   }
 
   /** Der nächste Start scheitert mit dieser Meldung (bis `failStarts(null)`). */
@@ -186,18 +192,50 @@ export class FakeClock implements Clock {
 
 // ---------- Prozess-Sonde ----------
 
-/** Steuerbare Prozess-Sonde: liefert den Prozessbaum, den der Test gesetzt hat. */
+/**
+ * Steuerbare Prozess-Sonde: liefert die Prozessliste und die Konsolen-Hosts, die der Test gesetzt hat. Mit
+ * `hold()` bleibt eine Abfrage hängen, bis der Test sie mit `release()` beantwortet.
+ */
 export class FakeProcessProbe implements ProcessProbe {
   processes: ProcessInfo[] = [];
   queries = 0;
+  /** Prozess-IDs, deren Konsolen-Host der Kern abgefragt hat, in der Reihenfolge der Abfragen. */
+  readonly hostQueries: number[] = [];
+  private readonly hosts = new Map<number, number>();
+  private held: (() => void)[] | null = null;
 
   set(processes: ProcessInfo[]): void {
     this.processes = processes;
   }
 
+  /** Der Konsolen-Host dieses Prozesses; ohne Angabe ist er nicht lesbar (`null`). */
+  setConsoleHost(pid: number, host: number): void {
+    this.hosts.set(pid, host);
+  }
+
   snapshot(): Promise<ProcessInfo[]> {
     this.queries++;
-    return Promise.resolve(structuredClone(this.processes));
+    const answer = () => structuredClone(this.processes);
+    if (!this.held) return Promise.resolve(answer());
+    const held = this.held;
+    return new Promise((resolve) => held.push(() => resolve(answer())));
+  }
+
+  consoleHost(pid: number): number | null {
+    this.hostQueries.push(pid);
+    return this.hosts.get(pid) ?? null;
+  }
+
+  /** Abfragen bleiben ab jetzt hängen. */
+  hold(): void {
+    this.held ??= [];
+  }
+
+  /** Beantwortet hängende Abfragen mit der aktuellen Liste; danach antwortet die Sonde wieder sofort. */
+  release(): void {
+    const held = this.held ?? [];
+    this.held = null;
+    for (const answer of held) answer();
   }
 }
 

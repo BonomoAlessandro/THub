@@ -91,6 +91,21 @@ export function useWorkspace(): {
     };
   }, []);
 
+  // Der Kern muss wissen, ob das Fenster im Vordergrund ist: Nur dann gilt der aktive Tab als angeschaut
+  // („fertig“ verschwindet, Hinweise braucht es keine). Gemeldet beim Laden und bei jedem Wechsel.
+  useEffect(() => {
+    const report = (foreground: boolean) => api.send({ type: 'windowForeground', foreground });
+    const onFocus = () => report(true);
+    const onBlur = () => report(false);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('blur', onBlur);
+    report(document.hasFocus());
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, []);
+
   const renameTab = useCallback((tabId: string, name: string) => {
     const trimmed = name.trim();
     setView((current) => {

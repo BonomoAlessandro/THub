@@ -9,7 +9,8 @@ import { PtyManager } from './ptyManager';
 import { shellIntegrationDir } from './shellLaunch';
 import { detectShells } from './shells';
 import { STATE_FILE_NAME, StateStore } from './store';
-import { hostSystem, noProcessProbe, systemClock } from './system';
+import { createProcessProbe } from './processProbe';
+import { hostSystem, systemClock } from './system';
 import { DEV_MENU } from './devMenu';
 import type { LocalApiInfo } from './workspace/claude';
 import type { ShellInfo } from './workspace/ports';
@@ -68,7 +69,7 @@ async function start(detectedShells: Promise<ShellInfo[]>, executionPolicy: Exec
       }),
       storage: new StateStore(path.join(app.getPath('userData'), STATE_FILE_NAME)),
       clock: systemClock,
-      processes: noProcessProbe,
+      processes: createProcessProbe(),
       system: hostSystem,
     },
     { shells, localApi: api?.info },
@@ -183,6 +184,9 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
       return;
     case 'saveHistory':
       ws.saveHistory(command.tabId, command.content);
+      return;
+    case 'windowForeground':
+      ws.windowForeground(command.foreground === true);
       return;
     case 'updateSettings':
       ws.updateSettings(command.patch);

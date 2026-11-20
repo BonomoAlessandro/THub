@@ -1,7 +1,7 @@
 // Claude-Zuordnung (Ticket 10): welche Claude-Session in einem Tab läuft.
 // Hier stehen der Vertrag der Eingänge (Meldungen des Starters, Hook-Ereignisse von Claude Code) und die
-// reinen Regeln nach der Tabelle „Claude-Status: Zustandsautomat pro Tab“ der Spezifikation, vorerst ohne
-// die Status-Zeilen (arbeitet, wartet, ruht: Ticket 13). Der Workspace-Kern wendet sie an.
+// reinen Regeln nach der Tabelle „Claude-Status: Zustandsautomat pro Tab“ der Spezifikation. Die Status-Zeilen
+// (arbeitet, wartet, ruht) stehen in `claudeStatus.ts`. Der Workspace-Kern wendet beides an.
 
 import * as path from 'node:path';
 import type { PersistedClaudeLink } from './schema';
@@ -69,6 +69,8 @@ export interface HookFacts {
   cwd?: string;
   /** Grund bei `SessionEnd`. */
   reason?: string;
+  /** Art bei `Notification`, z.B. `permission_prompt` oder `idle_prompt`. */
+  notificationType?: string;
 }
 
 /** `SessionEnd` mit diesen Gründen beendet Claude nicht: Es folgt ein `SessionStart` mit neuer Kennung. */
@@ -76,7 +78,23 @@ const SESSION_END_CONTINUES = new Set(['clear', 'resume']);
 
 export function readHook(event: string, payload: unknown): HookFacts {
   const p = typeof payload === 'object' && payload !== null ? (payload as Record<string, unknown>) : {};
-  return { event, sessionId: nonEmpty(p.session_id), cwd: nonEmpty(p.cwd), reason: nonEmpty(p.reason) };
+  return {
+    event,
+    sessionId: nonEmpty(p.session_id),
+    cwd: nonEmpty(p.cwd),
+    reason: nonEmpty(p.reason),
+    notificationType: nonEmpty(p.notification_type),
+  };
+}
+
+/**
+ * Ob das Ereignis eine Session beginnt: `SessionStart`, oder ein anderes Ereignis (ausser `SessionEnd`) mit einer
+ * anderen Kennung als der gespeicherten. Das zweite gilt als Ersatz, falls `SessionStart` nicht ankam (etwa ohne
+ * curl.exe), und wird danach normal verarbeitet.
+ */
+export function startsSession(link: PersistedClaudeLink | undefined, hook: HookFacts): boolean {
+  if (hook.event === 'SessionEnd' || !hook.sessionId) return false;
+  return hook.event === 'SessionStart' || hook.sessionId !== link?.sessionId;
 }
 
 /** Zuordnung nach dem Start durch den Starter: Claude-Tab, unbestätigt. */
@@ -106,7 +124,7 @@ export function linkAfterHook(
   let next = link;
   // SessionStart übernimmt Kennung und Ordner. Ein anderes Ereignis mit einer neuen Kennung zählt genauso,
   // falls SessionStart nicht ankam (etwa ohne curl.exe).
-  if (hook.sessionId && (hook.event === 'SessionStart' || hook.sessionId !== link?.sessionId)) {
+  if (startsSession(link, hook)) {
     const cwd = hook.cwd ? normalizeCwd(hook.cwd) : (link?.cwd ?? '');
     next = withSession(link, hook.sessionId, cwd, true);
   }

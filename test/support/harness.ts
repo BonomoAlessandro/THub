@@ -8,7 +8,7 @@ import { afterEach } from 'vitest';
 import { HOOK_FILE_NAME, writeHookFile } from '../../src/main/hookFile';
 import { LocalApiServer } from '../../src/main/localApi';
 import type { LocalApiInfo } from '../../src/main/workspace/claude';
-import type { ShellInfo, StateStorage, TabHistory } from '../../src/main/workspace/ports';
+import type { ProcessInfo, ShellInfo, StateStorage, TabHistory } from '../../src/main/workspace/ports';
 import type { PersistedState, PersistedTab } from '../../src/main/workspace/schema';
 import { createWorkspace, type Workspace } from '../../src/main/workspace/workspace';
 import type { TabSnapshot, WorkspaceEvent, WorkspaceSnapshot } from '../../src/shared/types';
@@ -210,6 +210,16 @@ export class TestWorkspace {
     for (const tab of this.tabs()) this.workspace.viewReady(tab.id, cols, rows);
   }
 
+  /**
+   * Der nächste Takt der Prozess-Sonde (1,5 Sekunden) mit dieser Prozessliste: Die Uhr läuft bis dahin, die
+   * Abfrage ist beantwortet und ausgewertet.
+   */
+  async probe(processes: ProcessInfo[]): Promise<void> {
+    this.processes.set(processes);
+    this.clock.advance(PROBE_INTERVAL_MS);
+    await settle();
+  }
+
   eventsOfType<T extends WorkspaceEvent['type']>(type: T): Extract<WorkspaceEvent, { type: T }>[] {
     return this.events.filter((e): e is Extract<WorkspaceEvent, { type: T }> => e.type === type);
   }
@@ -240,6 +250,14 @@ export class TestWorkspace {
     });
     return { workspace, terminal, renderer, events, api };
   }
+}
+
+/** Takt der Prozess-Sonde im Kern. */
+export const PROBE_INTERVAL_MS = 1500;
+
+/** Wartet, bis erfüllte Versprechen (etwa die Antwort der Prozess-Sonde) verarbeitet sind. */
+export function settle(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
 }
 
 export function startWorkspace(options?: TestWorkspaceOptions): TestWorkspace {

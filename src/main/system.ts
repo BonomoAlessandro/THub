@@ -50,7 +50,8 @@ export const hostSystem: HostSystem = {
   },
 };
 
-/** Platzhalter, bis die echte Prozess-Sonde (Ticket 13) den Prozessbaum liefert. */
+/** Sonde ohne Prozesse: Rückfall, wenn sich die echte Sonde (`processProbe.ts`) nicht laden lässt. */
 export const noProcessProbe: ProcessProbe = {
   snapshot: () => Promise.resolve([]),
+  consoleHost: () => null,
 };

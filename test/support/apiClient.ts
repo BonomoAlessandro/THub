@@ -62,6 +62,50 @@ export class ApiClient {
   hook(tabId: string, event: string, payload: unknown): Promise<ApiResponse> {
     return this.post(`/hooks/${event}`, payload, { 'X-THub-Tab': tabId });
   }
+
+  /**
+   * Ein Hook-Ereignis, dessen Kopfzeilen sofort und dessen Inhalt erst mit `finish` ankommt.
+   * `arrived` erfüllt sich, sobald der Server die Anfrage angenommen hat (das erste Stück ist bei ihm).
+   */
+  slowHook(tabId: string, event: string, payload: unknown): { arrived: Promise<void>; finish: () => Promise<ApiResponse> } {
+    const text = JSON.stringify(payload);
+    const half = Math.floor(text.length / 2);
+    let resolveResponse: (res: ApiResponse) => void;
+    const response = new Promise<ApiResponse>((resolve) => (resolveResponse = resolve));
+    const req = http.request(`${this.url}/hooks/${event}`, {
+      method: 'POST',
+      agent: false,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(text),
+        'X-THub-Tab': tabId,
+        'X-THub-Token': this.token ?? '',
+      },
+    });
+    const started = performance.now();
+    req.on('response', (res) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (c: Buffer) => chunks.push(c));
+      res.on('end', () =>
+        resolveResponse({
+          status: res.statusCode ?? 0,
+          headers: res.headers,
+          body: Buffer.concat(chunks).toString('utf8'),
+          ms: performance.now() - started,
+        }),
+      );
+    });
+    const arrived = new Promise<void>((resolve) => {
+      req.write(text.slice(0, half), () => setTimeout(resolve, 100));
+    });
+    return {
+      arrived,
+      finish: () => {
+        req.end(text.slice(half));
+        return response;
+      },
+    };
+  }
 }
 
 /** Ohne Keep-Alive, damit nach jedem Test keine Verbindung zu einem geschlossenen Server übrig bleibt. */
@@ -102,9 +146,15 @@ export type HookSample =
   | 'UserPromptSubmit'
   | 'UserPromptSubmit-task-notification'
   | 'PreToolUse-Bash'
+  | 'PreToolUse-Read'
+  | 'PreToolUse-AskUserQuestion'
   | 'PermissionRequest-Bash'
+  | 'PermissionRequest-Read'
+  | 'PermissionRequest-AskUserQuestion'
   | 'PostToolUse-Bash'
+  | 'PostToolUse-Read'
   | 'Stop'
+  | 'Stop-mit-background_tasks'
   | 'Notification-idle_prompt'
   | 'Notification-permission_prompt';
 
