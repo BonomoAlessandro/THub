@@ -269,8 +269,14 @@ function registerIpc(ws: Workspace): void {
     });
   });
 
-  ipcMain.handle(IPC.clipboardRead, () => clipboard.readText());
-  ipcMain.handle(IPC.clipboardWrite, (_e, text: string) => clipboard.writeText(text));
+  // Im Testmodus eine eigene Zwischenablage im Speicher: Prüfungen von „Pfad kopieren“ oder Kopieren im Terminal
+  // dürfen die echte Zwischenablage des Nutzers weder lesen noch überschreiben.
+  let testClipboard = '';
+  ipcMain.handle(IPC.clipboardRead, () => (TEST_HIDDEN ? testClipboard : clipboard.readText()));
+  ipcMain.handle(IPC.clipboardWrite, (_e, text: string) => {
+    if (TEST_HIDDEN) testClipboard = String(text);
+    else clipboard.writeText(text);
+  });
 }
 
 /** Öffnet das Fenster so, wie der Kern es vorgibt, und meldet ihm jede Änderung von Grösse und Lage. */
