@@ -110,8 +110,27 @@ export interface Workspace extends ClaudeReceiver {
    * der zuletzt benutzten Ordner. Der Tab behält seine Shell, auch über einen Neustart.
    */
   createTab(options?: NewTabOptions): string;
+  /**
+   * Dupliziert einen Tab (Rechtsklick-Menü): ein neuer Tab rechts neben ihm, auch wenn er nicht aktiv ist, im aktuellen
+   * Ordner des Tabs (gibt es ihn nicht mehr, wie beim Start der Shell: Startordner → Standardordner → Benutzerordner),
+   * mit derselben Shell und einem automatischen Namen nach dem Ordner. Der neue Tab wird aktiv und startet eine eigene
+   * Shell, ohne Verlauf; bei einem Claude-Tab nur das Terminal, ohne Claude-Session. Liefert seine Kennung, leer für
+   * unbekannte Tabs.
+   */
+  duplicateTab(tabId: string): string;
   /** Leere Namen werden ignoriert. Ein so vergebener Name wird nie automatisch überschrieben. */
   renameTab(tabId: string, name: string): void;
+  /**
+   * Verschiebt den Tab an Position `index` der Leiste (ab 0); die anderen behalten ihre Reihenfolge, der aktive Tab
+   * bleibt aktiv. Eine Position ausserhalb der Leiste gilt als das nächste Ende. Die Reihenfolge übersteht einen
+   * Neustart, und Ctrl+1 … Ctrl+9 (`activateTabAt`) folgen ihr.
+   */
+  moveTab(tabId: string, index: number): void;
+  /**
+   * Der aktuelle Ordner des Tabs, wie ihn der Tooltip zeigt: der zuletzt gemeldete, sonst der Startordner. Ihn öffnet
+   * „Ordner im Explorer öffnen“; `undefined` für unbekannte Tabs.
+   */
+  tabFolder(tabId: string): string | undefined;
   /** Zeigt den Tab an; ein pausierter Claude-Tab setzt dabei seine Session fort. */
   activateTab(tabId: string): void;
   /** Aktiviert den Tab `offset` Plätze weiter, über die Enden hinweg im Kreis. */
@@ -389,17 +408,33 @@ class WorkspaceCore implements Workspace {
 
   createTab(options: NewTabOptions = {}): string {
     if (this.stopping) return '';
-    const startCwd = this.newTabDir(options.cwd);
+    // Rechts neben dem aktiven Tab, damit zusammengehörige Tabs nebeneinander bleiben; ohne aktiven ganz rechts.
+    const activeIndex = this.state.tabs.findIndex((t) => t.id === this.state.activeTabId);
+    const index = activeIndex < 0 ? this.state.tabs.length : activeIndex + 1;
+    const shellId = (this.findShell(options.shellId) ?? this.defaultShell()).id;
+    return this.insertNewTab(index, this.newTabDir(options.cwd), shellId);
+  }
+
+  duplicateTab(tabId: string): string {
+    const source = this.findTab(tabId);
+    if (this.stopping || !source) return '';
+    // Dieselbe Shell-Kennung, auch wenn die Shell auf diesem Rechner fehlt: Dann startet das Duplikat wie die Quelle
+    // mit der Standard-Shell und kommt mit seiner Shell zurück, sobald es sie wieder gibt.
+    return this.insertNewTab(this.state.tabs.indexOf(source) + 1, this.resolveCwd(source), source.shellId);
+  }
+
+  /**
+   * Legt einen neuen Tab an Position `index` an und macht ihn aktiv: automatischer Name nach dem Startordner, keine
+   * Claude-Zuordnung, kein Verlauf. Der Startordner kommt an die Spitze der zuletzt benutzten Ordner.
+   */
+  private insertNewTab(index: number, startCwd: string, shellId: string): string {
     const tab: PersistedTab = {
       id: randomUUID(),
       name: this.autoTabName(startCwd),
       nameIsManual: false,
-      shellId: (this.findShell(options.shellId) ?? this.defaultShell()).id,
+      shellId,
       startCwd,
     };
-    // Rechts neben dem aktiven Tab, damit zusammengehörige Tabs nebeneinander bleiben; ohne aktiven ganz rechts.
-    const activeIndex = this.state.tabs.findIndex((t) => t.id === this.state.activeTabId);
-    const index = activeIndex < 0 ? this.state.tabs.length : activeIndex + 1;
     this.state.tabs.splice(index, 0, tab);
     this.runtimes.set(tab.id, newRuntime(false));
     this.state.activeTabId = tab.id;
@@ -415,6 +450,22 @@ class WorkspaceCore implements Workspace {
     tab.name = trimmed;
     tab.nameIsManual = true;
     this.tabsChanged();
+  }
+
+  moveTab(tabId: string, index: number): void {
+    const { tabs } = this.state;
+    const from = tabs.findIndex((t) => t.id === tabId);
+    if (this.stopping || from < 0 || !Number.isInteger(index)) return;
+    const to = Math.max(0, Math.min(index, tabs.length - 1));
+    if (to === from) return;
+    const [tab] = tabs.splice(from, 1);
+    tabs.splice(to, 0, tab);
+    this.tabsChanged();
+  }
+
+  tabFolder(tabId: string): string | undefined {
+    const tab = this.findTab(tabId);
+    return tab && (tab.lastCwd ?? tab.startCwd);
   }
 
   activateTab(tabId: string): void {
