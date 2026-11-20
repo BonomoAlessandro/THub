@@ -727,6 +727,19 @@ export class CoreShell {
   }
 
   /**
+   * Wartet auf sichtbaren Text. ConPTY reicht die Ordner-Meldung sofort durch, den Text des Prompts
+   * zeichnet es oft erst etwas spaeter.
+   */
+  async waitForVisible(re: RegExp, timeoutMs = 15000): Promise<void> {
+    const end = Date.now() + timeoutMs;
+    while (Date.now() < end) {
+      if (re.test(visibleText(this.output))) return;
+      await sleep(50);
+    }
+    throw new Error(`Ausgabe ${re} kam nicht in ${this.def.id}. Ausgabe:\n${visibleText(this.output).slice(-3000)}`);
+  }
+
+  /**
    * Beendet die Shell mit `exit` und den Kern geordnet, wie beim Beenden von THub. Mit `typeExit = false`
    * wird nichts getippt (etwa wenn das Testprofil den PSReadLine-Verlauf nicht abschalten konnte); das
    * Terminal-Backend beendet die Shell dann hart.

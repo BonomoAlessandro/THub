@@ -387,7 +387,8 @@ export function shellSuite(id: ShellId): void {
         expect(core.shownCwds.slice(-2)).toEqual([spaces, second]);
       });
 
-      it('erweitert den eigenen Prompt; die Escape-Sequenzen erscheinen nicht als Text', () => {
+      it('erweitert den eigenen Prompt; die Escape-Sequenzen erscheinen nicht als Text', async () => {
+        await cores[0].waitForVisible(/TH-PROMPT>/);
         const raw = cores[0].output;
         // Die Sequenzen bleiben im Strom ...
         expect(raw).toMatch(flavor === 'bash' ? /\x1b\]7;file:\/\// : /\x1b\]9;9;/);
@@ -434,7 +435,7 @@ export function shellSuite(id: ShellId): void {
           await core.waitForCwd(ws.root);
           core.write(cdLine(flavor, spaces) + '\r');
           await core.waitForCwd(spaces);
-          expect(visibleText(core.output)).toContain('TH-PROMPT>');
+          await core.waitForVisible(/TH-PROMPT>/);
           await core.shutdown();
         });
 
@@ -449,9 +450,12 @@ export function shellSuite(id: ShellId): void {
             const core = startCore(undefined, { env: { PSExecutionPolicyPreference: 'AllSigned' } });
             try {
               await core.waitForCwd(ws.root);
-              expect(existsSync(ws.profileLoaded)).toBe(false);
               // Ohne Profil der Standard-Prompt von PowerShell, ebenfalls mit Ordner-Meldung
-              expect(visibleText(core.output)).toMatch(/PS [A-Z]:\\[^\r\n]*>/);
+              await core.waitForVisible(/PS [A-Z]:\\[^\r\n]*>/);
+              expect(existsSync(ws.profileLoaded)).toBe(false);
+              // Die Meldung zum Profil steht da wie bei PowerShell selbst, ohne den Code der Integration.
+              expect(visibleText(core.output)).toMatch(/test-profile\.ps1/);
+              expect(visibleText(core.output)).not.toMatch(/THub-Integration/);
             } finally {
               // Nichts tippen: Ohne Testprofil schriebe PSReadLine in den echten Verlauf des Nutzers.
               await core.shutdown(false);

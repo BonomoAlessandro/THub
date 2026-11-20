@@ -22,7 +22,9 @@ foreach ($__THubProfile in $__THubProfiles) {
         try {
             . $__THubProfile
         } catch {
-            Write-Error -ErrorRecord $_
+            # Fehler zeigen wie PowerShell selbst. Nicht per Write-Error: Windows PowerShell setzte
+            # sonst diesen ganzen Code als Befehlsnamen vor die Meldung.
+            Write-Host -ForegroundColor Red (($_ | Out-String).TrimEnd())
         }
     }
 }
