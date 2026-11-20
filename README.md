@@ -43,6 +43,7 @@ src/
     folders.ts              Tab-Namen nach dem Ordner und Liste der zuletzt benutzten Ordner
     windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
     claude.ts               Claude-Zuordnung pro Tab: Vertrag von Starter und Hooks, Regeln
+    resume.ts               Claude-Sessions nach einem Neustart fortsetzen: welche, und der Startbefehl pro Shell
     cwdReport.ts            Ordner-Meldungen der Shell (OSC 7, OSC 9;9) im rohen Ausgabestrom erkennen
     shellIds.ts             Shell-Kennungen (pwsh, powershell, cmd, gitbash, wsl:<Distribution>) und Anzeigenamen
   main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
@@ -108,7 +109,7 @@ Gespeichert wird in `%APPDATA%\THub\state.json`, im Schema Version 2. Eine Datei
 }
 ```
 
-Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung>.json` (`{ "version": 1, "savedAt": …, "content": "…" }`): die letzten etwa 1000 Zeilen, serialisiert mit Farben, ohne den Bildschirm von Vollbildprogrammen wie `vim` oder `less`. Gesichert wird alle 30 Sekunden für Tabs mit neuer Ausgabe, beim Beenden (THub wartet höchstens 2 Sekunden auf den Renderer) und bei einer Windows-Abmeldung (sofort, mit dem zuletzt gesicherten Stand). Beim Schliessen eines Tabs wird seine Datei gelöscht.
+Der Inhalt jedes normalen Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung>.json` (`{ "version": 1, "savedAt": …, "content": "…" }`): die letzten etwa 1000 Zeilen, serialisiert mit Farben, ohne den Bildschirm von Vollbildprogrammen wie `vim` oder `less`. Gesichert wird alle 30 Sekunden für Tabs mit neuer Ausgabe, beim Beenden (THub wartet höchstens 2 Sekunden auf den Renderer) und bei einer Windows-Abmeldung (sofort, mit dem zuletzt gesicherten Stand). Beim Schliessen eines Tabs wird seine Datei gelöscht. Claude-Tabs haben keinen Verlauf: Wird ein Tab zum Claude-Tab, fällt seine Datei weg; wird er wieder normal, wird sein Inhalt wieder gesichert.
 
 ## Was das Grundgerüst kann
 
@@ -127,7 +128,7 @@ Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung
 - Tabs umbenennen (Doppelklick auf den Tab oder `F2`; Enter übernimmt, Escape bricht ab)
 - Beim Beenden werden alle Tabs gespeichert und beim nächsten Start in ihrem Verzeichnis neu gestartet; der zuletzt aktive Tab wird wieder angezeigt
 - Eigene Titelleiste ohne Windows-Rahmen: Die Tabs sitzen direkt in der Titelleiste, rechts die nativen Fensterknöpfe mit den Andock-Layouts von Windows 11. Die freie Fläche neben den Tabs (mindestens 56 px, auch bei vielen Tabs) verschiebt das Fenster, Doppelklick maximiert.
-- Der frühere Inhalt jedes Terminals steht nach einem Neustart ausgegraut über der neuen Eingabezeile, mit der Trennlinie „Wiederhergestellt · <Datum, Uhrzeit der Sicherung>“; er liegt im Scrollback, eine Mausrad-Bewegung nach oben zeigt ihn. Nach einem Absturz fehlen höchstens die letzten etwa 30 Sekunden.
+- Der frühere Inhalt jedes normalen Terminals steht nach einem Neustart ausgegraut über der neuen Eingabezeile, mit der Trennlinie „Wiederhergestellt · <Datum, Uhrzeit der Sicherung>“; er liegt im Scrollback, eine Mausrad-Bewegung nach oben zeigt ihn. Nach einem Absturz fehlen höchstens die letzten etwa 30 Sekunden.
 - Hell oder dunkel, standardmässig nach dem Design von Windows, auch die Terminalfläche und die Fensterknöpfe; ein Wechsel in Windows wirkt sofort
 - Beendete Shell (z.B. `exit`): Hinweis im Terminal, beliebige Taste startet sie neu
 - Kopieren/Einfügen: Rechtsklick (mit Auswahl kopieren, sonst einfügen), `Ctrl+Shift+C` / `Ctrl+Shift+V`
@@ -143,6 +144,13 @@ Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem
 - Beendet THub sich selbst (App beenden, Tab schliessen, Windows-Abmeldung), wird die Zuordnung eingefroren: Spätere Ereignisse ändern sie nicht mehr.
 - Ein zweiter Start öffnet keinen Server und schreibt keine Hook-Datei.
 
+### Claude-Sessions nach einem Neustart fortsetzen
+
+- **Fortgesetzt** wird ein Claude-Tab mit Session-Kennung, in dem ein Prompt geschrieben wurde oder dessen Session nie per Hook bestätigt wurde (Sicherheitsnetz, etwa wenn Hooks gesperrt sind). Seine Shell startet im Ordner der Session (fehlt er: Startordner, Standardordner, Benutzerordner), weil Claude nach `--resume` im aktuellen Ordner läuft, und führt einmal den Startbefehl aus: den Starter mit `--resume <Kennung>`, ohne `THUB_STARTER` direkt `claude --resume <Kennung>`. Claude-Tabs zeigen keinen alten Verlauf.
+- **Nur der zuletzt aktive Tab startet sofort.** Die übrigen fortzusetzenden Claude-Tabs sind pausiert (graues Pause-Symbol am Tab): Sie haben weder Prozess noch Ansicht, bis sie angezeigt werden, auf welchem Weg auch immer. Ein pausierter Tab bleibt über weitere Neustarts pausiert.
+- **Nicht fortgesetzt** wird ein Claude-Tab ohne Kennung oder mit einer bestätigten Session ohne Prompt: Er kommt als normales Terminal im Ordner der Session zurück, ohne Verlauf.
+- **Schlägt das Fortsetzen fehl** (Claude endet mit einem Exit-Code ungleich 0, ohne sich vorher per Hook gemeldet zu haben, etwa bei einer unbekannten Kennung oder einem abgelehnten Vertrauensdialog), steht im Terminal „Claude-Session konnte nicht fortgesetzt werden“; der Tab bleibt als normales Terminal offen. Das `SessionEnd` (`other`), das Claude dabei vorher schickt, ändert allein noch nichts.
+
 ### Shell-Integration
 
 Jede Windows-Shell startet mit der mitgelieferten Integration aus `resources/shell/` (im installierten Paket ausserhalb des asar-Archivs unter `resources\shell`). Sie lädt zuerst das normale Profil des Nutzers und meldet danach bei jedem Prompt den aktuellen Ordner; ein eigener Prompt (etwa oh-my-posh) bleibt, wie er ist.
@@ -154,7 +162,7 @@ Jede Windows-Shell startet mit der mitgelieferten Integration aus `resources/she
 | Git Bash | `--rcfile …/integration.bash -i`; lädt, was eine Login-Shell lädt (`/etc/profile`, dann `~/.bash_profile` usw.) | OSC 7 (`file://…`, prozentkodiert) per `PROMPT_COMMAND` |
 
 - Der Kern erkennt die Meldungen im rohen Ausgabestrom (auch über Stückgrenzen, Endzeichen BEL oder `ESC \`), wandelt sie in Windows-Pfade (Prozentkodierung, `/c/…` → `C:\…`, 8.3-Kurznamen) und merkt sich den Ordner als zuletzt aktiven Ordner des Tabs, wenn es ihn gibt. Der Tooltip zeigt ihn; nach einem Neustart startet der Tab dort (sonst Startordner, Standardordner, Benutzerordner). Die Sequenzen bleiben im Strom, xterm.js zeigt sie nicht an.
-- Startbefehl (für das Fortsetzen von Claude, Ticket 12): läuft genau einmal, sobald die Shell bereit ist; PowerShell und Git Bash bekommen ihn über `THUB_START_CMD` (vor dem Ausführen entfernt), cmd in der `/k`-Zeile hinter der Integration.
+- Startbefehl (für das Fortsetzen von Claude, siehe oben): läuft genau einmal, sobald die Shell bereit ist; PowerShell und Git Bash bekommen ihn über `THUB_START_CMD` (vor dem Ausführen entfernt), cmd in der `/k`-Zeile hinter der Integration.
 - Fehlt die Integration oder scheitert sie, startet die Shell trotzdem. Shells ohne Integration (WSL) starten wie bisher.
 
 **`claude`-Ersatz:** In jeder Windows-Shell überdeckt die Integration `claude` (PowerShell- und Bash-Funktion, doskey-Makro in cmd). Alle rufen denselben Starter auf, `powershell.exe -NoProfile -NoLogo -ExecutionPolicy Bypass -File …\starter.ps1` mit den Argumenten wie getippt; der Starter liest seine rohe Befehlszeile, so kommen bei `claude` genau dieselben Argumente an wie bei einem direkten Aufruf.
