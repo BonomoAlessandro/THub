@@ -270,6 +270,48 @@ Der Starter arbeitet in diesen Schritten:
 - **Konsolen-Host:** `OpenConsole.exe` statt `conhost.exe`, wie schon von Prozess-Sonde und Regeln vorgesehen; nach einem `exit` endet er von selbst. Das Aufräumen nach Ticket 15 bleibt für den Rückfall und für den Worker von node-pty.
 - **Befehlsvorschau:** geprüft wird mit `Get-Command Set-PSReadLineOption -ParameterName PredictionSource`, das auch im Constrained Language Mode geht. Ein Nutzer kann sie in einem THub-Tab von Hand wieder einschalten; die Integration setzt sie nur beim Start.
 
+**Präzisierungen aus der Umsetzung (Ticket 24, zweite Runde):**
+- **Befund:** Auch mit der mitgelieferten ConPTY brauchte beim Nutzer jede Pfeiltaste im Befehlsverlauf rund 1 Sekunde. Das galt in jedem PowerShell-Fenster, auch ausserhalb von THub und in Windows PowerShell 5.1; cmd war flüssig. Ein `Set-PSReadLineOption -HistorySaveStyle SaveNothing` im betroffenen Fenster machte es sofort flüssig, mit demselben Verlauf im Speicher. Die Ursache lag also nicht in THub, sondern beim Verlaufs-Mutex von PSReadLine.
+- **Mechanismus** (Quelltext von PSReadLine 2.0.0 und 2.4.5, in beiden gleich):
+  - Mit dem Standard `HistorySaveStyle SaveIncrementally` ruft jede Taste, die im Verlauf blättert oder sucht (`PreviousHistory`, `NextHistory`, `HistorySearchBackward`, `ReverseSearchHistory` usw.), zuerst `SaveCurrentLine` auf, das `MaybeReadHistoryFile`.
+  - `MaybeReadHistoryFile` wartet mit `WaitOne(1000)` auf den benannten Mutex `PSReadLineHistoryFile_<Hash>` (FNV-1a über den kleingeschriebenen Pfad der Verlaufsdatei). Danach prüft es die Grösse der Datei und liest nur, was andere Sitzungen angehängt haben.
+  - Alle PowerShell-Sitzungen mit derselben Verlaufsdatei teilen diesen Mutex, Windows PowerShell 5.1 und PowerShell 7 gleichermassen. Ein Enter schreibt den Befehl unter demselben Mutex, mit `WaitOne(100)`; eine neue Sitzung liest den Verlauf beim ersten Prompt mit `WaitOne(1000)`.
+  - Ist der Mutex frei, kostet das alles unter 1 ms.
+- **Externe Ursache:** Eine hängengebliebene Windows PowerShell 5.1 im Terminal von IntelliJ hielt den Mutex dauerhaft.
+  - Ermittelt per `NtQueryMutant(MutantOwnerInformation)`: Besitzer war ihr Hauptthread, untätig am Prompt.
+  - PSReadLine 2.0.0, das Windows PowerShell 5.1 mitbringt, gibt einen verlassenen Mutex nicht frei. Endet ein Prozess, während er den Mutex hält, bekommt die nächste Sitzung ihn mit `AbandonedMutexException`. 2.0.0 versucht es dann erneut, ohne vorher freizugeben, und der Thread besitzt den Mutex danach bis zum Ende seines Prozesses. Behoben ab PSReadLine 2.2.0-beta4; 2.4.5 gibt einen verlassenen Mutex richtig frei.
+  - Solange der Mutex gehalten wird, wartet jede Taste im Verlauf bis zum Zeitlimit von 1 s. Ein Enter wartet ebenfalls und schreibt den Befehl nicht in die Datei. PSReadLine 2.4.5 holt das beim nächsten Befehl nach, sobald der Mutex frei ist; endet die Sitzung vorher, fehlt der Befehl. Eine neue Sitzung wartet beim ersten Prompt 1 s und hat danach keinen Verlauf aus der Datei.
+  - Nach dem Schliessen der IntelliJ-Sitzung war der Mutex frei und das Blättern überall flüssig.
+- **Gemessen** unter blankem node-pty mit der mitgelieferten ConPTY, ohne THub und ohne Integration, mit synthetischem Verlauf in einem Temp-Ordner (nie der echte). Die Zeit reicht von der Taste bis zum letzten Ausgabestück:
+
+  | Fall | Pfeiltaste |
+  |---|---|
+  | cmd | 0,3 ms |
+  | PowerShell 7.7, leerer Verlauf | 2,0 ms |
+  | PowerShell 7.7, 9000 Einträge, Mutex frei | 2,9 ms (p95 4,6 ms) |
+  | Windows PowerShell 5.1, 9000 Einträge, Mutex frei | 3,6 ms (p95 4,5 ms) |
+  | PowerShell 7.7, Mutex von einer Windows PowerShell 5.1 gehalten | 1007 bis 1016 ms |
+  | zweite Windows PowerShell 5.1, Mutex gehalten | 590 bis 870 ms |
+  | neue PowerShell 7.7, nachdem die haltende Sitzung beendet ist | 2 bis 4 ms (erste Taste 19 ms) |
+
+  - Nachgestellt wurde das so, zweimal mit demselben Ergebnis: Ein Prozess endet, während er den Mutex hält. Eine Windows PowerShell 5.1 blättert einmal und hält ihn ab dann (Besitzer laut `NtQueryMutant`: ihr Hauptthread). Eine PowerShell 7 auf derselben Datei braucht danach rund 1 s pro Pfeiltaste. Endet die Windows PowerShell 5.1, gibt die nächste PowerShell 7 den verlassenen Mutex richtig frei, und alles ist wieder schnell.
+  - Verlaufsgrösse, Duplikate und Dateizugriffe sind nicht die Ursache. Mutex, Grösse der Datei und Öffnen kosten je unter 1 ms, auch mit dem Virenscanner, der Dateien namens `ConsoleHost_history.txt` gesondert prüft (Öffnen 0,35 statt 0,06 ms).
+- **THub ändert nichts an der Speicherung des Verlaufs.** Die Auswege wurden geprüft und verworfen:
+  - `SaveAtExit` überschriebe die Datei beim Beenden mit dem Stand der einen Sitzung: höchstens `MaximumHistoryCount` Einträge, ohne die Befehle anderer Sitzungen. Wird der Prozess beendet, speicherte es gar nichts.
+  - `SaveNothing` oder ein eigener Pfad trennten den Verlauf der THub-Tabs von den übrigen Fenstern.
+  - Abhilfe ist, die haltende Sitzung zu beenden. Vorbeugend PSReadLine in Windows PowerShell 5.1 aktualisieren (`Install-Module PSReadLine -Scope CurrentUser -Force`, ab 2.2) oder in anderen Terminals PowerShell 7 verwenden. Auch ein Windows-PowerShell-Tab in THub hat PSReadLine 2.0.
+- **Prüfen** in einer beliebigen PowerShell. Der Befehl öffnet die Verlaufsdatei nicht. Er nimmt den Mutex nur, wenn er frei ist (wie PSReadLine bei jeder Taste), gibt ihn sofort zurück und zeigt `frei` oder `belegt`:
+
+  ```powershell
+  $p = (Get-PSReadLineOption).HistorySavePath.ToLower(); $h = [uint64]2166136261
+  foreach ($c in [int[]]$p.ToCharArray()) { foreach ($b in ($c -band 255), ($c -shr 8)) { $h = (($h -bxor $b) * 16777619) % 4294967296 } }
+  $m = $null
+  if (-not [Threading.Mutex]::TryOpenExisting("PSReadLineHistoryFile_$h", [ref]$m)) { 'frei' }
+  else { try { $frei = $m.WaitOne(0) } catch [Threading.AbandonedMutexException] { $frei = $true }; if ($frei) { $m.ReleaseMutex(); 'frei' } else { 'belegt' } }
+  ```
+
+  Bleibt es über mehrere Versuche bei `belegt`, hält eine Sitzung den Mutex fest.
+
 ### Hook-Empfänger und lokale Schnittstelle
 
 - Ein kleiner HTTP-Server im Hauptprozess, gebunden nur an `127.0.0.1` auf einem zufälligen freien Port. Jede Anfrage muss das Token mitschicken, sonst wird sie mit 403 abgewiesen. Anfragen zu unbekannten Tabs werden ignoriert.

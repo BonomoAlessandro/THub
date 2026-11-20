@@ -37,3 +37,12 @@ Nach der Installation mit der mitgelieferten ConPTY ist das Blättern beim Nutze
 - maximiertes Fenster.
 
 Die Ursache ist unter diesen Bedingungen zu messen (Einzeldruck und gehaltene Taste mit Wiederholrate, Verzögerung bis zur gezeichneten Zeile, Nachlaufen nach dem Loslassen, lange Aufgaben in Haupt- und Renderer-Prozess) und zu beheben.
+
+> **Ergebnis der zweiten Runde (2026-11-20):** Die Ursache lag ausserhalb von THub. Jede Pfeiltaste brauchte rund 1 Sekunde, in jedem PowerShell-Fenster, auch ausserhalb von THub und in Windows PowerShell 5.1; cmd war flüssig.
+>
+> - **Mechanismus:** Mit dem Standard `HistorySaveStyle SaveIncrementally` geht jede Taste, die im Verlauf blättert, über `SaveCurrentLine` → `MaybeReadHistoryFile` → `WaitOne(1000)` auf den benannten Mutex `PSReadLineHistoryFile_<Hash des Verlaufspfads>`. Diesen Mutex teilen alle PowerShell-Sitzungen mit derselben Verlaufsdatei. Das gilt in PSReadLine 2.0.0 wie in 2.4.5.
+> - **Ursache:** Eine hängengebliebene Windows PowerShell 5.1 im Terminal von IntelliJ hielt den Mutex dauerhaft. PSReadLine 2.0.0 gibt einen verlassenen Mutex nicht wieder frei (behoben ab 2.2.0-beta4). Darum wartete jede Taste bis zum Zeitlimit von 1 s, und solange der Mutex gehalten war, kam kein neuer Befehl in die Verlaufsdatei. Nach dem Schliessen dieser Sitzung war alles wieder flüssig.
+> - **Gegenprobe:** Mit freiem Mutex und 9000 synthetischen Einträgen braucht eine Pfeiltaste 3 bis 5 ms (cmd: 0,3 ms), weit unter einem Bild. Verlaufsgrösse, Duplikate und Dateizugriffe sind also nicht die Ursache. Nachgestellt: Hält eine Windows PowerShell 5.1 den Mutex, braucht eine PowerShell 7 auf derselben Datei 1007 bis 1016 ms pro Taste.
+> - **THub:** ändert nichts, auch nicht an der Speicherung des Verlaufs.
+>
+> Prüfbefehl, Zahlen und verworfene Auswege: Spezifikation, „Shell-Integration“ → „Präzisierungen aus der Umsetzung (Ticket 24, zweite Runde)“; Hinweis für Nutzer im README unter „Bekannte Grenzen“.

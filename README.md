@@ -268,6 +268,17 @@ Ausführlich in der Spezifikation unter [„Shell-Integration“ → „Bekannte
 - Claude in WSL wird nicht erfasst; WSL-Tabs sind normale Terminals und zeigen nie „Prozesse laufen“.
 - Laufende Programme ausser Claude kommen nach einem Neustart nicht zurück, nur die Shell im zuletzt aktiven Ordner.
 - Der frühere Inhalt steht nach einem Neustart im Scrollback, nicht direkt über dem neuen Prompt: ConPTY gehört der sichtbare Bereich, die Shell beginnt oben links. Der Versuch mit `conptyInheritCursor` wurde verworfen (Ticket 21, `docs/spikes/verlauf-sichtbar.md`).
+- **PowerShell: Pfeiltaste nach oben braucht rund 1 Sekunde, in jedem Fenster.** Dann hält eine andere PowerShell-Sitzung den Verlaufs-Mutex von PSReadLine fest, meist eine Windows PowerShell 5.1 in einem anderen Terminal, etwa dem einer IDE. Ihr PSReadLine 2.0 gibt ihn nicht mehr frei, wenn ein anderer Prozess ihn verlassen hat. Solange er gehalten wird, wartet jede Taste im Verlauf bis zum Zeitlimit von 1 s, und keine Sitzung schreibt neue Befehle in den Verlauf. THub kann daran nichts ändern; dasselbe passiert ausserhalb von THub. Prüfen in einer beliebigen PowerShell (öffnet die Verlaufsdatei nicht, zeigt `frei` oder `belegt`):
+
+  ```powershell
+  $p = (Get-PSReadLineOption).HistorySavePath.ToLower(); $h = [uint64]2166136261
+  foreach ($c in [int[]]$p.ToCharArray()) { foreach ($b in ($c -band 255), ($c -shr 8)) { $h = (($h -bxor $b) * 16777619) % 4294967296 } }
+  $m = $null
+  if (-not [Threading.Mutex]::TryOpenExisting("PSReadLineHistoryFile_$h", [ref]$m)) { 'frei' }
+  else { try { $frei = $m.WaitOne(0) } catch [Threading.AbandonedMutexException] { $frei = $true }; if ($frei) { $m.ReleaseMutex(); 'frei' } else { 'belegt' } }
+  ```
+
+  Bleibt es bei `belegt`: die übrigen PowerShell-Sitzungen nacheinander schliessen, zuerst Windows PowerShell 5.1 (auch in IDEs oder einem Windows-PowerShell-Tab in THub). Sobald die haltende zu ist, sind die Pfeiltasten überall wieder flüssig. Vorbeugend PSReadLine in Windows PowerShell aktualisieren (`Install-Module PSReadLine -Scope CurrentUser -Force`) oder dort PowerShell 7 verwenden. Hintergrund in der Spezifikation unter „Präzisierungen aus der Umsetzung (Ticket 24, zweite Runde)“.
 - Aus der Shell oder von Claude geöffnete GUI-Programme halten den Tab blau, solange sie offen sind; ein Prompt, der länger als 1,5 Sekunden rechnet, kann kurz blau aufblitzen. Vollständig abgekoppelte Prozesse lassen sich keinem Tab zuordnen.
 - Eigenheiten des Ersatzes: `claude --% …` (Stop-Parsing in PowerShell) wirkt anders als direkt; ein Argument, das nur aus `-` besteht oder mit `-:` beginnt, lässt `powershell.exe -File` abbrechen; Zeilenumbrüche in Argumenten erreichen `claude.cmd` nicht; in Git Bash wandelt MSYS Prompts um, die mit `/` beginnen (wie bei einem direkten Aufruf); ein Pfad zum Starter mit `$` funktioniert in cmd nicht; im Constrained Language Mode scheitert der Starter. Jeder Start über den Ersatz kostet rund 0,5 Sekunden.
 
