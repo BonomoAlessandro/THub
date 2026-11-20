@@ -200,33 +200,78 @@ describe('Verlauf', () => {
   });
 
   describe('Schliessen', () => {
-    it('löscht beim Schliessen den Verlauf des Tabs', async () => {
+    it('fordert beim Schliessen den aktuellen Verlauf an, noch bevor der Tab aus der Leiste verschwindet, und sichert ihn', () => {
       const { h, a, b } = twoRunningTabs();
       h.terminal.output(a, 'eins\r\n');
-      h.terminal.output(b, 'zwei\r\n');
+      h.clock.advance(INTERVAL);
+      h.terminal.output(a, 'kurz vor dem Schliessen\r\n');
+      const order: string[] = [];
+      h.workspace.subscribe((event) => {
+        if (event.type === 'requestHistory') order.push(`Verlauf ${event.tabIds.join(',')}`);
+        if (event.type === 'tabs') order.push(`Tabs ${event.tabs.map((t) => t.id).join(',')}`);
+      });
+
+      h.workspace.closeTab(a);
+
+      expect(order).toEqual([`Verlauf ${a}`, `Tabs ${b}`]);
+      expect(h.storedHistory(a)?.content).toBe('eins\r\nkurz vor dem Schliessen\r\n');
+    });
+
+    it('fordert ihn nicht an, wenn sich seit der letzten Sicherung nichts geändert hat; die Sicherung bleibt', () => {
+      const { h, a } = twoRunningTabs();
+      h.terminal.output(a, 'eins\r\n');
       h.clock.advance(INTERVAL);
 
       h.workspace.closeTab(a);
 
-      expect(h.storedHistory(a)).toBeNull();
-      expect(h.storedHistory(b)?.content).toBe('zwei\r\n');
-      await h.restart();
-      h.showAllViews();
-      expect(h.eventsOfType('restoreHistory')).toMatchObject([{ tabId: b }]);
+      expect(h.eventsOfType('requestHistory').filter((e) => e.tabIds.includes(a))).toHaveLength(1);
+      expect(h.storedHistory(a)?.content).toBe('eins\r\n');
     });
 
-    it('sichert für einen geschlossenen Tab nichts mehr, auch wenn sein Verlauf erst danach eintrifft', () => {
+    it('nimmt für einen geschlossenen Tab nur die Antwort auf die Anforderung beim Schliessen an', () => {
       const h = startWorkspace();
       const id = h.activeTab()!.id;
       h.showAllViews();
       h.terminal.output(id, 'Ausgabe\r\n');
       h.renderer.answersHistory = false;
-      h.clock.advance(INTERVAL);
 
       h.workspace.closeTab(id);
       h.workspace.saveHistory(id, 'Ausgabe\r\n');
+      h.workspace.saveHistory(id, 'später\r\n');
 
-      expect(h.storedHistory(id)).toBeNull();
+      expect(h.storedHistory(id)?.content).toBe('Ausgabe\r\n');
+    });
+
+    it('gibt den Verlauf nach einem Neustart keinem offenen Tab, solange der Tab geschlossen ist', async () => {
+      const { h, a, b } = twoRunningTabs();
+      h.terminal.output(a, 'eins\r\n');
+      h.terminal.output(b, 'zwei\r\n');
+
+      h.workspace.closeTab(a);
+      await h.restart();
+      h.showAllViews();
+
+      expect(h.eventsOfType('restoreHistory')).toMatchObject([{ tabId: b, content: 'zwei\r\n' }]);
+      expect(h.storedHistory(a)?.content).toBe('eins\r\n');
+    });
+
+    it('wartet beim Beenden auf den Verlauf eines eben geschlossenen Tabs', async () => {
+      const h = startWorkspace();
+      const id = h.activeTab()!.id;
+      h.workspace.createTab();
+      h.showAllViews();
+      h.terminal.output(id, 'Ausgabe\r\n');
+      h.renderer.answersHistory = false;
+      h.workspace.closeTab(id);
+
+      let done = false;
+      const shutdown = h.workspace.shutdown().then(() => (done = true));
+      await settle();
+      expect(done).toBe(false);
+      h.workspace.saveHistory(id, 'Ausgabe\r\n');
+      await shutdown;
+
+      expect(h.storedHistory(id)?.content).toBe('Ausgabe\r\n');
     });
   });
 

@@ -10,6 +10,7 @@ const api: THubApi = {
   },
   send: (command) => ipcRenderer.send(IPC.workspaceCommand, command),
   loadRecentDirs: () => ipcRenderer.invoke(IPC.workspaceRecentDirs),
+  loadClosedTabs: () => ipcRenderer.invoke(IPC.workspaceClosedTabs),
 
   pickDirectory: (purpose) => ipcRenderer.invoke(IPC.dialogPickDirectory, purpose),
 

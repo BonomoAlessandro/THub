@@ -122,7 +122,7 @@ describe('Verlaufsdateien', () => {
     ]);
   });
 
-  it('löscht die Datei, wenn der Tab geschlossen wird', () => {
+  it('behält die Datei eines geschlossenen Tabs und löscht sie, wenn er aus der Liste der letzten zehn fällt', () => {
     const { h, dir } = startWithStateFile();
     const id = h.activeTab()!.id;
     h.showAllViews();
@@ -130,6 +130,8 @@ describe('Verlaufsdateien', () => {
     h.clock.advance(30_000);
 
     h.workspace.closeTab(id);
+    expect(fs.readdirSync(path.join(dir, 'history'))).toEqual([`${id}.json`]);
+    for (let i = 0; i < 10; i++) h.workspace.closeTab(h.workspace.createTab());
 
     expect(fs.readdirSync(path.join(dir, 'history'))).toEqual([]);
   });

@@ -4,6 +4,7 @@ import { WheelSteps } from './fontSize';
 import { isPopupOpen } from './popup/popups';
 import { SettingsDialog } from './settings/SettingsDialog';
 import { resolveShortcut, type ShortcutAction } from './shortcuts';
+import { CloseDialog } from './tabs/CloseDialog';
 import { TabBar } from './tabs/TabBar';
 import { TerminalArea } from './terminal/TerminalArea';
 import { focusTerminal, terminalViews } from './terminal/terminalViews';
@@ -11,9 +12,12 @@ import { useWorkspace, type WorkspaceView } from './useWorkspace';
 
 const api = window.thub;
 
-/** Das Fenster: Tab-Leiste oben, darunter die Terminal-Fläche; darüber bei Bedarf die Einstellungen. */
+/**
+ * Das Fenster: Tab-Leiste oben, darunter die Terminal-Fläche; darüber bei Bedarf die Einstellungen oder die Rückfrage
+ * vor dem Schliessen.
+ */
 export function App() {
-  const { view, renameTab } = useWorkspace();
+  const { view, renameTab, closeQuestion, answerCloseQuestion } = useWorkspace();
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -35,6 +39,17 @@ export function App() {
     setSettingsOpen(false);
     focusTerminal(viewRef.current?.activeTabId ?? null);
   }, []);
+
+  // Nach der Rückfrage geht der Fokus ins Terminal: beim Abbrechen in das des aktiven Tabs, beim Schliessen in das des
+  // Nachbarn, sobald der Kern ihn aktiv meldet.
+  const answerClose = useCallback(
+    (confirmed: boolean) => {
+      if (!closeQuestion) return;
+      answerCloseQuestion(closeQuestion, confirmed);
+      focusTerminal(viewRef.current?.activeTabId ?? null);
+    },
+    [closeQuestion, answerCloseQuestion],
+  );
 
   // Tastenkürzel in der Capture-Phase, also bevor xterm.js die Taste sieht. Solange ein Menü oder
   // Dialog offen ist, gehören die Tasten ihm.
@@ -95,6 +110,7 @@ export function App() {
           onClose={closeSettings}
         />
       )}
+      {closeQuestion && <CloseDialog question={closeQuestion} onAnswer={answerClose} />}
     </>
   );
 }
@@ -106,8 +122,12 @@ function runShortcut(action: ShortcutAction, view: WorkspaceView, startRename: (
     case 'newTab':
       api.send({ type: 'createTab' });
       return;
+    // Der Kern schliesst sofort oder fragt erst zurück.
     case 'closeTab':
-      if (activeId) api.send({ type: 'closeTab', tabId: activeId });
+      if (activeId) api.send({ type: 'requestClose', tabIds: [activeId] });
+      return;
+    case 'reopenTab':
+      api.send({ type: 'reopenClosedTab' });
       return;
     case 'copy':
       if (activeId) void terminalViews.get(activeId)?.copySelection();

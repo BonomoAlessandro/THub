@@ -155,7 +155,7 @@ export function TabBar({
             onActivate={() =>
               tab.id === activeTabId ? focusTerminal(tab.id) : api.send({ type: 'activateTab', tabId: tab.id })
             }
-            onClose={() => api.send({ type: 'closeTab', tabId: tab.id })}
+            onClose={() => api.send({ type: 'requestClose', tabIds: [tab.id] })}
             onStartRename={() => onStartRename(tab.id)}
             onFinishRename={(name) => onFinishRename(tab.id, name)}
             onHover={(el) => (el && !renamingId ? tooltip.schedule(el, { kind: 'tab', tabId: tab.id }) : hideTooltip())}

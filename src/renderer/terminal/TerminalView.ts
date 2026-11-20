@@ -15,6 +15,8 @@ export class TerminalView {
   private readonly fitAddon = new FitAddon();
   private readonly serializeAddon = new SerializeAddon();
   private exited = false;
+  /** Angeforderte Verläufe, die auf die Verarbeitung der bisherigen Ausgabe warten (`serializeHistory`). */
+  private readonly pendingHistory = new Set<() => void>();
 
   constructor(
     readonly tabId: string,
@@ -90,11 +92,17 @@ export class TerminalView {
 
   /**
    * Der aktuelle Inhalt zum Sichern. Serialisiert wird erst, wenn alle bisher empfangenen Ausgaben
-   * verarbeitet sind; xterm.js schreibt verzögert.
+   * verarbeitet sind; xterm.js schreibt verzögert. Wird die Ansicht vorher geschlossen (der Kern fordert den Verlauf
+   * eines Tabs an, den er gerade schliesst), gilt der Inhalt bis dahin.
    */
   serializeHistory(): Promise<string> {
     return new Promise((resolve) => {
-      this.term.write('', () => resolve(serializeHistory(this.term, this.serializeAddon)));
+      const serialize = (): void => {
+        if (!this.pendingHistory.delete(serialize)) return;
+        resolve(serializeHistory(this.term, this.serializeAddon));
+      };
+      this.pendingHistory.add(serialize);
+      this.term.write('', serialize);
     });
   }
 
@@ -146,6 +154,7 @@ export class TerminalView {
   }
 
   dispose(): void {
+    for (const serialize of [...this.pendingHistory]) serialize();
     this.host.removeEventListener('contextmenu', this.onContextMenu);
     this.term.dispose();
   }

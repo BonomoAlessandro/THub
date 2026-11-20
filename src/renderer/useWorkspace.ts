@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Settings, ShellOption, TabSnapshot } from '../shared/types';
+import type { BusyTab, Settings, ShellOption, TabSnapshot } from '../shared/types';
 import { terminalViews } from './terminal/terminalViews';
 
 const api = window.thub;
@@ -17,6 +17,12 @@ export interface WorkspaceView {
   homeDir: string;
 }
 
+/** Eine offene Rückfrage des Kerns vor dem Schliessen: diese Tabs schliessen, in `busy` läuft noch etwas. */
+export interface CloseQuestion {
+  tabIds: string[];
+  busy: BusyTab[];
+}
+
 /**
  * Hält die Anzeige mit dem Kern im Gleichstand: zuerst der Schnappschuss, danach die
  * Änderungsereignisse. Ausgabe, Ende, Hinweise und Verlauf gehen direkt an die Terminal-Ansichten;
@@ -27,8 +33,13 @@ export function useWorkspace(): {
   view: WorkspaceView | null;
   /** Benennt einen Tab um und zeigt den neuen Namen sofort; der Kern bestätigt mit dem nächsten Ereignis. */
   renameTab(tabId: string, name: string): void;
+  /** Die offene Rückfrage vor dem Schliessen; eine neue ersetzt sie. */
+  closeQuestion: CloseQuestion | null;
+  /** Antwort auf die Rückfrage: Bestätigt schliesst der Kern ihre Tabs, sonst bleiben alle offen. */
+  answerCloseQuestion(question: CloseQuestion, confirmed: boolean): void;
 } {
   const [view, setView] = useState<WorkspaceView | null>(null);
+  const [closeQuestion, setCloseQuestion] = useState<CloseQuestion | null>(null);
 
   useEffect(() => {
     /** Erst nach dem Schnappschuss werden Ereignisse angewendet; frühere stecken schon darin. */
@@ -67,6 +78,9 @@ export function useWorkspace(): {
               ?.serializeHistory()
               .then((content) => api.send({ type: 'saveHistory', tabId, content }));
           }
+          return;
+        case 'askClose':
+          setCloseQuestion({ tabIds: event.tabIds, busy: event.busy });
           return;
       }
     });
@@ -115,5 +129,10 @@ export function useWorkspace(): {
     if (trimmed) api.send({ type: 'renameTab', tabId, name: trimmed });
   }, []);
 
-  return { view, renameTab };
+  const answerCloseQuestion = useCallback((question: CloseQuestion, confirmed: boolean) => {
+    setCloseQuestion((current) => (current === question ? null : current));
+    if (confirmed) api.send({ type: 'closeTabs', tabIds: question.tabIds });
+  }, []);
+
+  return { view, renameTab, closeQuestion, answerCloseQuestion };
 }

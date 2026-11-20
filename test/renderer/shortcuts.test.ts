@@ -83,4 +83,26 @@ describe('Tastenkürzel', () => {
       expect(resolveShortcut(key(combo, produced))).toBeNull();
     });
   });
+
+  // Erkannt am erzeugten Buchstaben: Auf der Schweizer Tastatur liegt Z dort, wo die US-Tastatur Y hat.
+  describe('Zuletzt geschlossenen Tab wieder öffnen', () => {
+    const reopen = { type: 'reopenTab' };
+
+    it.each([
+      ['US-Tastatur', 'Ctrl+Shift+KeyZ', 'Z'],
+      ['Schweizer Tastatur: Z liegt auf der Taste KeyY', 'Ctrl+Shift+KeyY', 'Z'],
+      ['ohne lateinische Buchstaben (russisch): nach der Tastenposition', 'Ctrl+Shift+KeyZ', 'Я'],
+    ])('%s', (_label, combo, produced) => {
+      expect(resolveShortcut(key(combo, produced))).toEqual(reopen);
+    });
+
+    it.each([
+      ['Ctrl+Shift+Y auf der Schweizer Tastatur (Taste KeyZ)', 'Ctrl+Shift+KeyZ', 'Y'],
+      ['Ctrl+Z ohne Shift', 'Ctrl+KeyZ', 'z'],
+      ['Shift+Z ohne Ctrl', 'Shift+KeyZ', 'Z'],
+      ['AltGr mit Shift+Z', 'Ctrl+Shift+Alt+KeyZ', 'Z'],
+    ])('lässt %s ans Terminal durch', (_label, combo, produced) => {
+      expect(resolveShortcut(key(combo, produced))).toBeNull();
+    });
+  });
 });
