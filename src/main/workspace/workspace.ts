@@ -75,6 +75,12 @@ const ESC_QUIET_MS = 1500;
  * nichts meldet; ein bestätigter langer Befehl hält „arbeitet“, weil sein Prozess läuft.
  */
 const ANSWER_QUIET_MS = 3000;
+/**
+ * So lange wartet der Kern nach einem von THub abgesetzten Fortsetzen auf die Start-Meldung des Starters (Ticket 23).
+ * Kommt keine, läuft Claude ohne Erfassung: THUB_STARTER fehlt (Gruppenrichtlinie), `starter.ps1` fehlt oder die lokale
+ * Schnittstelle ist nicht erreichbar. Grosszügig bemessen, weil ein langsames Profil den Startbefehl verzögert.
+ */
+const RESUME_LAUNCH_GRACE_MS = 30_000;
 
 export interface WorkspaceOptions {
   /** Die erkannten Shells (Shell-Erkennung), in der Reihenfolge des Pfeil-Menüs; mindestens eine. */
@@ -84,6 +90,8 @@ export interface WorkspaceOptions {
    * Terminals nur THUB_TAB_ID; der Starter erreicht THub nicht und startet claude unverändert.
    */
   localApi?: LocalApiInfo;
+  /** Frist für die Start-Meldung nach einem Fortsetzen, in Millisekunden; Standard 30 s. Nur Tests verkürzen sie. */
+  resumeLaunchGraceMs?: number;
 }
 
 /** Wie ein neuer Tab angelegt wird. */
@@ -181,7 +189,8 @@ export interface Workspace extends ClaudeReceiver {
    *
    * Ein fortzusetzender Claude-Tab bekommt keinen Verlauf: Seine Shell startet im Ordner der Session mit dem
    * Startbefehl „Starter mit `--resume <Kennung>`“. Ist er pausiert (`TabSnapshot.paused`), startet er erst, wenn er
-   * angezeigt wird; die Grösse merkt sich der Kern bis dahin.
+   * angezeigt wird; die Grösse merkt sich der Kern bis dahin. Meldet der Starter danach innerhalb von 30 Sekunden
+   * keinen Start, läuft Claude ohne Erfassung: Die Claude-Zuordnung fällt weg, die Session läuft in der Shell weiter.
    */
   viewReady(tabId: string, cols: number, rows: number): void;
   resizeTab(tabId: string, cols: number, rows: number): void;
@@ -221,7 +230,16 @@ export interface Workspace extends ClaudeReceiver {
    */
   windowForeground(foreground: boolean): void;
 
-  /** Nimmt einen Hinweis weg (× am Hinweis); offene Punkte sind damit auch im gespeicherten Zustand weg. */
+  /**
+   * Klick auf einen Hinweis: zeigt seinen Tab an wie `activateTab`. Ein Hinweis mit offenen Punkten verschwindet dabei,
+   * auch aus dem gespeicherten Zustand; „wartet“ und „fertig“ verschwinden wie bei jedem Anzeigen des Tabs. Ein Hinweis,
+   * der nicht mehr steht, ändert nichts.
+   */
+  openToast(toastId: string): void;
+  /**
+   * Nimmt einen Hinweis weg (× am Hinweis), ohne den Tab anzuzeigen; offene Punkte sind damit auch im gespeicherten
+   * Zustand weg.
+   */
   dismissToast(toastId: string): void;
   /** Die Maus steht auf dem Hinweis bzw. nicht mehr: Solange hält sein Countdown an. */
   holdToast(toastId: string, hold: boolean): void;
@@ -248,7 +266,12 @@ export interface Workspace extends ClaudeReceiver {
 }
 
 export function createWorkspace(ports: WorkspacePorts, options: WorkspaceOptions): Workspace {
-  return new WorkspaceCore(ports, options.shells, options.localApi);
+  return new WorkspaceCore(
+    ports,
+    options.shells,
+    options.localApi,
+    options.resumeLaunchGraceMs ?? RESUME_LAUNCH_GRACE_MS,
+  );
 }
 
 /** Laufzeit-Angaben eines Tabs; werden nicht gespeichert. */
@@ -289,6 +312,16 @@ interface TabRuntime {
    * ausser `SessionEnd`). Solange entscheidet erst die Ende-Meldung des Starters, ob der Tab normal wird.
    */
   resuming?: string;
+  /**
+   * Frist nach einem von THub abgesetzten Fortsetzen, bis der Starter den Start meldet (Ticket 23). Läuft sie ab, läuft
+   * Claude ohne Erfassung, und die Claude-Zuordnung fällt weg.
+   */
+  cancelLaunchWait?: CancelTimer;
+  /**
+   * Die Claude-Zuordnung, die mit dieser Frist weggefallen ist, solange dieselbe Shell läuft. Meldet der Starter das
+   * Fortsetzen doch noch (sehr langsames Profil), gilt sie wieder.
+   */
+  uncaptured?: PersistedClaudeLink;
   /** Zählt die Ausgabestücke der Shell; daran erkennt die Sicherung, ob sich der Inhalt geändert hat. */
   output: number;
   /** Stand von `output`, als der Verlauf zuletzt angefordert wurde. */
@@ -364,6 +397,8 @@ class WorkspaceCore implements Workspace {
     private readonly ports: WorkspacePorts,
     private readonly shells: ShellInfo[],
     private readonly localApi: LocalApiInfo | undefined,
+    /** Frist für die Start-Meldung nach einem Fortsetzen (`RESUME_LAUNCH_GRACE_MS`). */
+    private readonly resumeLaunchGraceMs: number,
   ) {
     if (shells.length === 0) throw new Error('Der Workspace-Kern braucht mindestens eine Shell.');
     this.toasts = new ToastBoard(ports.clock, () => this.emit({ type: 'toasts', toasts: this.toasts.snapshot() }));
@@ -808,6 +843,8 @@ class WorkspaceCore implements Workspace {
           runtime.pid = undefined;
           runtime.processes = false;
           runtime.resuming = undefined;
+          this.cancelLaunchWait(runtime);
+          runtime.uncaptured = undefined;
           // Mit der Shell endet auch ein Claude darin: Der Tab wird ein normales Terminal.
           if (!this.frozen) this.setClaudeLink(tab, undefined);
           this.emit({ type: 'exit', tabId: tab.id, exitCode });
@@ -817,8 +854,12 @@ class WorkspaceCore implements Workspace {
       if (resume) runtime.resume = undefined;
       if (isCurrent()) {
         runtime.pid = pid;
-        // Von THub gestartetes Fortsetzen: Bis Claude sich meldet, entscheidet erst die Ende-Meldung des Starters.
-        if (resume) runtime.resuming = resume.sessionId;
+        // Von THub gestartetes Fortsetzen: Bis Claude sich meldet, entscheidet erst die Ende-Meldung des Starters. Die
+        // Frist für die Start-Meldung beginnt erst jetzt, mit dem Startbefehl.
+        if (resume) {
+          runtime.resuming = resume.sessionId;
+          this.awaitResumeLaunch(tab, runtime, cwd);
+        }
       }
     } catch (err) {
       if (runtime.run === run) {
@@ -939,6 +980,32 @@ class WorkspaceCore implements Workspace {
       return undefined;
     }
     return { sessionId, command: resumeCommand(shell.integration, sessionId) };
+  }
+
+  /**
+   * Der Startbefehl zum Fortsetzen ist abgesetzt (Ticket 23). Meldet der Starter innerhalb der Frist keinen Start,
+   * läuft Claude ohne Erfassung, etwa ohne THUB_STARTER: Ohne Hooks und ohne Ende-Meldung bliebe der Tab sonst ein
+   * Claude-Tab, bis die Shell endet, und jeder weitere Neustart setzte die Session wieder fort. Die Claude-Zuordnung
+   * fällt deshalb weg, wie bei einem `claude`, das ohne Starter getippt wurde; die Session läuft in der Shell ungestört
+   * weiter. Der Tab steht danach im Ordner, in dem seine Shell gestartet ist, ausser die Shell hat inzwischen selbst
+   * einen gemeldet. Start-Meldung, Hook-Ereignis, Ende von Claude oder Shell, Schliessen, Einfrieren und Beenden
+   * beenden die Frist ohne Wirkung.
+   * @param cwd der Ordner, in dem die Shell gestartet ist
+   */
+  private awaitResumeLaunch(tab: PersistedTab, runtime: TabRuntime, cwd: string): void {
+    this.cancelLaunchWait(runtime);
+    const run = runtime.run;
+    const cwdBefore = tab.lastCwd;
+    runtime.cancelLaunchWait = this.ports.clock.schedule(this.resumeLaunchGraceMs, () => {
+      runtime.cancelLaunchWait = undefined;
+      const link = tab.claude;
+      if (this.frozen || this.stopping || this.runtimes.get(tab.id) !== runtime || runtime.run !== run || !link) return;
+      this.updateTab(tab, () => {
+        if (tab.lastCwd === cwdBefore) tab.lastCwd = cwd;
+        this.setClaudeLink(tab, undefined);
+      });
+      runtime.uncaptured = link;
+    });
   }
 
   // ---------- Verlauf ----------
@@ -1112,6 +1179,15 @@ class WorkspaceCore implements Workspace {
 
   // ---------- Hinweise ----------
 
+  openToast(toastId: string): void {
+    if (this.stopping || typeof toastId !== 'string') return;
+    const toast = this.toasts.find(toastId);
+    if (!toast) return;
+    // Offene Punkte sind mit dem Klick angeschaut (Ticket 27); das blosse Anzeigen des Tabs lässt sie stehen.
+    if (toast.kind === 'openPoints') this.dismissToast(toastId);
+    this.activateTab(toast.tabId);
+  }
+
   dismissToast(toastId: string): void {
     if (this.stopping || typeof toastId !== 'string') return;
     const dismissed = this.toasts.dismiss(toastId);
@@ -1143,9 +1219,9 @@ class WorkspaceCore implements Workspace {
   }
 
   /**
-   * Hinweis mit den offenen Punkten aus Claudes Antwort (Ticket 22): auch für den sichtbaren Tab, bis er mit ×
-   * geschlossen wird, und gespeichert, damit er einen Neustart übersteht. Er ersetzt den bisherigen des Tabs und einen
-   * „fertig“-Hinweis.
+   * Hinweis mit den offenen Punkten aus Claudes Antwort (Ticket 22): auch für den sichtbaren Tab, bis er mit × oder einem
+   * Klick darauf geschlossen wird (`openToast`), und gespeichert, damit er einen Neustart übersteht. Er ersetzt den
+   * bisherigen des Tabs und einen „fertig“-Hinweis.
    */
   private showOpenPoints(tab: PersistedTab, points: string[]): void {
     tab.openPoints = points;
@@ -1182,13 +1258,22 @@ class WorkspaceCore implements Workspace {
     // Ein anderer Start als das von THub gestartete Fortsetzen selbst: Dieses ist dann vorbei.
     const runtime = this.runtimes.get(tab.id);
     if (runtime?.resuming !== undefined && sessionId !== runtime.resuming) runtime.resuming = undefined;
+    // Kommt die Meldung zum Fortsetzen erst nach der Frist (sehr langsames Profil), gilt die weggefallene Zuordnung
+    // wieder, samt „hatte Prompt“ und dem laufenden Fortsetzen.
+    const uncaptured = runtime?.uncaptured;
+    if (runtime) runtime.uncaptured = undefined;
+    const late =
+      !tab.claude && uncaptured !== undefined && sessionId !== undefined && uncaptured.sessionId === sessionId;
+    const previous = late ? uncaptured : tab.claude;
     const reported = request.cwd ? this.normalizeDir(request.cwd) : '';
     this.updateTab(tab, () => {
-      this.setClaudeLink(tab, linkAfterLaunch(tab.claude, sessionId, reported || (tab.lastCwd ?? tab.startCwd)));
-      // Ein neu gestartetes Claude ruht, auch wenn das vorige ohne Ende-Meldung verschwunden ist.
+      this.setClaudeLink(tab, linkAfterLaunch(previous, sessionId, reported || (tab.lastCwd ?? tab.startCwd)));
+      // Ein neu gestartetes Claude ruht, auch wenn das vorige ohne Ende-Meldung verschwunden ist. Die Start-Meldung
+      // beendet auch die Frist nach einem Fortsetzen.
       if (runtime) {
         this.cancelClaudeTimers(runtime);
         runtime.claude = IDLE_CLAUDE;
+        if (late) runtime.resuming = sessionId;
       }
     });
 
@@ -1334,10 +1419,16 @@ class WorkspaceCore implements Workspace {
     runtime.cancelEsc = undefined;
   }
 
-  /** Beendet die Wartezeiten nach Esc und nach einer Antwort. */
+  private cancelLaunchWait(runtime: TabRuntime): void {
+    runtime.cancelLaunchWait?.();
+    runtime.cancelLaunchWait = undefined;
+  }
+
+  /** Beendet die Wartezeiten nach Esc und nach einer Antwort und die Frist für die Start-Meldung (Ticket 23). */
   private cancelClaudeTimers(runtime: TabRuntime): void {
     this.cancelEscTimer(runtime);
     this.cancelAnswerCheck(runtime);
+    this.cancelLaunchWait(runtime);
   }
 
   /** Der Tab, für den eine Meldung von Starter oder Claude gilt; keiner, wenn unbekannt oder eingefroren. */
@@ -1524,6 +1615,8 @@ class WorkspaceCore implements Workspace {
 
   freeze(): void {
     this.frozen = true;
+    // Eingefroren ändert sich keine Zuordnung mehr: Die Fristen nach einem Fortsetzen enden ohne Wirkung.
+    for (const runtime of this.runtimes.values()) this.cancelLaunchWait(runtime);
     this.saveWindowNow();
     this.ports.storage.flush();
   }

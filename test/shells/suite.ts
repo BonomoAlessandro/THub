@@ -796,6 +796,7 @@ export function shellSuite(id: ShellId): void {
          */
         const restartWithClaudeTab = async (
           claudeStarter = () => policy.starterAllowed(),
+          resumeLaunchGraceMs?: number,
         ): Promise<{ core: CoreShell; notices: string[] }> => {
           clearStubRecords(ws);
           const storage = new MemoryStorage({
@@ -813,7 +814,12 @@ export function shellSuite(id: ShellId): void {
             ],
             activeTabId: 'claude-tab',
           });
-          const core = await CoreShell.startWithApi(def, ws, { claudeDir: ws.stubExeDir, claudeStarter }, storage);
+          const core = await CoreShell.startWithApi(
+            def,
+            ws,
+            { claudeDir: ws.stubExeDir, claudeStarter, resumeLaunchGraceMs },
+            storage,
+          );
           cores.push(core);
           const notices: string[] = [];
           core.core.subscribe((event: WorkspaceEvent) => {
@@ -876,6 +882,42 @@ export function shellSuite(id: ShellId): void {
           expect(records[0].env.THUB_STARTER).toBeUndefined();
           expect(records[0].cwd.toLowerCase()).toBe(project.toLowerCase());
           await core.mark();
+        });
+
+        it('ohne THUB_STARTER fällt die Zuordnung nach der Frist weg; Claude läuft weiter, ein Neustart setzt nichts fort', async () => {
+          // Verkürzte Frist (im Betrieb 30 s); claude läuft, bis es beendet wird.
+          configureStub(ws, { wait: true });
+          try {
+            const { core, notices } = await restartWithClaudeTab(() => false, 2000);
+            expect(core.claudeLink()).toMatchObject({ sessionId: RESUME_ID });
+
+            const records = await stubCalled(core);
+            await core.waitForVisible(/STUB-WAITING/);
+            await core.waitForClaudeLink((l) => l === undefined);
+
+            expect(records.map((r) => r.argv)).toEqual([['--resume', RESUME_ID]]);
+            // Claude läuft ungestört weiter: THub hat weder etwas beendet noch etwas getippt.
+            expect(() => process.kill(records[0].pid, 0)).not.toThrow();
+            expect(visibleText(core.output)).not.toMatch(/STUB-CTRLC|STUB-TIMEOUT/);
+            expect(notices).toEqual([]);
+
+            // THub beendet sich, während Claude noch läuft (eingefroren), und startet neu: nichts wird fortgesetzt.
+            await core.shutdown(false);
+            const again = await CoreShell.startWithApi(
+              def,
+              ws,
+              { claudeDir: ws.stubExeDir, claudeStarter: () => false },
+              core.storage,
+            );
+            cores.push(again);
+            await again.mark();
+            expect(again.orders).toHaveLength(1);
+            expect(again.orders[0].startCommand).toBeUndefined();
+            expect(readStubRecords(ws)).toHaveLength(1);
+            expect(again.claudeLink()).toBeUndefined();
+          } finally {
+            configureStub(ws);
+          }
         });
       });
     });

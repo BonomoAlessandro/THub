@@ -88,7 +88,7 @@ Eine Liste für die gesammelte Abnahme am Schluss ([Ticket 19](tickets/19-readme
 ## Offene Punkte
 
 - [ ] **[Claude]** Eine Aufgabe geben, bei der Claude Rückfragen hat → der Hinweis „Offene Punkte“ erscheint unten rechts mit den Fragen, auch im aktiven Tab: höchstens vier Punkte zu je höchstens zwei Zeilen, bei mehr „+ k weitere“. (T22)
-- [ ] **[Claude]** Den Tab wechseln und zurück → der Hinweis bleibt; erst `×` schliesst ihn. (T22)
+- [ ] **[Claude]** Den Tab wechseln und zurück → der Hinweis bleibt; erst ein Klick auf den Hinweis (springt in den Tab) oder `×` schliesst ihn. (T22, T27)
 - [ ] **[Claude]** Eine spätere Antwort mit neuen Punkten ersetzt den Hinweis. Eine Antwort ohne Punkte lässt ihn stehen, und liegt der Tab im Hintergrund, erscheint „fertig“ daneben. (T22)
 - [ ] **[Claude]** THub neu starten → der nicht geschlossene Hinweis ist wieder da. (T22)
 - [ ] **[Claude]** Den Tab schliessen und mit `Ctrl+Shift+Z` wieder öffnen → der Hinweis kommt nicht zurück. (T22)

@@ -251,7 +251,12 @@ export type WorkspaceCommand =
    * Wechsel; der aktive Tab gilt nur im Vordergrund als angeschaut.
    */
   | { type: 'windowForeground'; foreground: boolean }
-  /** Hinweis mit × wegklicken. */
+  /**
+   * Klick auf einen Hinweis: Der Kern zeigt dessen Tab an; ein Hinweis mit offenen Punkten verschwindet dabei, auch aus
+   * dem gespeicherten Zustand.
+   */
+  | { type: 'openToast'; toastId: string }
+  /** Hinweis mit × wegklicken, ohne den Tab anzuzeigen. */
   | { type: 'dismissToast'; toastId: string }
   /** Die Maus steht auf dem Hinweis (`hold`) bzw. nicht mehr; solange hält sein Countdown an. */
   | { type: 'holdToast'; toastId: string; hold: boolean }
@@ -285,6 +290,12 @@ export interface THubApi {
   readClipboard(): Promise<string>;
   writeClipboard(text: string): Promise<void>;
 
+  /**
+   * Ctrl+Klick auf einen Link im Terminal: öffnet die Adresse im Standardbrowser. Nur `http:` und `https:`; der
+   * Hauptprozess prüft das selbst noch einmal.
+   */
+  openLink(url: string): Promise<void>;
+
   /** Das geltende Design; es bestimmt der Hauptprozess. */
   loadTheme(): Promise<ResolvedTheme>;
   /** Meldet jeden Wechsel des Designs, zum Beispiel wenn Windows von dunkel auf hell wechselt. */
@@ -302,6 +313,7 @@ export const IPC = {
   tabOpenFolder: 'tab:open-folder',
   clipboardRead: 'clipboard:read',
   clipboardWrite: 'clipboard:write',
+  linkOpen: 'link:open',
   themeCurrent: 'theme:current',
   themeChanged: 'theme:changed',
 } as const;

@@ -1,6 +1,6 @@
 # 25 – Links und Rechtsklick im Terminal
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: –
 Herkunft: Abnahme von Hand (Ticket 19), „Links in Claude“ und „Kopieren mit rechter Maustaste“ in [docs/abnahme.md](../abnahme.md)
 Spezifikation: „Oberfläche (Renderer)“, Kopieren und Einfügen

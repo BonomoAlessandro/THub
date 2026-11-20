@@ -4,9 +4,9 @@ import { hookPayload } from '../support/apiClient';
 import { ClaudeTab, startScene } from '../support/claudeTab';
 import { startWorkspaceWithApi, type TestWorkspace } from '../support/harness';
 
-// Offene Punkte aus Claudes Antworten als Hinweis (Ticket 22) über die echte lokale Schnittstelle: `Stop` in der Form
-// aus dem Spike (spikes/claude-hooks/samples/Stop.json) mit einer eigenen `last_assistant_message`, Befehle der
-// Oberfläche direkt am Kern.
+// Offene Punkte aus Claudes Antworten als Hinweis (Tickets 22 und 27) über die echte lokale Schnittstelle: `Stop` in
+// der Form aus dem Spike (spikes/claude-hooks/samples/Stop.json) mit einer eigenen `last_assistant_message`, Befehle
+// der Oberfläche direkt am Kern.
 
 const FINISHED_MS = 6000;
 
@@ -24,8 +24,17 @@ const SECTION_POINTS = [
   'Die Client-ID für die Produktion fehlt noch.',
 ];
 
-/** Eine Antwort ohne Abschnitt, die mit einer Frage endet. */
-const WITH_QUESTION = 'Der Fix ist drin und getestet. Soll ich auch die alten Einträge korrigieren?';
+/** Eine spätere Antwort mit einem anderen Abschnitt. */
+const WITH_OTHER_SECTION = [
+  'Die Migration ist vorbereitet.',
+  '',
+  '**Offene Fragen**',
+  '- Auf welchem Server soll sie zuerst laufen?',
+].join('\n');
+const OTHER_POINTS = ['Auf welchem Server soll sie zuerst laufen?'];
+
+/** Eine Antwort ohne Abschnitt, die mit einer Frage endet: ein Angebot für weitere Arbeit, kein offener Punkt. */
+const WITH_QUESTION = 'Der Fix ist drin und getestet. Soll ich auch noch die alten Einträge korrigieren?';
 
 /** Eine Antwort ohne offene Punkte. */
 const WITHOUT_POINTS = 'Erledigt: Die Tests laufen wieder, die Ursache war eine fehlende Zeitzone.';
@@ -54,12 +63,25 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       });
     });
 
-    it('mit Frage im letzten Absatz → Hinweis mit dieser Frage', async () => {
+    it.each([
+      ['deutsch', WITH_QUESTION],
+      ['englisch', 'Done, the parser now handles empty lines. Want me to also add tests for the edge cases?'],
+    ])('mit Schlussfrage ohne Abschnitt (%s) → kein Hinweis mit offenen Punkten, nur „fertig“ wie bisher', async (_label, answer) => {
+      const { h, a } = await startScene();
+
+      await a.answer(answer);
+
+      expect(a.pointsToast()).toBeUndefined();
+      expect(toasts(h).map((t) => [t.tabId, t.kind])).toEqual([[a.id, 'finished']]);
+      expect(h.storedTab(a.id)).not.toHaveProperty('openPoints');
+    });
+
+    it('eine Überschrift ohne Aufzählung darunter → kein Hinweis mit offenen Punkten', async () => {
       const { a } = await startScene();
 
-      await a.answer(WITH_QUESTION);
+      await a.answer('Fertig.\n\n## Offene Punkte\n\nSoll ich deployen?');
 
-      expect(a.pointsToast()?.points).toEqual(['Soll ich auch die alten Einträge korrigieren?']);
+      expect(a.pointsToast()).toBeUndefined();
     });
 
     it('ohne Abschnitt und ohne Frage → kein Hinweis mit offenen Punkten, nur „fertig“ wie bisher', async () => {
@@ -111,7 +133,7 @@ describe('Offene Punkte aus Claudes Antworten', () => {
     });
   });
 
-  describe('der Hinweis bleibt, bis er mit × geschlossen wird', () => {
+  describe('der Hinweis bleibt, bis er mit × oder einem Klick geschlossen wird', () => {
     it('erscheint auch für den sichtbaren Tab; der Tab ist dann nicht „fertig“', async () => {
       const { h, a } = await startScene();
       h.workspace.activateTab(a.id);
@@ -165,7 +187,7 @@ describe('Offene Punkte aus Claudes Antworten', () => {
     it('× nimmt ihn weg, auch im gespeicherten Zustand; andere Hinweise bleiben', async () => {
       const { h, a, b } = await startScene();
       await a.answer(WITH_SECTION);
-      await b.answer(WITH_QUESTION);
+      await b.answer(WITH_OTHER_SECTION);
       expect(h.storedTab(a.id)?.openPoints).toEqual(SECTION_POINTS);
 
       h.workspace.dismissToast(a.pointsToast()!.id);
@@ -173,6 +195,72 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       expect(a.pointsToast()).toBeUndefined();
       expect(b.pointsToast()).toBeDefined();
       expect(h.storedTab(a.id)).not.toHaveProperty('openPoints');
+    });
+
+    it('× zeigt den Tab nicht an', async () => {
+      const { h, shownId, a } = await startScene();
+      await a.answer(WITH_SECTION);
+
+      h.workspace.dismissToast(a.pointsToast()!.id);
+
+      expect(h.activeTab()?.id).toBe(shownId);
+      expect(a.status()).toBe('finished');
+    });
+
+    it('ein Klick zeigt den Tab an und nimmt den Hinweis weg, auch im gespeicherten Zustand; andere Hinweise bleiben', async () => {
+      const { h, a, b } = await startScene();
+      await a.answer(WITH_SECTION);
+      await b.answer(WITH_OTHER_SECTION);
+      expect(h.storedTab(a.id)?.openPoints).toEqual(SECTION_POINTS);
+
+      h.workspace.openToast(a.pointsToast()!.id);
+
+      expect(h.activeTab()?.id).toBe(a.id);
+      expect(a.status()).toBe('idle');
+      expect(a.pointsToast()).toBeUndefined();
+      expect(b.pointsToast()?.points).toEqual(OTHER_POINTS);
+      expect(h.eventsOfType('toasts').at(-1)?.toasts.map((t) => t.tabId)).toEqual([b.id]);
+      expect(h.storedTab(a.id)).not.toHaveProperty('openPoints');
+      await h.restart();
+      expect(toasts(h).map((t) => t.tabId)).toEqual([b.id]);
+    });
+
+    it('ein Klick auf den Hinweis des sichtbaren Tabs nimmt ihn ebenso weg', async () => {
+      const { h, a } = await startScene();
+      h.workspace.activateTab(a.id);
+      await a.answer(WITH_SECTION);
+
+      h.workspace.openToast(a.pointsToast()!.id);
+
+      expect(h.activeTab()?.id).toBe(a.id);
+      expect(a.pointsToast()).toBeUndefined();
+      expect(h.storedTab(a.id)).not.toHaveProperty('openPoints');
+    });
+
+    it('ein Klick auf „wartet“ desselben Tabs zeigt den Tab nur an: die offenen Punkte bleiben', async () => {
+      const { h, a } = await startScene();
+      await a.answer(WITH_SECTION);
+      await a.askPermission();
+
+      h.workspace.openToast(a.toast()!.id);
+
+      expect(h.activeTab()?.id).toBe(a.id);
+      expect(a.toasts().map((t) => t.kind)).toEqual(['openPoints']);
+      expect(h.storedTab(a.id)?.openPoints).toEqual(SECTION_POINTS);
+    });
+
+    it('ein Klick auf einen Hinweis, der nicht mehr steht, ändert nichts', async () => {
+      const { h, shownId, a } = await startScene();
+      await a.answer(WITH_SECTION);
+      const replaced = a.pointsToast()!;
+      await a.answerAgain(WITH_OTHER_SECTION);
+
+      h.workspace.openToast(replaced.id);
+      h.workspace.openToast('gibt-es-nicht');
+
+      expect(h.activeTab()?.id).toBe(shownId);
+      expect(a.pointsToast()?.points).toEqual(OTHER_POINTS);
+      expect(h.storedTab(a.id)?.openPoints).toEqual(OTHER_POINTS);
     });
 
     it('bleibt, wenn Claude im Tab endet', async () => {
@@ -187,7 +275,7 @@ describe('Offene Punkte aus Claudes Antworten', () => {
     it('ein geschlossener Tab nimmt ihn mit, auch in die Liste der geschlossenen Tabs; wieder geöffnet kommt er nicht zurück', async () => {
       const { h, a, b } = await startScene();
       await a.answer(WITH_SECTION);
-      await b.answer(WITH_QUESTION);
+      await b.answer(WITH_OTHER_SECTION);
 
       h.workspace.closeTab(a.id);
 
@@ -209,11 +297,11 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       await a.answer(WITH_SECTION);
       const first = a.pointsToast()!;
 
-      await a.answerAgain(WITH_QUESTION);
+      await a.answerAgain(WITH_OTHER_SECTION);
 
       const second = a.pointsToast()!;
       expect(second.id).not.toBe(first.id);
-      expect(second.points).toEqual(['Soll ich auch die alten Einträge korrigieren?']);
+      expect(second.points).toEqual(OTHER_POINTS);
       expect(h.storedTab(a.id)?.openPoints).toEqual(second.points);
     });
 
@@ -240,7 +328,7 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       expect(b.toast()).toMatchObject({ kind: 'finished' });
 
       // Ein „fertig“ aus einer früheren Antwort verschwindet ebenso.
-      await b.answerAgain(WITH_QUESTION);
+      await b.answerAgain(WITH_OTHER_SECTION);
       expect(b.toasts().map((t) => t.kind)).toEqual(['openPoints']);
       h.clock.advance(FINISHED_MS);
       expect(toasts(h).map((t) => t.kind)).toEqual(['openPoints', 'openPoints']);
@@ -262,7 +350,7 @@ describe('Offene Punkte aus Claudes Antworten', () => {
     it('der nicht geschlossene Hinweis ist nach dem Neustart wieder da, mit denselben Punkten', async () => {
       const { h, a, b } = await startScene();
       await a.answer(WITH_SECTION);
-      await b.answer(WITH_QUESTION);
+      await b.answer(WITH_OTHER_SECTION);
       h.workspace.dismissToast(b.pointsToast()!.id);
 
       await h.restart();
@@ -270,12 +358,15 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       expect(toasts(h)).toEqual([{ id: expect.any(String), tabId: a.id, kind: 'openPoints', points: SECTION_POINTS }]);
     });
 
-    it('× nach dem Neustart: Er ist auch beim nächsten Start weg', async () => {
+    it.each([
+      ['×', (h: TestWorkspace, toastId: string) => h.workspace.dismissToast(toastId)],
+      ['Klick', (h: TestWorkspace, toastId: string) => h.workspace.openToast(toastId)],
+    ])('%s nach dem Neustart: Er ist auch beim nächsten Start weg', async (_way, close) => {
       const { h, a } = await startScene();
       await a.answer(WITH_SECTION);
       await h.restart();
 
-      h.workspace.dismissToast(toasts(h)[0].id);
+      close(h, toasts(h)[0].id);
       await h.restart();
 
       expect(toasts(h)).toEqual([]);
@@ -293,9 +384,9 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       expect(toasts(h).map((t) => t.kind)).toEqual(['openPoints']);
 
       const resumed = await ClaudeTab.launch(h, a.id);
-      await resumed.answer(WITH_QUESTION);
+      await resumed.answer(WITH_OTHER_SECTION);
       expect(toasts(h)).toEqual([
-        { id: expect.any(String), tabId: a.id, kind: 'openPoints', points: ['Soll ich auch die alten Einträge korrigieren?'] },
+        { id: expect.any(String), tabId: a.id, kind: 'openPoints', points: OTHER_POINTS },
       ]);
     });
 
@@ -353,7 +444,7 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       // Wieder eingeschaltet kommen nur neue.
       h.workspace.updateSettings({ openPoints: true });
       expect(a.pointsToast()).toBeUndefined();
-      await a.answerAgain(WITH_QUESTION);
+      await a.answerAgain(WITH_OTHER_SECTION);
       expect(a.pointsToast()).toBeDefined();
     });
 
@@ -390,7 +481,7 @@ describe('Offene Punkte aus Claudes Antworten', () => {
       await a.answer(WITH_SECTION);
 
       h.workspace.updateSettings({ notifications: false });
-      await b.answer(WITH_QUESTION);
+      await b.answer(WITH_OTHER_SECTION);
 
       expect(toasts(h).map((t) => [t.tabId, t.kind])).toEqual([
         [a.id, 'openPoints'],

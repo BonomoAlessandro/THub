@@ -2,7 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ShellInfo } from '../../src/main/workspace/ports';
 import { hookEvent, hookPayload, type HookSample } from '../support/apiClient';
 import { expectHookReply } from '../support/claudeTab';
-import { startWorkspaceWithApi, TEST_SHELLS, type TestWorkspace, type TestWorkspaceOptions } from '../support/harness';
+import type { MemoryStorage } from '../support/fakes';
+import {
+  startWorkspace,
+  startWorkspaceWithApi,
+  TEST_SHELLS,
+  type TestWorkspace,
+  type TestWorkspaceOptions,
+} from '../support/harness';
 
 // Claude-Sessions nach einem Neustart fortsetzen (Ticket 12): simulierte Neustarts auf demselben gespeicherten Zustand,
 // Meldungen des Starters und Hook-Ereignisse über die echte lokale Schnittstelle, in der Form, wie Claude Code 2.1.328
@@ -13,6 +20,8 @@ const WEB = 'C:\\web';
 const START = 'C:\\start';
 const DEFAULT = 'D:\\standard';
 const INTERVAL = 30_000;
+/** Frist für die Start-Meldung des Starters nach einem von THub abgesetzten Fortsetzen (Ticket 23). */
+const LAUNCH_GRACE = 30_000;
 const FAILED = 'Claude-Session konnte nicht fortgesetzt werden';
 
 const GIT_BASH: ShellInfo = {
@@ -66,6 +75,11 @@ async function starterResumes(h: TestWorkspace, tabId: string, id: string, cwd =
 
 function notices(h: TestWorkspace, tabId: string): string[] {
   return h.eventsOfType('notice').filter((n) => n.tabId === tabId).map((n) => n.text);
+}
+
+/** Wie oft der Kern den Zustand bisher zum Speichern vorgemerkt hat. */
+function saves(h: TestWorkspace): number {
+  return (h.storage as MemoryStorage).saves;
 }
 
 describe('Claude-Sessions fortsetzen', () => {
@@ -452,6 +466,213 @@ describe('Claude-Sessions fortsetzen', () => {
 
       expect(h.storedTab(tab)).not.toHaveProperty('claude');
       expect(notices(h, tab)).toEqual([]);
+    });
+  });
+
+  describe('Fortsetzen ohne Start-Meldung des Starters (Ticket 23)', () => {
+    /**
+     * Nach einem Neustart läuft der Startbefehl im zuletzt aktiven Tab, aber der Starter meldet keinen Start, etwa weil
+     * THUB_STARTER fehlt (Gruppenrichtlinie): `claude --resume <Kennung>` läuft dann direkt, ohne Erfassung.
+     */
+    async function resumedWithoutLaunch(): Promise<{ h: TestWorkspace; tab: string; id: string }> {
+      const h = await setup();
+      const tab = h.activeTab()!.id;
+      const id = await claudeWithPrompt(h, tab, PROJ);
+      await h.restart();
+      h.showAllViews();
+      expect(h.terminal.startsFor(tab)[0].order.startCommand).toBe(psResume(id));
+      return { h, tab, id };
+    }
+
+    it('nach der Frist fällt die Zuordnung weg; Claude läuft ungestört weiter, ein Neustart setzt nichts fort', async () => {
+      const { h, tab, id } = await resumedWithoutLaunch();
+      h.terminal.output(tab, 'Claude läuft ohne Erfassung\r\n');
+
+      h.clock.advance(LAUNCH_GRACE - 1);
+      expect(h.storedTab(tab)?.claude).toEqual({ sessionId: id, cwd: PROJ, confirmed: true, hadPrompt: true });
+      expect(h.activeTab()?.kind).toBe('claude');
+
+      h.clock.advance(1);
+      expect(h.storedTab(tab)).not.toHaveProperty('claude');
+      // Ein normales Terminal im Ordner der Session; die Shell samt Claude läuft weiter, THub tippt nichts.
+      expect(h.activeTab()).toMatchObject({ kind: 'terminal', cwd: PROJ, process: 'running', status: 'idle' });
+      expect(h.terminal.isRunning(tab)).toBe(true);
+      expect(h.terminal.kills).toEqual([]);
+      expect(h.terminal.writes).toEqual([]);
+      expect(notices(h, tab)).toEqual([]);
+
+      await h.restart();
+      h.showAllViews();
+
+      expect(h.terminal.startsFor(tab)).toHaveLength(1);
+      expect(h.terminal.startsFor(tab)[0].order.cwd).toBe(PROJ);
+      expect(h.terminal.startsFor(tab)[0].order.startCommand).toBeUndefined();
+      // Wie jedes normale Terminal kommt er mit seinem Verlauf zurück.
+      expect(h.eventsOfType('restoreHistory')).toMatchObject([
+        { tabId: tab, content: 'Claude läuft ohne Erfassung\r\n' },
+      ]);
+    });
+
+    it('ebenso, wenn die lokale Schnittstelle nicht starten konnte', async () => {
+      const id = '8c74988d-a942-4021-a698-4b97d7977f8b';
+      const link = { sessionId: id, cwd: PROJ, confirmed: true, hadPrompt: true };
+      const h = startWorkspace({
+        directories: [PROJ],
+        state: {
+          version: 2,
+          tabs: [{ id: 't1', name: 'Claude', nameIsManual: true, shellId: 'pwsh', startCwd: PROJ, claude: link }],
+          activeTabId: 't1',
+        },
+      });
+      h.showAllViews();
+      const order = h.terminal.startsFor('t1')[0].order;
+      expect(order).toMatchObject({ startCommand: psResume(id), env: { THUB_TAB_ID: 't1' } });
+      expect(order.env).not.toHaveProperty('THUB_API');
+
+      h.clock.advance(LAUNCH_GRACE);
+
+      expect(h.storedTab('t1')).not.toHaveProperty('claude');
+      expect(h.activeTab()?.kind).toBe('terminal');
+    });
+
+    it('meldet der Starter den Start innerhalb der Frist, ändert sich nichts', async () => {
+      const { h, tab, id } = await resumedWithoutLaunch();
+
+      h.clock.advance(LAUNCH_GRACE - 1);
+      await starterResumes(h, tab, id);
+      const link = h.storedTab(tab)?.claude;
+      h.clock.advance(2 * LAUNCH_GRACE);
+
+      expect(link).toEqual({ sessionId: id, cwd: PROJ, confirmed: false, hadPrompt: true });
+      expect(h.storedTab(tab)?.claude).toEqual(link);
+      expect(h.activeTab()?.kind).toBe('claude');
+    });
+
+    it('kommt die Start-Meldung erst nach der Frist (sehr langsames Profil), ist die Zuordnung wieder da', async () => {
+      const { h, tab, id } = await resumedWithoutLaunch();
+      h.clock.advance(LAUNCH_GRACE);
+      expect(h.storedTab(tab)).not.toHaveProperty('claude');
+
+      await starterResumes(h, tab, id);
+
+      // Wie nach einer rechtzeitigen Meldung, „hatte Prompt“ inklusive: Ein Neustart setzt die Session wieder fort.
+      expect(h.storedTab(tab)?.claude).toEqual({ sessionId: id, cwd: PROJ, confirmed: false, hadPrompt: true });
+      expect(h.activeTab()?.kind).toBe('claude');
+      await hook(h, tab, 'SessionStart-resume', { session_id: id, cwd: PROJ });
+      await h.restart();
+      h.showAllViews();
+      expect(h.terminal.startsFor(tab)[0].order).toMatchObject({ cwd: PROJ, startCommand: psResume(id) });
+    });
+
+    it('auch eine späte Start-Meldung gilt als das Fortsetzen von THub: Schlägt es fehl, kommt der Hinweis', async () => {
+      const { h, tab, id } = await resumedWithoutLaunch();
+      h.clock.advance(LAUNCH_GRACE);
+      await starterResumes(h, tab, id);
+
+      await hook(h, tab, 'SessionEnd-other', { session_id: id, cwd: PROJ });
+      expect(h.storedTab(tab)?.claude).toMatchObject({ sessionId: id });
+      await h.api.exit(tab, id, 1);
+
+      expect(h.storedTab(tab)).not.toHaveProperty('claude');
+      expect(notices(h, tab)).toEqual([FAILED]);
+    });
+
+    it('App beenden während der Frist: kein Effekt, auch nicht auf den gespeicherten Zustand; danach wird fortgesetzt', async () => {
+      const { h, tab, id } = await resumedWithoutLaunch();
+      h.clock.advance(LAUNCH_GRACE - 1);
+
+      const shutdown = h.workspace.shutdown();
+      h.clock.advance(1);
+      await shutdown;
+      const saved = saves(h);
+      h.clock.advance(2 * LAUNCH_GRACE);
+
+      expect(saves(h)).toBe(saved);
+      expect(h.storedTab(tab)?.claude).toEqual({ sessionId: id, cwd: PROJ, confirmed: true, hadPrompt: true });
+      await h.restart();
+      h.showAllViews();
+      expect(h.terminal.startsFor(tab)[0].order.startCommand).toBe(psResume(id));
+    });
+
+    it('Einfrieren (Windows-Abmeldung) während der Frist: kein Effekt, danach wird fortgesetzt', async () => {
+      const { h, tab, id } = await resumedWithoutLaunch();
+      h.clock.advance(LAUNCH_GRACE - 1);
+
+      h.workspace.sessionEnding();
+      const saved = saves(h);
+      h.clock.advance(2 * LAUNCH_GRACE);
+
+      expect(saves(h)).toBe(saved);
+      expect(h.storedTab(tab)?.claude).toEqual({ sessionId: id, cwd: PROJ, confirmed: true, hadPrompt: true });
+      expect(h.activeTab()?.kind).toBe('claude');
+      await h.restart();
+      h.showAllViews();
+      expect(h.terminal.startsFor(tab)[0].order.startCommand).toBe(psResume(id));
+    });
+
+    it('Schliessen des Tabs während der Frist: kein Effekt; wieder geöffnet beginnt die Frist von vorn', async () => {
+      const { h, tab, id } = await resumedWithoutLaunch();
+      h.workspace.createTab({ cwd: WEB });
+      h.showAllViews();
+      h.clock.advance(LAUNCH_GRACE - 1);
+
+      h.workspace.closeTab(tab);
+      h.clock.advance(LAUNCH_GRACE);
+      expect(h.storedState().closedTabs[0].tab.claude).toEqual({
+        sessionId: id,
+        cwd: PROJ,
+        confirmed: true,
+        hadPrompt: true,
+      });
+
+      h.workspace.reopenClosedTab();
+      h.showAllViews();
+      expect(h.terminal.startsFor(tab).map((s) => s.order.startCommand)).toEqual([psResume(id), psResume(id)]);
+      h.clock.advance(LAUNCH_GRACE - 1);
+      expect(h.storedTab(tab)?.claude).toMatchObject({ sessionId: id });
+      h.clock.advance(1);
+      expect(h.storedTab(tab)).not.toHaveProperty('claude');
+    });
+
+    it('Ende der Shell während der Frist: der Tab wird wie immer normal; ein später gestartetes Claude bleibt erfasst', async () => {
+      const { h, tab } = await resumedWithoutLaunch();
+      h.clock.advance(LAUNCH_GRACE - 1);
+
+      h.terminal.exit(tab, 0);
+      expect(h.storedTab(tab)).not.toHaveProperty('claude');
+      h.workspace.restartTab(tab);
+      const id = await launchNew(h, tab, WEB);
+      h.clock.advance(LAUNCH_GRACE);
+
+      expect(h.storedTab(tab)?.claude).toMatchObject({ sessionId: id, cwd: WEB });
+    });
+
+    it('ein pausierter Tab beginnt die Frist erst beim Öffnen; nie geöffnet behält er seine Zuordnung', async () => {
+      const h = await setup();
+      const a = h.activeTab()!.id;
+      const b = h.workspace.createTab({ cwd: WEB });
+      h.showAllViews();
+      const idA = await claudeWithPrompt(h, a, PROJ);
+      const idB = await claudeWithPrompt(h, b, WEB);
+      h.workspace.activateTab(a);
+      const linkB = h.storedTab(b)?.claude;
+      await h.restart();
+      h.showAllViews();
+      await starterResumes(h, a, idA);
+
+      h.clock.advance(3 * LAUNCH_GRACE);
+      expect(h.tabs().find((t) => t.id === b)).toMatchObject({ kind: 'claude', paused: true });
+      expect(h.storedTab(b)?.claude).toEqual(linkB);
+
+      h.workspace.activateTab(b);
+      expect(h.terminal.startsFor(b)[0].order.startCommand).toBe(psResume(idB));
+      h.clock.advance(LAUNCH_GRACE - 1);
+      expect(h.storedTab(b)?.claude).toEqual(linkB);
+      h.clock.advance(1);
+      expect(h.storedTab(b)).not.toHaveProperty('claude');
+      expect(h.tabs().find((t) => t.id === b)).toMatchObject({ kind: 'terminal', cwd: WEB });
+      // Der Tab mit rechtzeitiger Start-Meldung bleibt ein Claude-Tab.
+      expect(h.storedTab(a)?.claude).toMatchObject({ sessionId: idA });
     });
   });
 
