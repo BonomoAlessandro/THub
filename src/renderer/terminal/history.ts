@@ -40,6 +40,7 @@ export function serializeHistory(term: Terminal, serializer: SerializeAddon): st
  * Was die Ansicht vor dem Start der Shell ins Terminal schreibt: den Verlauf ausgegraut, darunter die
  * Trennlinie und so viele Leerzeilen, dass beides im Scrollback liegt. ConPTY leert beim Start den
  * sichtbaren Bereich; die erste Eingabezeile steht danach direkt unter der Trennlinie.
+ * Warum der Verlauf nicht mit `conptyInheritCursor` sichtbar stehen bleibt: docs/spikes/verlauf-sichtbar.md.
  */
 export function restoredHistory(content: string, savedAt: number, cols: number, rows: number): string {
   return `${dimmed(content)}\r\n${separator(savedAt, cols)}${'\r\n'.repeat(rows)}`;

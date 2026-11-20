@@ -1,0 +1,2192 @@
+powershell · heute (Leerzeilen, ohne inheritCursor), kurzer Verlauf: Prompt nach 1011 ms, DSR-Anfragen [], Antworten []
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 1 | Cursorzeile "-sichtbar-FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 1 | Cursorzeile "ub-verlauf-sichtbar-FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 70x30              Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach einem Befehl              Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   Befehl, dann 60x12 und zurück  Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+powershell · inheritCursor, kurzer Verlauf: Prompt nach 12509 ms, DSR-Anfragen [1204], Antworten [{"at":1217,"answer":"\"\\u001b[10;1R\""}]
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "-sichtbar-FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "ub-verlauf-sichtbar-FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 70x30              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach einem Befehl              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 4 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 1x, Ausgabe 1x
+   Befehl, dann 60x12 und zurück  Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+powershell · inheritCursor, langer Verlauf (80 Zeilen): Prompt nach 420 ms, DSR-Anfragen [78], Antworten [{"at":93,"answer":"\"\\u001b[24;1R\""}]
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "-sichtbar-FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor -1 | Cursorzeile "────────────── Wiederhergestellt · Do., " | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "ub-verlauf-sichtbar-FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "Verlaufszeile 80 gelb Ende" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 70x30              Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "Verlaufszeile 80 gelb Ende" | grau | Befehl 0x, Ausgabe 0x
+   nach einem Befehl              Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 1x, Ausgabe 1x
+   Befehl, dann 60x12 und zurück  Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor null | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 1x, Ausgabe 1x
+powershell · inheritCursor ohne Reflow in xterm.js, kurzer Verlauf: Prompt nach 520 ms, DSR-Anfragen [83], Antworten [{"at":93,"answer":"\"\\u001b[10;1R\""}]
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "-sichtbar-FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "ub-verlauf-sichtbar-FU2TFl>             " | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor -1 | Cursorzeile "────────────── Wiederhergestellt · Do., " | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 70x30              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor -1 | Cursorzeile "FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor -1 | Cursorzeile "────────────── Wiederhergestellt · Do., " | grau | Befehl 0x, Ausgabe 0x
+   nach einem Befehl              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 3 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 1x, Ausgabe 1x
+   Befehl, dann 60x12 und zurück  Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+powershell · inheritCursor ohne Reflow in xterm.js, langer Verlauf: Prompt nach 389 ms, DSR-Anfragen [71], Antworten [{"at":78,"answer":"\"\\u001b[24;1R\""}]
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "-sichtbar-FU2TFl>                       " | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor -1 | Cursorzeile "────────────── Wiederhergestellt · Do., " | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "ub-verlauf-sichtbar-FU2TFl>             " | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "Verlaufszeile 80 gelb Ende" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 70x30              Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "Verlaufszeile 80 gelb Ende" | grau | Befehl 0x, Ausgabe 0x
+   nach einem Befehl              Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 1x, Ausgabe 1x
+   Befehl, dann 60x12 und zurück  Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor null | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 1x, Ausgabe 1x
+powershell · Gegenprobe: Shell gibt den Verlauf selbst aus (ohne inheritCursor): Prompt nach 608 ms, DSR-Anfragen [], Antworten []
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "-sichtbar-FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf KAPUTT (fehlt 1, doppelt 0) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "ub-verlauf-sichtbar-FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+      fehlt: "nothing to commit, working tree clean"
+   nach Grösse 100x24             Verlauf KAPUTT (fehlt 4, doppelt 0) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+      fehlt: "PS C:\\Projekte\\demo> git status", "On branch main", "Your branch is up to date with 'origin/main'."
+   nach Grösse 70x30              Verlauf KAPUTT (fehlt 4, doppelt 0) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "FU2TFl>" | grau | Befehl 0x, Ausgabe 0x
+      fehlt: "PS C:\\Projekte\\demo> git status", "On branch main", "Your branch is up to date with 'origin/main'."
+   nach Grösse 100x24             Verlauf KAPUTT (fehlt 4, doppelt 0) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+      fehlt: "PS C:\\Projekte\\demo> git status", "On branch main", "Your branch is up to date with 'origin/main'."
+   nach einem Befehl              Verlauf KAPUTT (fehlt 4, doppelt 0) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 7 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 1x, Ausgabe 1x
+      fehlt: "PS C:\\Projekte\\demo> git status", "On branch main", "Your branch is up to date with 'origin/main'."
+   Befehl, dann 60x12 und zurück  Verlauf KAPUTT (fehlt 6, doppelt 0) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 6 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 1x, Ausgabe 1x
+      fehlt: "PS C:\\Projekte\\demo> git status", "On branch main", "Your branch is up to date with 'origin/main'."
+powershell · inheritCursor, Antwort 1500 ms zu spät: Prompt nach 1959 ms, DSR-Anfragen [70], Antworten [{"at":1586,"answer":"\"\\u001b[10;1R\""}]
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "PS C:\\Users\\<Benutzer>\\AppData\\Loc" | grau | Befehl 0x, Ausgabe 0x
+powershell · inheritCursor, Antwort bleibt aus: Prompt nach nie ms, DSR-Anfragen [148], Antworten []
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "" | grau | Befehl 0x, Ausgabe 0x
+
+
+########## powershell · heute (Leerzeilen, ohne inheritCursor), kurzer Verlauf
+=== nach dem Start  (100x24, baseY=9, Cursor 78,0, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 60x24  (60x24, baseY=11, Cursor 18,1, Pufferzeilen 35)
+^ -3|PS C:\Projekte\demo> 
+^ -2|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──
+^ -1|────────────
+   0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf
+>  1|-sichtbar-FU2TFl>
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x24  (100x24, baseY=9, Cursor 78,0, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x12  (100x12, baseY=9, Cursor 78,0, Pufferzeilen 21)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+=== nach Grösse 100x24  (100x24, baseY=9, Cursor 78,0, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=8, Cursor 78,0, Pufferzeilen 48)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=12, Cursor 28,1, Pufferzeilen 22)
+^ -3|PS C:\Projekte\demo> 
+^ -2|────────────── Wiederhergestellt · Do., 19.11.2026
+^ -1|, 17:42 ──────────────
+   0|PS C:\Users\<Benutzer>\AppData\Local\Temp\th
+>  1|ub-verlauf-sichtbar-FU2TFl>
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+=== nach Grösse 100x24  (100x24, baseY=9, Cursor 78,0, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=11, Cursor 69,0, Pufferzeilen 41)
+^ -3|PS C:\Projekte\demo> 
+^ -2|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ────────────
+^ -1|──
+>  0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=9, Cursor 69,0, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=9, Cursor 69,0, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=9, Cursor 59,0, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  0|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++202ms "\u001b[?9001h\u001b[?1004h"
++976ms "\u001b[?25l\u001b[2J\u001b[m\u001b[HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[1C\u001b]0;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\u0007\u001b[?25h"
++2256ms "\u001b[?25l\u001b[8;24;60t\u001b[HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[2;1
++3235ms "\u001b[?25l\u001b[HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[1;79H\
++4240ms "\u001b[?25l\u001b[HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[1;79H\u001b[?25h"
++5219ms "\u001b[?25l\u001b[HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[1;79H\
++6414ms "\u001b[?25l\u001b[HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\
++7370ms "\u001b[?25l\u001b[HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[2;29H\u001b[?25h"
++8300ms "\u001b[?25l\u001b[HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[1;79H\
+
+
+########## powershell · inheritCursor, kurzer Verlauf
+=== nach dem Start  (100x24, baseY=0, Cursor 78,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl> 
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 60x24  (60x24, baseY=2, Cursor 18,10, Pufferzeilen 26)
+^ -2|PS C:\Projekte\demo> git status
+^ -1|On branch main
+   0|Your branch is up to date with 'origin/main'.
+   1|nothing to commit, working tree clean
+   2|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spal
+   3|ten umbrechen muss, damit man das Umbrechen sieht"
+   4|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit m
+   5|an das Umbrechen sieht
+   6|PS C:\Projekte\demo> 
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──
+   8|────────────
+   9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf
+> 10|-sichtbar-FU2TFl>
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 78,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x12  (100x12, baseY=0, Cursor 78,9, Pufferzeilen 12)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 78,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=0, Cursor 78,9, Pufferzeilen 40)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht"
+   5|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   6|PS C:\Projekte\demo> 
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   8|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+>  9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=5, Cursor 28,9, Pufferzeilen 15)
+^ -3|Your branch is up to date with 'origin/main'.
+^ -2|nothing to commit, working tree clean
+^ -1|PS C:\Projekte\demo> echo "eine lange Zeile, die b
+   0|ei 60 Spalten umbrechen muss, damit man das Umbrec
+   1|hen sieht"
+   2|eine lange Zeile, die bei 60 Spalten umbrechen mus
+   3|s, damit man das Umbrechen sieht
+   4|PS C:\Projekte\demo> 
+   5|────────────── Wiederhergestellt · Do., 19.11.2026
+   6|, 17:42 ──────────────
+   7|PS C:\Users\<Benutzer>\AppData\Local\Temp\th
+   8|ub-verlauf-sichtbar-FU2TFl>
+>  9|ub-verlauf-sichtbar-FU2TFl>
+=== nach Grösse 100x24  (100x24, baseY=1, Cursor 78,8, Pufferzeilen 25)
+^ -1|PS C:\Projekte\demo> git status
+   0|On branch main
+   1|Your branch is up to date with 'origin/main'.
+   2|nothing to commit, working tree clean
+   3|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   4|hen sieht"
+   5|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   6|PS C:\Projekte\demo> 
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  8|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=3, Cursor 8,9, Pufferzeilen 33)
+^ -3|PS C:\Projekte\demo> git status
+^ -2|On branch main
+^ -1|Your branch is up to date with 'origin/main'.
+   0|nothing to commit, working tree clean
+   1|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrec
+   2|hen muss, damit man das Umbrechen sieht"
+   3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umb
+   4|rechen sieht
+   5|PS C:\Projekte\demo> 
+   6|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ────────────
+   7|──
+   8|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-
+>  9|FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=1, Cursor 78,8, Pufferzeilen 25)
+^ -1|PS C:\Projekte\demo> git status
+   0|On branch main
+   1|Your branch is up to date with 'origin/main'.
+   2|nothing to commit, working tree clean
+   3|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   4|hen sieht"
+   5|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   6|PS C:\Projekte\demo> 
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  8|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=1, Cursor 78,12, Pufferzeilen 25)
+^ -1|PS C:\Projekte\demo> git status
+   0|On branch main
+   1|Your branch is up to date with 'origin/main'.
+   2|nothing to commit, working tree clean
+   3|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   4|hen sieht"
+   5|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   6|PS C:\Projekte\demo> 
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   8|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-
+   9|                                                                              echo hallo-nach-resize
+  10|
+  11|hallo-nach-resize
+> 12|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl> 
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=2, Cursor 78,8, Pufferzeilen 26)
+^ -2|PS C:\Projekte\demo> git status
+^ -1|On branch main
+   0|Your branch is up to date with 'origin/main'.
+   1|nothing to commit, working tree clean
+   2|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   3|hen sieht"
+   4|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   5|PS C:\Projekte\demo> 
+   6|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   7|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-
+>  8|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++1204ms "\u001b[6n"
++1227ms "\u001b[?9001h\u001b[?1004h"
++1228ms "\u001b[m\u001b]0;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\u0007\u001b[?25h"
++12479ms "PS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl> "
++13733ms "\u001b[?25l\u001b[8;24;60t\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[11;19H\u001b[?25h"
++14697ms "\u001b[?25l\u001b[10;1HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;79H\u001b[?25h"
++15674ms "\u001b[?25l\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;79H\u001b[?25h"
++16626ms "\u001b[?25l\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;79H\u001b[?25h"
++17596ms "\u001b[?25l\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u0
++18531ms "\rub-verlauf-sichtbar-FU2TFl>\u001b[K\u001b[1C"
++19457ms "\u001b[?25l\r\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;79H\u001b[?25h"
++20382ms "\u001b[?25l\r\nFU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;9H\u001b[?25h"
++21306ms "\u001b[?25l\r\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;79H\u001b[?25h"
++22240ms "\u001b[?25l"
++22250ms "\u001b[93m\ne\u001b[?25h"
++22266ms "\u001b[m\u001b[93m\becho \u001b[37mhallo-nach-resize\u001b[12;1H"
++22334ms "\u001b[mhallo-nach-resize"
++22343ms "\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl> "
++23595ms "\u001b[?25l\u001b[9;1H\u001b[18X\u001b[93m\u001b[18Cecho \u001b[37mhallo-nach-resize\u001b[K\u001b[m\r\nhallo-nach-resize\u001b[K\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\u001b[1C\u001b[?25h"
++24529ms "\u001b[?25l\u001b[93m\u001b[37m\u001b[m\u001b[9;1HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;79H\u001b[?25h"
+
+
+########## powershell · inheritCursor, langer Verlauf (80 Zeilen)
+=== nach dem Start  (100x24, baseY=58, Cursor 78,23, Pufferzeilen 82)
+^ -3|Verlaufszeile 56 gelb Ende
+^ -2|Verlaufszeile 57 gelb Ende
+^ -1|Verlaufszeile 58 gelb Ende
+   0|Verlaufszeile 59 gelb Ende
+   1|Verlaufszeile 60 gelb Ende
+   2|Verlaufszeile 61 gelb Ende
+   3|Verlaufszeile 62 gelb Ende
+   4|Verlaufszeile 63 gelb Ende
+   5|Verlaufszeile 64 gelb Ende
+   6|Verlaufszeile 65 gelb Ende
+   7|Verlaufszeile 66 gelb Ende
+   8|Verlaufszeile 67 gelb Ende
+   9|Verlaufszeile 68 gelb Ende
+  10|Verlaufszeile 69 gelb Ende
+  11|Verlaufszeile 70 gelb Ende
+  12|Verlaufszeile 71 gelb Ende
+  13|Verlaufszeile 72 gelb Ende
+  14|Verlaufszeile 73 gelb Ende
+  15|Verlaufszeile 74 gelb Ende
+  16|Verlaufszeile 75 gelb Ende
+  17|Verlaufszeile 76 gelb Ende
+  18|Verlaufszeile 77 gelb Ende
+  19|Verlaufszeile 78 gelb Ende
+  20|Verlaufszeile 79 gelb Ende
+  21|Verlaufszeile 80 gelb Ende
+  22|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+> 23|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl> 
+=== nach Grösse 60x24  (60x24, baseY=59, Cursor 18,23, Pufferzeilen 83)
+^ -3|Verlaufszeile 57 gelb Ende
+^ -2|Verlaufszeile 58 gelb Ende
+^ -1|Verlaufszeile 59 gelb Ende
+   0|Verlaufszeile 60 gelb Ende
+   1|Verlaufszeile 61 gelb Ende
+   2|Verlaufszeile 62 gelb Ende
+   3|Verlaufszeile 63 gelb Ende
+   4|Verlaufszeile 64 gelb Ende
+   5|Verlaufszeile 65 gelb Ende
+   6|Verlaufszeile 66 gelb Ende
+   7|Verlaufszeile 67 gelb Ende
+   8|Verlaufszeile 68 gelb Ende
+   9|Verlaufszeile 69 gelb Ende
+  10|Verlaufszeile 70 gelb Ende
+  11|Verlaufszeile 71 gelb Ende
+  12|Verlaufszeile 72 gelb Ende
+  13|Verlaufszeile 73 gelb Ende
+  14|Verlaufszeile 74 gelb Ende
+  15|Verlaufszeile 75 gelb Ende
+  16|Verlaufszeile 76 gelb Ende
+  17|Verlaufszeile 77 gelb Ende
+  18|Verlaufszeile 78 gelb Ende
+  19|Verlaufszeile 79 gelb Ende
+  20|Verlaufszeile 80 gelb Ende
+  21|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──
+  22|────────────
+> 23|-sichtbar-FU2TFl>
+=== nach Grösse 100x24  (100x24, baseY=58, Cursor 78,22, Pufferzeilen 82)
+^ -3|Verlaufszeile 56 gelb Ende
+^ -2|Verlaufszeile 57 gelb Ende
+^ -1|Verlaufszeile 58 gelb Ende
+   0|Verlaufszeile 59 gelb Ende
+   1|Verlaufszeile 60 gelb Ende
+   2|Verlaufszeile 61 gelb Ende
+   3|Verlaufszeile 62 gelb Ende
+   4|Verlaufszeile 63 gelb Ende
+   5|Verlaufszeile 64 gelb Ende
+   6|Verlaufszeile 65 gelb Ende
+   7|Verlaufszeile 66 gelb Ende
+   8|Verlaufszeile 67 gelb Ende
+   9|Verlaufszeile 68 gelb Ende
+  10|Verlaufszeile 69 gelb Ende
+  11|Verlaufszeile 70 gelb Ende
+  12|Verlaufszeile 71 gelb Ende
+  13|Verlaufszeile 72 gelb Ende
+  14|Verlaufszeile 73 gelb Ende
+  15|Verlaufszeile 74 gelb Ende
+  16|Verlaufszeile 75 gelb Ende
+  17|Verlaufszeile 76 gelb Ende
+  18|Verlaufszeile 77 gelb Ende
+  19|Verlaufszeile 78 gelb Ende
+  20|Verlaufszeile 79 gelb Ende
+  21|Verlaufszeile 80 gelb Ende
+> 22|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  23|
+=== nach Grösse 100x12  (100x12, baseY=69, Cursor 78,11, Pufferzeilen 81)
+^ -3|Verlaufszeile 67 gelb Ende
+^ -2|Verlaufszeile 68 gelb Ende
+^ -1|Verlaufszeile 69 gelb Ende
+   0|Verlaufszeile 70 gelb Ende
+   1|Verlaufszeile 71 gelb Ende
+   2|Verlaufszeile 72 gelb Ende
+   3|Verlaufszeile 73 gelb Ende
+   4|Verlaufszeile 74 gelb Ende
+   5|Verlaufszeile 75 gelb Ende
+   6|Verlaufszeile 76 gelb Ende
+   7|Verlaufszeile 77 gelb Ende
+   8|Verlaufszeile 78 gelb Ende
+   9|Verlaufszeile 79 gelb Ende
+  10|Verlaufszeile 80 gelb Ende
+> 11|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+=== nach Grösse 100x24  (100x24, baseY=69, Cursor 78,11, Pufferzeilen 93)
+^ -3|Verlaufszeile 67 gelb Ende
+^ -2|Verlaufszeile 68 gelb Ende
+^ -1|Verlaufszeile 69 gelb Ende
+   0|Verlaufszeile 70 gelb Ende
+   1|Verlaufszeile 71 gelb Ende
+   2|Verlaufszeile 72 gelb Ende
+   3|Verlaufszeile 73 gelb Ende
+   4|Verlaufszeile 74 gelb Ende
+   5|Verlaufszeile 75 gelb Ende
+   6|Verlaufszeile 76 gelb Ende
+   7|Verlaufszeile 77 gelb Ende
+   8|Verlaufszeile 78 gelb Ende
+   9|Verlaufszeile 79 gelb Ende
+  10|Verlaufszeile 80 gelb Ende
+> 11|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=69, Cursor 78,11, Pufferzeilen 109)
+^ -3|Verlaufszeile 67 gelb Ende
+^ -2|Verlaufszeile 68 gelb Ende
+^ -1|Verlaufszeile 69 gelb Ende
+   0|Verlaufszeile 70 gelb Ende
+   1|Verlaufszeile 71 gelb Ende
+   2|Verlaufszeile 72 gelb Ende
+   3|Verlaufszeile 73 gelb Ende
+   4|Verlaufszeile 74 gelb Ende
+   5|Verlaufszeile 75 gelb Ende
+   6|Verlaufszeile 76 gelb Ende
+   7|Verlaufszeile 77 gelb Ende
+   8|Verlaufszeile 78 gelb Ende
+   9|Verlaufszeile 79 gelb Ende
+  10|Verlaufszeile 80 gelb Ende
+> 11|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=71, Cursor 28,9, Pufferzeilen 81)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+   8|Verlaufszeile 80 gelb Ende
+>  9|ub-verlauf-sichtbar-FU2TFl>
+=== nach Grösse 100x24  (100x24, baseY=71, Cursor 78,8, Pufferzeilen 95)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+>  8|Verlaufszeile 80 gelb Ende
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=71, Cursor 8,9, Pufferzeilen 101)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+   8|Verlaufszeile 80 gelb Ende
+>  9|FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=71, Cursor 78,8, Pufferzeilen 95)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+>  8|Verlaufszeile 80 gelb Ende
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=74, Cursor 78,23, Pufferzeilen 98)
+^ -3|Verlaufszeile 72 gelb Ende
+^ -2|Verlaufszeile 73 gelb Ende
+^ -1|Verlaufszeile 74 gelb Ende
+   0|Verlaufszeile 75 gelb Ende
+   1|Verlaufszeile 76 gelb Ende
+   2|Verlaufszeile 77 gelb Ende
+   3|Verlaufszeile 78 gelb Ende
+   4|Verlaufszeile 79 gelb Ende
+   5|Verlaufszeile 80 gelb Ende
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|                                                                              echo hallo-nach-resize
+  21|
+  22|hallo-nach-resize
+> 23|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=87, Cursor 78,9, Pufferzeilen 111)
+^ -3|
+^ -2|
+^ -1|
+   0|
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|                                                                              echo hallo-nach-resize
+   7|
+   8|hallo-nach-resize
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++78ms "\u001b[6n"
++93ms "\u001b[?9001h\u001b[?1004h"
++93ms "\u001b[m\u001b]0;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\u0007\u001b[?25h"
++419ms "PS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl> "
++1666ms "\u001b[8;24;60t\r-sichtbar-FU2TFl>\u001b[K\u001b[1C"
++2591ms "\u001b[?25l\r\u001b[K\u001b[23;79H\u001b[?25h"
++3524ms "\u001b[?25l\u001b[12;1HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\u001b[1C\u001b[?25h"
++4448ms "\u001b[?25l\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[12;79H\u001b[?25h"
++5388ms "\u001b[?25l\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u0
++6324ms "\u001b[?25l\u001b[10;1Hub-verlauf-sichtbar-FU2TFl>\u001b[K\u001b[1C\u001b[?25h"
++7261ms "\u001b[?25l\r\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;79H\u001b[?25h"
++8199ms "\u001b[?25l\r\nFU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;9H\u001b[?25h"
++9137ms "\u001b[?25l\r\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;79H\u001b[?25h"
++10075ms "\u001b[?25l"
++10085ms "\u001b[93m\u001b[24;79He\u001b[?25h"
++10095ms "\u001b[m\u001b[93m\becho \u001b[37mhallo-nach-resize\u001b[?25l"
++10096ms "\u001b[m\r\n\u001b[?25h"
++10101ms "\n"
++10200ms "hallo-nach-resize"
++10200ms "\r"
++10212ms "\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[1C"
++11447ms "\u001b[?25l\u001b[6;1H\u001b[K\r\n                                                            \r\n\u001b[18X\u001b[93m\u001b[18Cecho \u001b[37mhallo-nach-resize\u001b[K\u001b[m\r\n\u001b[K\r\nhallo-nach-resize\u001b[K\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\u001b[1C\u001b[?25h"
++12382ms "\u001b[?25l\u001b[6;1H\u001b[K\r\n\u001b[78X\u001b[93m\u001b[78Cecho \u001b[37mhallo-nach-resize\u001b[m\r\n\u001b[K\r\nhallo-nach-resize\u001b[K\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\
+
+
+########## powershell · inheritCursor ohne Reflow in xterm.js, kurzer Verlauf
+=== nach dem Start  (100x24, baseY=0, Cursor 78,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl> 
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 60x24  (60x24, baseY=0, Cursor 18,10, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl> 
+> 10|-sichtbar-FU2TFl>
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 78,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x12  (100x12, baseY=0, Cursor 78,9, Pufferzeilen 12)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 78,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=0, Cursor 78,9, Pufferzeilen 40)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=0, Cursor 28,9, Pufferzeilen 10)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|ub-verlauf-sichtbar-FU2TFl>                       ub-verlauf-sichtbar-FU2TFl>
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 78,8, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+>  8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=0, Cursor 8,9, Pufferzeilen 30)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 78,8, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+>  8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=0, Cursor 78,12, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|                                                                              echo hallo-nach-resize
+  10|
+  11|hallo-nach-resize
+> 12|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl> 
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=1, Cursor 78,8, Pufferzeilen 25)
+^ -1|PS C:\Projekte\demo> git status
+   0|On branch main
+   1|Your branch is up to date with 'origin/main'.
+   2|nothing to commit, working tree clean
+   3|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   4|hen sieht"
+   5|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   6|PS C:\Projekte\demo> 
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  8|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++83ms "\u001b[6n"
++94ms "\u001b[?9001h\u001b[?1004h"
++94ms "\u001b[m\u001b]0;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\u0007\u001b[?25h"
++520ms "PS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl> "
++1762ms "\u001b[?25l\u001b[8;24;60t\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[11;19H\u001b[?25h"
++2699ms "\u001b[?25l\u001b[10;1HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;79H\u001b[?25h"
++3635ms "\u001b[?25l\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;79H\u001b[?25h"
++4573ms "\u001b[?25l\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;79H\u001b[?25h"
++5512ms "\u001b[?25l\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u0
++6448ms "\rub-verlauf-sichtbar-FU2TFl>\u001b[K\u001b[1C"
++7383ms "\u001b[?25l\r\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;79H\u001b[?25h"
++8314ms "\u001b[?25l\r\nFU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;9H\u001b[?25h"
++9249ms "\u001b[?25l\r\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;79H\u001b[?25h"
++10182ms "\u001b[?25l"
++10195ms "\u001b[93m\necho \u001b[37mhallo-nach-resize\u001b[12;1H\u001b[?25h"
++10254ms "\u001b[mhallo-nach-resize"
++10273ms "\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl> "
++11492ms "\u001b[?25l\u001b[9;1H\u001b[18X\u001b[93m\u001b[18Cecho \u001b[37mhallo-nach-resize\u001b[K\u001b[m\r\nhallo-nach-resize\u001b[K\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\u001b[1C\u001b[?25h"
++12429ms "\u001b[?25l\u001b[93m\u001b[37m\u001b[m\u001b[9;1HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;79H\u001b[?25h"
+
+
+########## powershell · inheritCursor ohne Reflow in xterm.js, langer Verlauf
+=== nach dem Start  (100x24, baseY=58, Cursor 78,23, Pufferzeilen 82)
+^ -3|Verlaufszeile 56 gelb Ende
+^ -2|Verlaufszeile 57 gelb Ende
+^ -1|Verlaufszeile 58 gelb Ende
+   0|Verlaufszeile 59 gelb Ende
+   1|Verlaufszeile 60 gelb Ende
+   2|Verlaufszeile 61 gelb Ende
+   3|Verlaufszeile 62 gelb Ende
+   4|Verlaufszeile 63 gelb Ende
+   5|Verlaufszeile 64 gelb Ende
+   6|Verlaufszeile 65 gelb Ende
+   7|Verlaufszeile 66 gelb Ende
+   8|Verlaufszeile 67 gelb Ende
+   9|Verlaufszeile 68 gelb Ende
+  10|Verlaufszeile 69 gelb Ende
+  11|Verlaufszeile 70 gelb Ende
+  12|Verlaufszeile 71 gelb Ende
+  13|Verlaufszeile 72 gelb Ende
+  14|Verlaufszeile 73 gelb Ende
+  15|Verlaufszeile 74 gelb Ende
+  16|Verlaufszeile 75 gelb Ende
+  17|Verlaufszeile 76 gelb Ende
+  18|Verlaufszeile 77 gelb Ende
+  19|Verlaufszeile 78 gelb Ende
+  20|Verlaufszeile 79 gelb Ende
+  21|Verlaufszeile 80 gelb Ende
+  22|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+> 23|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl> 
+=== nach Grösse 60x24  (60x24, baseY=58, Cursor 18,23, Pufferzeilen 82)
+^ -3|Verlaufszeile 56 gelb Ende
+^ -2|Verlaufszeile 57 gelb Ende
+^ -1|Verlaufszeile 58 gelb Ende
+   0|Verlaufszeile 59 gelb Ende
+   1|Verlaufszeile 60 gelb Ende
+   2|Verlaufszeile 61 gelb Ende
+   3|Verlaufszeile 62 gelb Ende
+   4|Verlaufszeile 63 gelb Ende
+   5|Verlaufszeile 64 gelb Ende
+   6|Verlaufszeile 65 gelb Ende
+   7|Verlaufszeile 66 gelb Ende
+   8|Verlaufszeile 67 gelb Ende
+   9|Verlaufszeile 68 gelb Ende
+  10|Verlaufszeile 69 gelb Ende
+  11|Verlaufszeile 70 gelb Ende
+  12|Verlaufszeile 71 gelb Ende
+  13|Verlaufszeile 72 gelb Ende
+  14|Verlaufszeile 73 gelb Ende
+  15|Verlaufszeile 74 gelb Ende
+  16|Verlaufszeile 75 gelb Ende
+  17|Verlaufszeile 76 gelb Ende
+  18|Verlaufszeile 77 gelb Ende
+  19|Verlaufszeile 78 gelb Ende
+  20|Verlaufszeile 79 gelb Ende
+  21|Verlaufszeile 80 gelb Ende
+  22|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+> 23|-sichtbar-FU2TFl>                                           -sichtbar-FU2TFl> 
+=== nach Grösse 100x24  (100x24, baseY=58, Cursor 78,22, Pufferzeilen 82)
+^ -3|Verlaufszeile 56 gelb Ende
+^ -2|Verlaufszeile 57 gelb Ende
+^ -1|Verlaufszeile 58 gelb Ende
+   0|Verlaufszeile 59 gelb Ende
+   1|Verlaufszeile 60 gelb Ende
+   2|Verlaufszeile 61 gelb Ende
+   3|Verlaufszeile 62 gelb Ende
+   4|Verlaufszeile 63 gelb Ende
+   5|Verlaufszeile 64 gelb Ende
+   6|Verlaufszeile 65 gelb Ende
+   7|Verlaufszeile 66 gelb Ende
+   8|Verlaufszeile 67 gelb Ende
+   9|Verlaufszeile 68 gelb Ende
+  10|Verlaufszeile 69 gelb Ende
+  11|Verlaufszeile 70 gelb Ende
+  12|Verlaufszeile 71 gelb Ende
+  13|Verlaufszeile 72 gelb Ende
+  14|Verlaufszeile 73 gelb Ende
+  15|Verlaufszeile 74 gelb Ende
+  16|Verlaufszeile 75 gelb Ende
+  17|Verlaufszeile 76 gelb Ende
+  18|Verlaufszeile 77 gelb Ende
+  19|Verlaufszeile 78 gelb Ende
+  20|Verlaufszeile 79 gelb Ende
+  21|Verlaufszeile 80 gelb Ende
+> 22|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  23|
+=== nach Grösse 100x12  (100x12, baseY=69, Cursor 78,11, Pufferzeilen 81)
+^ -3|Verlaufszeile 67 gelb Ende
+^ -2|Verlaufszeile 68 gelb Ende
+^ -1|Verlaufszeile 69 gelb Ende
+   0|Verlaufszeile 70 gelb Ende
+   1|Verlaufszeile 71 gelb Ende
+   2|Verlaufszeile 72 gelb Ende
+   3|Verlaufszeile 73 gelb Ende
+   4|Verlaufszeile 74 gelb Ende
+   5|Verlaufszeile 75 gelb Ende
+   6|Verlaufszeile 76 gelb Ende
+   7|Verlaufszeile 77 gelb Ende
+   8|Verlaufszeile 78 gelb Ende
+   9|Verlaufszeile 79 gelb Ende
+  10|Verlaufszeile 80 gelb Ende
+> 11|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+=== nach Grösse 100x24  (100x24, baseY=69, Cursor 78,11, Pufferzeilen 93)
+^ -3|Verlaufszeile 67 gelb Ende
+^ -2|Verlaufszeile 68 gelb Ende
+^ -1|Verlaufszeile 69 gelb Ende
+   0|Verlaufszeile 70 gelb Ende
+   1|Verlaufszeile 71 gelb Ende
+   2|Verlaufszeile 72 gelb Ende
+   3|Verlaufszeile 73 gelb Ende
+   4|Verlaufszeile 74 gelb Ende
+   5|Verlaufszeile 75 gelb Ende
+   6|Verlaufszeile 76 gelb Ende
+   7|Verlaufszeile 77 gelb Ende
+   8|Verlaufszeile 78 gelb Ende
+   9|Verlaufszeile 79 gelb Ende
+  10|Verlaufszeile 80 gelb Ende
+> 11|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=69, Cursor 78,11, Pufferzeilen 109)
+^ -3|Verlaufszeile 67 gelb Ende
+^ -2|Verlaufszeile 68 gelb Ende
+^ -1|Verlaufszeile 69 gelb Ende
+   0|Verlaufszeile 70 gelb Ende
+   1|Verlaufszeile 71 gelb Ende
+   2|Verlaufszeile 72 gelb Ende
+   3|Verlaufszeile 73 gelb Ende
+   4|Verlaufszeile 74 gelb Ende
+   5|Verlaufszeile 75 gelb Ende
+   6|Verlaufszeile 76 gelb Ende
+   7|Verlaufszeile 77 gelb Ende
+   8|Verlaufszeile 78 gelb Ende
+   9|Verlaufszeile 79 gelb Ende
+  10|Verlaufszeile 80 gelb Ende
+> 11|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=71, Cursor 28,9, Pufferzeilen 81)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+   8|Verlaufszeile 80 gelb Ende
+>  9|ub-verlauf-sichtbar-FU2TFl>                       ub-verlauf-sichtbar-FU2TFl>
+=== nach Grösse 100x24  (100x24, baseY=71, Cursor 78,8, Pufferzeilen 95)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+>  8|Verlaufszeile 80 gelb Ende
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=71, Cursor 8,9, Pufferzeilen 101)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+   8|Verlaufszeile 80 gelb Ende
+>  9|FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=71, Cursor 78,8, Pufferzeilen 95)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+>  8|Verlaufszeile 80 gelb Ende
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=74, Cursor 78,23, Pufferzeilen 98)
+^ -3|Verlaufszeile 72 gelb Ende
+^ -2|Verlaufszeile 73 gelb Ende
+^ -1|Verlaufszeile 74 gelb Ende
+   0|Verlaufszeile 75 gelb Ende
+   1|Verlaufszeile 76 gelb Ende
+   2|Verlaufszeile 77 gelb Ende
+   3|Verlaufszeile 78 gelb Ende
+   4|Verlaufszeile 79 gelb Ende
+   5|Verlaufszeile 80 gelb Ende
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|                                                                              echo hallo-nach-resize
+  21|
+  22|hallo-nach-resize
+> 23|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=86, Cursor 78,9, Pufferzeilen 110)
+^ -3|
+^ -2|
+^ -1|
+   0|
+   1|
+   2|
+   3|
+   4|
+   5|
+   6|                                                                              echo hallo-nach-resize
+   7|
+   8|hallo-nach-resize
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++71ms "\u001b[6n"
++79ms "\u001b[?9001h\u001b[?1004h"
++79ms "\u001b[m\u001b]0;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\u0007\u001b[?25h"
++389ms "PS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl> "
++1641ms "\u001b[8;24;60t\r-sichtbar-FU2TFl>\u001b[K\u001b[1C"
++2577ms "\u001b[?25l\r\u001b[K\u001b[23;79H\u001b[?25h"
++3504ms "\u001b[?25l\u001b[12;1HPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\u001b[1C\u001b[?25h"
++4437ms "\u001b[?25l\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[12;79H\u001b[?25h"
++5377ms "\u001b[?25l\rPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u0
++6310ms "\u001b[?25l\u001b[10;1Hub-verlauf-sichtbar-FU2TFl>\u001b[K\u001b[1C\u001b[?25h"
++7250ms "\u001b[?25l\r\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;79H\u001b[?25h"
++8183ms "\u001b[?25l\r\nFU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;9H\u001b[?25h"
++9122ms "\u001b[?25l\r\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;79H\u001b[?25h"
++10092ms "\u001b[?25l"
++10103ms "\u001b[93m\u001b[24;79Hecho \u001b[37mhallo-nach-resi"
++10104ms "\u001b[m\u001b[93m\u001b[24;79Hecho \u001b[37mhallo-nach-resize"
++10106ms "\u001b[m\r\n\u001b[?25h"
++10118ms "\n"
++10165ms "hallo-nach-resize"
++10166ms "\r"
++10181ms "\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[1C"
++11427ms "\u001b[?25l\u001b[6;1H\u001b[K\r\n                                                            \r\n\u001b[18X\u001b[93m\u001b[18Cecho \u001b[37mhallo-nach-resize\u001b[K\u001b[m\r\n\u001b[K\r\nhallo-nach-resize\u001b[K\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\u001b[1C\u001b[?25h"
++12360ms "\u001b[?25l\u001b[6;1H\u001b[K\r\n\u001b[78X\u001b[93m\u001b[78Cecho \u001b[37mhallo-nach-resize\u001b[m\r\n\u001b[K\r\nhallo-nach-resize\u001b[K\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\
+
+
+########## powershell · Gegenprobe: Shell gibt den Verlauf selbst aus (ohne inheritCursor)
+=== nach dem Start  (100x24, baseY=0, Cursor 78,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl> 
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 60x24  (60x24, baseY=0, Cursor 18,12, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spal
+   5|ten umbrechen muss, damit man das Umbrechen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit m
+   7|an das Umbrechen sieht
+   8|PS C:\Projekte\demo> 
+   9|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──
+  10|────────────
+  11|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf
+> 12|-sichtbar-FU2TFl>
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 78,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x12  (100x12, baseY=0, Cursor 78,9, Pufferzeilen 12)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 78,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=0, Cursor 78,8, Pufferzeilen 40)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht"
+   5|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   6|PS C:\Projekte\demo> 
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  8|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=3, Cursor 28,9, Pufferzeilen 13)
+^ -3|PS C:\Projekte\demo> git status
+^ -2|On branch main
+^ -1|Your branch is up to date with 'origin/main'.
+   0|PS C:\Projekte\demo> echo "eine lange Zeile, die b
+   1|ei 60 Spalten umbrechen muss, damit man das Umbrec
+   2|hen sieht"
+   3|eine lange Zeile, die bei 60 Spalten umbrechen mus
+   4|s, damit man das Umbrechen sieht
+   5|PS C:\Projekte\demo> 
+   6|────────────── Wiederhergestellt · Do., 19.11.2026
+   7|, 17:42 ──────────────
+   8|PS C:\Users\<Benutzer>\AppData\Local\Temp\th
+>  9|ub-verlauf-sichtbar-FU2TFl>
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 78,5, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   1|hen sieht"
+   2|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   3|PS C:\Projekte\demo> 
+   4|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  5|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=0, Cursor 8,8, Pufferzeilen 30)
+   0|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrec
+   1|hen muss, damit man das Umbrechen sieht"
+   2|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umb
+   3|rechen sieht
+   4|PS C:\Projekte\demo> 
+   5|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ────────────
+   6|──
+   7|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-
+>  8|FU2TFl>
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 78,5, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   1|hen sieht"
+   2|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   3|PS C:\Projekte\demo> 
+   4|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  5|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=0, Cursor 78,12, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   1|hen sieht"
+   2|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   3|PS C:\Projekte\demo> 
+   4|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   5|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   6|
+   7|
+   8|
+   9|                                                                              echo hallo-nach-resize
+  10|
+  11|hallo-nach-resize
+> 12|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl> 
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=2, Cursor 78,7, Pufferzeilen 26)
+^ -2|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+^ -1|hen sieht"
+   0|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   1|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   2|
+   3|
+   4|
+   5|                                                                              echo hallo-nach-resize
+   6|hallo-nach-resize
+>  7|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl>
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++85ms "\u001b[?9001h\u001b[?1004h"
++529ms "\u001b[?25l\u001b[2J\u001b[m\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\r\nOn branch main\r\nYour branch is up to date with 'origin/main'.\u001b[32m\r\nnothing to commit, working tree clean\u001b[m\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\"\r\neine lange Zeile, die bei 60 Spalten umbrechen muss, damit man d
++546ms "\u001b[m"
++570ms "PS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl> "
++1797ms "\u001b[?25l\u001b[8;24;60t\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\u001b[22m\u001b[K\u001b[2m\r\nOn branch main\u001b[22m\u001b[K\u001b[2m\r\nYour branch is up to date with 'origin/main'.\u001b[22m\u001b[K\u001b[32m\u001b[2m\r\nnothing to commit, working tree clean\u001b[m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man da
++2735ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\u001b[22m\u001b[K\u001b[2m\r\nOn branch main\u001b[22m\u001b[K\u001b[2m\r\nYour branch is up to date with 'origin/main'.\u001b[22m\u001b[K\u001b[32m\u001b[2m\r\nnothing to commit, working tree clean\u001b[m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sie
++3674ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\u001b[22m\u001b[K\u001b[2m\r\nOn branch main\u001b[22m\u001b[K\u001b[2m\r\nYour branch is up to date with 'origin/main'.\u001b[22m\u001b[K\u001b[32m\u001b[2m\r\nnothing to commit, working tree clean\u001b[m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sie
++4607ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\u001b[22m\u001b[K\u001b[2m\r\nOn branch main\u001b[22m\u001b[K\u001b[2m\r\nYour branch is up to date with 'origin/main'.\u001b[22m\u001b[K\u001b[32m\u001b[2m\r\nnothing to commit, working tree clean\u001b[m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sie
++5548ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\u001b[22m\u001b[K\u001b[2m\r\nOn branch main\u001b[22m\u001b[K\u001b[2m\r\nYour branch is up to date with 'origin/main'.\u001b[22m\u001b[K\u001b[32m\u001b[2m\r\nnothing to commit, working tree clean\u001b[m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sie
++6483ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\"\u001b[22m\u001b[K\u001b[2m\r\neine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\u001b[22m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> \u001b[22m\u001b[K\u001b[90m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 
++7425ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\"\u001b[22m\u001b[K\u001b[2m\r\neine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\u001b[22m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> \u001b[22m\u001b[K\u001b[90m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 
++8362ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\"\u001b[22m\u001b[K\u001b[2m\r\neine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\u001b[22m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> \u001b[22m\u001b[K\u001b[90m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 
++9289ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\"\u001b[22m\u001b[K\u001b[2m\r\neine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\u001b[22m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> \u001b[22m\u001b[K\u001b[90m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 
++10234ms "\u001b[?25l"
++10255ms "\u001b[93m\u001b[10;79Hecho \u001b[37mhallo-nach-"
++10270ms "\u001b[m\u001b[93m\u001b[10;79Hecho \u001b[37mhallo-nach-resize\u001b[12;1H\u001b[?25h"
++10354ms "\u001b[mhallo-nach-resize"
++10363ms "\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl> "
++11598ms "\u001b[?25l\u001b[90m\u001b[H────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────\u001b[K\u001b[m\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n                                                            \r\n\u001b[18X\u001b[93m\u001b[18Cecho \u001b[37mhallo-nach-resize\u001b[K\u001b[m\r\nh
++12536ms "\u001b[?25l\u001b[90m\u001b[H────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────\u001b[K\u001b[m\r\nPS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl>\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[78X\u001b[93m\u001b[78Cecho \u001b[37mhallo-nach-resize\u001b[m\r\nhallo-nach-resize\u001b[K\r\nPS C:\\Users\\<Benutzer>\\AppData\\Loc
+
+
+########## powershell · inheritCursor, Antwort 1500 ms zu spät
+=== nach dem Start  (100x24, baseY=0, Cursor 78,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|PS C:\Users\<Benutzer>\AppData\Local\Temp\thub-verlauf-sichtbar-FU2TFl> 
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++70ms "\u001b[6n"
++1586ms "\u001b[?9001h\u001b[?1004h"
++1587ms "\u001b[m\u001b]0;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\u0007\u001b[?25h"
++1934ms "PS C:\\Users\\<Benutzer>\\AppData\\Local\\Temp\\thub-verlauf-sichtbar-FU2TFl> "
+
+
+########## powershell · inheritCursor, Antwort bleibt aus
+=== nach dem Start  (100x24, baseY=0, Cursor 0,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++148ms "\u001b[6n"

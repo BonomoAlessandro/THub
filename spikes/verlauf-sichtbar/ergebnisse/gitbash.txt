@@ -1,0 +1,2281 @@
+gitbash · heute (Leerzeilen, ohne inheritCursor), kurzer Verlauf: Prompt nach 984 ms, DSR-Anfragen [], Antworten []
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 2 | Cursorzeile "$ " | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 4 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 4 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 70x30              Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 4 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach einem Befehl              Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 6 | Cursorzeile "$ " | grau | Befehl 1x, Ausgabe 1x
+   Befehl, dann 60x12 und zurück  Verlauf heil | Trennlinien 1 | Trennlinie im Scrollback | Verlaufsende im Scrollback | Abstand Trennlinie→Cursor 6 | Cursorzeile "$" | grau | Befehl 1x, Ausgabe 1x
+gitbash · inheritCursor, kurzer Verlauf: Prompt nach 1772 ms, DSR-Anfragen [138], Antworten [{"at":153,"answer":"\"\\u001b[10;1R\""}]
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$ " | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 70x30              Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach einem Befehl              Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$ " | grau | Befehl 0x, Ausgabe 0x
+   Befehl, dann 60x12 und zurück  Verlauf heil | Trennlinien 0 | Trennlinie im Scrollback | Verlaufsende sichtbar | Abstand Trennlinie→Cursor null | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+gitbash · inheritCursor, langer Verlauf (80 Zeilen): Prompt nach 2211 ms, DSR-Anfragen [153], Antworten [{"at":153,"answer":"\"\\u001b[24;1R\""}]
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 3 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 70x30              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach einem Befehl              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 4 | Cursorzeile "$ " | grau | Befehl 1x, Ausgabe 1x
+   Befehl, dann 60x12 und zurück  Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 1x, Ausgabe 0x
+gitbash · inheritCursor ohne Reflow in xterm.js, kurzer Verlauf: Prompt nach 1210 ms, DSR-Anfragen [117], Antworten [{"at":123,"answer":"\"\\u001b[10;1R\""}]
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$ " | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 3 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 70x30              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach einem Befehl              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 5 | Cursorzeile "$ " | grau | Befehl 0x, Ausgabe 0x
+   Befehl, dann 60x12 und zurück  Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 3 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+gitbash · inheritCursor ohne Reflow in xterm.js, langer Verlauf: Prompt nach 2253 ms, DSR-Anfragen [145], Antworten [{"at":154,"answer":"\"\\u001b[24;1R\""}]
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 70x30              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 1 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach einem Befehl              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 4 | Cursorzeile "$ " | grau | Befehl 1x, Ausgabe 1x
+   Befehl, dann 60x12 und zurück  Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 1x, Ausgabe 0x
+gitbash · Gegenprobe: Shell gibt den Verlauf selbst aus (ohne inheritCursor): Prompt nach 3210 ms, DSR-Anfragen [], Antworten []
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$ " | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 60x24              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 3 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x12             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 140x40             Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 50x10              Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 3 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+   nach Grösse 100x24             Verlauf KAPUTT (fehlt 3, doppelt 0) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+      fehlt: "Your branch is up to date with 'origin/main'.", "nothing to commit, working tree clean", "PS C:\\Projekte\\demo> echo \"eine lange Zeile, die b"
+   nach Grösse 70x30              Verlauf KAPUTT (fehlt 3, doppelt 1) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 3 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+      fehlt: "Your branch is up to date with 'origin/main'.", "nothing to commit, working tree clean", "PS C:\\Projekte\\demo> echo \"eine lange Zeile, die b"
+      doppelt: "eine lange Zeile, die bei 60 Spalten umbrechen mus"
+   nach Grösse 100x24             Verlauf KAPUTT (fehlt 4, doppelt 0) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$" | grau | Befehl 0x, Ausgabe 0x
+      fehlt: "On branch main", "Your branch is up to date with 'origin/main'.", "nothing to commit, working tree clean"
+   nach einem Befehl              Verlauf KAPUTT (fehlt 4, doppelt 0) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 6 | Cursorzeile "$ " | grau | Befehl 1x, Ausgabe 1x
+      fehlt: "On branch main", "Your branch is up to date with 'origin/main'.", "nothing to commit, working tree clean"
+   Befehl, dann 60x12 und zurück  Verlauf KAPUTT (fehlt 5, doppelt 0) | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 6 | Cursorzeile "$" | grau | Befehl 1x, Ausgabe 1x
+      fehlt: "On branch main", "Your branch is up to date with 'origin/main'.", "nothing to commit, working tree clean"
+gitbash · inheritCursor, Antwort 1500 ms zu spät: Prompt nach 3781 ms, DSR-Anfragen [136], Antworten [{"at":1646,"answer":"\"\\u001b[10;1R\""}]
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 2 | Cursorzeile "$ " | grau | Befehl 0x, Ausgabe 0x
+gitbash · inheritCursor, Antwort bleibt aus: Prompt nach nie ms, DSR-Anfragen [152], Antworten []
+   nach dem Start                 Verlauf heil | Trennlinien 1 | Trennlinie sichtbar | Verlaufsende sichtbar | Abstand Trennlinie→Cursor 0 | Cursorzeile "" | grau | Befehl 0x, Ausgabe 0x
+
+
+########## gitbash · heute (Leerzeilen, ohne inheritCursor), kurzer Verlauf
+=== nach dem Start  (100x24, baseY=9, Cursor 2,2, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  2|$ 
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 60x24  (60x24, baseY=12, Cursor 2,3, Pufferzeilen 36)
+^ -3|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──
+^ -2|────────────
+^ -1|
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlau
+   2|f-sichtbar-FU2TFl
+>  3|$
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x24  (100x24, baseY=9, Cursor 2,2, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  2|$
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x12  (100x12, baseY=9, Cursor 2,2, Pufferzeilen 21)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  2|$
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+=== nach Grösse 100x24  (100x24, baseY=9, Cursor 2,2, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  2|$
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=8, Cursor 2,2, Pufferzeilen 48)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  2|$
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=13, Cursor 2,3, Pufferzeilen 23)
+^ -3|────────────── Wiederhergestellt · Do., 19.11.2026
+^ -2|, 17:42 ──────────────
+^ -1|
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/t
+   2|hub-verlauf-sichtbar-FU2TFl
+>  3|$
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+=== nach Grösse 100x24  (100x24, baseY=9, Cursor 2,2, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  2|$
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=12, Cursor 2,3, Pufferzeilen 42)
+^ -3|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ────────────
+^ -2|──
+^ -1|
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar
+   2|-FU2TFl
+>  3|$
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=9, Cursor 2,2, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  2|$
+   3|
+   4|
+   5|
+   6|
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=9, Cursor 2,6, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+   2|$ echo hallo-nach-resize
+   3|hallo-nach-resize
+   4|
+   5|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  6|$ 
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=9, Cursor 2,6, Pufferzeilen 33)
+^ -3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+^ -2|PS C:\Projekte\demo> 
+^ -1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   0|
+   1|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+   2|$ echo hallo-nach-resize
+   3|hallo-nach-resize
+   4|
+   5|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  6|$
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++109ms "\u001b[?9001h\u001b[?1004h"
++930ms "\u001b[?2004h\u001b[?25l\u001b[2J\u001b[m\u001b[H\u001b]0;C:\\Program Files\\Git\\bin\\bash.exe\u0007\u001b[?25h"
++953ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ \u001b]0;MINGW64:/tmp/thub-verlauf-sichtbar-FU2TFl\u0007"
++2231ms "\u001b[?25l\u001b[8;24;60t\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\
++2247ms "\r"
++2262ms "$\u001b[K\u001b[1C"
++3229ms "\u001b[?25l\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n
++4163ms "\u001b[?25l\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[3;3H\u001b[?25h"
++4177ms "\r$\u001b[K\u001b[1C"
++5152ms "\u001b[?25l\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n
++5167ms "\r$\u001b[K\u001b[1C"
++6143ms "\u001b[?25l\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n
++7077ms "\u001b[?25l\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[4;3H\u001b[?25h"
++7092ms "\r$\u001b[K\u001b[1C"
++8063ms "\u001b[?25l\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n
++8094ms "\r$\u001b[K\u001b[1C"
++9054ms "\u001b[?25l\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n
++9984ms "\u001b[?25l\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n
++10944ms "echo hallo-nach-resize"
++10945ms "\u001b[?2004l"
++10959ms "\r\nhallo-nach-resize\r\n"
++11178ms "\u001b[?2004h"
++11191ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ "
++12460ms "\u001b[?25l\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$ echo hallo-nach-resize\u001b[K\r\nhallo-nach-resize\u001b[K\r\n\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n
++12492ms "\r$\u001b[K\u001b[1C"
++13454ms "\u001b[?25l\u001b[H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$ echo hallo-nach-resize\u001b[K\r\nhallo-nach-resize\u001b[K\r\n\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n
++13471ms "\r"
++13485ms "$\u001b[K\u001b[1C"
+
+
+########## gitbash · inheritCursor, kurzer Verlauf
+=== nach dem Start  (100x24, baseY=0, Cursor 2,11, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$ 
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 60x24  (60x24, baseY=0, Cursor 2,12, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spal
+   5|ten umbrechen muss, damit man das Umbrechen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit m
+   7|an das Umbrechen sieht
+   8|PS C:\Projekte\demo> 
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlau
+  11|f-sichtbar-FU2TFl
+> 12|$
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 2,11, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x12  (100x12, baseY=0, Cursor 2,11, Pufferzeilen 12)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 2,11, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=0, Cursor 2,11, Pufferzeilen 40)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht"
+   5|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   6|PS C:\Projekte\demo> 
+   7|
+   8|
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=6, Cursor 2,9, Pufferzeilen 16)
+^ -3|nothing to commit, working tree clean
+^ -2|PS C:\Projekte\demo> echo "eine lange Zeile, die b
+^ -1|ei 60 Spalten umbrechen muss, damit man das Umbrec
+   0|hen sieht"
+   1|eine lange Zeile, die bei 60 Spalten umbrechen mus
+   2|s, damit man das Umbrechen sieht
+   3|PS C:\Projekte\demo> 
+   4|
+   5|
+   6|
+   7|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/t
+   8|hub-verlauf-sichtbar-FU2TFl
+>  9|$
+=== nach Grösse 100x24  (100x24, baseY=3, Cursor 2,8, Pufferzeilen 27)
+^ -3|PS C:\Projekte\demo> git status
+^ -2|On branch main
+^ -1|Your branch is up to date with 'origin/main'.
+   0|nothing to commit, working tree clean
+   1|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   2|hen sieht"
+   3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   4|PS C:\Projekte\demo> 
+   5|
+   6|
+   7|
+>  8|$
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=4, Cursor 2,9, Pufferzeilen 34)
+^ -3|On branch main
+^ -2|Your branch is up to date with 'origin/main'.
+^ -1|nothing to commit, working tree clean
+   0|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrec
+   1|hen muss, damit man das Umbrechen sieht"
+   2|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umb
+   3|rechen sieht
+   4|PS C:\Projekte\demo> 
+   5|
+   6|
+   7|
+   8|-FU2TFl
+>  9|$
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=3, Cursor 2,8, Pufferzeilen 27)
+^ -3|PS C:\Projekte\demo> git status
+^ -2|On branch main
+^ -1|Your branch is up to date with 'origin/main'.
+   0|nothing to commit, working tree clean
+   1|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   2|hen sieht"
+   3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   4|PS C:\Projekte\demo> 
+   5|
+   6|
+   7|
+>  8|$
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=3, Cursor 2,12, Pufferzeilen 27)
+^ -3|PS C:\Projekte\demo> git status
+^ -2|On branch main
+^ -1|Your branch is up to date with 'origin/main'.
+   0|nothing to commit, working tree clean
+   1|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   2|hen sieht"
+   3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   4|PS C:\Projekte\demo> 
+   5|
+   6|
+   7|
+   8|$ cho hallo-nach-resize
+   9|bash: cho: command not found
+  10|
+  11|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 12|$ 
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=4, Cursor 2,9, Pufferzeilen 28)
+^ -3|On branch main
+^ -2|Your branch is up to date with 'origin/main'.
+^ -1|nothing to commit, working tree clean
+   0|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   1|hen sieht"
+   2|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   3|PS C:\Projekte\demo> 
+   4|
+   5|
+   6|
+   7|$ cho hallo-nach-resize
+   8|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  9|$
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++138ms "\u001b[6n"
++154ms "\u001b[?9001h\u001b[?1004h"
++154ms "\u001b[m\u001b]0;C:\\Program Files\\Git\\bin\\bash.exe\u0007\u001b[?25h"
++1725ms "\u001b[?2004h"
++1742ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ \u001b]0;MINGW64:/tmp/thub-verlauf-sichtbar-FU2TFl\u0007"
++3016ms "\u001b[?25l\u001b[8;24;60t\u001b[10;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[13;3H\u001b[?25h"
++3954ms "\u001b[?25l\u001b[10;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[12;3H\u001b[?25h"
++4885ms "\u001b[?25l\u001b[10;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\u001b[1C\u001b[?25h"
++5821ms "\u001b[?25l\u001b[10;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[12;3H\u001b[?25h"
++6755ms "\u001b[?25l\u001b[10;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K
++6773ms "\r"
++6787ms "$\u001b[K\u001b[1C"
++7752ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[10;1H$\u001b[K\u001b[1C\u001b[?25h"
++7783ms "\r$\u001b[K\u001b[1C"
++8747ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;3H\u001b[?25h"
++9687ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\r-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;3H\u001b[?25h"
++9698ms "\r$\u001b[K\u001b[1C"
++10749ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;3H\u001b[?25h"
++11687ms "\r"
++11701ms "$\u001b[K\u001b[1C"
++11742ms "cho hallo-nach-resize"
++11742ms "\u001b[?2004l"
++11764ms "\r\n"
++11856ms "bash: cho: command not found\r\n"
++12111ms "\u001b[?2004h"
++12125ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ "
++13381ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\u001b[1C\u001b[?25h"
++13415ms "\r"
++13437ms "$\u001b[K\u001b[1C"
++14370ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[32m\u001b[9;1HAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;3H\u001b[?25h"
++14382ms "\r$\u001b[K\u001b[1C"
+
+
+########## gitbash · inheritCursor, langer Verlauf (80 Zeilen)
+=== nach dem Start  (100x24, baseY=60, Cursor 2,23, Pufferzeilen 84)
+^ -3|Verlaufszeile 58 gelb Ende
+^ -2|Verlaufszeile 59 gelb Ende
+^ -1|Verlaufszeile 60 gelb Ende
+   0|Verlaufszeile 61 gelb Ende
+   1|Verlaufszeile 62 gelb Ende
+   2|Verlaufszeile 63 gelb Ende
+   3|Verlaufszeile 64 gelb Ende
+   4|Verlaufszeile 65 gelb Ende
+   5|Verlaufszeile 66 gelb Ende
+   6|Verlaufszeile 67 gelb Ende
+   7|Verlaufszeile 68 gelb Ende
+   8|Verlaufszeile 69 gelb Ende
+   9|Verlaufszeile 70 gelb Ende
+  10|Verlaufszeile 71 gelb Ende
+  11|Verlaufszeile 72 gelb Ende
+  12|Verlaufszeile 73 gelb Ende
+  13|Verlaufszeile 74 gelb Ende
+  14|Verlaufszeile 75 gelb Ende
+  15|Verlaufszeile 76 gelb Ende
+  16|Verlaufszeile 77 gelb Ende
+  17|Verlaufszeile 78 gelb Ende
+  18|Verlaufszeile 79 gelb Ende
+  19|Verlaufszeile 80 gelb Ende
+  20|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  21|
+  22|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 23|$
+=== nach Grösse 60x24  (60x24, baseY=62, Cursor 2,23, Pufferzeilen 86)
+^ -3|Verlaufszeile 60 gelb Ende
+^ -2|Verlaufszeile 61 gelb Ende
+^ -1|Verlaufszeile 62 gelb Ende
+   0|Verlaufszeile 63 gelb Ende
+   1|Verlaufszeile 64 gelb Ende
+   2|Verlaufszeile 65 gelb Ende
+   3|Verlaufszeile 66 gelb Ende
+   4|Verlaufszeile 67 gelb Ende
+   5|Verlaufszeile 68 gelb Ende
+   6|Verlaufszeile 69 gelb Ende
+   7|Verlaufszeile 70 gelb Ende
+   8|Verlaufszeile 71 gelb Ende
+   9|Verlaufszeile 72 gelb Ende
+  10|Verlaufszeile 73 gelb Ende
+  11|Verlaufszeile 74 gelb Ende
+  12|Verlaufszeile 75 gelb Ende
+  13|Verlaufszeile 76 gelb Ende
+  14|Verlaufszeile 77 gelb Ende
+  15|Verlaufszeile 78 gelb Ende
+  16|Verlaufszeile 79 gelb Ende
+  17|Verlaufszeile 80 gelb Ende
+  18|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──
+  19|────────────
+  20|
+  21|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlau
+  22|f-sichtbar-FU2TFl
+> 23|$
+=== nach Grösse 100x24  (100x24, baseY=60, Cursor 2,22, Pufferzeilen 84)
+^ -3|Verlaufszeile 58 gelb Ende
+^ -2|Verlaufszeile 59 gelb Ende
+^ -1|Verlaufszeile 60 gelb Ende
+   0|Verlaufszeile 61 gelb Ende
+   1|Verlaufszeile 62 gelb Ende
+   2|Verlaufszeile 63 gelb Ende
+   3|Verlaufszeile 64 gelb Ende
+   4|Verlaufszeile 65 gelb Ende
+   5|Verlaufszeile 66 gelb Ende
+   6|Verlaufszeile 67 gelb Ende
+   7|Verlaufszeile 68 gelb Ende
+   8|Verlaufszeile 69 gelb Ende
+   9|Verlaufszeile 70 gelb Ende
+  10|Verlaufszeile 71 gelb Ende
+  11|Verlaufszeile 72 gelb Ende
+  12|Verlaufszeile 73 gelb Ende
+  13|Verlaufszeile 74 gelb Ende
+  14|Verlaufszeile 75 gelb Ende
+  15|Verlaufszeile 76 gelb Ende
+  16|Verlaufszeile 77 gelb Ende
+  17|Verlaufszeile 78 gelb Ende
+  18|Verlaufszeile 79 gelb Ende
+  19|Verlaufszeile 80 gelb Ende
+  20|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  21|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 22|$
+  23|
+=== nach Grösse 100x12  (100x12, baseY=71, Cursor 2,11, Pufferzeilen 83)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+   8|Verlaufszeile 80 gelb Ende
+   9|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+=== nach Grösse 100x24  (100x24, baseY=71, Cursor 2,11, Pufferzeilen 95)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+   8|Verlaufszeile 80 gelb Ende
+   9|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=71, Cursor 2,11, Pufferzeilen 111)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+   8|Verlaufszeile 80 gelb Ende
+   9|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=75, Cursor 2,9, Pufferzeilen 85)
+^ -3|Verlaufszeile 73 gelb Ende
+^ -2|Verlaufszeile 74 gelb Ende
+^ -1|Verlaufszeile 75 gelb Ende
+   0|Verlaufszeile 76 gelb Ende
+   1|Verlaufszeile 77 gelb Ende
+   2|Verlaufszeile 78 gelb Ende
+   3|Verlaufszeile 79 gelb Ende
+   4|Verlaufszeile 80 gelb Ende
+   5|────────────── Wiederhergestellt · Do., 19.11.2026
+   6|, 17:42 ──────────────
+   7|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/t
+   8|hub-verlauf-sichtbar-FU2TFl
+>  9|$
+=== nach Grösse 100x24  (100x24, baseY=73, Cursor 2,8, Pufferzeilen 97)
+^ -3|Verlaufszeile 71 gelb Ende
+^ -2|Verlaufszeile 72 gelb Ende
+^ -1|Verlaufszeile 73 gelb Ende
+   0|Verlaufszeile 74 gelb Ende
+   1|Verlaufszeile 75 gelb Ende
+   2|Verlaufszeile 76 gelb Ende
+   3|Verlaufszeile 77 gelb Ende
+   4|Verlaufszeile 78 gelb Ende
+   5|Verlaufszeile 79 gelb Ende
+   6|Verlaufszeile 80 gelb Ende
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  8|$
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=74, Cursor 2,9, Pufferzeilen 104)
+^ -3|Verlaufszeile 72 gelb Ende
+^ -2|Verlaufszeile 73 gelb Ende
+^ -1|Verlaufszeile 74 gelb Ende
+   0|Verlaufszeile 75 gelb Ende
+   1|Verlaufszeile 76 gelb Ende
+   2|Verlaufszeile 77 gelb Ende
+   3|Verlaufszeile 78 gelb Ende
+   4|Verlaufszeile 79 gelb Ende
+   5|Verlaufszeile 80 gelb Ende
+   6|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ────────────
+   7|──
+   8|-FU2TFl
+>  9|$
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=73, Cursor 2,8, Pufferzeilen 97)
+^ -3|Verlaufszeile 71 gelb Ende
+^ -2|Verlaufszeile 72 gelb Ende
+^ -1|Verlaufszeile 73 gelb Ende
+   0|Verlaufszeile 74 gelb Ende
+   1|Verlaufszeile 75 gelb Ende
+   2|Verlaufszeile 76 gelb Ende
+   3|Verlaufszeile 77 gelb Ende
+   4|Verlaufszeile 78 gelb Ende
+   5|Verlaufszeile 79 gelb Ende
+   6|Verlaufszeile 80 gelb Ende
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  8|$
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=73, Cursor 2,12, Pufferzeilen 97)
+^ -3|Verlaufszeile 71 gelb Ende
+^ -2|Verlaufszeile 72 gelb Ende
+^ -1|Verlaufszeile 73 gelb Ende
+   0|Verlaufszeile 74 gelb Ende
+   1|Verlaufszeile 75 gelb Ende
+   2|Verlaufszeile 76 gelb Ende
+   3|Verlaufszeile 77 gelb Ende
+   4|Verlaufszeile 78 gelb Ende
+   5|Verlaufszeile 79 gelb Ende
+   6|Verlaufszeile 80 gelb Ende
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   8|$ echo hallo-nach-resize
+   9|hallo-nach-resize
+  10|
+  11|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 12|$ 
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=74, Cursor 2,9, Pufferzeilen 98)
+^ -3|Verlaufszeile 72 gelb Ende
+^ -2|Verlaufszeile 73 gelb Ende
+^ -1|Verlaufszeile 74 gelb Ende
+   0|Verlaufszeile 75 gelb Ende
+   1|Verlaufszeile 76 gelb Ende
+   2|Verlaufszeile 77 gelb Ende
+   3|Verlaufszeile 78 gelb Ende
+   4|Verlaufszeile 79 gelb Ende
+   5|Verlaufszeile 80 gelb Ende
+   6|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   7|$ echo hallo-nach-resize
+   8|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  9|$
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++153ms "\u001b[6n"
++154ms "\u001b[?9001h\u001b[?1004h\u001b[m\u001b]0;C:\\Program Files\\Git\\bin\\bash.exe\u0007\u001b[?25h"
++2159ms "\u001b[?2004h"
++2160ms "\u001b]0;MINGW64:/tmp/thub-verlauf-sichtbar-FU2TFl\u0007"
++2163ms "\n\u001b[32mAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\r"
++2180ms "\u001b[m\n$\u001b[1C"
++3404ms "\u001b[?25l\u001b[8;24;60t\u001b[32m\u001b[22;1HAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\u001b[1C\u001b[?25h"
++4324ms "\u001b[?25l\u001b[32m\u001b[22;1HAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\u001b[23;3H\u001b[?25h"
++5260ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[12;1H$\u001b[K\u001b[1C\u001b[?25h"
++5290ms "\r$\u001b[K\u001b[1C"
++6257ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\r$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[12;3H\u001b[?25h"
++6287ms "\r$\u001b[K\u001b[1C"
++7255ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\r$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u0
++8193ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[10;1H$\u001b[K\u001b[1C\u001b[?25h"
++8207ms "\r$\u001b[K\u001b[1C"
++9131ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;3H\u001b[?25h"
++9162ms "\r$\u001b[K\u001b[1C"
++10125ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\r-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;3H\u001b[?25h"
++10141ms "\r"
++10154ms "$\u001b[K\u001b[1C"
++11122ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;3H\u001b[?25h"
++11152ms "\r$\u001b[K\u001b[1C"
++12152ms "echo hallo-nach-resize"
++12152ms "\u001b[?2004l"
++12165ms "\r\nhallo-nach-resize\r\n"
++12351ms "\u001b[?2004h"
++12365ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ "
++13611ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\u001b[1C\u001b[?25h"
++13640ms "\r$\u001b[K\u001b[1C"
++14607ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[32m\u001b[9;1HAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;3H\u001b[?25h"
++14626ms "\r"
++14637ms "$\u001b[K\u001b[1C"
+
+
+########## gitbash · inheritCursor ohne Reflow in xterm.js, kurzer Verlauf
+=== nach dem Start  (100x24, baseY=0, Cursor 2,11, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$ 
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 60x24  (60x24, baseY=0, Cursor 2,12, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+  11|f-sichtbar-FU2TFl
+> 12|$
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 2,11, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x12  (100x12, baseY=0, Cursor 2,11, Pufferzeilen 12)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 2,11, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=0, Cursor 2,11, Pufferzeilen 40)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=2, Cursor 2,9, Pufferzeilen 12)
+^ -2|PS C:\Projekte\demo> git status
+^ -1|On branch main
+   0|Your branch is up to date with 'origin/main'.
+   1|nothing to commit, working tree clean
+   2|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   3|hen sieht"
+   4|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   5|PS C:\Projekte\demo> 
+   6|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   7|
+   8|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  9|$
+=== nach Grösse 100x24  (100x24, baseY=2, Cursor 2,8, Pufferzeilen 26)
+^ -2|PS C:\Projekte\demo> git status
+^ -1|On branch main
+   0|Your branch is up to date with 'origin/main'.
+   1|nothing to commit, working tree clean
+   2|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   3|hen sieht"
+   4|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   5|PS C:\Projekte\demo> 
+   6|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   7|
+>  8|$
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=2, Cursor 2,9, Pufferzeilen 32)
+^ -2|PS C:\Projekte\demo> git status
+^ -1|On branch main
+   0|Your branch is up to date with 'origin/main'.
+   1|nothing to commit, working tree clean
+   2|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   3|hen sieht"
+   4|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   5|PS C:\Projekte\demo> 
+   6|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   7|
+   8|-FU2TFl
+>  9|$
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=2, Cursor 2,8, Pufferzeilen 26)
+^ -2|PS C:\Projekte\demo> git status
+^ -1|On branch main
+   0|Your branch is up to date with 'origin/main'.
+   1|nothing to commit, working tree clean
+   2|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   3|hen sieht"
+   4|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   5|PS C:\Projekte\demo> 
+   6|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   7|
+>  8|$
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=2, Cursor 2,12, Pufferzeilen 26)
+^ -2|PS C:\Projekte\demo> git status
+^ -1|On branch main
+   0|Your branch is up to date with 'origin/main'.
+   1|nothing to commit, working tree clean
+   2|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   3|hen sieht"
+   4|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   5|PS C:\Projekte\demo> 
+   6|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   7|
+   8|$ cho hallo-nach-resize
+   9|bash: cho: command not found
+  10|
+  11|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 12|$ 
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=3, Cursor 2,9, Pufferzeilen 27)
+^ -3|PS C:\Projekte\demo> git status
+^ -2|On branch main
+^ -1|Your branch is up to date with 'origin/main'.
+   0|nothing to commit, working tree clean
+   1|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   2|hen sieht"
+   3|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   4|PS C:\Projekte\demo> 
+   5|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   6|
+   7|$ cho hallo-nach-resize
+   8|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  9|$
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++117ms "\u001b[6n"
++123ms "\u001b[?9001h\u001b[?1004h"
++123ms "\u001b[m\u001b]0;C:\\Program Files\\Git\\bin\\bash.exe\u0007\u001b[?25h"
++1155ms "\u001b[?2004h"
++1163ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ \u001b]0;MINGW64:/tmp/thub-verlauf-sichtbar-FU2TFl\u0007"
++2404ms "\u001b[?25l\u001b[8;24;60t\u001b[10;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[13;3H\u001b[?25h"
++3340ms "\u001b[?25l\u001b[10;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[12;3H\u001b[?25h"
++4279ms "\u001b[?25l\u001b[10;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\u001b[1C\u001b[?25h"
++5216ms "\u001b[?25l\u001b[10;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[12;3H\u001b[?25h"
++6157ms "\u001b[?25l\u001b[10;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K
++6187ms "\r$\u001b[K\u001b[1C"
++7149ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[10;1H$\u001b[K\u001b[1C\u001b[?25h"
++7165ms "\r"
++7180ms "$\u001b[K\u001b[1C"
++8148ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;3H\u001b[?25h"
++9084ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\r-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;3H\u001b[?25h"
++9099ms "\r$\u001b[K\u001b[1C"
++10019ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;3H\u001b[?25h"
++10956ms "\r"
++10970ms "$\u001b[K\u001b[1C"
++10996ms "cho hallo-nach-resize"
++10997ms "\u001b[?2004l"
++11016ms "\r\n"
++11058ms "bash: cho: command not found\r\n"
++11560ms "\u001b[?2004h"
++11575ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ "
++12810ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\u001b[1C\u001b[?25h"
++12840ms "\r$\u001b[K\u001b[1C"
++13809ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[32m\u001b[9;1HAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;3H\u001b[?25h"
++13824ms "\r$\u001b[K\u001b[1C"
+
+
+########## gitbash · inheritCursor ohne Reflow in xterm.js, langer Verlauf
+=== nach dem Start  (100x24, baseY=60, Cursor 2,23, Pufferzeilen 84)
+^ -3|Verlaufszeile 58 gelb Ende
+^ -2|Verlaufszeile 59 gelb Ende
+^ -1|Verlaufszeile 60 gelb Ende
+   0|Verlaufszeile 61 gelb Ende
+   1|Verlaufszeile 62 gelb Ende
+   2|Verlaufszeile 63 gelb Ende
+   3|Verlaufszeile 64 gelb Ende
+   4|Verlaufszeile 65 gelb Ende
+   5|Verlaufszeile 66 gelb Ende
+   6|Verlaufszeile 67 gelb Ende
+   7|Verlaufszeile 68 gelb Ende
+   8|Verlaufszeile 69 gelb Ende
+   9|Verlaufszeile 70 gelb Ende
+  10|Verlaufszeile 71 gelb Ende
+  11|Verlaufszeile 72 gelb Ende
+  12|Verlaufszeile 73 gelb Ende
+  13|Verlaufszeile 74 gelb Ende
+  14|Verlaufszeile 75 gelb Ende
+  15|Verlaufszeile 76 gelb Ende
+  16|Verlaufszeile 77 gelb Ende
+  17|Verlaufszeile 78 gelb Ende
+  18|Verlaufszeile 79 gelb Ende
+  19|Verlaufszeile 80 gelb Ende
+  20|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  21|
+  22|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 23|$
+=== nach Grösse 60x24  (60x24, baseY=60, Cursor 2,23, Pufferzeilen 84)
+^ -3|Verlaufszeile 58 gelb Ende
+^ -2|Verlaufszeile 59 gelb Ende
+^ -1|Verlaufszeile 60 gelb Ende
+   0|Verlaufszeile 61 gelb Ende
+   1|Verlaufszeile 62 gelb Ende
+   2|Verlaufszeile 63 gelb Ende
+   3|Verlaufszeile 64 gelb Ende
+   4|Verlaufszeile 65 gelb Ende
+   5|Verlaufszeile 66 gelb Ende
+   6|Verlaufszeile 67 gelb Ende
+   7|Verlaufszeile 68 gelb Ende
+   8|Verlaufszeile 69 gelb Ende
+   9|Verlaufszeile 70 gelb Ende
+  10|Verlaufszeile 71 gelb Ende
+  11|Verlaufszeile 72 gelb Ende
+  12|Verlaufszeile 73 gelb Ende
+  13|Verlaufszeile 74 gelb Ende
+  14|Verlaufszeile 75 gelb Ende
+  15|Verlaufszeile 76 gelb Ende
+  16|Verlaufszeile 77 gelb Ende
+  17|Verlaufszeile 78 gelb Ende
+  18|Verlaufszeile 79 gelb Ende
+  19|Verlaufszeile 80 gelb Ende
+  20|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  21|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlau
+  22|f-sichtbar-FU2TFl                                           f-sichtbar-FU2TFl
+> 23|$
+=== nach Grösse 100x24  (100x24, baseY=60, Cursor 2,22, Pufferzeilen 84)
+^ -3|Verlaufszeile 58 gelb Ende
+^ -2|Verlaufszeile 59 gelb Ende
+^ -1|Verlaufszeile 60 gelb Ende
+   0|Verlaufszeile 61 gelb Ende
+   1|Verlaufszeile 62 gelb Ende
+   2|Verlaufszeile 63 gelb Ende
+   3|Verlaufszeile 64 gelb Ende
+   4|Verlaufszeile 65 gelb Ende
+   5|Verlaufszeile 66 gelb Ende
+   6|Verlaufszeile 67 gelb Ende
+   7|Verlaufszeile 68 gelb Ende
+   8|Verlaufszeile 69 gelb Ende
+   9|Verlaufszeile 70 gelb Ende
+  10|Verlaufszeile 71 gelb Ende
+  11|Verlaufszeile 72 gelb Ende
+  12|Verlaufszeile 73 gelb Ende
+  13|Verlaufszeile 74 gelb Ende
+  14|Verlaufszeile 75 gelb Ende
+  15|Verlaufszeile 76 gelb Ende
+  16|Verlaufszeile 77 gelb Ende
+  17|Verlaufszeile 78 gelb Ende
+  18|Verlaufszeile 79 gelb Ende
+  19|Verlaufszeile 80 gelb Ende
+  20|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  21|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 22|$
+  23|
+=== nach Grösse 100x12  (100x12, baseY=71, Cursor 2,11, Pufferzeilen 83)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+   8|Verlaufszeile 80 gelb Ende
+   9|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+=== nach Grösse 100x24  (100x24, baseY=71, Cursor 2,11, Pufferzeilen 95)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+   8|Verlaufszeile 80 gelb Ende
+   9|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=71, Cursor 2,11, Pufferzeilen 111)
+^ -3|Verlaufszeile 69 gelb Ende
+^ -2|Verlaufszeile 70 gelb Ende
+^ -1|Verlaufszeile 71 gelb Ende
+   0|Verlaufszeile 72 gelb Ende
+   1|Verlaufszeile 73 gelb Ende
+   2|Verlaufszeile 74 gelb Ende
+   3|Verlaufszeile 75 gelb Ende
+   4|Verlaufszeile 76 gelb Ende
+   5|Verlaufszeile 77 gelb Ende
+   6|Verlaufszeile 78 gelb Ende
+   7|Verlaufszeile 79 gelb Ende
+   8|Verlaufszeile 80 gelb Ende
+   9|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=73, Cursor 2,9, Pufferzeilen 83)
+^ -3|Verlaufszeile 71 gelb Ende
+^ -2|Verlaufszeile 72 gelb Ende
+^ -1|Verlaufszeile 73 gelb Ende
+   0|Verlaufszeile 74 gelb Ende
+   1|Verlaufszeile 75 gelb Ende
+   2|Verlaufszeile 76 gelb Ende
+   3|Verlaufszeile 77 gelb Ende
+   4|Verlaufszeile 78 gelb Ende
+   5|Verlaufszeile 79 gelb Ende
+   6|Verlaufszeile 80 gelb Ende
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   8|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  9|$
+=== nach Grösse 100x24  (100x24, baseY=73, Cursor 2,8, Pufferzeilen 97)
+^ -3|Verlaufszeile 71 gelb Ende
+^ -2|Verlaufszeile 72 gelb Ende
+^ -1|Verlaufszeile 73 gelb Ende
+   0|Verlaufszeile 74 gelb Ende
+   1|Verlaufszeile 75 gelb Ende
+   2|Verlaufszeile 76 gelb Ende
+   3|Verlaufszeile 77 gelb Ende
+   4|Verlaufszeile 78 gelb Ende
+   5|Verlaufszeile 79 gelb Ende
+   6|Verlaufszeile 80 gelb Ende
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  8|$
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=73, Cursor 2,9, Pufferzeilen 103)
+^ -3|Verlaufszeile 71 gelb Ende
+^ -2|Verlaufszeile 72 gelb Ende
+^ -1|Verlaufszeile 73 gelb Ende
+   0|Verlaufszeile 74 gelb Ende
+   1|Verlaufszeile 75 gelb Ende
+   2|Verlaufszeile 76 gelb Ende
+   3|Verlaufszeile 77 gelb Ende
+   4|Verlaufszeile 78 gelb Ende
+   5|Verlaufszeile 79 gelb Ende
+   6|Verlaufszeile 80 gelb Ende
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   8|-FU2TFl
+>  9|$
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=73, Cursor 2,8, Pufferzeilen 97)
+^ -3|Verlaufszeile 71 gelb Ende
+^ -2|Verlaufszeile 72 gelb Ende
+^ -1|Verlaufszeile 73 gelb Ende
+   0|Verlaufszeile 74 gelb Ende
+   1|Verlaufszeile 75 gelb Ende
+   2|Verlaufszeile 76 gelb Ende
+   3|Verlaufszeile 77 gelb Ende
+   4|Verlaufszeile 78 gelb Ende
+   5|Verlaufszeile 79 gelb Ende
+   6|Verlaufszeile 80 gelb Ende
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  8|$
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=73, Cursor 2,12, Pufferzeilen 97)
+^ -3|Verlaufszeile 71 gelb Ende
+^ -2|Verlaufszeile 72 gelb Ende
+^ -1|Verlaufszeile 73 gelb Ende
+   0|Verlaufszeile 74 gelb Ende
+   1|Verlaufszeile 75 gelb Ende
+   2|Verlaufszeile 76 gelb Ende
+   3|Verlaufszeile 77 gelb Ende
+   4|Verlaufszeile 78 gelb Ende
+   5|Verlaufszeile 79 gelb Ende
+   6|Verlaufszeile 80 gelb Ende
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   8|$ echo hallo-nach-resize
+   9|hallo-nach-resize
+  10|
+  11|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 12|$ 
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=74, Cursor 2,9, Pufferzeilen 98)
+^ -3|Verlaufszeile 72 gelb Ende
+^ -2|Verlaufszeile 73 gelb Ende
+^ -1|Verlaufszeile 74 gelb Ende
+   0|Verlaufszeile 75 gelb Ende
+   1|Verlaufszeile 76 gelb Ende
+   2|Verlaufszeile 77 gelb Ende
+   3|Verlaufszeile 78 gelb Ende
+   4|Verlaufszeile 79 gelb Ende
+   5|Verlaufszeile 80 gelb Ende
+   6|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   7|$ echo hallo-nach-resize
+   8|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  9|$
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++145ms "\u001b[6n"
++154ms "\u001b[?9001h\u001b[?1004h"
++154ms "\u001b[m\u001b]0;C:\\Program Files\\Git\\bin\\bash.exe\u0007\u001b[?25h"
++2206ms "\u001b[?2004h"
++2207ms "\u001b]0;MINGW64:/tmp/thub-verlauf-sichtbar-FU2TFl\u0007"
++2210ms "\n\u001b[32mAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\r"
++2223ms "\u001b[m\n$\u001b[1C"
++3445ms "\u001b[?25l\u001b[8;24;60t\u001b[32m\u001b[22;1HAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\u001b[1C\u001b[?25h"
++3477ms "\r"
++3487ms "$\u001b[K\u001b[1C"
++4440ms "\u001b[?25l\u001b[32m\u001b[22;1HAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\u001b[23;3H\u001b[?25h"
++4469ms "\r$\u001b[K\u001b[1C"
++5439ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[12;1H$\u001b[K\u001b[1C\u001b[?25h"
++6371ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\r$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[12;3H\u001b[?25h"
++7309ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\r$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u0
++7338ms "\r$\u001b[K\u001b[1C"
++8307ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[10;1H$\u001b[K\u001b[1C\u001b[?25h"
++8335ms "\r$\u001b[K\u001b[1C"
++9311ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;3H\u001b[?25h"
++10246ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\r-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;3H\u001b[?25h"
++10258ms "\r$\u001b[K\u001b[1C"
++11237ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[9;3H\u001b[?25h"
++11265ms "\r$\u001b[K\u001b[1C"
++12284ms "echo hallo-nach-resize"
++12285ms "\u001b[?2004l"
++12297ms "\r\nhallo-nach-resize\r\n"
++12530ms "\u001b[?2004h"
++12545ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ "
++13786ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[9;1H\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\u001b[1C\u001b[?25h"
++14715ms "\u001b[?25l\u001b[32m\u001b[35m\u001b[33m\u001b[m\u001b[32m\u001b[9;1HAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[10;3H\u001b[?25h"
+
+
+########## gitbash · Gegenprobe: Shell gibt den Verlauf selbst aus (ohne inheritCursor)
+=== nach dem Start  (100x24, baseY=0, Cursor 2,11, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$ 
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 60x24  (60x24, baseY=0, Cursor 2,14, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spal
+   5|ten umbrechen muss, damit man das Umbrechen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit m
+   7|an das Umbrechen sieht
+   8|PS C:\Projekte\demo> 
+   9|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──
+  10|────────────
+  11|
+  12|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlau
+  13|f-sichtbar-FU2TFl
+> 14|$
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 2,11, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 100x12  (100x12, baseY=0, Cursor 2,11, Pufferzeilen 12)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+=== nach Grösse 100x24  (100x24, baseY=0, Cursor 2,11, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 140x40  (140x40, baseY=0, Cursor 2,10, Pufferzeilen 40)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht"
+   5|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   6|PS C:\Projekte\demo> 
+   7|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   8|
+   9|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 10|$
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+  30|
+  31|
+  32|
+  33|
+  34|
+  35|
+  36|
+  37|
+  38|
+  39|
+=== nach Grösse 50x10  (50x10, baseY=6, Cursor 2,9, Pufferzeilen 16)
+^ -3|nothing to commit, working tree clean
+^ -2|PS C:\Projekte\demo> echo "eine lange Zeile, die b
+^ -1|ei 60 Spalten umbrechen muss, damit man das Umbrec
+   0|hen sieht"
+   1|eine lange Zeile, die bei 60 Spalten umbrechen mus
+   2|s, damit man das Umbrechen sieht
+   3|PS C:\Projekte\demo> 
+   4|────────────── Wiederhergestellt · Do., 19.11.2026
+   5|, 17:42 ──────────────
+   6|
+   7|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/t
+   8|hub-verlauf-sichtbar-FU2TFl
+>  9|$
+=== nach Grösse 100x24  (100x24, baseY=2, Cursor 2,6, Pufferzeilen 26)
+^ -2|PS C:\Projekte\demo> git status
+^ -1|On branch main
+   0|hen sieht"
+   1|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   2|PS C:\Projekte\demo> 
+   3|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   4|
+   5|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  6|$
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach Grösse 70x30  (70x30, baseY=5, Cursor 2,9, Pufferzeilen 35)
+^ -3|hen sieht"
+^ -2|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umb
+^ -1|rechen sieht
+   0|hen sieht"
+   1|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umb
+   2|rechen sieht
+   3|PS C:\Projekte\demo> 
+   4|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ────────────
+   5|──
+   6|
+   7|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar
+   8|-FU2TFl
+>  9|$
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+  24|
+  25|
+  26|
+  27|
+  28|
+  29|
+=== nach Grösse 100x24  (100x24, baseY=1, Cursor 2,6, Pufferzeilen 25)
+^ -1|PS C:\Projekte\demo> git status
+   0|hen sieht"
+   1|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   2|PS C:\Projekte\demo> 
+   3|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   4|
+   5|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  6|$
+   7|
+   8|
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== nach einem Befehl  (100x24, baseY=1, Cursor 2,10, Pufferzeilen 25)
+^ -1|PS C:\Projekte\demo> git status
+   0|hen sieht"
+   1|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   2|PS C:\Projekte\demo> 
+   3|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   4|
+   5|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+   6|$ echo hallo-nach-resize
+   7|hallo-nach-resize
+   8|
+   9|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 10|$ 
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+=== Befehl, dann 60x12 und zurück  (100x24, baseY=1, Cursor 2,8, Pufferzeilen 25)
+^ -1|PS C:\Projekte\demo> git status
+   0|PS C:\Projekte\demo> 
+   1|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   2|
+   3|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+   4|$ echo hallo-nach-resize
+   5|hallo-nach-resize
+   6|
+   7|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+>  8|$
+   9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++156ms "\u001b[?9001h\u001b[?1004h"
++2289ms "\u001b[?25l\u001b[2J\u001b[m\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\r\nOn branch main\r\nYour branch is up to date with 'origin/main'.\r\n\u001b]0;C:\\Program Files\\Git\\bin\\bash.exe\u0007\u001b[?25h"
++2302ms "\u001b[22m\u001b[32m\u001b[2mnothing to commit, working tree clean\u001b[m\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\"\r\neine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\r\nPS C:\\Projekte\\demo> \u001b[90m\u001b[22m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ───
++3158ms "\u001b[?2004h"
++3158ms "\u001b[m"
++3180ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ \u001b]0;MINGW64:/tmp/thub-verlauf-sichtbar-FU2TFl\u0007"
++4453ms "\u001b[?25l\u001b[8;24;60t\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\u001b[22m\u001b[K\u001b[2m\r\nOn branch main\u001b[22m\u001b[K\u001b[2m\r\nYour branch is up to date with 'origin/main'.\u001b[22m\u001b[K\u001b[32m\u001b[2m\r\nnothing to commit, working tree clean\u001b[m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man da
++5381ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\u001b[22m\u001b[K\u001b[2m\r\nOn branch main\u001b[22m\u001b[K\u001b[2m\r\nYour branch is up to date with 'origin/main'.\u001b[22m\u001b[K\u001b[32m\u001b[2m\r\nnothing to commit, working tree clean\u001b[m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sie
++6305ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\u001b[22m\u001b[K\u001b[2m\r\nOn branch main\u001b[22m\u001b[K\u001b[2m\r\nYour branch is up to date with 'origin/main'.\u001b[22m\u001b[K\u001b[32m\u001b[2m\r\nnothing to commit, working tree clean\u001b[m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sie
++6322ms "\r"
++6334ms "$\u001b[K\u001b[1C"
++7293ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\u001b[22m\u001b[K\u001b[2m\r\nOn branch main\u001b[22m\u001b[K\u001b[2m\r\nYour branch is up to date with 'origin/main'.\u001b[22m\u001b[K\u001b[32m\u001b[2m\r\nnothing to commit, working tree clean\u001b[m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sie
++7322ms "\r$\u001b[K\u001b[1C"
++8281ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> git status\u001b[22m\u001b[K\u001b[2m\r\nOn branch main\u001b[22m\u001b[K\u001b[2m\r\nYour branch is up to date with 'origin/main'.\u001b[22m\u001b[K\u001b[32m\u001b[2m\r\nnothing to commit, working tree clean\u001b[m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> echo \"eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sie
++9211ms "\u001b[?25l\u001b[2m\u001b[Hhen sieht\"\u001b[22m\u001b[K\u001b[2m\r\neine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\u001b[22m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> \u001b[22m\u001b[K\u001b[90m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────\u001b[K\u001b[m\r\n\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mM
++9224ms "\r$\u001b[K\u001b[1C"
++10196ms "\u001b[?25l\u001b[2m\u001b[Hhen sieht\"\u001b[22m\u001b[K\u001b[2m\r\neine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\u001b[22m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> \u001b[22m\u001b[K\u001b[90m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────\u001b[K\u001b[m\r\n\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mM
++10214ms "\r"
++10226ms "$\u001b[K\u001b[1C"
++11184ms "\u001b[?25l\u001b[2m\u001b[Hhen sieht\"\u001b[22m\u001b[K\u001b[2m\r\neine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\u001b[22m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> \u001b[22m\u001b[K\u001b[90m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────\u001b[K\u001b[m\r\n\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mM
++12113ms "\u001b[?25l\u001b[2m\u001b[Hhen sieht\"\u001b[22m\u001b[K\u001b[2m\r\neine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht\u001b[22m\u001b[K\u001b[2m\r\nPS C:\\Projekte\\demo> \u001b[22m\u001b[K\u001b[90m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────\u001b[K\u001b[m\r\n\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mM
++13069ms "echo hallo-nach-resize"
++13069ms "\u001b[?2004l"
++13082ms "\r\nhallo-nach-resize\r\n"
++13323ms "\u001b[?2004h"
++13344ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ "
++14565ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> \u001b[22m\u001b[K\u001b[90m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────\u001b[K\u001b[m\r\n\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$ echo hallo-nach-resize\u001b[K\r\nhallo-nach-resize\u001b[K\r\n\u001b[K\u001b[32m\r
++15502ms "\u001b[?25l\u001b[2m\u001b[HPS C:\\Projekte\\demo> \u001b[22m\u001b[K\u001b[90m\r\n────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────\u001b[K\u001b[m\r\n\u001b[K\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[K\u001b[m\r\n$ echo hallo-nach-resize\u001b[K\r\nhallo-nach-resize\u001b[K\r\n\u001b[K\u001b[32m\r
+
+
+########## gitbash · inheritCursor, Antwort 1500 ms zu spät
+=== nach dem Start  (100x24, baseY=0, Cursor 2,11, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+   9|
+  10|AzureAD+<Benutzer>@<Rechner> MINGW64 /tmp/thub-verlauf-sichtbar-FU2TFl
+> 11|$ 
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++136ms "\u001b[6n"
++1647ms "\u001b[?9001h\u001b[?1004h"
++1647ms "\u001b[m\u001b]0;C:\\Program Files\\Git\\bin\\bash.exe\u0007\u001b[?25h"
++3734ms "\u001b[?2004h"
++3750ms "\u001b[32m\r\nAzureAD+<Benutzer>@<Rechner> \u001b[35mMINGW64 \u001b[33m/tmp/thub-verlauf-sichtbar-FU2TFl\u001b[m\r\n$ \u001b]0;MINGW64:/tmp/thub-verlauf-sichtbar-FU2TFl\u0007"
+
+
+########## gitbash · inheritCursor, Antwort bleibt aus
+=== nach dem Start  (100x24, baseY=0, Cursor 0,9, Pufferzeilen 24)
+   0|PS C:\Projekte\demo> git status
+   1|On branch main
+   2|Your branch is up to date with 'origin/main'.
+   3|nothing to commit, working tree clean
+   4|PS C:\Projekte\demo> echo "eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrec
+   5|hen sieht"
+   6|eine lange Zeile, die bei 60 Spalten umbrechen muss, damit man das Umbrechen sieht
+   7|PS C:\Projekte\demo> 
+   8|────────────── Wiederhergestellt · Do., 19.11.2026, 17:42 ──────────────
+>  9|
+  10|
+  11|
+  12|
+  13|
+  14|
+  15|
+  16|
+  17|
+  18|
+  19|
+  20|
+  21|
+  22|
+  23|
+--- Rohausgabe (Anfang)
++152ms "\u001b[6n"
