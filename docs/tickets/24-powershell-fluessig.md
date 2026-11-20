@@ -1,6 +1,6 @@
 # 24 – PowerShell in THub: flüssige Pfeiltasten, keine Befehlsvorschau
 
-Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
+Status: `in Arbeit` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: –
 Herkunft: Abnahme von Hand (Ticket 19), „Verwendung von Tastaturpfeilen im Terminal“ und „Die Befehlspreview“ in [docs/abnahme.md](../abnahme.md)
 Spezifikation: „Shell-Integration“, „Terminal-Backend“
@@ -27,3 +27,13 @@ Spezifikation: „Shell-Integration“, „Terminal-Backend“
 
 - [ ] In einem PowerShell-7-Tab mit dem echten Profil durch den Verlauf blättern → so flüssig wie im Windows Terminal.
 - [ ] `cd` tippen → keine graue Vorschau, keine Vorschlagsliste.
+
+## Nachtrag aus der Nachprüfung (2026-11-20)
+
+Nach der Installation mit der mitgelieferten ConPTY ist das Blättern beim Nutzer weiterhin träge. Geprüft: Die installierte THub läuft mit `OpenConsole.exe`, die Korrektur ist also aktiv. Die Umgebung des Nutzers unterscheidet sich von der Messung oben:
+- PowerShell 7.7 (Store-Version) mit PSReadLine 2.4.5, **ohne Profil**;
+- ein Befehlsverlauf mit gut **9000 Einträgen** (gemessen wurde mit leerem Verlauf);
+- **mehrere Tabs**, oft mit einem arbeitenden Claude in einem anderen Tab, das laufend neu zeichnet;
+- maximiertes Fenster.
+
+Die Ursache ist unter diesen Bedingungen zu messen (Einzeldruck und gehaltene Taste mit Wiederholrate, Verzögerung bis zur gezeichneten Zeile, Nachlaufen nach dem Loslassen, lange Aufgaben in Haupt- und Renderer-Prozess) und zu beheben.
