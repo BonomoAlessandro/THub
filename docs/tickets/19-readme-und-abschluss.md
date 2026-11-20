@@ -1,6 +1,6 @@
 # 19 – README und Abschluss-Prüfung auf einem frischen Rechner
 
-Status: `ready-for-human` · Typ: HITL
+Status: `in Arbeit` · Typ: HITL
 Blockiert durch: alle anderen Tickets
 User Stories: 37, 39, sowie alle als Abnahme
 Spezifikation: „Weitere Hinweise“

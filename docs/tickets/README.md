@@ -38,7 +38,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 16 | [Rechtsklick-Menü und Umsortieren per Ziehen](16-rechtsklick-und-ziehen.md) | AFK | 15 | erledigt |
 | 17 | [Befehlspalette](17-befehlspalette.md) | AFK | 15 | erledigt |
 | 18 | [Design-Wahl und Schriftgrösse](18-design-und-schrift.md) | AFK | 05 | erledigt |
-| 19 | [README und Abschluss-Prüfung auf einem frischen Rechner](19-readme-und-abschluss.md) | HITL | alle | offen |
+| 19 | [README und Abschluss-Prüfung auf einem frischen Rechner](19-readme-und-abschluss.md) | HITL | alle | in Arbeit |
 | 20 | [Umbenennen in THub](20-umbenennen-thub.md) | AFK | 04, 08 | erledigt |
 | 21 | [Verlauf nach dem Neustart direkt sichtbar](21-verlauf-direkt-sichtbar.md) | AFK | 08 | erledigt (verworfen) |
 | 22 | [Offene Punkte aus Claudes Antworten als Hinweis](22-offene-punkte.md) | AFK | 14 | erledigt |
