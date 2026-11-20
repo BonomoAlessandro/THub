@@ -62,6 +62,13 @@ describe('Unscharfe Suche', () => {
     // Name und Ordner zusammen: „web src“ findet den Tab „web“ im Ordner „C:\web\src“.
     expect(itemScore('web src', { label: 'web', detail: 'C:\\web\\src' })).not.toBeNull();
   });
+
+  it('vom Ordner zählen nur die letzten zwei Teile, sonst passte ein langer Pfad zu fast jeder Suche', () => {
+    const deep = { label: 'docs', detail: 'C:\\Users\\anna\\AppData\\Local\\Temp\\projects\\docs' };
+    expect(itemScore('api', deep)).toBeNull();
+    expect(itemScore('proj', deep)).not.toBeNull();
+    expect(itemScore('temp', deep)).toBeNull();
+  });
 });
 
 describe('Gruppen der Palette durchsuchen', () => {

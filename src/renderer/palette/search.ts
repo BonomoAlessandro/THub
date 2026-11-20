@@ -10,6 +10,8 @@ const WORD_START_BONUS = 2;
 const LENGTH_PENALTY = 0.02;
 /** Abzug, wenn erst der Zusatz (etwa der Ordner eines Tabs) den Treffer bringt: Ein Treffer im Namen geht vor. */
 const DETAIL_PENALTY = 2;
+/** Vom Zusatz zählen nur so viele letzte Teile eines Pfads: Ein langer Pfad passte sonst zu fast jeder kurzen Suche. */
+const DETAIL_SEGMENTS = 2;
 
 /** Zeichen, nach denen ein neues Wort beginnt, z.B. in „api-gateway“ oder „C:\dev\web“. */
 const WORD_SEPARATOR = /[\s\-_\\/.:,]/;
@@ -62,7 +64,7 @@ function isWordStart(text: string, i: number): boolean {
 /** Ein Eintrag, den die Suche findet: Name und, bei einem Tab, sein Ordner. */
 export interface Searchable {
   label: string;
-  /** Zusatz, der auch gefunden wird, aber weniger zählt als der Name. */
+  /** Zusatz, der auch gefunden wird, aber weniger zählt als der Name; bei einem Pfad nur seine letzten zwei Teile. */
   detail?: string;
 }
 
@@ -76,7 +78,8 @@ export interface SearchGroup<T extends Searchable> {
 export function itemScore(query: string, item: Searchable): number | null {
   const label = fuzzyScore(query, item.label);
   if (!item.detail) return label;
-  const withDetail = fuzzyScore(query, `${item.label} ${item.detail}`);
+  const tail = item.detail.split(/[\\/]+/).filter(Boolean).slice(-DETAIL_SEGMENTS).join('\\');
+  const withDetail = fuzzyScore(query, `${item.label} ${tail}`);
   if (withDetail === null) return label;
   return Math.max(label ?? -Infinity, withDetail - DETAIL_PENALTY);
 }

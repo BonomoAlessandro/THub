@@ -801,7 +801,7 @@ kbd {
 /* ---------- Übersicht der Tastenkürzel ---------- */
 /* Zeilen wie in den Einstellungen, etwas enger; die Liste scrollt, wenn das Fenster niedrig ist. */
 .keys-list {
-  max-height: calc(78vh - 150px);
+  max-height: calc(89vh - 170px);
   margin: 0 -20px;
   padding: 0 20px;
   overflow-y: auto;
