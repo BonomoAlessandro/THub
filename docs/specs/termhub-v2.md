@@ -469,7 +469,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Hinweise:** 320 px breit, Titel 14 px, Text 13 px. Die ganze Karte ist anklickbar und öffnet den Tab; es gibt keinen „Öffnen“-Button. Eine dezente Zeile „Zum Tab wechseln →“ zeigt, dass man klicken kann, und wird beim Überfahren hell. Das × zum Wegklicken erscheint beim Überfahren.
   - **Symbol-Platz links vom Tab-Namen:** Im Ruhezustand zeigt er gedämpft den Typ des Tabs (`>_` für ein normales Terminal, ein Stern für einen Claude-Tab), sonst den Status.
   - **Status-Animationen:** „arbeitet“ = violetter Claude-Stern, der rotiert und pulsiert; „wartet auf dich“ = oranger Punkt mit Ping-Ring; „Prozesse laufen“ = blauer, ruhig atmender Punkt; „fertig“ = grüner Punkt; „pausiert“ = graues Pause-Symbol. Bei reduzierter Bewegung (Windows-Einstellung) stehen die Animationen still; nur der Claude-Stern dreht sich langsam weiter.
-- **Design-Variablen** (vom Nutzer am 2026-11-19 freigegeben; vollständige Liste mit allen Werten in `prototype/styles.css`):
+- **Design-Variablen** (vom Nutzer am 2026-11-19 freigegeben, `--st-working` im dunklen Design am 2026-11-20 aufgehellt; vollständige Liste mit allen Werten in `prototype/styles.css`):
 
 | Zweck | Variable | Dunkel | Hell |
 |---|---|---|---|
@@ -480,7 +480,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 | Neutrale Hervorhebung (kein Akzent) | `--accent`, `--on-accent` | `#f4f4f5` auf `#111114` | `#18181b` auf `#ffffff` |
 | Dialoge, Menüs, Hinweise | `--dialog-bg` | `#25252b` | `#ffffff` |
 | Gefahr (Schliessen-Bestätigung) | `--danger` | `#f2555a` | `#dc2626` |
-| Status arbeitet / wartet / Prozesse | `--st-working`, `--st-waiting`, `--st-processes` | `#a78bfa`, `#fb923c`, `#60a5fa` | `#7c3aed`, `#ea580c`, `#2563eb` |
+| Status arbeitet / wartet / Prozesse | `--st-working`, `--st-waiting`, `--st-processes` | `#c4b5fd`, `#fb923c`, `#60a5fa` | `#7c3aed`, `#ea580c`, `#2563eb` |
 | Status fertig / pausiert | `--st-finished`, `--st-paused` | `#4ade80`, `#8b8b96` | `#16a34a`, `#9090a0` |
 | Terminal Hintergrund / Text | `--term-bg`, `--term-fg` | `#141417`, `#d4d4dc` | `#ffffff`, `#24242b` |
 | Terminal Rot / Grün / Gelb / Blau | `--a-red` … `--a-blue` | `#f87171`, `#4ade80`, `#facc15`, `#60a5fa` | `#c62828`, `#1a7f37`, `#9a6700`, `#0550ae` |
