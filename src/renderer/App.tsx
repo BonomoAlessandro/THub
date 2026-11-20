@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FONT_SIZE } from '../shared/types';
-import { stepFontSize, WheelSteps } from './fontSize';
+import { WheelSteps } from './fontSize';
 import { isPopupOpen } from './popup/popups';
 import { SettingsDialog } from './settings/SettingsDialog';
 import { resolveShortcut, type ShortcutAction } from './shortcuts';
@@ -62,8 +62,7 @@ export function App() {
       e.preventDefault();
       e.stopPropagation();
       const step = wheel.add(e.deltaY, e.deltaMode);
-      const current = viewRef.current;
-      if (step !== 0 && current && !isPopupOpen()) setFontSize(current, stepFontSize(current.settings.fontSize, step));
+      if (step !== 0 && !isPopupOpen()) api.send({ type: 'stepFontSize', step });
     };
     window.addEventListener('wheel', onWheel, { capture: true, passive: false });
     return () => window.removeEventListener('wheel', onWheel, { capture: true });
@@ -118,16 +117,12 @@ function runShortcut(action: ShortcutAction, view: WorkspaceView, startRename: (
     case 'renameTab':
       if (activeId) startRename(activeId);
       return;
+    // Die Schriftgrösse aller Terminals speichert der Kern; er meldet sie zurück, dann passen sich die Terminals an.
     case 'fontSize':
-      setFontSize(view, stepFontSize(view.settings.fontSize, action.step));
+      api.send({ type: 'stepFontSize', step: action.step });
       return;
     case 'resetFontSize':
-      setFontSize(view, FONT_SIZE.default);
+      api.send({ type: 'updateSettings', patch: { fontSize: FONT_SIZE.default } });
       return;
   }
-}
-
-/** Schriftgrösse aller Terminals; der Kern speichert sie und meldet sie zurück, dann passen sich die Terminals an. */
-function setFontSize(view: WorkspaceView, size: number): void {
-  if (size !== view.settings.fontSize) api.send({ type: 'updateSettings', patch: { fontSize: size } });
 }

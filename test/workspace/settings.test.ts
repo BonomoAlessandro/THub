@@ -106,6 +106,63 @@ describe('Schriftgrösse im Terminal', () => {
     expect(h.events.length).toBe(events);
   });
 
+  describe('in Schritten (Ctrl + Mausrad, Ctrl +/-, Stepper)', () => {
+    it('je Schritt 1 px grösser oder kleiner, gespeichert und gemeldet', () => {
+      const h = startWorkspace();
+
+      h.workspace.stepFontSize(1);
+      expect(h.snapshot().settings.fontSize).toBe(15);
+      expect(h.events.at(-1)).toMatchObject({ type: 'settings', settings: { fontSize: 15 } });
+
+      h.workspace.stepFontSize(-1);
+      h.workspace.stepFontSize(-1);
+      expect(h.storedState().settings.fontSize).toBe(13);
+    });
+
+    it('schnelle Schritte gehen nicht verloren: Der Kern rechnet vom eigenen Stand aus', () => {
+      const h = startWorkspace();
+
+      for (let i = 0; i < 5; i++) h.workspace.stepFontSize(1);
+      h.workspace.stepFontSize(-1);
+
+      expect(h.snapshot().settings.fontSize).toBe(18);
+      expect(h.eventsOfType('settings').map((e) => e.settings.fontSize)).toEqual([15, 16, 17, 18, 19, 18]);
+    });
+
+    it('bleibt an den Grenzen 8 und 32 stehen', () => {
+      const h = startWorkspace();
+      h.workspace.updateSettings({ fontSize: 31 });
+
+      h.workspace.stepFontSize(1);
+      h.workspace.stepFontSize(1);
+      expect(h.snapshot().settings.fontSize).toBe(32);
+
+      h.workspace.updateSettings({ fontSize: 9 });
+      h.workspace.stepFontSize(-1);
+      h.workspace.stepFontSize(-1);
+      expect(h.snapshot().settings.fontSize).toBe(8);
+    });
+
+    it('ignoriert Schritte, die keine ganze Zahl sind', () => {
+      const h = startWorkspace();
+
+      h.workspace.stepFontSize(0.5);
+      h.workspace.stepFontSize(Number.NaN);
+
+      expect(h.snapshot().settings.fontSize).toBe(14);
+    });
+
+    it('übersteht einen Neustart', async () => {
+      const h = startWorkspace();
+      h.workspace.stepFontSize(-1);
+      h.workspace.stepFontSize(-1);
+
+      await h.restart();
+
+      expect(h.snapshot().settings.fontSize).toBe(12);
+    });
+  });
+
   it('lässt die anderen Einstellungen unverändert', () => {
     const h = startWorkspace({ directories: ['D:\\work'] });
     h.workspace.updateSettings({ defaultCwd: 'D:\\work', theme: 'light' });

@@ -96,7 +96,12 @@ export type WorkspaceCommand =
   | { type: 'restartTab'; tabId: string }
   /** Antwort auf `requestHistory`: der serialisierte Inhalt des Terminals eines Tabs. */
   | { type: 'saveHistory'; tabId: string; content: string }
-  | { type: 'updateSettings'; patch: Partial<Settings> };
+  | { type: 'updateSettings'; patch: Partial<Settings> }
+  /**
+   * Schriftgrösse einen Schritt grösser (1) oder kleiner (-1). Der Kern rechnet vom eigenen Stand aus,
+   * damit bei schnellen Schritten (Mausrad, gehaltene Taste) keiner verloren geht.
+   */
+  | { type: 'stepFontSize'; step: number };
 
 export type Unsubscribe = () => void;
 

@@ -166,6 +166,9 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
     case 'updateSettings':
       ws.updateSettings(command.patch);
       return;
+    case 'stepFontSize':
+      ws.stepFontSize(command.step);
+      return;
   }
 }
 

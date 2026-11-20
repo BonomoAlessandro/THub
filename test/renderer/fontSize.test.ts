@@ -1,17 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { stepFontSize, WheelSteps } from '../../src/renderer/fontSize';
-
-describe('Schriftgrösse in Schritten', () => {
-  it('geht je Schritt um 1 px', () => {
-    expect(stepFontSize(14, 1)).toBe(15);
-    expect(stepFontSize(14, -1)).toBe(13);
-  });
-
-  it('bleibt zwischen 8 und 32', () => {
-    expect(stepFontSize(32, 1)).toBe(32);
-    expect(stepFontSize(8, -1)).toBe(8);
-  });
-});
+import { WheelSteps } from '../../src/renderer/fontSize';
 
 describe('Ctrl + Mausrad', () => {
   /** Die Schritte zu einer Folge von Bewegungen (deltaY in px). */

@@ -1,12 +1,5 @@
-// Schriftgrösse der Terminals (Ticket 18): Schritte per Stepper, Tastenkürzel und Ctrl + Mausrad.
-// Rein rechnerisch, ohne DOM; die Grösse selbst speichert der Kern und meldet sie allen Terminals.
-
-import { FONT_SIZE } from '../shared/types';
-
-/** Die Schriftgrösse einen Schritt weiter, innerhalb der Grenzen (8 bis 32). */
-export function stepFontSize(size: number, step: number): number {
-  return Math.min(FONT_SIZE.max, Math.max(FONT_SIZE.min, Math.round(size + step)));
-}
+// Schriftgrösse der Terminals mit Ctrl + Mausrad (Ticket 18). Rein rechnerisch, ohne DOM; die Schritte
+// gehen an den Kern, der die Grösse speichert und allen Terminals meldet.
 
 /**
  * So viel Bewegung von Ctrl + Mausrad ergibt einen Schritt. Ein Klick des Mausrads liefert unter Windows

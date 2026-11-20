@@ -113,6 +113,11 @@ export interface Workspace extends ClaudeReceiver {
   saveHistory(tabId: string, content: string): void;
 
   updateSettings(patch: Partial<Settings>): void;
+  /**
+   * Schriftgrösse um `step` Schritte (ganze Zahl) grösser oder kleiner, vom aktuellen Stand aus;
+   * sie bleibt zwischen 8 und 32.
+   */
+  stepFontSize(step: number): void;
 
   /**
    * Wie das Fenster öffnen soll: gespeicherte Grösse, Position und Maximiert-Zustand, geprüft gegen die
@@ -540,6 +545,11 @@ class WorkspaceCore implements Workspace {
     this.state.settings = next;
     this.save();
     this.emit({ type: 'settings', settings: structuredClone(next) });
+  }
+
+  stepFontSize(step: number): void {
+    if (!Number.isInteger(step)) return;
+    this.updateSettings({ fontSize: this.state.settings.fontSize + step });
   }
 
   // ---------- Fenster ----------
