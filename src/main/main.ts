@@ -218,6 +218,9 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
     case 'windowForeground':
       ws.windowForeground(command.foreground === true);
       return;
+    case 'openToast':
+      ws.openToast(command.toastId);
+      return;
     case 'dismissToast':
       ws.dismissToast(command.toastId);
       return;
