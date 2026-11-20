@@ -1,0 +1,5 @@
+{
+  "beschreibung": "Anfang eines echten Puffers von NtQuerySystemInformation(SystemProcessInformation), Windows 11 Pro 10.0.26200 (x64), aufgenommen am 2026-11-20 mit koffi 3.3.8. Die ersten fünf Einträge (Leerlaufprozess, System, Secure System, Registry, smss.exe) mit ihren echten Versätzen; bereinigt: Threads und alle nicht ausgewerteten Felder genullt, der letzte Eintrag ohne Verweis auf einen nächsten. base ist die Adresse des Puffers bei der Aufnahme (die Namenszeiger zeigen in den Puffer).",
+  "base": "1722235846720",
+  "gzipBase64": "H4sIAAAAAAACCu3YoUpDURgH8L9z0bAiiBhmV9kDmIZBsGmwGES5DMPKpqDNR9gT2IQFxcU9gsHgC+xRBsrFsOnumkH5/cp3z/luOvw/DpzWerKfahejl+G4M1kJAAAAAMA/9/6UbNeq+1XvpWtplLXVbk8HM926IwUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBKJ7lLP9cp0i3Xg9ry/x/ezh7HncnK9/3NNMs6OmhPBzPdra/vuqNmYf6KXOYmvRRp/khj8rq6PDunz+cL89jIRlnvD+fzeCCP8GuOU6STq3KKe7mb6y27WnavR8Nlczw8mp/jnbo55u/qp5t++tlLkdsUn1sfoAad2XrLAAA="
+}

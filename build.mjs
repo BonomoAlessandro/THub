@@ -21,8 +21,12 @@ await Promise.all([
     platform: 'node',
     format: 'cjs',
     target: 'node22',
-    // node-pty ist ein natives Modul und wird zur Laufzeit aus node_modules geladen.
-    external: ['electron', 'node-pty'],
+    // node-pty und koffi sind native Module und werden zur Laufzeit aus node_modules geladen (koffi lässt sich
+    // nicht bündeln; seine Binärdatei liegt im optionalen Paket @koromix/koffi-win32-*).
+    external: ['electron', 'node-pty', 'koffi'],
+    // Das spät geladene koffi (`await import('koffi')`) wird zu require: so lädt es wie node-pty über den
+    // CommonJS-Lader von Electron, der Module im Paket aus app.asar.unpacked holt.
+    supported: { 'dynamic-import': false },
   }),
   build({
     ...common,
