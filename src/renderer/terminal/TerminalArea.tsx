@@ -8,13 +8,15 @@ const api = window.thub;
 interface TerminalAreaProps {
   tabs: TabSnapshot[];
   activeTabId: string | null;
+  /** Schriftgrösse aller Terminals. */
+  fontSize: number;
 }
 
 /**
  * Terminal-Fläche als Karte: ein xterm.js pro Tab, alle übereinander. Inaktive Ansichten werden
  * ausgeblendet, nicht zerstört, damit Inhalt und laufende Programme erhalten bleiben.
  */
-export function TerminalArea({ tabs, activeTabId }: TerminalAreaProps) {
+export function TerminalArea({ tabs, activeTabId, fontSize }: TerminalAreaProps) {
   const stackRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef(activeTabId);
   activeRef.current = activeTabId;
@@ -40,6 +42,7 @@ export function TerminalArea({ tabs, activeTabId }: TerminalAreaProps) {
               tabId={tab.id}
               active={tab.id === activeTabId}
               exited={tab.process === 'exited'}
+              fontSize={fontSize}
             />
           ))}
         </div>
@@ -60,15 +63,19 @@ interface TerminalPaneProps {
   tabId: string;
   active: boolean;
   exited: boolean;
+  fontSize: number;
 }
 
-function TerminalPane({ tabId, active, exited }: TerminalPaneProps) {
+function TerminalPane({ tabId, active, exited, fontSize }: TerminalPaneProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<TerminalView | null>(null);
+  const fontSizeRef = useRef(fontSize);
+  fontSizeRef.current = fontSize;
 
-  // Die Ansicht entsteht mit dem Tab und meldet sofort „bereit“; erst dann startet der Kern die Shell.
+  // Die Ansicht entsteht mit dem Tab und meldet sofort „bereit“; erst dann startet der Kern die Shell,
+  // gleich in der Grösse, die zur eingestellten Schrift passt.
   useLayoutEffect(() => {
-    const view = new TerminalView(tabId, hostRef.current!);
+    const view = new TerminalView(tabId, hostRef.current!, fontSizeRef.current);
     viewRef.current = view;
     terminalViews.set(tabId, view);
     view.reportReady();
@@ -86,6 +93,11 @@ function TerminalPane({ tabId, active, exited }: TerminalPaneProps) {
   useLayoutEffect(() => {
     if (active) viewRef.current?.show();
   }, [active]);
+
+  // Alle Terminals zugleich, auch die verdeckten: Ihre Shells erfahren die neue Grösse sofort.
+  useLayoutEffect(() => {
+    viewRef.current?.setFontSize(fontSize);
+  }, [fontSize]);
 
   return <div ref={hostRef} className={active ? 'terminal-host active' : 'terminal-host'} />;
 }

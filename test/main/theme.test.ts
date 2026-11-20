@@ -4,22 +4,35 @@ import { describe, expect, it } from 'vitest';
 import {
   createThemeSource,
   followTheme,
+  followThemeSetting,
   resolveTheme,
   windowChrome,
   type SystemTheme,
   type ThemedWindow,
 } from '../../src/main/theme';
 import { IPC, type ResolvedTheme, type Theme } from '../../src/shared/types';
+import { startWorkspace } from '../support/harness';
 
 /**
  * Electrons `nativeTheme`, nachgemacht: `themeSource` legt das Design fest oder lässt Windows
  * entscheiden, und ein Wechsel in Windows meldet sich mit „updated“.
  */
 class FakeNativeTheme extends EventEmitter implements SystemTheme {
-  themeSource: Theme = 'system';
+  /** Wie oft `themeSource` gesetzt wurde; Electron zeichnet danach alles neu. */
+  assignments = 0;
+  private source: Theme = 'system';
 
   constructor(private windowsDark: boolean) {
     super();
+  }
+
+  get themeSource(): Theme {
+    return this.source;
+  }
+
+  set themeSource(value: Theme) {
+    this.source = value;
+    this.assignments++;
   }
 
   get shouldUseDarkColors(): boolean {
@@ -145,6 +158,81 @@ describe('Design hell/dunkel', () => {
       system.switchWindows('light');
 
       expect(seen).toEqual([]);
+    });
+  });
+
+  describe('Design-Wahl aus den Einstellungen', () => {
+    /** Kern, Design-Quelle und Fenster, verbunden wie in main.ts. */
+    function wired(windowsDark: boolean) {
+      const system = new FakeNativeTheme(windowsDark);
+      const source = createThemeSource(system);
+      const h = startWorkspace();
+      followThemeSetting(source, h.workspace);
+      const window = fakeWindow(source.current());
+      followTheme(window.win, source);
+      return { system, source, h, seen: window.seen };
+    }
+
+    it('„Hell“ gilt sofort für Fenster, Fensterknöpfe und Oberfläche, auch wenn Windows dunkel ist', () => {
+      const { system, h, seen } = wired(true);
+
+      h.workspace.updateSettings({ theme: 'light' });
+
+      expect(seen.background).toBe('#f3f3f6');
+      expect(seen.overlay).toEqual({ color: '#f3f3f6', symbolColor: '#1b1b1f', height: 44 });
+      expect(seen.renderer).toBe('light');
+      // Auch native Dialoge (Ordner wählen) zeigen das gewählte Design.
+      expect(system.themeSource).toBe('light');
+    });
+
+    it('eine feste Wahl bleibt, wenn Windows wechselt', () => {
+      const { system, h, seen } = wired(false);
+      h.workspace.updateSettings({ theme: 'dark' });
+
+      system.switchWindows('dark');
+      system.switchWindows('light');
+
+      expect(seen.renderer).toBe('dark');
+      expect(seen.messages).toBe(1);
+    });
+
+    it('mit „System“ folgt THub danach wieder live Windows', () => {
+      const { system, h, seen } = wired(false);
+      h.workspace.updateSettings({ theme: 'dark' });
+
+      h.workspace.updateSettings({ theme: 'system' });
+      expect(seen.renderer).toBe('light');
+      expect(system.themeSource).toBe('system');
+
+      system.switchWindows('dark');
+      expect(seen.renderer).toBe('dark');
+      expect(seen.background).toBe('#1d1d22');
+    });
+
+    it('beim Start gilt die gespeicherte Wahl, bevor das Fenster aufgeht', async () => {
+      const h = startWorkspace();
+      h.workspace.updateSettings({ theme: 'dark' });
+      await h.restart();
+      const system = new FakeNativeTheme(false);
+      const source = createThemeSource(system);
+
+      followThemeSetting(source, h.workspace);
+
+      expect(source.current()).toBe('dark');
+      expect(windowChrome(source.current()).backgroundColor).toBe('#1d1d22');
+      expect(system.themeSource).toBe('dark');
+    });
+
+    it('andere Einstellungen (etwa die Schriftgrösse) fassen das Design nicht an', () => {
+      const { system, h, seen } = wired(true);
+      h.workspace.updateSettings({ theme: 'light' });
+      const assignments = system.assignments;
+
+      h.workspace.updateSettings({ fontSize: 20 });
+      h.workspace.updateSettings({ fontSize: 21 });
+
+      expect(system.assignments).toBe(assignments);
+      expect(seen.messages).toBe(1);
     });
   });
 

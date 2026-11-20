@@ -1,8 +1,9 @@
 // Design hell/dunkel im Hauptprozess (Ticket 04): Er bestimmt, welches Design gilt, und zieht bei
-// jedem Wechsel Fensterfarbe, native Fensterknöpfe und Oberfläche nach.
-// Lädt Electron nicht selbst; main.ts reicht nativeTheme und das Fenster herein.
+// jedem Wechsel Fensterfarbe, native Fensterknöpfe und Oberfläche nach. Die Wahl System, Hell oder
+// Dunkel kommt aus den Einstellungen (Ticket 18).
+// Lädt Electron nicht selbst; main.ts reicht nativeTheme, das Fenster und den Workspace-Kern herein.
 
-import { IPC, type ResolvedTheme, type Theme, type Unsubscribe } from '../shared/types';
+import { IPC, type ResolvedTheme, type Theme, type Unsubscribe, type WorkspaceEvent } from '../shared/types';
 
 /** Höhe der Titelleiste in px (--titlebar-h); die nativen Fensterknöpfe sind genau so hoch. */
 export const TITLEBAR_HEIGHT = 44;
@@ -44,7 +45,8 @@ export interface ThemeSource {
   current(): ResolvedTheme;
   /**
    * Wahl aus den Einstellungen (Ticket 18): „system“ folgt Windows, „light“ und „dark“ legen fest.
-   * Sie geht auch an Electron, damit native Dialoge und Menüs dasselbe Design zeigen.
+   * Sie geht auch an Electron, damit native Dialoge und Menüs dasselbe Design zeigen. Die gleiche
+   * Wahl noch einmal ändert nichts.
    */
   setChoice(choice: Theme): void;
   /** Meldet jeden Wechsel des geltenden Designs, nicht aber unveränderte Meldungen von Windows. */
@@ -70,6 +72,7 @@ export function createThemeSource(system: SystemTheme): ThemeSource {
   return {
     current: () => current,
     setChoice(next) {
+      if (next === choice) return;
       choice = next;
       system.themeSource = next;
       update();
@@ -100,5 +103,22 @@ export function followTheme(win: ThemedWindow, source: ThemeSource): Unsubscribe
     win.setBackgroundColor(chrome.backgroundColor);
     win.setTitleBarOverlay(chrome.titleBarOverlay);
     win.webContents.send(IPC.themeChanged, theme);
+  });
+}
+
+/** Woher die Design-Wahl kommt: die Einstellungen des Workspace-Kerns. */
+export interface ThemeSettings {
+  snapshot(): { settings: { theme: Theme } };
+  subscribe(listener: (event: WorkspaceEvent) => void): Unsubscribe;
+}
+
+/**
+ * Übernimmt die Design-Wahl aus den Einstellungen: sofort die gespeicherte, danach jede Änderung.
+ * Vor dem Öffnen des Fensters aufrufen, damit es gleich in den richtigen Farben erscheint.
+ */
+export function followThemeSetting(source: ThemeSource, settings: ThemeSettings): Unsubscribe {
+  source.setChoice(settings.snapshot().settings.theme);
+  return settings.subscribe((event) => {
+    if (event.type === 'settings') source.setChoice(event.settings.theme);
   });
 }
