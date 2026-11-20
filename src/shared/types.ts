@@ -7,13 +7,16 @@ export type Theme = 'system' | 'light' | 'dark';
 /** Das Design, das gerade gilt: hell oder dunkel; „System“ ist dabei schon aufgelöst. */
 export type ResolvedTheme = 'light' | 'dark';
 
+/** Terminal-Schriftgrösse in px: kleinste, grösste und Standardgrösse (`Ctrl+0` setzt darauf zurück). */
+export const FONT_SIZE = { min: 8, max: 32, default: 14 } as const;
+
 export interface Settings {
   /** Standardordner für neue Tabs; leer heisst Benutzerordner. */
   defaultCwd: string;
   /** Kennung der Standard-Shell (z.B. "pwsh"); fehlt sie, wählt der Kern selbst. */
   defaultShellId?: string;
   theme: Theme;
-  /** Terminal-Schriftgrösse, 8 bis 32. */
+  /** Terminal-Schriftgrösse, 8 bis 32 (`FONT_SIZE`). */
   fontSize: number;
   /** Hinweise im Fenster an/aus. */
   notifications: boolean;
