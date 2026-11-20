@@ -1,6 +1,7 @@
 // Werkzeuge fuer die Shell-Integrationstests (Teststelle 2): nachgemachtes claude, aufzeichnende
 // Testattrappe der lokalen Schnittstelle und echte Shells ueber das echte Terminal-Backend von THub
-// (PtyManager: node-pty/ConPTY mit der mitgelieferten Integration), auf Wunsch samt Workspace-Kern.
+// (PtyManager: node-pty/ConPTY mit der mitgelieferten Integration), auf Wunsch samt Workspace-Kern und
+// echter lokaler Schnittstelle (Ende zu Ende).
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import {
@@ -19,17 +20,21 @@ import http from 'node:http';
 import type { AddressInfo, Socket } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
+import { HOOK_FILE_NAME, writeHookFile } from '../../src/main/hookFile';
+import { LocalApiServer } from '../../src/main/localApi';
 import { PtyManager } from '../../src/main/ptyManager';
 import { shellEnv } from '../../src/main/shellEnv';
+import type { LocalApiInfo } from '../../src/main/workspace/claude';
 import type {
   Clock,
   HostSystem,
   ShellInfo,
   ShellIntegration,
   StartOrder,
+  StateStorage,
   TerminalBackend,
 } from '../../src/main/workspace/ports';
-import type { PersistedState } from '../../src/main/workspace/schema';
+import type { PersistedClaudeLink, PersistedState } from '../../src/main/workspace/schema';
 import { createWorkspace as createCore, type Workspace as Core } from '../../src/main/workspace/workspace';
 import { MemoryStorage } from '../support/fakes';
 
@@ -118,7 +123,7 @@ export function killLeftovers(root: string): string[] {
     `Where-Object { ($_.CommandLine -and $_.CommandLine.Contains($r)) -or ($_.ExecutablePath -and $_.ExecutablePath.Contains($r)) } | ` +
     `Where-Object { $_.ProcessId -ne $PID } | ForEach-Object { "$($_.ProcessId) $($_.Name)"; Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`;
   const out = execFileSync(POWERSHELL_EXE, ['-NoProfile', '-NonInteractive', '-Command', script], {
-    env: { ...process.env, TH_KILL_ROOT: root },
+    env: windowsPowerShellEnv({ TH_KILL_ROOT: root }),
     encoding: 'utf8',
   });
   return out.split(/\r?\n/).filter(Boolean);
@@ -239,6 +244,29 @@ export class FakeTHub {
     for (const s of this.sockets) s.destroy();
     if (this.server) await new Promise<void>((resolve) => this.server!.close(() => resolve()));
   }
+}
+
+/**
+ * Nachgemachter Benutzer-Modulordner von PowerShell 7 (`…\Dokumente\PowerShell\Modules`) mit einem
+ * Microsoft.PowerShell.Security, das nur PowerShell 7 laden kann. Steht er in PSModulePath, wie wenn THub aus
+ * PowerShell 7 gestartet wurde, findet Windows PowerShell dort Get-ExecutionPolicy und scheitert beim Laden.
+ */
+export function fakePowerShell7Modules(ws: Workspace): string {
+  const modules = path.join(ws.root, 'Dokumente', 'PowerShell', 'Modules');
+  const security = path.join(modules, 'Microsoft.PowerShell.Security');
+  mkdirSync(security, { recursive: true });
+  writeFileSync(
+    path.join(security, 'Microsoft.PowerShell.Security.psd1'),
+    "@{ ModuleVersion = '7.0.0.0'; PowerShellVersion = '7.0'; CompatiblePSEditions = @('Core'); CmdletsToExport = @('Get-ExecutionPolicy') }\r\n",
+  );
+  return modules;
+}
+
+/** Umgebung fuer eigene Aufrufe von Windows PowerShell im Test: ohne PSModulePath (siehe executionPolicy.ts). */
+function windowsPowerShellEnv(extra: Record<string, string> = {}): Record<string, string> {
+  const env: Record<string, string> = {};
+  for (const [k, v] of Object.entries(process.env)) if (v !== undefined && k.toUpperCase() !== 'PSMODULEPATH') env[k] = v;
+  return { ...env, ...extra };
 }
 
 /** Ein Port, auf dem sicher niemand lauscht (kurz belegt und wieder freigegeben). */
@@ -370,13 +398,36 @@ export interface LaunchOptions {
   profileExtra?: string[];
   /** Zusaetzliche Variablen der Grundumgebung */
   env?: Record<string, string>;
+  /**
+   * Variablen, die THub geerbt haette (etwa aus einer PowerShell-7-Sitzung); anders als `env` gehen sie wie
+   * im Betrieb durch die Bereinigung des Terminal-Backends (shellEnv).
+   */
+  inherited?: Record<string, string>;
+  /** Wie `PtyManagerOptions.claudeStarter`: ob die Shell den claude-Ersatz bekommt; Standard ja. */
+  claudeStarter?: () => boolean;
 }
 
 export interface TestStart {
-  /** Startauftrag, wie ihn der Kern erteilt; THUB_* der Schnittstelle stehen in `order.env`. */
+  /**
+   * Startauftrag, wie ihn der Kern erteilt; THUB_* der Schnittstelle stehen in `order.env`. THUB_STARTER setzt
+   * das Terminal-Backend selbst (Pfad zu starter.ps1 in `ws.shellDir`).
+   */
   order: StartOrder;
   /** Ausdruecklich gesetzte Grundumgebung fuer das Terminal-Backend (statt der eigenen des Testlaufs). */
   baseEnv: Record<string, string>;
+}
+
+/**
+ * Setzt Variablen und ersetzt dabei gleichnamige in anderer Schreibweise. Windows unterscheidet die
+ * Schreibweise nicht, und mit zwei Eintraegen gilt der erste: Im Testlauf kommen geerbte Variablen gross
+ * geschrieben an (etwa PSEXECUTIONPOLICYPREFERENCE=Bypass aus einer PowerShell mit -ExecutionPolicy Bypass),
+ * ein zusaetzliches PSExecutionPolicyPreference=AllSigned bliebe sonst wirkungslos.
+ */
+function assignEnv(target: Record<string, string>, extra: Record<string, string> | undefined): void {
+  for (const [key, value] of Object.entries(extra ?? {})) {
+    for (const existing of Object.keys(target)) if (existing.toUpperCase() === key.toUpperCase()) delete target[existing];
+    target[key] = value;
+  }
 }
 
 /**
@@ -404,6 +455,7 @@ export function buildStart(def: ShellDef, ws: Workspace, opts: LaunchOptions): T
   delete inherited.Path;
   inherited.PATH = [...(opts.claudeDir ? [opts.claudeDir] : []), ...sysPath].join(';');
   inherited.HOME = ws.home;
+  assignEnv(inherited, opts.inherited);
   const baseEnv = shellEnv(inherited);
   baseEnv.STUB_OUT = ws.stubOut;
   baseEnv.STUB_CONFIG = ws.stubConfig;
@@ -412,8 +464,6 @@ export function buildStart(def: ShellDef, ws: Workspace, opts: LaunchOptions): T
 
   const env: Record<string, string> = { THUB_TAB_ID: opts.tabId, THUB_TOKEN: opts.token };
   if (opts.api) env.THUB_API = opts.api;
-  // THUB_STARTER setzt THub erst mit Ticket 11; die Tests des Starters brauchen ihn schon.
-  env.THUB_STARTER = ws.starter;
 
   switch (def.id) {
     case 'pwsh':
@@ -454,7 +504,7 @@ export function buildStart(def: ShellDef, ws: Workspace, opts: LaunchOptions): T
       break;
   }
 
-  Object.assign(baseEnv, opts.env);
+  assignEnv(baseEnv, opts.env);
 
   const order: StartOrder = {
     file: def.exe,
@@ -474,6 +524,37 @@ export function buildStart(def: ShellDef, ws: Workspace, opts: LaunchOptions): T
 
 const SESSION_TAB = 'tab';
 
+/**
+ * Wartet, bis die Markierungszeile mit `nonce` ihren Exit-Code in `ws.mark` geschrieben hat.
+ * @param what wofuer gewartet wird, fuer die Fehlermeldung
+ * @param output Ausgabe der Shell ohne Escape-Sequenzen, fuer die Fehlermeldung
+ */
+async function waitForMark(
+  ws: Workspace,
+  nonce: string,
+  timeoutMs: number,
+  exited: () => boolean,
+  what: () => string,
+  output: () => string,
+): Promise<number> {
+  const end = Date.now() + timeoutMs;
+  while (Date.now() < end) {
+    if (exited()) throw new Error(`Shell hat sich beendet (${what()}). Ausgabe:\n${output()}`);
+    if (existsSync(ws.mark)) {
+      let text = '';
+      try {
+        text = readFileSync(ws.mark, 'utf8').replace(/^﻿/, '').trim();
+      } catch {
+        // wird gerade geschrieben
+      }
+      const m = new RegExp(`^${nonce} (-?\\d+)`).exec(text);
+      if (m) return Number(m[1]);
+    }
+    await sleep(50);
+  }
+  throw new Error(`Zeitlimit fuer ${what()}. Ausgabe:\n${output().slice(-3000)}`);
+}
+
 export class ShellSession {
   output = '';
   exited = false;
@@ -489,7 +570,7 @@ export class ShellSession {
   /** Startet die Shell ueber das echte Terminal-Backend, mit Integration und Testprofil. */
   static async start(def: ShellDef, ws: Workspace, opts: LaunchOptions): Promise<ShellSession> {
     const { order, baseEnv } = buildStart(def, ws, opts);
-    const backend = new PtyManager({ shellDir: ws.shellDir, baseEnv: () => baseEnv });
+    const backend = new PtyManager({ shellDir: ws.shellDir, baseEnv: () => baseEnv, claudeStarter: opts.claudeStarter });
     const s = new ShellSession(def, ws, backend);
     s.procPid = backend.start(SESSION_TAB, order, {
       data: (d) => {
@@ -531,23 +612,8 @@ export class ShellSession {
     return this.waitMark(nonce, timeoutMs, '(Markierung)');
   }
 
-  private async waitMark(nonce: string, timeoutMs: number, what: string): Promise<number> {
-    const end = Date.now() + timeoutMs;
-    while (Date.now() < end) {
-      if (this.exited) throw new Error(`${this.def.id} hat sich beendet. Ausgabe:\n${this.plainOutput()}`);
-      if (existsSync(this.ws.mark)) {
-        let text = '';
-        try {
-          text = readFileSync(this.ws.mark, 'utf8').replace(/^﻿/, '').trim();
-        } catch {
-          // wird gerade geschrieben
-        }
-        const m = new RegExp(`^${nonce} (-?\\d+)`).exec(text);
-        if (m) return Number(m[1]);
-      }
-      await sleep(50);
-    }
-    throw new Error(`Zeitlimit fuer ${what} in ${this.def.id}. Ausgabe:\n${this.plainOutput().slice(-3000)}`);
+  private waitMark(nonce: string, timeoutMs: number, what: string): Promise<number> {
+    return waitForMark(this.ws, nonce, timeoutMs, () => this.exited, () => `${what} in ${this.def.id}`, () => this.plainOutput());
   }
 
   async waitForOutput(re: RegExp, timeoutMs = 15000): Promise<void> {
@@ -626,10 +692,23 @@ function testSystem(home: string): HostSystem {
   };
 }
 
+/** Anpassungen fuer einen Kern mit echter Shell. */
+export interface CoreShellOptions extends Pick<LaunchOptions, 'profileExtra' | 'env' | 'claudeStarter'> {
+  /** Ordner im PATH vor den Systemordnern, etwa das nachgemachte claude; Standard: keiner. */
+  claudeDir?: string | null;
+}
+
+/** Eine laufende echte lokale Schnittstelle samt Hook-Datei, so wie main.ts sie beim Start oeffnet. */
+interface RunningLocalApi {
+  server: LocalApiServer;
+  info: LocalApiInfo;
+}
+
 /**
  * Ein Workspace-Kern, wie THub ihn startet, mit dem echten Terminal-Backend und einer echten Shell mit
- * Integration. Nachgemacht sind nur Speicher (im Arbeitsspeicher) und Oberflaeche; die Umgebung der Shell
- * ist ausdruecklich gesetzt. Der Kern hat genau einen Tab im Arbeitsordner des Tests.
+ * Integration, auf Wunsch mit der echten lokalen Schnittstelle (`startWithApi`). Nachgemacht sind nur
+ * Speicher (im Arbeitsspeicher) und Oberflaeche; die Umgebung der Shell ist ausdruecklich gesetzt. Der Kern
+ * hat genau einen Tab im Arbeitsordner des Tests.
  */
 export class CoreShell {
   /** Rohe Ausgabe der Shell, so wie sie der Kern an die Oberflaeche gibt. */
@@ -637,28 +716,66 @@ export class CoreShell {
   /** Angezeigter Ordner des Tabs nach jeder Aenderung, ohne direkte Wiederholungen. */
   readonly shownCwds: string[] = [];
   private exited = false;
+  private counter = 0;
+  private apiClosed = false;
 
   private constructor(
     readonly def: ShellDef,
+    readonly ws: Workspace,
     readonly storage: MemoryStorage,
     readonly core: Core,
     /** Startauftraege, die der Kern dem Terminal-Backend erteilt hat. */
     readonly orders: StartOrder[],
+    /**
+     * Claude-Zuordnung des Tabs, wie sie gespeichert wurde, nach jeder Aenderung; `undefined` heisst normales
+     * Terminal. Bleibt leer, solange der Tab ein normales Terminal bleibt.
+     */
+    readonly claudeLinks: (PersistedClaudeLink | undefined)[],
+    private readonly api: RunningLocalApi | null,
   ) {}
 
   /**
+   * Startet THub wie main.ts: echte lokale Schnittstelle auf 127.0.0.1 mit eigenem Token, Hook-Datei in einem
+   * Datenordner des Tests, Kern, Terminal-Backend. Die Shell erreicht nur diese Schnittstelle.
+   */
+  static async startWithApi(
+    def: ShellDef,
+    ws: Workspace,
+    extra: CoreShellOptions = {},
+    storage = new MemoryStorage(),
+  ): Promise<CoreShell> {
+    const server = await LocalApiServer.start();
+    try {
+      const hookFile = path.join(ws.root, 'Daten äöü', HOOK_FILE_NAME);
+      writeHookFile(hookFile, server.url);
+      return CoreShell.start(def, ws, storage, extra, { server, info: { url: server.url, token: server.token, hookFile } });
+    } catch (err) {
+      await server.close();
+      throw err;
+    }
+  }
+
+  /**
    * Startet den Kern; mit `storage` auf dem gespeicherten Zustand eines frueheren Kerns (Neustart), mit
-   * `extra` mit angepasstem Testprofil oder zusaetzlicher Umgebung.
+   * `extra` mit angepasstem Testprofil, zusaetzlicher Umgebung oder nachgemachtem claude im PATH.
    */
   static start(
     def: ShellDef,
     ws: Workspace,
     storage = new MemoryStorage(),
-    extra: Pick<LaunchOptions, 'profileExtra' | 'env'> = {},
+    extra: CoreShellOptions = {},
+    api: RunningLocalApi | null = null,
   ): CoreShell {
     if (!def.exe) throw new Error(`${def.id} ist nicht installiert`);
-    const { baseEnv } = buildStart(def, ws, { claudeDir: null, api: null, token: '', tabId: '', ...extra });
-    const backend = new PtyManager({ shellDir: ws.shellDir, baseEnv: () => baseEnv });
+    const { baseEnv } = buildStart(def, ws, {
+      api: null,
+      token: '',
+      tabId: '',
+      profileExtra: extra.profileExtra,
+      env: extra.env,
+      claudeDir: extra.claudeDir ?? null,
+    });
+    const backend = new PtyManager({ shellDir: ws.shellDir, baseEnv: () => baseEnv, claudeStarter: extra.claudeStarter });
     const orders: StartOrder[] = [];
     const recording: TerminalBackend = {
       start: (tabId, order, listener) => {
@@ -678,17 +795,33 @@ export class CoreShell {
       capturesClaude: true,
       integration: def.integration,
     };
+    // Haelt jede Aenderung der Claude-Zuordnung fest, so wie der Kern sie speichert.
+    const savedLinks: (PersistedClaudeLink | undefined)[] = [];
+    const recordingStorage: StateStorage = {
+      loadState: () => storage.loadState(),
+      saveState: (state) => {
+        storage.saveState(state);
+        const link = state.tabs[0]?.claude;
+        if (JSON.stringify(link) !== JSON.stringify(savedLinks.at(-1))) savedLinks.push(structuredClone(link));
+      },
+      flush: () => storage.flush(),
+      loadHistory: (tabId) => storage.loadHistory(tabId),
+      saveHistory: (tabId, history) => storage.saveHistory(tabId, history),
+      deleteHistory: (tabId) => storage.deleteHistory(tabId),
+    };
     const core = createCore(
       {
         terminal: recording,
-        storage,
+        storage: recordingStorage,
         clock: realClock,
         processes: { snapshot: () => Promise.resolve([]) },
         system: testSystem(ws.root),
       },
-      { shells: [shell] },
+      { shells: [shell], localApi: api?.info },
     );
-    const s = new CoreShell(def, storage, core, orders);
+    const s = new CoreShell(def, ws, storage, core, orders, savedLinks, api);
+    // Wie main.ts: Erst wenn der Kern laeuft, gehen die Anfragen an ihn.
+    api?.server.connect(core);
     core.subscribe((event) => {
       if (event.type === 'output') s.output += event.data;
       if (event.type === 'exit') s.exited = true;
@@ -706,9 +839,62 @@ export class CoreShell {
     return this.core.snapshot().tabs[0].id;
   }
 
+  /** Die lokale Schnittstelle dieses Kerns: Adresse, Token, Hook-Datei. */
+  get localApi(): LocalApiInfo {
+    if (!this.api) throw new Error('Dieser Kern laeuft ohne lokale Schnittstelle (startWithApi)');
+    return this.api.info;
+  }
+
   /** Zuletzt aktiver Ordner des Tabs, so wie er gespeichert ist. */
   lastCwd(): string | undefined {
     return (this.storage.stored as PersistedState | null)?.tabs[0]?.lastCwd;
+  }
+
+  /** Die gespeicherte Claude-Zuordnung des Tabs; `undefined` heisst normales Terminal. */
+  claudeLink(): PersistedClaudeLink | undefined {
+    return (this.storage.stored as PersistedState | null)?.tabs[0]?.claude;
+  }
+
+  /** Tippt eine Zeile mit Markierung und liefert den Exit-Code des letzten Befehls. */
+  async run(line: string, timeoutMs = 30000): Promise<number> {
+    const nonce = this.nonce();
+    this.write(line + this.def.markSuffix(nonce) + '\r');
+    return this.waitMark(nonce, timeoutMs, line);
+  }
+
+  /** Tippt nur eine Markierungszeile. */
+  async mark(timeoutMs = 30000): Promise<number> {
+    const nonce = this.nonce();
+    this.write(this.def.markLine(nonce) + '\r');
+    return this.waitMark(nonce, timeoutMs, '(Markierung)');
+  }
+
+  private nonce(): string {
+    this.counter++;
+    return `K${this.counter}x${Date.now() % 100000}`;
+  }
+
+  private waitMark(nonce: string, timeoutMs: number, what: string): Promise<number> {
+    return waitForMark(this.ws, nonce, timeoutMs, () => this.exited, () => `${what} in ${this.def.id}`, () =>
+      visibleText(this.output),
+    );
+  }
+
+  /** Wartet, bis die gespeicherte Claude-Zuordnung die Bedingung erfuellt. */
+  async waitForClaudeLink(
+    ok: (link: PersistedClaudeLink | undefined) => boolean,
+    timeoutMs = 20000,
+  ): Promise<PersistedClaudeLink | undefined> {
+    const end = Date.now() + timeoutMs;
+    while (Date.now() < end) {
+      const link = this.claudeLink();
+      if (ok(link)) return link;
+      await sleep(50);
+    }
+    throw new Error(
+      `Claude-Zuordnung kam nicht wie erwartet in ${this.def.id}; zuletzt: ${JSON.stringify(this.claudeLink())}. Ausgabe:\n` +
+        visibleText(this.output).slice(-3000),
+    );
   }
 
   write(data: string): void {
@@ -742,10 +928,20 @@ export class CoreShell {
     throw new Error(`Ausgabe ${re} kam nicht in ${this.def.id}. Ausgabe:\n${visibleText(this.output).slice(-3000)}`);
   }
 
+  /** Wie `waitForVisible`, aber nur fuer Ausgabe nach der Stelle `offset` der rohen Ausgabe. */
+  async waitForVisibleAfter(offset: number, re: RegExp, timeoutMs = 15000): Promise<void> {
+    const end = Date.now() + timeoutMs;
+    while (Date.now() < end) {
+      if (re.test(visibleText(this.output.slice(offset)))) return;
+      await sleep(50);
+    }
+    throw new Error(`Ausgabe ${re} kam nicht in ${this.def.id}. Ausgabe:\n${visibleText(this.output).slice(-3000)}`);
+  }
+
   /**
-   * Beendet die Shell mit `exit` und den Kern geordnet, wie beim Beenden von THub. Mit `typeExit = false`
-   * wird nichts getippt (etwa wenn das Testprofil den PSReadLine-Verlauf nicht abschalten konnte); das
-   * Terminal-Backend beendet die Shell dann hart.
+   * Beendet die Shell mit `exit` und den Kern geordnet, wie beim Beenden von THub, danach die lokale
+   * Schnittstelle. Mit `typeExit = false` wird nichts getippt (etwa wenn das Testprofil den PSReadLine-Verlauf
+   * nicht abschalten konnte); das Terminal-Backend beendet die Shell dann hart.
    */
   async shutdown(typeExit = true): Promise<void> {
     if (!this.exited && typeExit) {
@@ -754,18 +950,23 @@ export class CoreShell {
       while (!this.exited && Date.now() < soft) await sleep(50);
     }
     await this.core.shutdown();
+    if (this.api && !this.apiClosed) {
+      this.apiClosed = true;
+      await this.api.server.close();
+    }
   }
 }
 
 /**
  * Ob eine Gruppenrichtlinie die Execution Policy festlegt (MachinePolicy oder UserPolicy). Dann wirkt eine
- * Richtlinie im Prozessbereich (PSExecutionPolicyPreference) nicht.
+ * Richtlinie im Prozessbereich (PSExecutionPolicyPreference) nicht. Ohne PSModulePath: Laeuft der Test aus
+ * PowerShell 7, stehen dort dessen Module, und Windows PowerShell koennte Get-ExecutionPolicy nicht laden.
  */
 export function executionPolicyFromGroupPolicy(): boolean {
   const out = execFileSync(
     POWERSHELL_EXE,
     ['-NoProfile', '-NonInteractive', '-Command', 'Get-ExecutionPolicy -Scope MachinePolicy; Get-ExecutionPolicy -Scope UserPolicy'],
-    { encoding: 'utf8' },
+    { encoding: 'utf8', env: windowsPowerShellEnv() },
   );
   return out.split(/\r?\n/).some((line) => line.trim() !== '' && line.trim() !== 'Undefined');
 }

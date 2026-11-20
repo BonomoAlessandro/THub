@@ -22,8 +22,9 @@ afterAll(() => {
 });
 
 function classify(tail: string): any {
+  // Ohne geerbte THUB_* und ohne PSModulePath (laeuft der Test aus PowerShell 7, stehen dort dessen Module).
   const env: Record<string, string> = {};
-  for (const [k, v] of Object.entries(process.env)) if (v !== undefined && !/^THUB_/i.test(k)) env[k] = v;
+  for (const [k, v] of Object.entries(process.env)) if (v !== undefined && !/^(THUB_|PSMODULEPATH$)/i.test(k)) env[k] = v;
   delete env.Path;
   env.PATH = `${dir};${path.dirname(POWERSHELL)}`;
   env.THUB_STARTER_DRYRUN = '1';

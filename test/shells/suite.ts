@@ -1,9 +1,11 @@
 // Gemeinsame Tests fuer alle vier Windows-Shells (Teststelle 2, Tickets 07 und 11).
 // Jede Shell hat eine eigene Testdatei, damit Vitest die Shells parallel laufen laesst.
-// Alle Shells starten ueber das echte Terminal-Backend von THub (PtyManager) mit der Integration.
+// Alle Shells starten ueber das echte Terminal-Backend von THub (PtyManager) mit der Integration; THUB_STARTER
+// setzt das Backend. Die Tests "Ende zu Ende" laufen dazu mit dem echten Kern und der echten lokalen Schnittstelle.
 import { existsSync, mkdirSync, realpathSync, rmSync } from 'node:fs';
 import path from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { checkExecutionPolicy, type ExecutionPolicyCheck } from '../../src/main/executionPolicy';
 import {
   CoreShell,
   FakeTHub,
@@ -18,6 +20,7 @@ import {
   configureStub,
   createWorkspace,
   executionPolicyFromGroupPolicy,
+  fakePowerShell7Modules,
   readStubRecords,
   removeWorkspace,
   sleep,
@@ -76,6 +79,7 @@ export function shellSuite(id: ShellId): void {
       variant?: Variant | null;
       api?: string | null;
       startCommand?: string;
+      inherited?: Record<string, string>;
     }): Promise<ShellSession> => {
       const variant = opts.variant === undefined ? 'exe' : opts.variant;
       const claudeDir = variant === 'exe' ? ws.stubExeDir : variant === 'cmd' ? ws.stubCmdDir : null;
@@ -85,6 +89,7 @@ export function shellSuite(id: ShellId): void {
         token: hub.token,
         tabId: TAB_ID,
         startCommand: opts.startCommand,
+        inherited: opts.inherited,
       });
       sessions.push(s);
       return s;
@@ -120,6 +125,24 @@ export function shellSuite(id: ShellId): void {
         expect(existsSync(ws.profileLoaded)).toBe(true);
         // claude ist der Ersatz, nicht das Programm: der Starter fragt THub an
         const r = await call(s, 'claude');
+        expect(r.requests.map((x) => x.path)).toEqual(['/claude/launch', '/claude/started', '/claude/exit']);
+      });
+
+      it('Windows PowerShell lädt seine Module, auch wenn THub aus PowerShell 7 gestartet wurde', async () => {
+        // THub erbt dann den PSModulePath von PowerShell 7, mit dessen Modulordnern vorne.
+        const pwshModules = fakePowerShell7Modules(ws);
+        const s = await start({ inherited: { PSModulePath: [pwshModules, process.env.PSModulePath ?? ''].join(';') } });
+        if (flavor === 'ps') {
+          // In der Shell selbst (in Windows PowerShell lädt das Microsoft.PowerShell.Security)
+          const inShell = await s.run(
+            'try { $null = Get-ExecutionPolicy -ErrorAction Stop; $global:LASTEXITCODE = 0 } catch { $global:LASTEXITCODE = 9 }',
+          );
+          expect(inShell).toBe(0);
+        }
+        // Ein Windows PowerShell, das aus der Shell startet, wie der Starter
+        expect(await s.run('powershell.exe -NoProfile -NonInteractive -Command Get-ExecutionPolicy')).toBe(0);
+        const r = await call(s, 'claude');
+        expect(r.records).toHaveLength(1);
         expect(r.requests.map((x) => x.path)).toEqual(['/claude/launch', '/claude/started', '/claude/exit']);
       });
     });
@@ -301,11 +324,37 @@ export function shellSuite(id: ShellId): void {
     });
 
     describe('Ohne THub', () => {
+      /** Zeitlimit des Starters fuer die Anfrage `launch`. */
+      const LAUNCH_TIMEOUT_MS = 1000;
+      /** Spielraum fuer Schwankungen, wenn die anderen Shells parallel laufen. */
+      const SLACK_MS = 4000;
+
+      /**
+       * Wie lange ein Aufruf in dieser Shell gerade ohne jede Anfrage an THub dauert (durchgereicht): Start von
+       * Windows PowerShell und dem nachgemachten claude, unter der aktuellen Last. Gemessen kurz vor und kurz
+       * nach dem eigentlichen Aufruf; es zaehlt der laengere.
+       */
+      const withoutRequest = async (s: ShellSession): Promise<number> => {
+        const t0 = Date.now();
+        await s.run('claude --version');
+        return Date.now() - t0;
+      };
+
+      /** Dauer von `line` und die Vergleichsdauer ohne Anfrage. */
+      const timed = async <T>(s: ShellSession, line: () => Promise<T>): Promise<{ result: T; ms: number; baseline: number }> => {
+        const before = await withoutRequest(s);
+        const t0 = Date.now();
+        const result = await line();
+        const ms = Date.now() - t0;
+        const after = await withoutRequest(s);
+        return { result, ms, baseline: Math.max(before, after) };
+      };
+
       it('startet claude unverändert, wenn die Schnittstelle nicht erreichbar ist', async () => {
         const s = await start({ api: `http://127.0.0.1:${await closedPort()}` });
-        const t0 = Date.now();
-        const r = await call(s, `claude ${CASES['Prompt mit Leerzeichen'][flavor]}`);
-        expect(Date.now() - t0).toBeLessThan(6000);
+        const { result: r, ms, baseline } = await timed(s, () => call(s, `claude ${CASES['Prompt mit Leerzeichen'][flavor]}`));
+        // Die vergebliche Anfrage kostet hoechstens das Zeitlimit des Starters, kein Haengen.
+        expect(ms).toBeLessThan(baseline + LAUNCH_TIMEOUT_MS + SLACK_MS);
         expect(r.records).toHaveLength(1);
         expect(r.records[0].argv).toEqual(['fix the bug in main.ts']);
         configureStub(ws, { exit: 4 });
@@ -322,15 +371,15 @@ export function shellSuite(id: ShellId): void {
         await hang.start();
         try {
           const s = await start({ api: hang.url });
-          clearStubRecords(ws);
-          const t0 = Date.now();
-          await s.run('claude');
-          const elapsed = Date.now() - t0;
-          const records = readStubRecords(ws);
+          const { result: records, ms, baseline } = await timed(s, async () => {
+            clearStubRecords(ws);
+            await s.run('claude');
+            return readStubRecords(ws);
+          });
           expect(records).toHaveLength(1);
           expect(records[0].argv).toEqual([]);
           expect(hang.paths()).toEqual(['/claude/launch']);
-          expect(elapsed).toBeLessThan(5000);
+          expect(ms).toBeLessThan(baseline + LAUNCH_TIMEOUT_MS + SLACK_MS);
         } finally {
           await hang.close();
         }
@@ -507,9 +556,142 @@ export function shellSuite(id: ShellId): void {
         expect(hub.paths()).toEqual(['/claude/launch', '/claude/started', '/claude/exit']);
         expect(hub.requests[0].body.case).toBe('withId');
         expect(records[0].env.THUB_TAB_ID).toBe(TAB_ID);
-        // Die Integration entfernt THUB_START_CMD vor dem Ausführen; NO_PROXY ergänzt das Terminal-Backend.
+        // Die Integration entfernt THUB_START_CMD vor dem Ausführen; NO_PROXY und THUB_STARTER setzt das
+        // Terminal-Backend.
         expect(records[0].env.THUB_START_CMD).toBeUndefined();
         expect(records[0].env.NO_PROXY?.split(',')).toEqual(expect.arrayContaining(['127.0.0.1', 'localhost']));
+        expect(records[0].env.THUB_STARTER).toBe(ws.starter);
+      });
+    });
+
+    describe('Ende zu Ende: Kern, echte lokale Schnittstelle, Terminal-Backend, Shell', () => {
+      const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+      let project: string;
+      let policy: ExecutionPolicyCheck;
+      let exeCore: CoreShell | null = null;
+      const cores: CoreShell[] = [];
+
+      beforeAll(async () => {
+        project = path.join(ws.root, 'Projekt äöü');
+        mkdirSync(project, { recursive: true });
+        // Wie main.ts: Die echte Prüfung der Execution Policy entscheidet, ob die Shells den Ersatz bekommen.
+        policy = checkExecutionPolicy();
+        await policy.done;
+      });
+
+      afterAll(async () => {
+        for (const core of cores) await core.shutdown();
+      });
+
+      /** THub wie nach dem Start: ein Tab „Mein Tab äöü“, dessen Shell im Projektordner (mit Umlauten) steht. */
+      const startTHub = async (variant: Variant, claudeStarter = () => policy.starterAllowed()): Promise<CoreShell> => {
+        const core = await CoreShell.startWithApi(def, ws, {
+          claudeDir: variant === 'exe' ? ws.stubExeDir : ws.stubCmdDir,
+          claudeStarter,
+        });
+        cores.push(core);
+        core.core.renameTab(core.tabId, TAB_NAME);
+        await core.waitForCwd(ws.root);
+        core.write(cdLine(flavor, project) + '\r');
+        await core.waitForCwd(project);
+        return core;
+      };
+
+      /** Claude-Tab, noch nicht per Hook bestätigt, im Projektordner. */
+      const unconfirmed = (sessionId: string) => ({
+        sessionId,
+        cwd: expect.toSatisfy((cwd: string) => cwd.toLowerCase() === project.toLowerCase()),
+        confirmed: false,
+        hadPrompt: false,
+      });
+
+      it('claude macht den Tab zum Claude-Tab mit der Kennung des Kerns; das Ende macht ihn wieder normal', async (ctx) => {
+        ctx.skip(!policy.starterAllowed(), 'Eine Gruppenrichtlinie blockiert den Starter auf diesem Rechner');
+        exeCore = await startTHub('exe');
+        const core = exeCore;
+        expect(core.claudeLink()).toBeUndefined();
+        configureStub(ws, { wait: true, ctrlcExit: 130 });
+        try {
+          clearStubRecords(ws);
+          core.write('claude\r');
+          const link = await core.waitForClaudeLink((l) => l !== undefined);
+          await core.waitForVisible(/STUB-WAITING/);
+
+          // claude bekommt die Hook-Datei dieses Starts, die Kennung des Kerns und den Tab-Namen mit Umlauten.
+          const records = readStubRecords(ws);
+          expect(records).toHaveLength(1);
+          const argv = records[0].argv;
+          expect(argv).toEqual(['--settings', core.localApi.hookFile, '--session-id', expect.stringMatching(UUID), '-n', TAB_NAME]);
+          expect(records[0].env.THUB_TAB_ID).toBe(core.tabId);
+          // Während claude läuft, ist der Tab ein unbestätigter Claude-Tab mit genau dieser Kennung.
+          expect(link).toEqual(unconfirmed(argv[3]));
+
+          // Ctrl+C beendet claude; die Ende-Meldung macht den Tab wieder zum normalen Terminal.
+          const atCtrlC = core.output.length;
+          core.write('\x03');
+          await core.waitForClaudeLink((l) => l === undefined);
+          expect(core.claudeLinks).toEqual([link, undefined]);
+          // Nach Ctrl+C verwerfen cmd und PowerShell vorab getippte Zeichen: erst den Prompt abwarten.
+          await core.waitForVisibleAfter(atCtrlC, /TH-PROMPT>/);
+          await sleep(300);
+          expect(await core.mark()).toBe(130);
+        } finally {
+          configureStub(ws);
+        }
+      });
+
+      it('claude --resume <Kennung>: Claude-Tab mit dieser Kennung, nur --settings ergänzt', async (ctx) => {
+        ctx.skip(!policy.starterAllowed(), 'Eine Gruppenrichtlinie blockiert den Starter auf diesem Rechner');
+        const core = exeCore ?? (await startTHub('exe'));
+        const id = '0f54d6f0-5e3c-45e6-aabf-d76021219bad';
+        const before = core.claudeLinks.length;
+        clearStubRecords(ws);
+
+        expect(await core.run(`claude --resume ${id}`)).toBe(0);
+
+        expect(readStubRecords(ws).map((r) => r.argv)).toEqual([['--settings', core.localApi.hookFile, '--resume', id]]);
+        expect(core.claudeLinks.slice(before)).toEqual([unconfirmed(id), undefined]);
+        expect(core.claudeLink()).toBeUndefined();
+      });
+
+      it('über claude.cmd (npm-Shim) ebenso; ein Exit-Code ungleich 0 kommt in der Shell an', async (ctx) => {
+        ctx.skip(!policy.starterAllowed(), 'Eine Gruppenrichtlinie blockiert den Starter auf diesem Rechner');
+        const core = await startTHub('cmd');
+        configureStub(ws, { exit: 3 });
+        try {
+          clearStubRecords(ws);
+
+          expect(await core.run('claude')).toBe(3);
+
+          const records = readStubRecords(ws);
+          expect(records).toHaveLength(1);
+          const argv = records[0].argv;
+          expect(argv).toEqual(['--settings', core.localApi.hookFile, '--session-id', expect.stringMatching(UUID), '-n', TAB_NAME]);
+          expect(core.claudeLinks).toEqual([unconfirmed(argv[3]), undefined]);
+        } finally {
+          configureStub(ws);
+        }
+      });
+
+      it('Gruppenrichtlinie AllSigned (nachgemacht): kein Ersatz, claude läuft direkt, der Tab bleibt normal', async () => {
+        vi.spyOn(console, 'log').mockImplementation(() => undefined);
+        const allSigned = checkExecutionPolicy(() => Promise.resolve({ kind: 'output', stdout: 'AllSigned\r\nUndefined\r\n' }));
+        try {
+          expect(await allSigned.done).toBe(false);
+        } finally {
+          vi.restoreAllMocks();
+        }
+        const core = await startTHub('exe', () => allSigned.starterAllowed());
+        clearStubRecords(ws);
+
+        expect(await core.run(`claude ${CASES['Prompt mit Leerzeichen'][flavor]}`)).toBe(0);
+
+        const records = readStubRecords(ws);
+        expect(records).toHaveLength(1);
+        expect(records[0].argv).toEqual(['fix the bug in main.ts']);
+        expect(records[0].env.THUB_STARTER).toBeUndefined();
+        expect(records[0].env.THUB_TAB_ID).toBe(core.tabId);
+        expect(core.claudeLinks).toEqual([]);
       });
     });
   });
