@@ -2,6 +2,7 @@ import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme } fro
 import * as path from 'node:path';
 import { IPC, type DirectoryPurpose, type WorkspaceCommand } from '../shared/types';
 import { dataFolders, takeOverLegacyData, type DataFolders } from './dataFolder';
+import { checkExecutionPolicy, type ExecutionPolicyCheck } from './executionPolicy';
 import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
 import { LocalApiServer } from './localApi';
 import { PtyManager } from './ptyManager';
@@ -29,8 +30,11 @@ let shutdown: 'running' | 'stopping' | 'done' = 'running';
 // Schnittstelle startet oder Dateien (Zustand, Hook-Datei) schreibt. Die laufende Instanz bekommt dafür
 // 'second-instance' und holt ihr Fenster nach vorne.
 if (app.requestSingleInstanceLock()) {
+  // Ob eine Gruppenrichtlinie den claude-Starter blockiert, prüft ein verstecktes powershell.exe, parallel zum
+  // übrigen Start. Die Shells fragen das Ergebnis erst ab, wenn sie starten; bis dahin ist es meist da.
+  const executionPolicy = checkExecutionPolicy();
   app.on('second-instance', bringWindowToFront);
-  app.whenReady().then(start);
+  app.whenReady().then(() => start(executionPolicy));
   app.on('before-quit', onBeforeQuit);
   app.on('window-all-closed', () => app.quit());
 } else {
@@ -38,7 +42,7 @@ if (app.requestSingleInstanceLock()) {
 }
 
 /** Start der einzigen Instanz: lokale Schnittstelle und Hook-Datei, Zustand laden, Fenster öffnen. */
-async function start(): Promise<void> {
+async function start(executionPolicy: ExecutionPolicyCheck): Promise<void> {
   // Im Dev-Modus ein Menü mit DevTools und Neu laden, aber ohne Zoom; die installierte App hat keines.
   Menu.setApplicationMenu(app.isPackaged ? null : Menu.buildFromTemplate(DEV_MENU));
 
@@ -48,9 +52,11 @@ async function start(): Promise<void> {
   localApi = api?.server ?? null;
   workspace = createWorkspace(
     {
-      // Die Integrationsdateien liegen im Paket ausserhalb des asar-Archivs (extraResources).
+      // Die Integrationsdateien liegen im Paket ausserhalb des asar-Archivs (extraResources). Den claude-Ersatz
+      // bekommen die Shells nur, wenn keine Gruppenrichtlinie den Starter blockiert.
       terminal: new PtyManager({
         shellDir: shellIntegrationDir(app.isPackaged, process.resourcesPath, app.getAppPath()),
+        claudeStarter: () => executionPolicy.starterAllowed(),
       }),
       storage: new StateStore(path.join(app.getPath('userData'), STATE_FILE_NAME)),
       clock: systemClock,

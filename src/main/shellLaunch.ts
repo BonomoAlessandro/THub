@@ -10,6 +10,10 @@
 //
 // Der Startbefehl kommt bei PowerShell und Git Bash über THUB_START_CMD (die Integration entfernt die
 // Variable vor dem Ausführen), bei cmd in die /k-Zeile hinter die Integration.
+//
+// Den claude-Ersatz richtet jede Integration nur ein, wenn THUB_STARTER gesetzt ist (Ticket 11): voller Pfad zu
+// starter.ps1 im selben Ordner. Das Backend setzt die Variable selbst; eine Vorgabe aus der Umgebung oder dem
+// Startauftrag zählt nicht.
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -22,6 +26,17 @@ export interface ShellLaunch {
   args: string[] | string;
   env: Record<string, string>;
 }
+
+export interface ShellLaunchOptions {
+  /**
+   * Den claude-Ersatz einrichten (THUB_STARTER). Nein, wenn eine Gruppenrichtlinie den Starter blockieren würde
+   * (siehe executionPolicy.ts): Dann läuft `claude` direkt, ohne Erfassung.
+   */
+  claudeStarter: boolean;
+}
+
+/** Dateiname des claude-Starters im Ordner der Integrationsdateien. */
+export const STARTER_FILE_NAME = 'starter.ps1';
 
 /**
  * Ordner mit den Integrationsdateien (`resources/shell`). Im installierten Paket liegen sie als echte
@@ -39,9 +54,15 @@ export function shellIntegrationDir(isPackaged: boolean, resourcesPath: string, 
  * @param env vollständige Umgebung der Shell (bereinigte eigene Umgebung plus `order.env`)
  * @param shellDir Ordner mit den Integrationsdateien
  */
-export function shellLaunch(order: StartOrder, env: Record<string, string>, shellDir: string): ShellLaunch {
+export function shellLaunch(
+  order: StartOrder,
+  env: Record<string, string>,
+  shellDir: string,
+  options: ShellLaunchOptions = { claudeStarter: true },
+): ShellLaunch {
   const plain: ShellLaunch = { file: order.file, args: order.args, env };
   try {
+    const starter = order.integration && options.claudeStarter ? starterPath(shellDir) : undefined;
     switch (order.integration) {
       case 'powershell': {
         const code = fs.readFileSync(path.join(shellDir, 'integration.ps1'), 'utf8');
@@ -49,7 +70,7 @@ export function shellLaunch(order: StartOrder, env: Record<string, string>, shel
         return {
           file: order.file,
           args: ['-NoLogo', '-NoProfile', '-NoExit', '-EncodedCommand', encoded],
-          env: launchEnv(env, order.startCommand),
+          env: launchEnv(env, order.startCommand, starter),
         };
       }
       case 'cmd': {
@@ -57,14 +78,14 @@ export function shellLaunch(order: StartOrder, env: Record<string, string>, shel
         // In der /k-Zeile läuft der Startbefehl wie eine getippte Zeile, nicht im Batch-Kontext der
         // Integrationsdatei: So fragt cmd nach Ctrl+C nicht „Batchvorgang abbrechen (J/N)?“.
         const line = order.startCommand ? `"${init}" & ${order.startCommand}` : `"${init}"`;
-        return { file: order.file, args: `/s /k "${line}"`, env: launchEnv(env, undefined) };
+        return { file: order.file, args: `/s /k "${line}"`, env: launchEnv(env, undefined, starter) };
       }
       case 'bash': {
         const rc = requireFile(path.join(shellDir, 'integration.bash'));
         return {
           file: order.file,
           args: ['--rcfile', rc.replace(/\\/g, '/'), '-i'],
-          env: launchEnv(env, order.startCommand),
+          env: launchEnv(env, order.startCommand, starter),
         };
       }
       default:
@@ -77,12 +98,29 @@ export function shellLaunch(order: StartOrder, env: Record<string, string>, shel
   }
 }
 
-/** Umgebung mit genau diesem Startbefehl in THUB_START_CMD; ohne Startbefehl ohne die Variable. */
-function launchEnv(env: Record<string, string>, startCommand: string | undefined): Record<string, string> {
+/**
+ * Umgebung mit genau diesem Startbefehl in THUB_START_CMD und genau diesem Starter in THUB_STARTER; ohne Wert
+ * jeweils ohne die Variable.
+ */
+function launchEnv(
+  env: Record<string, string>,
+  startCommand: string | undefined,
+  starter: string | undefined,
+): Record<string, string> {
   const result = { ...env };
   delete result.THUB_START_CMD;
+  delete result.THUB_STARTER;
   if (startCommand) result.THUB_START_CMD = startCommand;
+  if (starter) result.THUB_STARTER = starter;
   return result;
+}
+
+/** Voller Pfad zum Starter; fehlt die Datei, gibt es keinen Ersatz, und `claude` läuft direkt. */
+function starterPath(shellDir: string): string | undefined {
+  const file = path.join(shellDir, STARTER_FILE_NAME);
+  if (fs.existsSync(file)) return file;
+  console.error(`claude-Starter fehlt, claude wird nicht erfasst: ${file}`);
+  return undefined;
 }
 
 function requireFile(file: string): string {

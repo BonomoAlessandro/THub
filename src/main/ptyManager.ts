@@ -11,6 +11,12 @@ export interface PtyManagerOptions {
    * bereinigte Umgebung (`shellEnv`). Die Shell-Integrationstests setzen sie ausdrücklich.
    */
   baseEnv?: () => Record<string, string>;
+  /**
+   * Ob die Windows-Shells den claude-Ersatz bekommen (THUB_STARTER mit dem Pfad zu `starter.ps1`); wird bei jedem
+   * Start einer Shell gefragt. Standard: ja. main.ts gibt das Ergebnis der Execution-Policy-Prüfung hinein
+   * (`checkExecutionPolicy`), die beim Start der ersten Shell womöglich noch läuft.
+   */
+  claudeStarter?: () => boolean;
 }
 
 /**
@@ -21,16 +27,20 @@ export class PtyManager implements TerminalBackend {
   private readonly ptys = new Map<string, pty.IPty>();
   private readonly shellDir: string;
   private readonly baseEnv: () => Record<string, string>;
+  private readonly claudeStarter: () => boolean;
 
   constructor(options: PtyManagerOptions) {
     this.shellDir = options.shellDir;
     this.baseEnv = options.baseEnv ?? (() => shellEnv());
+    this.claudeStarter = options.claudeStarter ?? (() => true);
   }
 
   start(tabId: string, order: StartOrder, listener: TerminalListener): number {
     if (this.ptys.has(tabId)) throw new Error(`Für diesen Tab läuft bereits eine Shell: ${tabId}`);
 
-    const launch = shellLaunch(order, { ...this.baseEnv(), ...order.env }, this.shellDir);
+    const launch = shellLaunch(order, { ...this.baseEnv(), ...order.env }, this.shellDir, {
+      claudeStarter: this.claudeStarter(),
+    });
     const proc = pty.spawn(launch.file, launch.args, {
       name: 'xterm-256color',
       cols: order.cols,
