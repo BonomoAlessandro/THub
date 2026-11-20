@@ -4,7 +4,7 @@ Eine Liste für die gesammelte Abnahme am Schluss ([Ticket 19](tickets/19-readme
 
 - Ticket 10 hat keine eigenen Punkte; die Prüfung mit echtem Claude steckt in Ticket 11.
 - Ticket 21 ist verworfen (der Verlauf steht nach einem Neustart weiterhin im Scrollback); seine Punkte entfallen.
-- Wie sich THub verhalten soll, steht im [README](../README.md) und in der [Spezifikation](specs/termhub-v2.md).
+- Wie sich THub verhalten soll, steht im [Handbuch](handbuch.md) und in der [Spezifikation](specs/termhub-v2.md).
 
 **Kennzeichen**
 
@@ -33,7 +33,7 @@ Eine Liste für die gesammelte Abnahme am Schluss ([Ticket 19](tickets/19-readme
 
 ## Tabs
 
-- [ ] Terminals öffnen, umbenennen und schliessen, THub beenden und neu starten: Alles verhält sich wie im README beschrieben. (T01)
+- [ ] Terminals öffnen, umbenennen und schliessen, THub beenden und neu starten: Alles verhält sich wie im Handbuch beschrieben. (T01)
 - [ ] Mit 20 Tabs: Die Tabs werden schmaler, die Leiste scrollt, auch mit dem Mausrad, und der aktive Tab bleibt sichtbar. (T03)
 - [ ] Umbenennen per Doppelklick und mit `F2`: Enter übernimmt, Escape bricht ab, danach ist der Fokus wieder im Terminal. (T03)
 - [ ] `exit` in einer Shell, danach eine beliebige Taste → die Shell startet neu. (T03)
@@ -204,7 +204,7 @@ Pro Abweichung einen Eintrag; daraus wird später ein Ticket in [docs/tickets](t
 
 - **Was:** <was nicht stimmt, in einem Satz>
 - **Wo:** <Abschnitt und Punkt dieser Liste, z.B. „Tabs, T15“; Shell, Design hell/dunkel, installierte App oder npm start>
-- **Erwartet:** <was laut Liste, README oder Spezifikation passieren sollte>
+- **Erwartet:** <was laut Liste, Handbuch oder Spezifikation passieren sollte>
 - **Tatsächlich:** <was passiert ist; wenn möglich mit Schritten zum Nachstellen und einem Screenshot>
 ```
 

@@ -1,0 +1,197 @@
+# THub – Aufbau und Entwicklung
+
+Wie THub gebaut ist, wie es getestet wird und wie man daran arbeitet. Die Bedienung steht im [Handbuch](handbuch.md), die Kurzfassung im [README](../README.md).
+
+## Aufbau
+
+| Teil | Technik |
+|---|---|
+| App-Hülle | [Electron](https://www.electronjs.org/) 45 |
+| Oberfläche | [React](https://react.dev/) 19 mit TypeScript, normales CSS mit Design-Variablen (hell/dunkel) |
+| Terminal-Darstellung | [xterm.js](https://xtermjs.org/) 6 (`@xterm/xterm`, `addon-fit`, `addon-serialize`) |
+| Shell-Prozesse | [node-pty](https://github.com/microsoft/node-pty) über ConPTY, und zwar die mitgelieferte (`conpty.dll`, `OpenConsole.exe` wie im Windows Terminal) |
+| Prozess-Sonde | [koffi](https://koffi.dev/) 3.3.8 (exakt gepinnt) |
+| Build | esbuild (Bündeln), TypeScript (nur Typecheck), electron-builder (NSIS-Installer) |
+| Tests | Vitest |
+
+### Workspace-Kern und Ports
+
+Der Hauptprozess ist die einzige Quelle der Wahrheit für den Zustand. Die gesamte Tab-Logik besitzt der **Workspace-Kern** [`src/main/workspace/workspace.ts`](../src/main/workspace/workspace.ts), ein tiefes Modul ohne Electron: Tabs anlegen, umbenennen, verschieben, schliessen und wieder öffnen, Wiederherstellen beim Start, aktueller Ordner, Claude-Zuordnung und Status, Hinweise, zuletzt benutzte Ordner, Einstellungen, Fensterangaben, Beenden.
+
+Nach aussen hängt der Kern nur an schmalen **Ports** ([`ports.ts`](../src/main/workspace/ports.ts)), die im Betrieb echt und in den Tests nachgemacht sind:
+
+| Port | Im Betrieb |
+|---|---|
+| Terminal-Backend: Shell starten, schreiben, Grösse ändern, beenden; meldet Ausgabe, Ende, Prozess-ID | [`ptyManager.ts`](../src/main/ptyManager.ts) (node-pty), Start mit Integration über [`shellLaunch.ts`](../src/main/shellLaunch.ts), Umgebung aus [`shellEnv.ts`](../src/main/shellEnv.ts) |
+| Speicher: Zustand und Verlauf pro Tab | [`store.ts`](../src/main/store.ts): `state.json` entprellt und atomar, Verlauf unter `history\` |
+| Uhr, System (Ordner, Benutzer, Bildschirme, 8.3-Kurznamen) | [`system.ts`](../src/main/system.ts) |
+| Prozess-Sonde: alle Prozesse in einer Abfrage, gezieltes Beenden | [`processProbe.ts`](../src/main/processProbe.ts) |
+
+**ConPTY:** Das Terminal-Backend startet jede Shell über die mit node-pty gelieferte ConPTY (`useConptyDll`), dieselbe wie im Windows Terminal. Die ConPTY von Windows schickte, was eine Shell neu zeichnet, erst mit ihrem nächsten Bild, rund 16 ms nach der Taste; das machte das Blättern im Befehlsverlauf träge (Ticket 24, Messungen in der Spezifikation unter „Shell-Integration“). Lässt sich die mitgelieferte nicht starten, nimmt das Backend für den Rest der Sitzung die von Windows. Die mitgelieferte fragt beim Start nach den Merkmalen des Terminals (DA1), worauf xterm.js antwortet, und leert den sichtbaren Bereich nicht selbst: Die Oberfläche setzt den Cursor vor jedem Start oben links in einen leeren Bereich (`startArea`), das Bisherige bleibt im Scrollback.
+
+Die reinen Regeln liegen in eigenen Modulen neben dem Kern, alle ohne Electron:
+
+| Modul | Inhalt |
+|---|---|
+| [`schema.ts`](../src/main/workspace/schema.ts) | gespeicherter Zustand (Version 2), Prüfung beim Laden, Übernahme aus Version 1 |
+| [`folders.ts`](../src/main/workspace/folders.ts) | Tab-Namen nach dem Ordner, zuletzt benutzte Ordner |
+| [`cwdReport.ts`](../src/main/workspace/cwdReport.ts) | Ordner-Meldungen der Shell (OSC 7, OSC 9;9) im rohen Ausgabestrom |
+| [`claude.ts`](../src/main/workspace/claude.ts) | Claude-Zuordnung: Vertrag von Starter und Hooks, Regeln |
+| [`tabStatus.ts`](../src/main/workspace/tabStatus.ts) | Status-Zeilen des Zustandsautomaten, Eingaben (Esc, Antwort), Vorrang der Anzeige |
+| [`processRules.ts`](../src/main/workspace/processRules.ts) | ob in einem Tab Prozesse laufen; welche Prozesse mit einem Tab enden |
+| [`resume.ts`](../src/main/workspace/resume.ts) | welche Claude-Session fortgesetzt wird, Startbefehl pro Shell |
+| [`toasts.ts`](../src/main/workspace/toasts.ts) | Hinweise: Plätze pro Tab, Countdown nur im Vordergrund |
+| [`openPoints.ts`](../src/main/workspace/openPoints.ts) | Anweisung an Claude und Erkennung offener Punkte |
+| [`windowPlacement.ts`](../src/main/workspace/windowPlacement.ts) | wo das Fenster öffnet |
+| [`shellIds.ts`](../src/main/workspace/shellIds.ts) | Shell-Kennungen (`pwsh`, `powershell`, `cmd`, `gitbash`, `wsl:<Distribution>`) und Anzeigenamen |
+
+[`main.ts`](../src/main/main.ts) verdrahtet alles: Einzelinstanz, Shell-Erkennung ([`shells.ts`](../src/main/shells.ts)) und Prüfung der Execution Policy ([`executionPolicy.ts`](../src/main/executionPolicy.ts)) parallel zum Start, lokale Schnittstelle und Hook-Datei, Kern, Fenster, IPC und geordnetes Beenden. Dazu [`theme.ts`](../src/main/theme.ts) (hell/dunkel, Fensterknöpfe), [`openFolder.ts`](../src/main/openFolder.ts) („Ordner im Explorer öffnen“), [`dataFolder.ts`](../src/main/dataFolder.ts) (Datenordner, Übernahme aus „TermHub“) und [`devMenu.ts`](../src/main/devMenu.ts).
+
+### IPC-Vertrag
+
+[`src/shared/types.ts`](../src/shared/types.ts) ist der Vertrag zwischen Oberfläche und Kern: `WorkspaceSnapshot` beim Laden, danach `WorkspaceEvent` (Tabs, Hinweise, Einstellungen, Ausgabe, Ende, Hinweis im Terminal, Verlauf wiederherstellen bzw. anfordern, Rückfrage beim Schliessen), in die andere Richtung nur `WorkspaceCommand`. Die Kanalnamen stehen in `IPC`. [`preload.ts`](../src/preload/preload.ts) stellt dem Renderer die API `window.thub` bereit.
+
+- Shells startet nur der Kern, und erst, wenn der Renderer die Ansicht des Tabs mit Spalten und Zeilen als bereit gemeldet hat (`viewReady`). So geht keine Ausgabe verloren, und ein wiederhergestellter Verlauf steht vor der ersten Ausgabe der Shell.
+- Pausierte Claude-Tabs bekommen ihre Ansicht erst, wenn sie angezeigt werden.
+- Den Ordner für „Ordner im Explorer öffnen“ bestimmt der Kern; der Renderer schickt nur die Tab-Kennung, und geöffnet wird nur ein Ordner, den es gibt.
+- Links aus dem Terminal öffnet der Hauptprozess ([`openLink.ts`](../src/main/openLink.ts)) mit `shell.openExternal`, nachdem er die Adresse selbst noch einmal geprüft hat: nur `http:` und `https:` ([`src/shared/links.ts`](../src/shared/links.ts)).
+
+### Lokale Schnittstelle und Hooks
+
+[`localApi.ts`](../src/main/localApi.ts) ist ein kleiner HTTP-Server nur auf `127.0.0.1`, auf einem zufälligen freien Port, mit einem pro Start zufälligen Token. Jedes Terminal bekommt `THUB_TAB_ID`, `THUB_API` (Adresse), `THUB_TOKEN` und, ohne blockierende Gruppenrichtlinie, `THUB_STARTER` (Pfad zum Starter). Ohne gültiges Token (`X-THub-Token`) antwortet der Server mit 403.
+
+| Endpunkt | Von | Antwort |
+|---|---|---|
+| `POST /claude/launch` | Starter, vor dem Start | Tab-Name, neue Session-Kennung (nur bei einer neuen Session), Pfad zur Hook-Datei; 404 für einen unbekannten Tab |
+| `POST /claude/started` | Starter, direkt nach dem Start | leer |
+| `POST /claude/exit` | Starter, nach dem Ende | leer |
+| `POST /hooks/<Ereignis>` | Claude Code, Tab in `X-THub-Tab` | immer sofort leer, nie Entscheidungsfelder; einzige Ausnahme `SessionStart` mit der Anweisung für offene Punkte |
+
+Die Hook-Datei schreibt [`hookFile.ts`](../src/main/hookFile.ts) bei jedem Start neu nach der im Spike geprüften Vorlage (`spikes/claude-hooks/empfohlene-hook-datei.json`): HTTP-Hooks für `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `Stop`, `StopFailure` und `Notification`, Tab und Token aus der Umgebung (`allowedEnvVars`), 2 Sekunden Zeitlimit. `SessionStart` kennt keine HTTP-Hooks und läuft über das `curl.exe` von Windows; fehlt es, übernimmt das nächste andere Ereignis mit neuer Kennung die Zuordnung. Ein zweiter Start öffnet keinen Server und schreibt keine Hook-Datei. Befunde: [`docs/spikes/claude-hooks.md`](spikes/claude-hooks.md).
+
+### Shell-Integration und Starter
+
+Jede Windows-Shell startet mit der mitgelieferten Integration aus [`resources/shell/`](../resources/shell) (im Paket als echte Dateien unter `resources\shell`). Sie lädt zuerst das normale Profil des Nutzers, schaltet in PowerShell die Befehlsvorschau von PSReadLine ab (`PredictionSource None`, nur wenn PSReadLine die Option kennt), meldet danach bei jedem Prompt den aktuellen Ordner, richtet den `claude`-Ersatz ein (nur mit `THUB_STARTER`) und führt bei Bedarf einmal einen Startbefehl aus.
+
+| Shell | Start | Ordner-Meldung |
+|---|---|---|
+| PowerShell 7, Windows PowerShell | `-NoLogo -NoProfile -NoExit -EncodedCommand <integration.ps1>`; die Integration lädt die Profile selbst | OSC 9;9, nur für Orte im Dateisystem |
+| cmd | `/s /k ""…\integration.cmd""`, ohne `/d`: AutoRun läuft wie gewohnt | OSC 9;9 vorne im `PROMPT` |
+| Git Bash | `--rcfile …/integration.bash -i`; lädt, was eine Login-Shell lädt | OSC 7 (`file://…`) per `PROMPT_COMMAND` |
+
+- Der Kern erkennt die Meldungen im rohen Ausgabestrom, auch über Stückgrenzen, wandelt sie in Windows-Pfade (Prozentkodierung, `/c/…` → `C:\…`, 8.3-Kurznamen) und übernimmt nur Ordner, die es gibt. Die Sequenzen bleiben im Strom; xterm.js zeigt sie nicht an.
+- **Startbefehl** (zum Fortsetzen von Claude): läuft genau einmal, sobald die Shell bereit ist; PowerShell und Git Bash bekommen ihn über `THUB_START_CMD` (vor dem Ausführen entfernt), cmd in der `/k`-Zeile hinter der Integration. Ohne `THUB_STARTER` ruft er `claude --resume <Kennung>` direkt auf.
+- **Umgebung** ([`shellEnv.ts`](../src/main/shellEnv.ts)): ohne geerbte `THUB_*`, `TERMHUB_*`, `npm_*` und `ELECTRON_*`; `NO_PROXY` um `127.0.0.1,localhost` ergänzt; `PSModulePath` ohne die Modulordner von PowerShell 7, damit Windows PowerShell 5.1 auch dann seine Module lädt, wenn THub aus PowerShell 7 gestartet wurde.
+- Fehlt die Integration oder scheitert sie, startet die Shell trotzdem. Mitgelieferte Skripte sind reines ASCII oder UTF-8 mit BOM, weil Windows PowerShell 5.1 UTF-8 ohne BOM falsch liest.
+- Befunde: [`docs/spikes/starter.md`](spikes/starter.md).
+
+### Prozess-Sonde
+
+[`processProbe.ts`](../src/main/processProbe.ts) fragt mit einem einzigen asynchronen Aufruf von `NtQuerySystemInformation` über koffi alle Prozesse ab (Prozess-ID, Eltern-ID, Programmname, Startzeit), ohne einen Prozess zu starten; das kostet rund 7 ms auf einem Hilfs-Thread. Der Kern nutzt sie für „Prozesse laufen“, für die Wartezeit nach einer Antwort an Claude und um beim Schliessen den ganzen Prozessbaum eines Tabs zu beenden; das Terminal-Backend räumt damit den Konsolen-Host einer von selbst beendeten Shell weg. Die Regeln stehen in [`processRules.ts`](../src/main/workspace/processRules.ts), die Befunde in [`docs/spikes/prozess-sonde.md`](spikes/prozess-sonde.md).
+
+- Ein Prozess ist (Prozess-ID, Startzeit); ein Kind zählt nur unter einem Elternprozess, der nicht jünger ist als es selbst, weil Windows Prozess-IDs wiederverwendet.
+- Wurzel ist die Prozess-ID von node-pty; bei Git Bash genau eine Ebene tiefer das `bash.exe`-Kind des Starters `bin\bash.exe`.
+- koffi ist exakt auf 3.3.8 gepinnt. Die Binärdatei kommt als optionales Paket `@koromix/koffi-win32-x64`: nie mit `--omit=optional` installieren. Im Paket liegt sie ausserhalb des asar-Archivs (`asarUnpack`), esbuild lässt koffi als `external` stehen.
+
+### Renderer
+
+[`src/renderer/`](../src/renderer) ist die React-Oberfläche: Sie zeigt an und schickt Befehle, die Tab-Logik liegt im Kern.
+
+| Datei oder Ordner | Inhalt |
+|---|---|
+| `main.tsx`, `theme.ts` | Einstieg; zuerst das Design übernehmen, dann zeichnen; Terminal-Farbschema aus den Design-Variablen |
+| `App.tsx`, `useWorkspace.ts` | Fenster mit Tab-Leiste, Terminal-Fläche, Hinweisen, Palette und Dialogen; Schnappschuss und Ereignisse des Kerns |
+| `shortcuts.ts`, `commands.ts`, `fontSize.ts` | Tabelle der Tastenkürzel; Befehle, die Tastenkürzel, Maus und Palette gemeinsam auslösen; `Ctrl` + Mausrad in Schritte |
+| `tabs/` | Titelleiste mit Tab-Leiste, Symbol-Platz, Umbenennen, Tooltip, Pfeil-Menü, Rechtsklick-Menü, Rückfrage beim Schliessen, Umsortieren per Ziehen (`useTabDrag.ts`, Rechnungen in `tabDrag.ts`) |
+| `popup/` | Menü und Dialog wie im Prototyp, Bedienung mit der Tastatur (`menuKeys.ts`) |
+| `palette/` | Befehlspalette: Einträge, unscharfe Suche, gekürzte Pfade |
+| `settings/` | Einstellungsdialog und Übersicht der Tastenkürzel |
+| `toasts/` | Hinweise unten rechts |
+| `terminal/` | ein xterm.js pro Tab, inaktive ausgeblendet statt zerstört; Verlauf serialisieren und ausgegraut wiederherstellen (`history.ts`); Rechtsklick und `Ctrl` + Klick auf Links (`mouse.ts`); Links ohne die gestrichelte Linie von xterm.js (`linkUnderline.ts`) |
+| `styles/` | Design-Variablen und Terminal-Farbschemata aus dem Prototyp (`tokens.css`), übriges CSS (`app.css`) |
+
+**Menüs und Dialoge über der Titelleiste:** Die Titelleiste ist die Zieh-Fläche des Fensters (`-webkit-app-region: drag`). Was darüber liegt oder hineinragt (Menüs, Abdunkelung eines Dialogs, Tooltip), braucht `-webkit-app-region: no-drag`, sonst verschiebt ein Klick dort das Fenster. Menüs bleiben links der nativen Fensterknöpfe (`navigator.windowControlsOverlay`). Solange ein Menü oder Dialog offen ist (`usePopupOpen`), ruhen die Tastenkürzel.
+
+### Gespeicherter Zustand
+
+Im Datenordner (siehe [Entwicklung](#entwicklung)) liegen `state.json`, der Ordner `history\` und die Hook-Datei `claude-hooks.json`. `state.json` hat das Schema Version 2; eine Datei der Version 1 wird beim Start übernommen, eine unlesbare als `state.json.corrupt-<Zeit>` beiseitegelegt.
+
+```json
+{
+  "version": 2,
+  "settings": { "defaultCwd": "", "defaultShellId": "pwsh", "theme": "system", "fontSize": 14, "notifications": true, "openPoints": true },
+  "tabs": [
+    { "id": "…", "name": "Mein Projekt", "nameIsManual": true, "shellId": "gitbash", "startCwd": "C:\\…", "lastCwd": "C:\\…\\src" },
+    { "id": "…", "name": "api", "nameIsManual": false, "shellId": "pwsh", "startCwd": "C:\\…\\api",
+      "claude": { "sessionId": "…", "cwd": "C:\\…\\api", "confirmed": true, "hadPrompt": true },
+      "openPoints": ["Soll der alte Login parallel weiterlaufen?"] }
+  ],
+  "activeTabId": "…",
+  "recentDirs": ["C:\\…\\Mein Projekt"],
+  "closedTabs": [],
+  "window": { "bounds": { "x": 200, "y": 100, "width": 1200, "height": 760 }, "maximized": false }
+}
+```
+
+Der Verlauf jedes normalen Tabs liegt in `history\<Tab-Kennung>.json` (`{ "version": 1, "savedAt": …, "content": "…" }`). Die Datei eines geschlossenen Tabs bleibt, solange er unter den zuletzt geschlossenen steht, und wird gelöscht, wenn er aus der Liste fällt. Claude-Tabs haben keinen Verlauf: Wird ein Tab zum Claude-Tab, fällt seine Datei weg; wird er wieder normal, sichert ihn die nächste Sicherung neu. Laufzeit-Angaben (Status, Prozess-IDs) werden nicht gespeichert.
+
+## Tests
+
+```powershell
+npm test             # Teststelle 1: Kern, Renderer-Logik, Hauptprozess (Vitest, schnell)
+npm run test:shells  # Teststelle 2: echte Shells (eigener Testlauf, rund 3 Minuten)
+npm run typecheck    # TypeScript prüfen
+```
+
+**`npm test`** ([`vitest.config.mts`](../vitest.config.mts)) läuft in Node, ohne Electron und ohne Fenster; lädt getesteter Code doch Electron, schlägt der Test laut fehl.
+
+- `test/workspace/`: der Workspace-Kern mit allen Ports nachgemacht ([`test/support/`](../test/support)): ein Terminal-Backend, das Startaufträge aufzeichnet und Ausgabe und Prozessende einspeisen lässt, Speicher im Arbeitsspeicher, steuerbare Uhr, steuerbare Prozess-Sonde mit Prozessbäumen, nachgemachtes System. Die lokale Schnittstelle läuft echt auf `127.0.0.1`; die Tests schicken echte HTTP-Anfragen mit Meldungen des Starters und dokumentierten Hook-Nutzdaten. Ein Neustart ist ein neuer Kern auf demselben gespeicherten Zustand. Geprüft wird äusseres Verhalten: Tabs, Startaufträge, Ordner-Erkennung, Rückfrage, geschlossene Tabs, Claude-Zuordnung und Status, Einfrieren, Prozess-Regeln, Hinweise, offene Punkte, Wiederherstellen, Übernahme aus Version 1.
+- `test/renderer/`: reine Logik der Oberfläche ohne DOM: Zuordnung der Tastenkürzel (auch Schweizer Tastatur und Ziffernblock), Übersicht aus derselben Tabelle, `Ctrl` + Mausrad, Tasten im Menü, Suche und Wirkung jedes Befehls der Palette (auch mit dem Kern), gekürzte Pfade, Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node (für die Startsequenzen beider ConPTYs), Einfügestelle und Scrollen beim Ziehen; mit echtem xterm.js auch Rechtsklick mit und ohne Mausmeldung, `Ctrl` + Klick auf Links und Links ohne gestrichelte Linie.
+- `test/main/`: Hauptprozess ohne Electron: Design hell/dunkel, Entwicklermenü, Datenordner und Übernahme, Umgebung der Shells, Shell-Erkennung mit nachgemachtem Rechner, Start der Shells mit Integration, Wahl der ConPTY samt Rückfall auf die von Windows (mit nachgemachtem node-pty), Prüfung der Execution Policy, Auswertung der Prozess-Sonde, „Ordner im Explorer öffnen“, Links öffnen mit nachgemachtem `shell.openExternal`.
+
+**`npm run test:shells`** ([`test/shells/`](../test/shells)) startet über das echte Terminal-Backend die echten Shells mit der echten Integration: PowerShell 7, Windows PowerShell, cmd und Git Bash; nicht installierte Shells werden übersprungen. Im PATH liegt ein nachgemachtes `claude` (als `.exe`, aus `ClaudeStub.cs` mit dem `csc.exe` von .NET Framework gebaut, und als `.cmd`), das Argumente und Umgebung in eine Datei schreibt. Geprüft werden: Gleichheit der Argumente mit einem direkten Aufruf, Ergänzen und Durchreichen, die Meldungen des Starters (auch nach `Ctrl+C` und bei Exit-Code ungleich 0), ohne THub und ohne `claude`, Ordner-Meldungen (auch mit Leerzeichen und Umlauten), Laden des Profils, Startbefehl genau einmal, Ende zu Ende mit dem echten Kern und der echten lokalen Schnittstelle (auch mit nachgemachter Gruppenrichtlinie `AllSigned`), Fortsetzen nach einem Neustart (auch ohne `THUB_STARTER`, mit verkürzter Frist für die Start-Meldung) das Beenden aller Nachfahren beim Schliessen mit der echten Prozess-Sonde, die abgeschaltete Befehlsvorschau von PSReadLine sowie eine Zeitgrenze für die Pfeiltasten: Die Zeile aus dem Verlauf muss im Median nach weniger als 10 ms beim Terminal-Backend sein, und der Konsolen-Host jeder Shell ist `OpenConsole.exe`. Wie xterm.js in der App beantwortet das Testgerüst die Abfrage der Terminal-Merkmale (DA1). Dazu die Einordnung des Starters allein (`classify.test.ts`, mit `THUB_STARTER_DRYRUN`).
+
+**Warum kein Test eine laufende THub-Instanz anspricht,** auch wenn der Testlauf selbst in einem THub-Tab läuft:
+
+- Kein Test startet die App; der Kern läuft in Node mit Daten im Arbeitsspeicher bzw. in Temp-Ordnern, nie im Datenordner von THub.
+- [`test/support/setup.ts`](../test/support/setup.ts) entfernt vor jeder Testdatei alle geerbten `THUB_*`-Variablen. Braucht ein Test eine lokale Schnittstelle, startet er seine eigene (oder eine aufzeichnende Attrappe) auf einem zufälligen Port mit eigenem Token und gibt `THUB_API` und `THUB_TOKEN` ausdrücklich mit.
+- Die Shell-Tests setzen die Umgebung der Shells ausdrücklich: PATH nur mit den Systemordnern und dem Ordner des nachgemachten `claude`, so wird nie ein echtes `claude` gefunden; eigenes `HOME` und Testprofil; das Terminal-Backend entfernt geerbte `THUB_*` und `TERMHUB_*`.
+
+## Entwicklung
+
+```powershell
+npm install          # nie mit --omit=optional (koffi braucht sein optionales Paket)
+npm start            # bauen und App starten
+npm run dev          # wie start, mit Sourcemaps und unminifiziert
+npm run dist         # Installer bauen -> release\THub Setup <version>.exe
+```
+
+`build.mjs` bündelt Hauptprozess, Preload und Renderer mit esbuild nach `dist/`; `electron`, `node-pty` und `koffi` bleiben `external`.
+
+### Datenordner
+
+| Start | Datenordner |
+|---|---|
+| installierte App | `%APPDATA%\THub` |
+| unpaketiert (`npm start`, `npm run dev`) | `%APPDATA%\THub-dev` |
+
+Die Entwicklung berührt die installierte App also nie ([`dataFolder.ts`](../src/main/dataFolder.ts)). Die Einzelinstanz-Sperre hängt am Datenordner: Die Entwicklungsversion läuft neben einer installierten THub, aber nur einmal. Unpaketiert gibt es ein Menü mit Neu laden und Entwicklerwerkzeugen, ohne Zoom; die installierte App hat kein Menü.
+
+**Umstieg vom alten Namen:** Bis 2026-11-19 hiess die App „TermHub“. Hat der Datenordner von THub noch keine `state.json`, übernimmt THub beim Start einmalig `state.json` und `history\` aus `%APPDATA%\TermHub` (unpaketiert aus `%APPDATA%\TermHub-dev`); der alte Ordner bleibt unverändert. Wegen der neuen App-Kennung `ch.custom.thub` bleibt eine installierte TermHub 0.1.0 eine eigene Installation und lässt sich wie gewohnt deinstallieren.
+
+### Testmodus
+
+Für automatische Prüfungen der echten App (`npm start`, `electron .` oder die gebaute `THub.exe`) gibt es zwei Umgebungsvariablen. Ohne beide wird die App für Prüfungen nie gestartet; die Regeln für Agenten stehen in [docs/tickets/README.md](tickets/README.md#spielregeln), „Spielregeln“.
+
+- **`THUB_TEST_DATA_DIR=<Temp-Ordner>`** ersetzt `%APPDATA%` als Wurzel der Datenordner: eigene Daten und eigene Einzelinstanz-Sperre (unpaketiert also `<Temp-Ordner>\THub-dev`). Ein umgeleitetes `APPDATA` allein genügt nicht, Electron ignoriert es.
+- **`THUB_TEST_HIDDEN=1`:**
+  - Das Fenster öffnet ausserhalb des Bildschirms, ohne Aktivierung und ohne Taskleisten-Eintrag; es nimmt niemandem den Fokus.
+  - Grösse und Lage des Fensters werden nicht gespeichert, und ein zweiter Start holt es nicht nach vorne.
+  - „Ordner im Explorer öffnen“ öffnet kein Explorer-Fenster; der Ordner steht nur in der Ausgabe.
+  - `Ctrl` + Klick auf einen Link öffnet keinen Browser; die Adresse steht nur in der Ausgabe („Testmodus: Der Browser würde … öffnen.“).
+  - Kopieren, Einfügen und „Pfad kopieren“ benutzen eine eigene Zwischenablage im Speicher statt der echten des Nutzers.
+  - Der Ordner-Dialog von Windows („Ordner wählen …“, „Ändern …“, „Standardordner ändern“) geht nicht auf: Als gewählter Ordner gilt `THUB_TEST_PICK_DIR`, ohne diese Variable ein Abbruch.
+
+### Installer
+
+`npm run dist` baut mit esbuild und electron-builder einen NSIS-Installer nach `release\THub Setup <version>.exe`, daneben das ungepackte Paket `release\win-unpacked`. Der Installer ist ein Assistent (kein Ein-Klick-Installer) mit wählbarem Installationsordner und erlaubt die Installation für den eigenen Benutzer ohne Administratorrechte (`perMachine: false`). Die Shell-Integration liegt im Paket als echte Dateien unter `resources\shell` (`extraResources`), node-pty und die Binärdatei von koffi ausserhalb des asar-Archivs (`asarUnpack`); `npmRebuild` bleibt aus. Der Installer ist nicht signiert, und es gibt kein Auto-Update.
