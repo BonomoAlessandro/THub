@@ -1,6 +1,6 @@
 # 05 – Ordner, Tab-Namen und Einstellungsdialog
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 04
 User Stories: 1–5, 12, 13, 75 (Standardordner), 79
 Spezifikation: „Tab-Namen“, „Gespeicherter Zustand“ (Einstellungen, zuletzt benutzte Ordner), „Oberfläche (Renderer)“
