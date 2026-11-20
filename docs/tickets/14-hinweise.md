@@ -1,6 +1,6 @@
 # 14 – Hinweise im Fenster
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 13
 User Stories: 49–55, 75 (Hinweise an/aus)
 Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Hinweise im Fenster)

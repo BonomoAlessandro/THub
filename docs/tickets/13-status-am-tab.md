@@ -1,6 +1,6 @@
 # 13 – Claude-Status und Prozess-Status am Tab
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 11
 User Stories: 41–48
 Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Status-Zeilen, „Prozesse laufen“, angezeigter Status)
