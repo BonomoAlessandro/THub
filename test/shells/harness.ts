@@ -703,6 +703,8 @@ export interface CoreShellOptions extends Pick<LaunchOptions, 'profileExtra' | '
    * Aufräumen des Konsolen-Hosts. Standard: eine Sonde ohne Prozesse, die nichts beendet.
    */
   realProcesses?: boolean;
+  /** Frist fuer die Start-Meldung nach einem Fortsetzen (Ticket 23), verkuerzt; Standard wie im Betrieb 30 s. */
+  resumeLaunchGraceMs?: number;
 }
 
 /** Eine laufende echte lokale Schnittstelle samt Hook-Datei, so wie main.ts sie beim Start oeffnet. */
@@ -725,6 +727,7 @@ export class CoreShell {
   private exited = false;
   private counter = 0;
   private apiClosed = false;
+  private stopped = false;
 
   private constructor(
     readonly def: ShellDef,
@@ -832,7 +835,7 @@ export class CoreShell {
         processes,
         system: testSystem(ws.root),
       },
-      { shells: [shell], localApi: api?.info },
+      { shells: [shell], localApi: api?.info, resumeLaunchGraceMs: extra.resumeLaunchGraceMs },
     );
     const s = new CoreShell(def, ws, storage, core, orders, savedLinks, api);
     // Wie main.ts: Erst wenn der Kern laeuft, gehen die Anfragen an ihn.
@@ -959,6 +962,9 @@ export class CoreShell {
    * nicht abschalten konnte); das Terminal-Backend beendet die Shell dann hart.
    */
   async shutdown(typeExit = true): Promise<void> {
+    // Schon beendet (etwa in einem Test vor dem Neustart): Nach dem Beenden meldet der Kern kein Ende der Shell mehr.
+    if (this.stopped) return;
+    this.stopped = true;
     if (!this.exited && typeExit) {
       this.write('exit\r');
       const soft = Date.now() + 5000;

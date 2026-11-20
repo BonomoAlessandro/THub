@@ -18,7 +18,8 @@ Desktop-App für Windows: mehrere Terminals als Tabs in einem Fenster. THub merk
 - **Tooltip** beim Überfahren: Name, aktueller Ordner, Shell und Status.
 - **Viele Tabs:** Die Tabs werden schmaler (bis 112 px), die Leiste wird scrollbar, auch mit dem Mausrad; der aktive Tab bleibt sichtbar. Zwischen `+` und dem Zahnrad bleibt immer eine freie Fläche von mindestens 56 px: Sie verschiebt das Fenster, ein Doppelklick maximiert es.
 - **Beendete Shell** (etwa nach `exit`): Im Terminal steht „Prozess beendet mit Code n – beliebige Taste startet die Shell neu“.
-- **Kopieren und Einfügen:** `Ctrl+Shift+C` / `Ctrl+Shift+V` oder Rechtsklick ins Terminal (mit Auswahl kopieren, sonst einfügen). `Ctrl+C` geht an die Shell.
+- **Kopieren und Einfügen:** `Ctrl+Shift+C` / `Ctrl+Shift+V` oder Rechtsklick ins Terminal (mit Auswahl kopieren, sonst einfügen). `Ctrl+C` geht an die Shell. Hat das Programm im Terminal die Maus eingeschaltet (etwa Claude im Vollbild), gehört ihm der Rechtsklick: Claude kopiert bzw. fügt dann selbst ein, genau einmal. Mit `Shift` + Rechtsklick kopiert bzw. fügt THub trotzdem ein, wie im Windows Terminal.
+- **Links:** Adressen im Terminal (Links, die Claude ausgibt, und URLs im Klartext wie die eines Dev-Servers) haben keine Linie; beim Überfahren erscheinen eine durchgezogene Unterstreichung und der Hand-Zeiger. `Ctrl` + Klick öffnet sie im Standardbrowser, nur `http:` und `https:`, ohne Rückfrage; ein Klick ohne `Ctrl` öffnet nichts. Hat das Programm die Maus eingeschaltet, geht auch `Ctrl` + Klick an das Programm (Claude öffnet den Link dann selbst); `Ctrl+Shift` + Klick öffnet ihn über THub.
 - **Kein Tab mehr offen:** Die Fläche zeigt „Kein Terminal offen.“ mit dem Knopf „Neues Terminal“. Startet THub ohne gespeicherte Tabs, öffnet es selbst ein Terminal.
 
 ### Schliessen und wieder öffnen
@@ -187,7 +188,7 @@ Die Tabelle entspricht `SHORTCUTS` in [src/renderer/shortcuts.ts](src/renderer/s
 - Mit Alt oder AltGr ist nie ein Kürzel gemeint.
 - Alle anderen Tasten gehen ans Terminal, auch `Ctrl+K` und `Ctrl+C`.
 - Solange ein Menü, ein Dialog oder die Befehlspalette offen ist oder ein Tab umbenannt wird, ruhen die Kürzel.
-- Mit der Maus: Doppelklick auf einen Tab benennt ihn um, die mittlere Maustaste schliesst ihn, Rechtsklick öffnet sein Menü; Rechtsklick ins Terminal kopiert bzw. fügt ein.
+- Mit der Maus: Doppelklick auf einen Tab benennt ihn um, die mittlere Maustaste schliesst ihn, Rechtsklick öffnet sein Menü; Rechtsklick ins Terminal kopiert bzw. fügt ein, `Ctrl` + Klick auf einen Link öffnet ihn im Browser. Hat das Programm im Terminal die Maus eingeschaltet (Claude im Vollbild), gehören ihm Rechtsklick und `Ctrl` + Klick; mit zusätzlich `Shift` handelt THub.
 
 ## Claude Code in THub
 
@@ -228,6 +229,7 @@ Die Hooks melden THub, was Claude tut; THub hört nur zu. Daraus folgt der Statu
 - Die Shell startet im **Ordner der Session** (fehlt er: Startordner, Standardordner, Benutzerordner), weil Claude nach `--resume` im aktuellen Ordner läuft, und führt einmal den Starter mit `--resume <Kennung>` aus. Claude läuft also in der Shell; nach dem Beenden bist du wieder dort. Claude-Tabs zeigen keinen alten Verlauf.
 - **Nicht fortgesetzt** wird ein Claude-Tab ohne Kennung, mit einer bestätigten Session ohne Prompt oder mit einer Kennung, die nicht nur aus Buchstaben, Ziffern, `-` und `_` besteht: Er kommt als normales Terminal im Ordner der Session zurück, ohne Verlauf.
 - **Schlägt das Fortsetzen fehl** (Claude endet mit einem Exit-Code ungleich 0, ohne sich vorher gemeldet zu haben, etwa bei einer unbekannten Kennung oder einem abgelehnten Vertrauensdialog), steht im Terminal „Claude-Session konnte nicht fortgesetzt werden“; der Tab bleibt als normales Terminal offen.
+- **Läuft der Starter beim Fortsetzen nicht** (eine Gruppenrichtlinie ist erst nach dem Erfassen dazugekommen, `starter.ps1` fehlt oder die lokale Schnittstelle konnte nicht starten), ruft der Startbefehl `claude --resume <Kennung>` direkt auf, ohne Erfassung. Meldet der Starter nicht innerhalb von 30 Sekunden einen Start, wird der Tab ein normales Terminal: Die Session läuft darin ungestört weiter, und nach dem nächsten Neustart wird sie nicht wieder fortgesetzt. Kommt die Meldung später doch noch (sehr langsames Profil), ist der Tab wieder ein Claude-Tab. Die Frist beginnt erst mit dem Fortsetzen, bei einem pausierten Tab also erst beim Öffnen.
 - **Beendest du Claude** (`/exit`, `Ctrl+C`), wird der Tab wieder ein normales Terminal im selben Ordner und kommt nach einem Neustart auch so zurück.
 - **`/clear`, `/resume`, `/compact`:** THub übernimmt die neue Kennung aus `SessionStart`, nach einem Neustart kommt die richtige Session zurück.
 - **Beendet THub sich selbst** (App beenden, Tab schliessen, Windows-Abmeldung), wird die Zuordnung eingefroren: Spätere Meldungen wie `SessionEnd` oder das Ende der Shell ändern sie nicht mehr. Sonst käme nach jedem Beenden jeder Claude-Tab als normales Terminal zurück.
@@ -244,7 +246,7 @@ THub funktioniert als normales Terminal-Fenster, ohne Fehlermeldung beim Start. 
 ### Execution Policy und Gruppenrichtlinien
 
 - Die PowerShell-Integration kommt per `-EncodedCommand`, nicht als Skriptdatei, und der Starter läuft mit `-ExecutionPolicy Bypass`. Eine lokal gesetzte Execution Policy blockiert also weder das eine noch das andere.
-- Eine **Gruppenrichtlinie** (Ebene `MachinePolicy` oder `UserPolicy`) mit `AllSigned` oder `Restricted` würde den Starter trotz `Bypass` blockieren. THub prüft das beim Start versteckt (`Get-ExecutionPolicy -Scope MachinePolicy` und `UserPolicy`, parallel zum Start, ohne ihn zu verzögern). Steht dort eine solche Richtlinie, bekommen die Shells keinen Ersatz (`THUB_STARTER` fehlt): `claude` läuft direkt, ohne Fehler, aber ohne Erfassung, also ohne Status und ohne Fortsetzen.
+- Eine **Gruppenrichtlinie** (Ebene `MachinePolicy` oder `UserPolicy`) mit `AllSigned` oder `Restricted` würde den Starter trotz `Bypass` blockieren. THub prüft das beim Start versteckt (`Get-ExecutionPolicy -Scope MachinePolicy` und `UserPolicy`, parallel zum Start, ohne ihn zu verzögern). Steht dort eine solche Richtlinie, bekommen die Shells keinen Ersatz (`THUB_STARTER` fehlt): `claude` läuft direkt, ohne Fehler, aber ohne Erfassung, also ohne Status und ohne Fortsetzen. Ein Claude-Tab, der vor der Richtlinie erfasst wurde, wird nach dem Neustart noch einmal fortgesetzt und danach ein normales Terminal (siehe [Fortsetzen nach einem Neustart](#fortsetzen-nach-einem-neustart)).
 - Solange die Prüfung läuft, nach 10 Sekunden ohne Antwort oder wenn PowerShell mit einem Fehler endet, bekommen die Shells den Ersatz. Lässt sich `powershell.exe` gar nicht starten, fehlt er, weil der Starter selbst ein `powershell.exe` ist.
 - Scheitert die Integration selbst (Gruppenrichtlinie, Constrained Language Mode), startet die Shell trotzdem, nur ohne Integration. Im Constrained Language Mode richtet die PowerShell-Integration den Ersatz nicht ein.
 
@@ -328,6 +330,7 @@ Die reinen Regeln liegen in eigenen Modulen neben dem Kern, alle ohne Electron:
 - Shells startet nur der Kern, und erst, wenn der Renderer die Ansicht des Tabs mit Spalten und Zeilen als bereit gemeldet hat (`viewReady`). So geht keine Ausgabe verloren, und ein wiederhergestellter Verlauf steht vor der ersten Ausgabe der Shell.
 - Pausierte Claude-Tabs bekommen ihre Ansicht erst, wenn sie angezeigt werden.
 - Den Ordner für „Ordner im Explorer öffnen“ bestimmt der Kern; der Renderer schickt nur die Tab-Kennung, und geöffnet wird nur ein Ordner, den es gibt.
+- Links aus dem Terminal öffnet der Hauptprozess ([`openLink.ts`](src/main/openLink.ts)) mit `shell.openExternal`, nachdem er die Adresse selbst noch einmal geprüft hat: nur `http:` und `https:` ([`src/shared/links.ts`](src/shared/links.ts)).
 
 ### Lokale Schnittstelle und Hooks
 
@@ -380,7 +383,7 @@ Jede Windows-Shell startet mit der mitgelieferten Integration aus [`resources/sh
 | `palette/` | Befehlspalette: Einträge, unscharfe Suche, gekürzte Pfade |
 | `settings/` | Einstellungsdialog und Übersicht der Tastenkürzel |
 | `toasts/` | Hinweise unten rechts |
-| `terminal/` | ein xterm.js pro Tab, inaktive ausgeblendet statt zerstört; Verlauf serialisieren und ausgegraut wiederherstellen (`history.ts`) |
+| `terminal/` | ein xterm.js pro Tab, inaktive ausgeblendet statt zerstört; Verlauf serialisieren und ausgegraut wiederherstellen (`history.ts`); Rechtsklick und `Ctrl` + Klick auf Links (`mouse.ts`); Links ohne die gestrichelte Linie von xterm.js (`linkUnderline.ts`) |
 | `styles/` | Design-Variablen und Terminal-Farbschemata aus dem Prototyp (`tokens.css`), übriges CSS (`app.css`) |
 
 **Menüs und Dialoge über der Titelleiste:** Die Titelleiste ist die Zieh-Fläche des Fensters (`-webkit-app-region: drag`). Was darüber liegt oder hineinragt (Menüs, Abdunkelung eines Dialogs, Tooltip), braucht `-webkit-app-region: no-drag`, sonst verschiebt ein Klick dort das Fenster. Menüs bleiben links der nativen Fensterknöpfe (`navigator.windowControlsOverlay`). Solange ein Menü oder Dialog offen ist (`usePopupOpen`), ruhen die Tastenkürzel.
@@ -419,10 +422,10 @@ npm run typecheck    # TypeScript prüfen
 **`npm test`** ([`vitest.config.mts`](vitest.config.mts)) läuft in Node, ohne Electron und ohne Fenster; lädt getesteter Code doch Electron, schlägt der Test laut fehl.
 
 - `test/workspace/`: der Workspace-Kern mit allen Ports nachgemacht ([`test/support/`](test/support)): ein Terminal-Backend, das Startaufträge aufzeichnet und Ausgabe und Prozessende einspeisen lässt, Speicher im Arbeitsspeicher, steuerbare Uhr, steuerbare Prozess-Sonde mit Prozessbäumen, nachgemachtes System. Die lokale Schnittstelle läuft echt auf `127.0.0.1`; die Tests schicken echte HTTP-Anfragen mit Meldungen des Starters und dokumentierten Hook-Nutzdaten. Ein Neustart ist ein neuer Kern auf demselben gespeicherten Zustand. Geprüft wird äusseres Verhalten: Tabs, Startaufträge, Ordner-Erkennung, Rückfrage, geschlossene Tabs, Claude-Zuordnung und Status, Einfrieren, Prozess-Regeln, Hinweise, offene Punkte, Wiederherstellen, Übernahme aus Version 1.
-- `test/renderer/`: reine Logik der Oberfläche ohne DOM: Zuordnung der Tastenkürzel (auch Schweizer Tastatur und Ziffernblock), Übersicht aus derselben Tabelle, `Ctrl` + Mausrad, Tasten im Menü, Suche und Wirkung jedes Befehls der Palette (auch mit dem Kern), gekürzte Pfade, Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node, Einfügestelle und Scrollen beim Ziehen.
-- `test/main/`: Hauptprozess ohne Electron: Design hell/dunkel, Entwicklermenü, Datenordner und Übernahme, Umgebung der Shells, Shell-Erkennung mit nachgemachtem Rechner, Start der Shells mit Integration, Prüfung der Execution Policy, Auswertung der Prozess-Sonde, „Ordner im Explorer öffnen“.
+- `test/renderer/`: reine Logik der Oberfläche ohne DOM: Zuordnung der Tastenkürzel (auch Schweizer Tastatur und Ziffernblock), Übersicht aus derselben Tabelle, `Ctrl` + Mausrad, Tasten im Menü, Suche und Wirkung jedes Befehls der Palette (auch mit dem Kern), gekürzte Pfade, Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node, Einfügestelle und Scrollen beim Ziehen; mit echtem xterm.js auch Rechtsklick mit und ohne Mausmeldung, `Ctrl` + Klick auf Links und Links ohne gestrichelte Linie.
+- `test/main/`: Hauptprozess ohne Electron: Design hell/dunkel, Entwicklermenü, Datenordner und Übernahme, Umgebung der Shells, Shell-Erkennung mit nachgemachtem Rechner, Start der Shells mit Integration, Prüfung der Execution Policy, Auswertung der Prozess-Sonde, „Ordner im Explorer öffnen“, Links öffnen mit nachgemachtem `shell.openExternal`.
 
-**`npm run test:shells`** ([`test/shells/`](test/shells)) startet über das echte Terminal-Backend die echten Shells mit der echten Integration: PowerShell 7, Windows PowerShell, cmd und Git Bash; nicht installierte Shells werden übersprungen. Im PATH liegt ein nachgemachtes `claude` (als `.exe`, aus `ClaudeStub.cs` mit dem `csc.exe` von .NET Framework gebaut, und als `.cmd`), das Argumente und Umgebung in eine Datei schreibt. Geprüft werden: Gleichheit der Argumente mit einem direkten Aufruf, Ergänzen und Durchreichen, die Meldungen des Starters (auch nach `Ctrl+C` und bei Exit-Code ungleich 0), ohne THub und ohne `claude`, Ordner-Meldungen (auch mit Leerzeichen und Umlauten), Laden des Profils, Startbefehl genau einmal, Ende zu Ende mit dem echten Kern und der echten lokalen Schnittstelle (auch mit nachgemachter Gruppenrichtlinie `AllSigned`), Fortsetzen nach einem Neustart sowie das Beenden aller Nachfahren beim Schliessen mit der echten Prozess-Sonde. Dazu die Einordnung des Starters allein (`classify.test.ts`, mit `THUB_STARTER_DRYRUN`).
+**`npm run test:shells`** ([`test/shells/`](test/shells)) startet über das echte Terminal-Backend die echten Shells mit der echten Integration: PowerShell 7, Windows PowerShell, cmd und Git Bash; nicht installierte Shells werden übersprungen. Im PATH liegt ein nachgemachtes `claude` (als `.exe`, aus `ClaudeStub.cs` mit dem `csc.exe` von .NET Framework gebaut, und als `.cmd`), das Argumente und Umgebung in eine Datei schreibt. Geprüft werden: Gleichheit der Argumente mit einem direkten Aufruf, Ergänzen und Durchreichen, die Meldungen des Starters (auch nach `Ctrl+C` und bei Exit-Code ungleich 0), ohne THub und ohne `claude`, Ordner-Meldungen (auch mit Leerzeichen und Umlauten), Laden des Profils, Startbefehl genau einmal, Ende zu Ende mit dem echten Kern und der echten lokalen Schnittstelle (auch mit nachgemachter Gruppenrichtlinie `AllSigned`), Fortsetzen nach einem Neustart (auch ohne `THUB_STARTER`, mit verkürzter Frist für die Start-Meldung) sowie das Beenden aller Nachfahren beim Schliessen mit der echten Prozess-Sonde. Dazu die Einordnung des Starters allein (`classify.test.ts`, mit `THUB_STARTER_DRYRUN`).
 
 **Warum kein Test eine laufende THub-Instanz anspricht,** auch wenn der Testlauf selbst in einem THub-Tab läuft:
 
@@ -461,6 +464,7 @@ Für automatische Prüfungen der echten App (`npm start`, `electron .` oder die 
   - Das Fenster öffnet ausserhalb des Bildschirms, ohne Aktivierung und ohne Taskleisten-Eintrag; es nimmt niemandem den Fokus.
   - Grösse und Lage des Fensters werden nicht gespeichert, und ein zweiter Start holt es nicht nach vorne.
   - „Ordner im Explorer öffnen“ öffnet kein Explorer-Fenster; der Ordner steht nur in der Ausgabe.
+  - `Ctrl` + Klick auf einen Link öffnet keinen Browser; die Adresse steht nur in der Ausgabe („Testmodus: Der Browser würde … öffnen.“).
   - Kopieren, Einfügen und „Pfad kopieren“ benutzen eine eigene Zwischenablage im Speicher statt der echten des Nutzers.
   - Der Ordner-Dialog von Windows („Ordner wählen …“, „Ändern …“, „Standardordner ändern“) geht nicht auf: Als gewählter Ordner gilt `THUB_TEST_PICK_DIR`, ohne diese Variable ein Abbruch.
 

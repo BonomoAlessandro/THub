@@ -1,6 +1,6 @@
 # 23 – Fortsetzen ohne Starter endet nicht in einer Endlosschleife
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: –
 User Stories: 28, 60, 63
 Spezifikation: „Wiederherstellen“ und die Abschnitte zu Starter und Ausführungsrichtlinie
