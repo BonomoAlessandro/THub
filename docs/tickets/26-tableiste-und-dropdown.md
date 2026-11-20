@@ -1,8 +1,8 @@
-# 26 – Tab-Leiste, neue Tabs am Ende, Dropdown im dunklen Design
+# 26 – Tab-Leiste, neue Tabs am Ende, Stern-Farbe und Dropdown im dunklen Design
 
-Status: `offen` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: –
-Herkunft: Abnahme von Hand (Ticket 19), „Die Tableiste“, „Neue Tabs“ und „Dropdown in den Einstellungen“ in [docs/abnahme.md](../abnahme.md)
+Herkunft: Abnahme von Hand (Ticket 19), „Die Tableiste“, „Neue Tabs“ und „Dropdown in den Einstellungen“ in [docs/abnahme.md](../abnahme.md), dazu die Farbe des Claude-Sterns (Wunsch des Nutzers während der Abnahme)
 Spezifikation: „Oberfläche (Renderer)“, Design-Tokens
 
 ## Was gebaut wird
@@ -15,6 +15,7 @@ Spezifikation: „Oberfläche (Renderer)“, Design-Tokens
 - **Neue Tabs am Ende.**
   - `+`, `Ctrl+Shift+T`, Pfeil-Menü (Shell oder „Neues Terminal in …“) und Palette öffnen den neuen Tab am Ende der Leiste, nicht neben dem aktiven.
   - Ausnahmen bleiben: „Duplizieren“ legt rechts neben der Quelle an (Ticket 16), und ein wieder geöffneter Tab kommt an seine alte Stelle (Ticket 15).
+- **Hellerer Claude-Stern im dunklen Design.** Der Stern „arbeitet“ hebt sich im dunklen Design zu wenig ab (heute `#a78bfa`, Kontrast 4,6–5,5 : 1 auf der Tab-Leiste). Neu `--st-working: #c4b5fd` im dunklen Design (6,7–8,2 : 1); das helle Design bleibt beim kräftigen Violett. Spezifikation (Token-Tabelle) und Prototyp (`prototype/styles.css`) gleich mitziehen. Vom Nutzer so entschieden.
 - **Dropdown im dunklen Design.** Die aufgeklappte Liste „Standard-Shell“ in den Einstellungen ist im dunklen Design weiss. Sie soll dem Design folgen, etwa über `color-scheme` je nach aktivem Design, und auch bei „System“ stimmen. Andere native Bedienelemente gleich mitprüfen.
 
 ## Akzeptanzkriterien
@@ -29,3 +30,4 @@ Spezifikation: „Oberfläche (Renderer)“, Design-Tokens
 - [ ] Die Tabs sind etwas höher; ein Klick knapp über einem Tab (im maximierten Fenster ganz oben) wählt ihn.
 - [ ] Mit dem ersten Tab aktiv auf `+` → der neue Tab erscheint am Ende.
 - [ ] Im dunklen Design ist die aufgeklappte Liste „Standard-Shell“ dunkel und lesbar.
+- [ ] Der Claude-Stern „arbeitet“ ist im dunklen Design gut sichtbar.
