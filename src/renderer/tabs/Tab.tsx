@@ -45,7 +45,7 @@ export function Tab({ tab, active, renaming, onActivate, onClose, onStartRename,
       onMouseEnter={(e) => onHover(e.currentTarget)}
       onMouseLeave={() => onHover(null)}
     >
-      <TabIcon kind="terminal" status="idle" />
+      <TabIcon kind={tab.kind} status={tab.status} />
       {renaming ? (
         <RenameInput initial={tab.name} onFinish={onFinishRename} />
       ) : (

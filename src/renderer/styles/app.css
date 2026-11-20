@@ -305,6 +305,60 @@ svg.i {
   fill: none;
   stroke-linecap: round;
 }
+.st-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Arbeitet: violetter Claude-Stern, der rotiert und pulsiert. */
+.st[data-s='working'] {
+  color: var(--st-working);
+}
+.st[data-s='working'] svg.spark {
+  animation: spark 1.6s var(--ease) infinite;
+}
+
+/* Wartet: oranger Punkt mit Ping-Ring. Ring exakt auf dem Punkt: beide 8 px, mittig im 14-px-Feld (3 px Rand). */
+.st[data-s='waiting'] {
+  color: var(--st-waiting);
+}
+.st[data-s='waiting'] .st-dot {
+  animation: blinkdot 1.4s ease-in-out infinite;
+}
+.st-ping {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  animation: ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Prozesse laufen: blauer, ruhig atmender Punkt. */
+.st[data-s='processes'] {
+  color: var(--st-processes);
+}
+.st[data-s='processes'] .st-dot {
+  animation: breathe 2.2s ease-in-out infinite;
+}
+
+/* Fertig, noch nicht angeschaut: grüner Punkt. Pausiert: graues Pause-Symbol. */
+.st[data-s='finished'] {
+  color: var(--st-finished);
+}
+.st[data-s='paused'] {
+  color: var(--st-paused);
+}
+.st svg.pause {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+  stroke: none;
+}
 
 /* ---------- Terminal-Fläche: abgerundete Karte mit feinem Rand ---------- */
 .terminal-area {
@@ -737,7 +791,52 @@ kbd {
     transform: scale(0.96);
   }
 }
+/* Status-Symbole (Claude-Stern 1,6 s, Ping 1,4 s, Atmen 2,2 s) */
+@keyframes spark {
+  0% {
+    transform: rotate(0deg) scale(0.8);
+  }
+  50% {
+    transform: rotate(90deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(180deg) scale(0.8);
+  }
+}
+@keyframes ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+@keyframes blinkdot {
+  50% {
+    opacity: 0.6;
+  }
+}
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
+/* Reduzierte Bewegung (Windows-Einstellung): wie im Prototyp. Alles steht still, nur der Stern von „arbeitet“
+   dreht sich langsam und gleichmässig, damit „arbeitet“ von „ruht“ zu unterscheiden bleibt. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -745,5 +844,8 @@ kbd {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition: none !important;
+  }
+  .st[data-s='working'] svg.spark {
+    animation: spin 2.4s linear infinite !important;
   }
 }

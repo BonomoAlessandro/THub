@@ -70,6 +70,16 @@ export function TerminalTypeIcon() {
   );
 }
 
+/** Pause-Symbol für „pausiert“: zwei gefüllte, abgerundete Balken im 10er-Raster. */
+export function PauseIcon() {
+  return (
+    <svg className="pause" viewBox="0 0 10 10" aria-hidden="true">
+      <rect x="1.5" y="1" width="2.6" height="8" rx="0.8" />
+      <rect x="5.9" y="1" width="2.6" height="8" rx="0.8" />
+    </svg>
+  );
+}
+
 /** Claude-Stern: ruhend als Typ-Symbol eines Claude-Tabs, rotierend und pulsierend für „arbeitet“. */
 export function SparkIcon() {
   return (

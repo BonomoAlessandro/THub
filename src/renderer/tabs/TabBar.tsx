@@ -5,6 +5,7 @@ import { Menu } from '../popup/Menu';
 import { focusTerminal } from '../terminal/terminalViews';
 import { newTabMenuEntries } from './newTabMenu';
 import { Tab } from './Tab';
+import { STATUS_TEXT } from './TabIcon';
 import { Tooltip } from './Tooltip';
 
 const api = window.thub;
@@ -227,6 +228,8 @@ export function TabBar({
             <dd className="mono">{tipTab.cwd}</dd>
             <dt>Shell</dt>
             <dd>{tipTab.shellName}</dd>
+            <dt>Status</dt>
+            <dd>{STATUS_TEXT[tipTab.status]}</dd>
           </dl>
         </Tooltip>
       )}
