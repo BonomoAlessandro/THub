@@ -1,4 +1,4 @@
-/* Oberfläche nach dem Prototyp (prototype/styles.css): Tab-Leiste, Terminal-Karte, Menüs, Dialoge, Tooltip. */
+/* Oberfläche nach dem Prototyp (prototype/styles.css): Tab-Leiste, Terminal-Karte, Menüs, Dialoge, Hinweise, Tooltip. */
 
 /* ---------- Grundlagen ---------- */
 * {
@@ -634,6 +634,11 @@ kbd {
 .set-ctl > * {
   flex: none;
 }
+/* Neben einem Schalter, der kaum Platz braucht, darf der Text breiter sein und bleibt wie im Prototyp einzeilig. */
+.set-row:has(.switch) > :first-child {
+  flex: 0 1 auto;
+  max-width: none;
+}
 
 /* Ordnerpfad zum Ansehen; ohne Standardordner steht gedämpft „Benutzerordner“ darin. Er schrumpft als Einziges. */
 .path-box {
@@ -716,6 +721,35 @@ kbd {
   outline-offset: -2px;
 }
 
+/* Schalter für an/aus (Hinweise im Fenster); an ist er neutral in der Textfarbe, ohne Akzentfarbe. */
+.switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 99px;
+  background: var(--switch-off);
+  transition: background var(--dur) var(--ease);
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform var(--dur) var(--ease);
+}
+.switch.on {
+  background: var(--accent);
+}
+.switch.on::after {
+  transform: translateX(16px);
+  background: var(--on-accent);
+}
+
 /* Auswahlfeld, z.B. die Standard-Shell; der Pfeil ist ein eingebettetes Symbol wie im Prototyp. */
 .select {
   height: 30px;
@@ -729,6 +763,151 @@ kbd {
   border-radius: var(--r-sm);
   -webkit-appearance: none;
   appearance: none;
+}
+
+/* ---------- Hinweise ---------- */
+/*
+ * Unten rechts über der Terminal-Fläche, 18 px vom Fensterrand, gestapelt wie im Prototyp, der neueste oben. Die
+ * Spalte beginnt erst unter der Titelleiste und überdeckt deren Zieh-Fläche nie; stehen mehr Hinweise, als Platz ist,
+ * lässt sie sich mit dem Mausrad scrollen. Ihr Rand lässt Platz für Schatten und Bewegung der Karten, die der
+ * Scrollbereich sonst abschnitte. Nur die Karten nehmen die Maus an, daneben geht alles ans Terminal.
+ */
+.toasts {
+  position: fixed;
+  top: var(--titlebar-h);
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: calc(320px + 32px + 18px);
+  max-width: 100%;
+  padding: 10px 18px 18px 32px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  pointer-events: none;
+}
+.toasts::-webkit-scrollbar {
+  display: none;
+}
+.toasts > :first-child {
+  margin-top: auto;
+}
+
+/* Deckend wie Menüs und Dialoge; die ganze Karte ist anklickbar, ohne „Öffnen“-Button. */
+.toast {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 14px 42px 13px 16px;
+  background: var(--dialog-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  pointer-events: auto;
+  transition:
+    box-shadow var(--dur-fast),
+    border-color var(--dur-fast),
+    transform var(--dur-fast) var(--ease);
+  animation: toast-in 240ms var(--ease);
+}
+/* Beim Überfahren hell wie im Prototyp, aber deckend: die Überfahr-Farbe liegt als innerer Schatten auf der Karte. */
+.toast:hover {
+  border-color: var(--text-faint);
+  box-shadow:
+    inset 0 0 0 100vmax var(--btn-hover),
+    var(--shadow-lg);
+  transform: translateX(-2px);
+}
+.toast.out {
+  pointer-events: none;
+  animation: toast-out 180ms var(--ease) forwards;
+}
+.toast .st {
+  margin-top: 2px;
+  transform: scale(1.25);
+}
+.t-body {
+  flex: 1;
+  min-width: 0;
+}
+.t-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.t-msg {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+/* Zeigt, dass die ganze Karte anklickbar ist, ohne wie ein Button auszusehen; beim Überfahren hell. */
+.t-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-faint);
+  transition: color var(--dur-fast);
+}
+.t-hint svg.i {
+  width: 13px;
+  height: 13px;
+  transition: transform var(--dur-fast) var(--ease);
+}
+.toast:hover .t-hint {
+  color: var(--text);
+}
+.toast:hover .t-hint svg.i {
+  transform: translateX(3px);
+}
+/* Das × erscheint beim Überfahren. */
+.t-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-xs);
+  display: grid;
+  place-items: center;
+  color: var(--text-faint);
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+.toast:hover .t-close {
+  opacity: 1;
+}
+.t-close:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.t-close svg.i {
+  width: 13px;
+  height: 13px;
+}
+/* Countdown von „fertig“: schrumpft vom übrigen Anteil (--p) in der übrigen Zeit (--d) auf null. */
+.t-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--st-finished);
+  opacity: 0.55;
+  transform-origin: left;
+  transform: scaleX(var(--p, 1));
+  animation: toast-countdown var(--d, 6s) linear forwards;
 }
 
 /* ---------- Tooltip ---------- */
@@ -834,9 +1013,28 @@ kbd {
     transform: rotate(360deg);
   }
 }
+/* Hinweise: herein von unten, hinaus nach rechts, Countdown-Linie auf null. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+@keyframes toast-countdown {
+  to {
+    transform: scaleX(0);
+  }
+}
 
 /* Reduzierte Bewegung (Windows-Einstellung): wie im Prototyp. Alles steht still, nur der Stern von „arbeitet“
-   dreht sich langsam und gleichmässig, damit „arbeitet“ von „ruht“ zu unterscheiden bleibt. */
+   dreht sich langsam und gleichmässig, damit „arbeitet“ von „ruht“ zu unterscheiden bleibt. Die Countdown-Linie
+   eines Hinweises läuft weiter: Sie zeigt die übrige Zeit an. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -847,5 +1045,8 @@ kbd {
   }
   .st[data-s='working'] svg.spark {
     animation: spin 2.4s linear infinite !important;
+  }
+  .t-progress {
+    animation-duration: var(--d, 6s) !important;
   }
 }
