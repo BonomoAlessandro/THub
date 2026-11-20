@@ -22,6 +22,7 @@ npm start          # bauen + App starten
 npm run dev        # wie start, mit Sourcemaps und unminifiziert
 npm run typecheck  # TypeScript prüfen
 npm test           # Kern-Tests mit Vitest
+npm run test:shells  # Shell-Integration mit echten Shells (rund 3 Minuten)
 npm run dist       # Installer bauen -> release\THub Setup <version>.exe
 ```
 
@@ -41,14 +42,18 @@ src/
     schema.ts               Gespeicherter Zustand (Version 2) und Übernahme aus Version 1
     windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
     claude.ts               Claude-Zuordnung pro Tab: Vertrag von Starter und Hooks, Regeln
+    cwdReport.ts            Ordner-Meldungen der Shell (OSC 7, OSC 9;9) im rohen Ausgabestrom erkennen
   main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
   main/hookFile.ts          Hook-Datei für Claude Code (claude-hooks.json im Datenordner)
   main/ptyManager.ts        Terminal-Backend: startet/beendet die Shells über node-pty (eine pro Tab)
-  main/shellEnv.ts          Umgebung der Shells: ohne geerbte THUB_*/TERMHUB_* und Interna des Dev-Starts
+  main/shellLaunch.ts       Start jeder Windows-Shell mit der mitgelieferten Integration (resources/shell)
+  main/shellEnv.ts          Umgebung der Shells: ohne geerbte THUB_*/TERMHUB_* und Interna des Dev-Starts,
+                            NO_PROXY um 127.0.0.1,localhost ergänzt
   main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json; Verlauf pro Tab unter history\
   main/dataFolder.ts        Datenordner (THub bzw. THub-dev) und einmalige Übernahme aus dem alten Ordner
   main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
-  main/shells.ts            Feste Shell-Liste (pwsh, powershell, cmd), bis die Shell-Erkennung kommt
+  main/shells.ts            Feste Shell-Liste (pwsh, powershell, cmd, Git Bash am Standardort), bis die
+                            Shell-Erkennung kommt
   main/theme.ts             Design hell/dunkel: folgt Windows (nativeTheme), zieht Fensterfarbe, Fensterknöpfe und Oberfläche nach
   preload/preload.ts        Stellt dem Renderer die API `window.thub` bereit
   renderer/                 React-Oberfläche: zeigt an und schickt Befehle, die Tab-Logik liegt im Kern
@@ -67,6 +72,8 @@ test/
   workspace/                Kern-Tests (Teststelle 1)
   renderer/                 Zuordnung der Tastenkürzel; Verlauf mit echtem xterm.js in Node
   main/                     Hauptprozess ohne Electron: Design hell/dunkel, Datenordner und Übernahme, Umgebung der Shells
+  shells/                   Teststelle 2: echte Shells über das echte Terminal-Backend (npm run test:shells)
+resources/shell/            Shell-Integration und claude-Starter; im Paket als echte Dateien unter resources\shell
 build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
 
@@ -115,6 +122,20 @@ Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem
 - Beendet THub sich selbst (App beenden, Tab schliessen, Windows-Abmeldung), wird die Zuordnung eingefroren: Spätere Ereignisse ändern sie nicht mehr.
 - Ein zweiter Start öffnet keinen Server und schreibt keine Hook-Datei.
 
+### Shell-Integration
+
+Jede Windows-Shell startet mit der mitgelieferten Integration aus `resources/shell/` (im installierten Paket ausserhalb des asar-Archivs unter `resources\shell`). Sie lädt zuerst das normale Profil des Nutzers und meldet danach bei jedem Prompt den aktuellen Ordner; ein eigener Prompt (etwa oh-my-posh) bleibt, wie er ist.
+
+| Shell | Start | Ordner-Meldung |
+|---|---|---|
+| PowerShell 7, Windows PowerShell | `-NoLogo -NoProfile -NoExit -EncodedCommand <integration.ps1>`; die Integration lädt die Profile selbst. Kein Skript, darum blockiert eine Execution Policy sie nicht. | OSC 9;9, nur für Orte im Dateisystem |
+| cmd | `/s /k ""…\integration.cmd""`, ohne `/d`: AutoRun läuft wie gewohnt | OSC 9;9 vorne im `PROMPT` |
+| Git Bash | `--rcfile …/integration.bash -i`; lädt, was eine Login-Shell lädt (`/etc/profile`, dann `~/.bash_profile` usw.) | OSC 7 (`file://…`, prozentkodiert) per `PROMPT_COMMAND` |
+
+- Der Kern erkennt die Meldungen im rohen Ausgabestrom (auch über Stückgrenzen, Endzeichen BEL oder `ESC \`), wandelt sie in Windows-Pfade (Prozentkodierung, `/c/…` → `C:\…`, 8.3-Kurznamen) und merkt sich den Ordner als zuletzt aktiven Ordner des Tabs, wenn es ihn gibt. Der Tooltip zeigt ihn; nach einem Neustart startet der Tab dort (sonst Startordner, Standardordner, Benutzerordner). Die Sequenzen bleiben im Strom, xterm.js zeigt sie nicht an.
+- Startbefehl (für das Fortsetzen von Claude, Ticket 12): läuft genau einmal, sobald die Shell bereit ist; PowerShell und Git Bash bekommen ihn über `THUB_START_CMD` (vor dem Ausführen entfernt), cmd in der `/k`-Zeile hinter der Integration.
+- Fehlt die Integration oder scheitert sie, startet die Shell trotzdem. Shells ohne Integration (WSL) starten wie bisher.
+
 ### Tastenkürzel
 
 | Kürzel | Aktion |
@@ -131,7 +152,7 @@ Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem
 
 ## Offene Punkte (zum Ausspezifizieren)
 
-- **Was heisst „wiederherstellen“?** Aktuell: neue Shell im *Startverzeichnis* der Session, darüber der frühere Inhalt ausgegraut. Nicht erhalten bleiben: laufende Programme und ein später per `cd` gewechseltes Verzeichnis.
+- **Was heisst „wiederherstellen“?** Aktuell: neue Shell im zuletzt aktiven Ordner des Tabs, darüber der frühere Inhalt ausgegraut. Nicht erhalten bleiben laufende Programme.
 - **Shell-Auswahl:** fest `powershell.exe` (in `state.json` änderbar). PowerShell 7, cmd, Git Bash, WSL? Pro Session wählbar?
 - **Default-Verzeichnis:** global für alle; pro Session überschreibbar? Was passiert mit bestehenden Sessions, wenn es geändert wird?
 - **Schliessen:** ohne Rückfrage. Bestätigung, wenn noch ein Programm läuft?
