@@ -1,6 +1,6 @@
 # 06 – Shells erkennen und pro Tab wählen
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 05
 User Stories: 6–9, 75 (Standard-Shell)
 Spezifikation: „Shell-Erkennung“, „Gespeicherter Zustand“ (Übernahme aus Version 1)
