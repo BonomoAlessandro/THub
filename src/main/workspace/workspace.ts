@@ -27,6 +27,7 @@ import {
 } from './claude';
 import { CwdReportScanner } from './cwdReport';
 import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
+import { openPointsContext } from './openPoints';
 import type { CancelTimer, ShellInfo, StartOrder, WorkspacePorts } from './ports';
 import { ProcessTracker, type ProcessTab, type ShellTree } from './processRules';
 import { resumeCommand, sessionToResume } from './resume';
@@ -923,6 +924,13 @@ class WorkspaceCore implements Workspace {
         this.notify(tab.id, 'finished');
       } else if (!wasWaiting && step.status.activity === 'waiting') this.notify(tab.id, 'waiting');
     });
+  }
+
+  claudeHookReply(tabId: string, event: string): object | undefined {
+    // Die Anweisung gilt in jeder Session: SessionStart kommt auch bei Fortsetzen, /clear und Kompaktieren. Auch
+    // eingefroren beim Beenden: Sie ändert nur, wie Claude schreibt, nicht den Zustand von THub.
+    if (event !== 'SessionStart' || !this.state.settings.openPoints || !this.findTab(tabId)) return undefined;
+    return openPointsContext();
   }
 
   /**

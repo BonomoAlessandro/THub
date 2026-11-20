@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { StateStore } from '../../src/main/store';
 import { MemoryStorage } from '../support/fakes';
 import { hookEvent, hookPayload, type HookSample } from '../support/apiClient';
+import { expectHookReply } from '../support/claudeTab';
 import { startWorkspaceWithApi, type TestWorkspace, type TestWorkspaceOptions } from '../support/harness';
 import { makeTempDir } from '../support/tempDir';
 
@@ -32,15 +33,15 @@ async function launchNew(h: TestWorkspace, tabId: string, cwd = 'C:\\proj'): Pro
   return JSON.parse(res.body).sessionId;
 }
 
-/** Claude Code schickt ein Hook-Ereignis; die Antwort ist immer ein leerer Erfolg. */
+/** Claude Code schickt ein Hook-Ereignis; die Antwort ist ein Erfolg ohne Entscheidungsfelder (`expectHookReply`). */
 async function hook(
   h: TestWorkspace,
   tabId: string,
   sample: HookSample,
   overrides: Record<string, unknown>,
 ): Promise<void> {
-  const res = await h.api.hook(tabId, hookEvent(sample), hookPayload(sample, overrides));
-  expect(res).toMatchObject({ status: 200, body: '' });
+  const event = hookEvent(sample);
+  expectHookReply(await h.api.hook(tabId, event, hookPayload(sample, overrides)), event);
 }
 
 describe('Claude-Zuordnung', () => {
@@ -173,11 +174,10 @@ describe('Claude-Zuordnung', () => {
   });
 
   describe('Ersatzregel, falls SessionStart fehlt', () => {
-    it('/hooks/SessionStart antwortet leer; ein Ereignis mit neuer session_id ohne SessionStart übernimmt die Kennung', async () => {
+    it('/hooks/SessionStart antwortet ohne Entscheidungsfelder; ein Ereignis mit neuer session_id ohne SessionStart übernimmt die Kennung', async () => {
       const { h, tabId } = await setup();
       const sessionStart = await h.api.hook(tabId, 'SessionStart', hookPayload('SessionStart-startup', { cwd: 'C:\\x' }));
-      expect(sessionStart).toMatchObject({ status: 200, body: '' });
-      expect(sessionStart.headers['content-length']).toBe('0');
+      expectHookReply(sessionStart, 'SessionStart');
 
       const { h: other, tabId: otherTab } = await setup();
       const id = await launchNew(other, otherTab);

@@ -49,6 +49,12 @@ export interface ClaudeReceiver {
   claudeExit(tabId: string, sessionId: string | undefined, exitCode: number): void;
   /** Hook-Ereignis von Claude Code (`event` wie `hook_event_name`), mit den rohen Nutzdaten. */
   claudeHook(tabId: string, event: string, payload: unknown): void;
+  /**
+   * Was der Empfänger Claude auf ein Hook-Ereignis antwortet, bevor es verarbeitet wird; `undefined` heisst leer. Einzige
+   * Ausnahme von der leeren Antwort: `SessionStart` bei eingeschalteter Einstellung „Offene Punkte“ (Ticket 22) liefert
+   * die Anweisung als zusätzlichen Kontext. Nie Entscheidungsfelder.
+   */
+  claudeHookReply(tabId: string, event: string): object | undefined;
 }
 
 /** Die laufende lokale Schnittstelle, wie der Kern sie an Terminals und Starter weitergibt. */

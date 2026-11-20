@@ -105,6 +105,7 @@ export function normalizeSettings(raw: unknown): Settings {
       ? Math.min(FONT_SIZE.max, Math.max(FONT_SIZE.min, Math.round(s.fontSize)))
       : FONT_SIZE.default,
     notifications: typeof s.notifications === 'boolean' ? s.notifications : true,
+    openPoints: typeof s.openPoints === 'boolean' ? s.openPoints : true,
   };
   if (isNonEmptyString(s.defaultShellId)) settings.defaultShellId = s.defaultShellId;
   return settings;
