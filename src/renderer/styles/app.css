@@ -824,6 +824,152 @@ kbd {
   appearance: none;
 }
 
+/* Unauffälliger Knopf als Verweis, links in der Fusszeile, z.B. „Alle Tastenkürzel …“ in den Einstellungen. */
+.link-btn {
+  margin-right: auto;
+  padding: 0 4px;
+  border-radius: var(--r-xs);
+  color: var(--text-muted);
+}
+.link-btn:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+/* ---------- Übersicht der Tastenkürzel ---------- */
+/* Zeilen wie in den Einstellungen, etwas enger; die Liste scrollt, wenn das Fenster niedrig ist. */
+.keys-list {
+  max-height: calc(89vh - 170px);
+  margin: 0 -20px;
+  padding: 0 20px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.keys-list:focus-visible {
+  outline-offset: -2px;
+}
+.keys-list .set-row {
+  padding: 7px 0;
+}
+.keys-list + .hint {
+  margin: 10px 0 0;
+}
+/* Gleichwertige Kombinationen nebeneinander, mit „oder“ dazwischen. */
+.keys-or,
+.combo {
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.combo kbd {
+  margin: 0 2px;
+}
+
+/* ---------- Befehlspalette ---------- */
+/* Wie im Prototyp, aber deckend (ohne Mica): Suchfeld, Liste mit Gruppen, Fusszeile mit der Bedienung. */
+.palette {
+  width: min(600px, calc(100% - 32px));
+  margin-top: 64px;
+  background: var(--menu-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: pop var(--dur) var(--ease);
+}
+.pal-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.pal-input input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  font: 15px var(--font-ui);
+  color: var(--text);
+}
+.pal-input input::placeholder {
+  color: var(--text-faint);
+}
+/* In einer Unterliste steht ihr Name vor dem Suchfeld. */
+.pal-crumb {
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--hover-strong);
+  white-space: nowrap;
+}
+.pal-list {
+  max-height: min(420px, 58vh);
+  overflow: auto;
+  padding: 5px;
+  scrollbar-width: thin;
+}
+.pal-group {
+  padding: 8px 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+.pal-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  color: var(--text);
+}
+.pal-item .mi-ic {
+  width: 16px;
+}
+/* Die gewählte Zeile: neutral hervorgehoben, mit Balken in der Textfarbe links. */
+.pal-item.sel {
+  background: var(--hover-strong);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.pal-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  overflow: hidden;
+  white-space: nowrap;
+}
+/* Der Ordner eines Tabs neben dem Namen; ein langer Pfad endet mit „…“. */
+.pal-main small {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Tastenkürzel eines Befehls bzw. „›“ vor einer Unterliste. */
+.mi-kbd {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.pal-empty {
+  padding: 22px;
+  text-align: center;
+  color: var(--text-faint);
+}
+.pal-foot {
+  display: flex;
+  gap: 16px;
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
 /* ---------- Hinweise ---------- */
 /*
  * Unten rechts über der Terminal-Fläche, 18 px vom Fensterrand, gestapelt wie im Prototyp, der neueste oben. Die

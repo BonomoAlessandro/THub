@@ -70,14 +70,17 @@ src/
   renderer/                 React-Oberfläche: zeigt an und schickt Befehle, die Tab-Logik liegt im Kern
     main.tsx                Einstieg; übernimmt zuerst das Design (hell/dunkel), dann wird gezeichnet
     theme.ts                Design übernehmen und live wechseln, Terminal-Farbschema aus den Design-Variablen
-    App.tsx                 Fenster: Tab-Leiste und Terminal-Fläche, Tastenkürzel
+    App.tsx                 Fenster: Tab-Leiste und Terminal-Fläche, Tastenkürzel, Palette und Dialoge
     useWorkspace.ts         Schnappschuss und Ereignisse des Kerns
-    shortcuts.ts            Zuordnung der Tastenkürzel (alles andere geht ans Terminal)
+    shortcuts.ts            Tabelle der Tastenkürzel: daraus die Verarbeitung und die Übersicht (alles andere geht ans
+                            Terminal)
+    commands.ts             Befehle, die Tastenkürzel, Maus und Befehlspalette gemeinsam auslösen
     fontSize.ts             Ctrl + Mausrad in Schritte der Schriftgrösse umrechnen
     tabs/                   Titelleiste mit Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf, Zieh-Fläche,
                             Pfeil-Menü mit den Shells und „Neues Terminal in …“
     popup/                  Menü und Dialog wie im Prototyp, Bedienung mit der Tastatur (menuKeys.ts)
-    settings/               Einstellungsdialog
+    palette/                Befehlspalette: Einträge (paletteEntries.ts), unscharfe Suche (search.ts), Anzeige
+    settings/               Einstellungsdialog und Übersicht der Tastenkürzel
     toasts/                 Hinweise unten rechts: Karten, Herein- und Hinausgleiten, Countdown-Linie
     terminal/               Ein xterm.js pro Tab, inaktive ausgeblendet; meldet „Ansicht bereit“;
                             Verlauf serialisieren und ausgegraut wiederherstellen (history.ts)
@@ -87,7 +90,8 @@ test/
   support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
   workspace/                Kern-Tests (Teststelle 1)
   renderer/                 Zuordnung der Tastenkürzel (auch Schweizer Tastatur, Ziffernblock), Ctrl + Mausrad, Tasten im Menü;
-                            Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node
+                            Übersicht der Tastenkürzel aus derselben Tabelle; Befehlspalette: Suche und Wirkung jedes
+                            Befehls (auch mit dem Kern); Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node
   main/                     Hauptprozess ohne Electron: Design hell/dunkel samt Wahl aus den Einstellungen, Entwicklermenü,
                             Datenordner und Übernahme, Umgebung der Shells, Shell-Erkennung mit nachgemachtem Rechner
   shells/                   Teststelle 2: echte Shells über das echte Terminal-Backend (npm run test:shells)
@@ -126,7 +130,7 @@ Der Inhalt jedes normalen Terminals liegt daneben in `%APPDATA%\THub\history\<Ta
 - THub erkennt die Shells selbst: PowerShell 7 (auch die Store-Version), Windows PowerShell, cmd („Eingabeaufforderung“), Git Bash (Standardort oder laut Registry) und jede WSL-Distribution einzeln, ohne die internen von Docker Desktop. Standard-Shell ist PowerShell 7, sonst Windows PowerShell; in den Einstellungen wählbar. Jeder Tab behält seine Shell, auch über einen Neustart. Fehlt sie beim Wiederherstellen (etwa nach einer Deinstallation), startet der Tab mit der Standard-Shell und zeigt einen Hinweis über der ersten Zeile; seine Shell behält er, sobald es sie wieder gibt, startet er wieder mit ihr. WSL-Tabs starten mit `wsl.exe -d <Distribution> --cd <Ordner>`.
 - Neue Tabs heissen wie ihr Ordner, im Benutzerordner wie der Benutzer, auf einem Laufwerk wie das Laufwerk (`D:`); bei Gleichstand mit „ 2“, „ 3“ usw. Der Name wird beim Anlegen festgelegt und ändert sich danach nicht von selbst; ein von Hand vergebener Name wird nie überschrieben. Aus Version 1 übernommene Tabs behalten ihre Namen.
 - Pfeil neben `+` („Shell oder Ordner wählen“): zuerst die erkannten Shells, die Standard-Shell mit dem Etikett „Standard“; ein Klick öffnet einen Tab mit dieser Shell im Standardordner. Darunter „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter der Pfad) und „Ordner wählen …“ (Ordner-Dialog von Windows). Zuletzt benutzt sind die Startordner neuer Tabs und der letzte Ordner eines Tabs beim Schliessen: höchstens acht, neueste zuerst, ohne Doppelte; angeboten werden nur Ordner, die es noch gibt. Bedienung auch mit Pfeiltasten, Enter und Escape.
-- Zahnrad: Einstellungen mit Standardordner, Standard-Shell, Design, Schriftgrösse, Hinweisen im Fenster und offenen Punkten aus Claudes Antworten; jede Änderung wirkt sofort. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
+- Zahnrad: Einstellungen mit Standardordner, Standard-Shell, Design, Schriftgrösse, Hinweisen im Fenster und offenen Punkten aus Claudes Antworten; jede Änderung wirkt sofort. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal. „Alle Tastenkürzel …“ unten links öffnet die Übersicht der Tastenkürzel; danach geht es zurück zu den Einstellungen.
   - Standardordner: „Ändern …“ öffnet den Ordner-Dialog, „Zurücksetzen“ stellt auf den Benutzerordner zurück. `+` und `Ctrl+Shift+T` öffnen neue Terminals dort; offene Tabs bleiben, wo sie sind.
   - Standard-Shell: die Shell für `+` und `Ctrl+Shift+T`, wählbar unter den erkannten; offene Tabs behalten ihre Shell.
   - Design: System (Standard), Hell oder Dunkel. Die Wahl gilt für Oberfläche, Terminalfläche, Fensterknöpfe und die Dialoge von Windows; bei „System“ zieht ein Wechsel in Windows sofort mit.
@@ -216,11 +220,20 @@ Endet eine Antwort von Claude mit Fragen oder Punkten, die du entscheiden, prüf
 ### Schliessen und wieder öffnen
 
 - **Rückfrage nur, wenn noch etwas läuft:** Ein ruhender Tab, auch ein ruhender Claude-Tab, schliesst sofort (`×`, mittlere Maustaste, `Ctrl+Shift+W`). Wartet Claude auf dich, arbeitet Claude oder laufen im Terminal Prozesse, fragt THub nach, mit dem Grund, dem Hinweis auf `Ctrl+Shift+Z` und dem Gefahr-Knopf „Schliessen“; den Fokus hat „Abbrechen“. Massgeblich ist, was wirklich läuft, nicht das Symbol: Ein grüner Tab mit einem noch laufenden Dev-Server fragt nach; grün allein oder pausiert nicht.
-- **Mehrere Tabs** („Andere Tabs schliessen“, im Menü ab Ticket 16): höchstens eine gemeinsame Rückfrage mit der Liste der Tabs, in denen noch etwas läuft; Abbrechen lässt alle offen.
+- **Mehrere Tabs** („Andere Tabs schliessen“ in der Befehlspalette, im Menü ab Ticket 16): höchstens eine gemeinsame Rückfrage mit der Liste der Tabs, in denen noch etwas läuft; Abbrechen lässt alle offen.
 - **Fenster schliessen oder THub beenden** fragt nie nach, auch nicht, wenn Claude gerade arbeitet: Alles kommt beim nächsten Start zurück.
 - **Alles endet mit dem Tab:** die Shell und alle ihre Nachfahren, auch Programme mit eigener Konsole (etwa per `Start-Process` gestartet), die das Schliessen der Pseudokonsole überleben würden. THub fragt dazu vorher die Prozessliste ab und beendet jeden Prozess nur, wenn Prozess-ID und Startzeit noch stimmen. Dasselbe beim Beenden von THub. Endet eine Shell von selbst (`exit`), beendet THub auch ihren Konsolen-Host, den node-pty sonst bis zum Ende von THub stehen liesse.
 - **Zuletzt geschlossen:** Ein geschlossener Tab wird eingefroren und kommt mit Name, Shell, Ordnern, Verlauf bzw. Claude-Zuordnung an die Spitze einer Liste der letzten zehn (`closedTabs` im Zustand), die einen Neustart übersteht. Ein normaler Tab sichert dabei noch seinen aktuellen Inhalt. Fällt ein Tab aus der Liste, wird seine Verlaufsdatei gelöscht.
-- **`Ctrl+Shift+Z`** öffnet den zuletzt geschlossenen Tab wieder, aus jedem Tab heraus; die Taste geht nicht an die Shell. Er kommt an seiner alten Position zurück und wird aktiv: ein normaler Tab mit seinem Verlauf im zuletzt aktiven Ordner, ein fortzusetzender Claude-Tab setzt seine Session sofort fort. Erkannt wird `Z` am erzeugten Buchstaben, also auch auf der Schweizer Tastatur (dort liegt `Z`, wo die US-Tastatur `Y` hat). Die Befehlspalette (Ticket 17) bietet später die ganze Liste an.
+- **`Ctrl+Shift+Z`** öffnet den zuletzt geschlossenen Tab wieder, aus jedem Tab heraus; die Taste geht nicht an die Shell. Er kommt an seiner alten Position zurück und wird aktiv: ein normaler Tab mit seinem Verlauf im zuletzt aktiven Ordner, ein fortzusetzender Claude-Tab setzt seine Session sofort fort. Erkannt wird `Z` am erzeugten Buchstaben, also auch auf der Schweizer Tastatur (dort liegt `Z`, wo die US-Tastatur `Y` hat). „Zuletzt geschlossen …“ in der Befehlspalette bietet die ganze Liste an.
+
+### Befehlspalette
+
+- **`Ctrl+Shift+P`** öffnet sie, aus jedem Tab heraus; die Taste geht nicht an die Shell. Aussehen wie im Prototyp: Suchfeld, darunter „Tabs“ und „Befehle“, unten die Bedienung.
+- **Tabs** mit Name, Ordner und Status-Symbol; Enter zeigt den Tab an (wie ein Klick auf ihn).
+- **Befehle:** Neues Terminal, Neues Terminal in … (zuletzt benutzte Ordner und „Ordner wählen …“, wie im Pfeil-Menü), Tab umbenennen, Tab schliessen, Andere Tabs schliessen, Zuletzt geschlossen … (die Liste der letzten zehn; Enter öffnet den gewählten Tab wieder), Einstellungen, Standardordner ändern (Ordner-Dialog wie „Ändern …“ in den Einstellungen), Tastenkürzel anzeigen. Rechts steht das Tastenkürzel desselben Befehls, aus der Tabelle der Tastenkürzel. Jeder Befehl wirkt wie über Maus oder Tastenkürzel; Schliessen fragt nach denselben Regeln zurück. Keine Claude-Befehle. Was einen aktiven bzw. einen zweiten Tab braucht, fehlt ohne ihn.
+- **Unscharfe Suche:** Die Zeichen müssen in dieser Reihenfolge vorkommen, nicht nebeneinander („termhb“ findet „termhub“, „neu term“ „Neues Terminal“). Zusammenhängende Treffer und Wortanfänge zählen mehr; vom Ordner eines Tabs zählen nur die letzten zwei Teile, und schwächer als der Name. Die Gruppe mit dem besten Treffer steht oben, bei gleichem Treffer Tabs vor Befehlen.
+- **Bedienung:** Pfeiltasten wählen, Enter führt aus, Escape schliesst (in einer Unterliste: zurück; dort auch Rücktaste im leeren Feld). Danach geht der Fokus ins Terminal. Solange die Palette offen ist, erreicht keine Taste das Terminal, und die Tastenkürzel der App ruhen.
+- **Übersicht der Tastenkürzel** („Tastenkürzel anzeigen“ oder „Alle Tastenkürzel …“ in den Einstellungen; kein eigenes Kürzel): ein Dialog im Stil der Einstellungen, gruppiert nach Tabs, Bearbeiten, Darstellung und Fenster. Er entsteht aus derselben Tabelle (`shortcuts.ts`), nach der die Tasten verarbeitet werden; ein neues Kürzel erscheint dort von selbst.
 
 ### Shell-Integration
 
@@ -250,13 +263,15 @@ Jede Windows-Shell startet mit der mitgelieferten Integration aus `resources/she
 | `Ctrl+Shift+T` | Neues Terminal |
 | `Ctrl+Shift+W` | Aktiven Tab schliessen (mit Rückfrage, wenn noch etwas läuft) |
 | `Ctrl+Shift+Z` | Zuletzt geschlossenen Tab wieder öffnen |
+| `Ctrl+Shift+P` | Befehlspalette |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | Nächster / vorheriger Tab |
 | `Ctrl+PageDown` / `Ctrl+PageUp` | Nächster / vorheriger Tab |
 | `Ctrl+1` … `Ctrl+9` | Zum n-ten Tab springen |
 | `F2` | Aktiven Tab umbenennen |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Kopieren / Einfügen |
+| `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-` / `Ctrl` `0` | Schriftgrösse ändern / zurücksetzen |
 
-`Ctrl+K` und alle anderen Tasten gehen unverändert an die Shell.
+`Ctrl+K` und alle anderen Tasten gehen unverändert an die Shell. In THub zeigt „Tastenkürzel anzeigen“ in der Befehlspalette dieselbe Liste.
 
 ## Offene Punkte (zum Ausspezifizieren)
 
