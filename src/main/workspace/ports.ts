@@ -48,6 +48,10 @@ export interface TerminalBackend {
   start(tabId: string, order: StartOrder, listener: TerminalListener): number;
   write(tabId: string, data: string): void;
   resize(tabId: string, cols: number, rows: number): void;
+  /**
+   * Beendet die Shell des Tabs, indem es ihre Pseudokonsole schliesst. Prozesse mit eigener Konsole (etwa per
+   * `Start-Process` gestartet) erreicht das nicht; die beendet der Kern über die Prozess-Sonde.
+   */
   kill(tabId: string): void;
   /** Beendet alle Shells und wartet, bis sie weg sind, höchstens `timeoutMs`. */
   killAll(timeoutMs: number): Promise<void>;
@@ -111,13 +115,22 @@ export interface ProcessInfo {
 }
 
 export interface ProcessProbe {
-  /** Liefert in einer einzigen Abfrage alle Prozesse des Systems. Der Kern ruft nie zwei Abfragen zugleich auf. */
+  /**
+   * Liefert in einer einzigen Abfrage alle Prozesse des Systems. Wird abgefragt, während noch eine Abfrage läuft,
+   * darf die Sonde beide mit demselben Ergebnis beantworten.
+   */
   snapshot(): Promise<ProcessInfo[]>;
   /**
    * Prozess-ID des Konsolen-Hosts (`conhost.exe`, `OpenConsole.exe`), an dem der Prozess hängt; `null`, wenn
    * sie sich nicht lesen lässt. Der Kern fragt nur für einzelne Prozesse (Git-Bash-Shells und Waisen).
    */
   consoleHost(pid: number): number | null;
+  /**
+   * Beendet diese Prozesse sofort, in dieser Reihenfolge (Ticket 15). Ein Prozess wird nur beendet, wenn er noch
+   * derselbe ist, also Prozess-ID und Startzeit wie in der Abfrage hat; beendete und nicht zugängliche Prozesse werden
+   * übergangen.
+   */
+  terminate(processes: ProcessInfo[]): void;
 }
 
 // ---------- System ----------

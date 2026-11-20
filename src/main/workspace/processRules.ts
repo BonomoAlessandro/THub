@@ -12,6 +12,7 @@
 // - Normale Tabs: jeder Nachfahre der innersten Shell. Claude-Tabs: nur Nachfahren des Claude-Prozesses, die nach
 //   dem letzten Prompt gestartet sind, und nur, solange Claude ruht. WSL: nie.
 // Dazu meldet jede Abfrage für offene Antworten auf Rückfragen, ob Claude seit der Antwort einen Prozess gestartet hat.
+// Für das Beenden (Ticket 15): alle Prozesse der Shell eines Tabs und der Konsolen-Host ihrer Pseudokonsole.
 
 import type { ProcessInfo } from './ports';
 
@@ -72,6 +73,47 @@ export type ConsoleHostLookup = (pid: number) => number | null;
 const ROOT_START_SLACK_MS = 2000;
 
 const CONSOLE_HOSTS = new Set(['conhost.exe', 'openconsole.exe']);
+
+/** Ob der Prozess ein Konsolen-Host ist (`conhost.exe`, `OpenConsole.exe`). */
+export function isConsoleHost(p: ProcessInfo): boolean {
+  return CONSOLE_HOSTS.has(p.name.toLowerCase());
+}
+
+/** Die Wurzel des Prozessbaums eines Tabs: die Prozess-ID von node-pty und wann der Kern die Shell gestartet hat. */
+export interface ShellRoot {
+  pid: number;
+  startedAt: number;
+}
+
+/**
+ * Alle Prozesse der Shell eines Tabs in dieser Abfrage, zum Beenden (Ticket 15): die Wurzel und ihre Nachfahren in jeder
+ * Tiefe, auch Prozesse mit eigener Konsole und deren Konsolen-Hosts. Eltern kommen vor ihren Kindern, damit ein
+ * Prozess, der seine Kinder neu startet, zuerst endet. Ohne Wurzel in der Abfrage (beendet, oder ein anderer Prozess
+ * mit ihrer Prozess-ID) keine: Die Nachfahren einer beendeten Shell sind über ihre Eltern nicht mehr sicher zu finden.
+ */
+export function shellProcesses(snapshot: ProcessInfo[], root: ShellRoot): ProcessInfo[] {
+  const tree = new ProcessTree(snapshot);
+  const shell = tree.byPid.get(root.pid);
+  if (!shell || shell.startTime < root.startedAt - ROOT_START_SLACK_MS) return [];
+  return [shell, ...tree.descendants([shell])];
+}
+
+/**
+ * Der Konsolen-Host der Pseudokonsole, in der eine Shell läuft (Ticket 15): ConPTY startet ihn unmittelbar vor der
+ * Shell als Kind desselben Prozesses (THub), node-pty beides im selben Aufruf. Er gilt nur, wenn direkt vor der Shell
+ * ein Konsolen-Host als Kind von `ownPid` gestartet ist; sonst keiner. `shellPid` ist die Prozess-ID von node-pty.
+ */
+export function ptyConsoleHost(snapshot: ProcessInfo[], ownPid: number, shellPid: number): ProcessInfo | undefined {
+  const tree = new ProcessTree(snapshot);
+  const owner = tree.byPid.get(ownPid);
+  const shell = tree.byPid.get(shellPid);
+  if (!owner || !shell || shell.ppid !== ownPid || !tree.hasParent(shell)) return undefined;
+  const before = tree
+    .childrenOf(owner)
+    .filter((p) => p !== shell && p.startTime <= shell.startTime)
+    .sort((a, b) => b.startTime - a.startTime);
+  return before[0] && isConsoleHost(before[0]) ? before[0] : undefined;
+}
 
 interface Identity {
   pid: number;
@@ -149,7 +191,7 @@ export class ProcessTracker {
         // Ein Nachfahre, der nach der Antwort gestartet ist, zeigt schon in einer einzigen Abfrage, dass Claude
         // weiterarbeitet (etwa ein bestätigter Befehl).
         const spawned = tree.descendants([claude]).some(
-          (p) => p.startTime >= answeredAt && !CONSOLE_HOSTS.has(p.name.toLowerCase()),
+          (p) => p.startTime >= answeredAt && !isConsoleHost(p),
         );
         answers.set(tab.id, spawned);
       }
@@ -161,7 +203,7 @@ export class ProcessTracker {
 
   /** Ein Prozess zählt, wenn er schon in der vorigen Abfrage vorkam und kein Konsolen-Host ist. */
   private counts(p: ProcessInfo): boolean {
-    return this.previous.has(key(p)) && !CONSOLE_HOSTS.has(p.name.toLowerCase());
+    return this.previous.has(key(p)) && !isConsoleHost(p);
   }
 
   private track(tab: ProcessTab): TabTrack {

@@ -194,11 +194,14 @@ export class FakeClock implements Clock {
 
 /**
  * Steuerbare Prozess-Sonde: liefert die Prozessliste und die Konsolen-Hosts, die der Test gesetzt hat. Mit
- * `hold()` bleibt eine Abfrage hängen, bis der Test sie mit `release()` beantwortet.
+ * `hold()` bleibt eine Abfrage hängen, bis der Test sie mit `release()` beantwortet. Beendete Prozesse zeichnet sie
+ * auf (`terminated`) und nimmt sie aus der Liste.
  */
 export class FakeProcessProbe implements ProcessProbe {
   processes: ProcessInfo[] = [];
   queries = 0;
+  /** Prozesse, die der Kern beendet hat, in der Reihenfolge der Aufträge. */
+  readonly terminated: ProcessInfo[] = [];
   /** Prozess-IDs, deren Konsolen-Host der Kern abgefragt hat, in der Reihenfolge der Abfragen. */
   readonly hostQueries: number[] = [];
   private readonly hosts = new Map<number, number>();
@@ -224,6 +227,17 @@ export class FakeProcessProbe implements ProcessProbe {
   consoleHost(pid: number): number | null {
     this.hostQueries.push(pid);
     return this.hosts.get(pid) ?? null;
+  }
+
+  terminate(processes: ProcessInfo[]): void {
+    this.terminated.push(...structuredClone(processes));
+    const gone = new Set(processes.map((p) => `${p.pid}:${p.startTime}`));
+    this.processes = this.processes.filter((p) => !gone.has(`${p.pid}:${p.startTime}`));
+  }
+
+  /** Prozess-IDs der beendeten Prozesse, in der Reihenfolge der Aufträge. */
+  terminatedPids(): number[] {
+    return this.terminated.map((p) => p.pid);
   }
 
   /** Abfragen bleiben ab jetzt hängen. */

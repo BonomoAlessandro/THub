@@ -1,3 +1,4 @@
+import { spawn, type ChildProcess } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { gunzipSync } from 'node:zlib';
@@ -162,5 +163,38 @@ describe.runIf(windows64)('Prozess-Sonde: echte Abfrage über koffi', () => {
 
     expect(host === null || (Number.isInteger(host) && host > 0)).toBe(true);
     expect(none).toBeNull();
+  });
+
+  describe('Prozesse beenden', () => {
+    /** Ein Node-Prozess ohne Fenster, der wartet, bis er beendet wird. */
+    function sleeper(): { child: ChildProcess; exited: Promise<number | null> } {
+      const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore', windowsHide: true });
+      const exited = new Promise<number | null>((resolve) => child.once('exit', (code) => resolve(code)));
+      return { child, exited };
+    }
+
+    it('beendet einen Prozess mit Prozess-ID und Startzeit aus der Abfrage', async () => {
+      const probe = createProcessProbe();
+      const { child, exited } = sleeper();
+      const info = (await probe.snapshot()).find((p) => p.pid === child.pid);
+      expect(info).toBeDefined();
+
+      probe.terminate([info!]);
+
+      expect(await exited).toBe(1);
+    });
+
+    it('übergeht einen Prozess mit anderer Startzeit (Prozess-ID neu vergeben) und beendete Prozesse', async () => {
+      const probe = createProcessProbe();
+      const { child, exited } = sleeper();
+      const info = (await probe.snapshot()).find((p) => p.pid === child.pid)!;
+
+      probe.terminate([{ ...info, startTime: info.startTime - 1 }, { pid: 999_999_996, ppid: 0, name: 'weg.exe', startTime: 0 }]);
+      const stillRunning = (await probe.snapshot()).some((p) => p.pid === child.pid && p.startTime === info.startTime);
+      child.kill();
+      await exited;
+
+      expect(stillRunning).toBe(true);
+    });
   });
 });
