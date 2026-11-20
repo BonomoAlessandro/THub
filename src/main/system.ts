@@ -50,8 +50,9 @@ export const hostSystem: HostSystem = {
   },
 };
 
-/** Sonde ohne Prozesse: Rückfall, wenn sich die echte Sonde (`processProbe.ts`) nicht laden lässt. */
+/** Sonde ohne Prozesse: Rückfall, wenn sich die echte Sonde (`processProbe.ts`) nicht laden lässt. Beendet nichts. */
 export const noProcessProbe: ProcessProbe = {
   snapshot: () => Promise.resolve([]),
   consoleHost: () => null,
+  terminate: () => {},
 };

@@ -435,7 +435,14 @@ svg.i {
   border-color: transparent;
   color: var(--on-accent);
 }
-.btn.primary:hover {
+/* Gefahr, z.B. „Schliessen“ in der Rückfrage vor dem Schliessen. */
+.btn.danger {
+  background: var(--danger);
+  border-color: transparent;
+  color: #fff;
+}
+.btn.primary:hover,
+.btn.danger:hover {
   filter: brightness(1.08);
 }
 .btn.sm {
@@ -573,6 +580,20 @@ kbd {
   padding: 4px 20px 18px;
   color: var(--text-muted);
   line-height: 1.5;
+}
+.dlg-body p {
+  margin: 0 0 8px;
+}
+/* Liste im Dialog, z.B. die Tabs, in denen beim Schliessen noch etwas läuft. */
+.dlg-body ul {
+  margin: 6px 0 10px;
+  padding-left: 18px;
+  color: var(--text);
+}
+/* Kleiner, schwacher Zusatz, z.B. „Mit Ctrl+Shift+Z öffnest du den Tab wieder.“ */
+.hint {
+  font-size: 12px;
+  color: var(--text-faint);
 }
 /* Fusszeile mit den Knöpfen; der primäre ist neutral (Textfarbe), ohne Akzentfarbe. */
 .dlg-actions {

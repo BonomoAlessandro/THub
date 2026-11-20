@@ -1,11 +1,12 @@
-// Gemeinsame Tests fuer alle vier Windows-Shells (Teststelle 2, Tickets 07, 11 und 12).
+// Gemeinsame Tests fuer alle vier Windows-Shells (Teststelle 2, Tickets 07, 11, 12 und 15).
 // Jede Shell hat eine eigene Testdatei, damit Vitest die Shells parallel laufen laesst.
 // Alle Shells starten ueber das echte Terminal-Backend von THub (PtyManager) mit der Integration; THUB_STARTER
 // setzt das Backend. Die Tests "Ende zu Ende" laufen dazu mit dem echten Kern und der echten lokalen Schnittstelle.
-import { existsSync, mkdirSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { checkExecutionPolicy, type ExecutionPolicyCheck } from '../../src/main/executionPolicy';
+import { createProcessProbe } from '../../src/main/processProbe';
 import { resumeCommand } from '../../src/main/workspace/resume';
 import type { WorkspaceEvent } from '../../src/shared/types';
 import { MemoryStorage } from '../support/fakes';
@@ -821,6 +822,85 @@ export function shellSuite(id: ShellId): void {
           expect(records[0].cwd.toLowerCase()).toBe(project.toLowerCase());
           await core.mark();
         });
+      });
+    });
+
+    describe('Schliessen: Shell samt Nachfahren beenden, Konsolen-Host aufräumen (Kern mit echter Prozess-Sonde)', () => {
+      const probe = createProcessProbe();
+      const cores: CoreShell[] = [];
+      const powershell = path.join(SYSTEM_ROOT, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+
+      afterAll(async () => {
+        // Geschlossene oder beendete Tabs: nichts mehr tippen, nur noch den Kern beenden.
+        for (const core of cores) await core.shutdown(false);
+      });
+
+      /** Konsolen-Hosts, die dieser Testprozess wie THub für Pseudokonsolen gestartet hat. */
+      const ownHosts = async (): Promise<number[]> =>
+        (await probe.snapshot())
+          .filter((p) => p.ppid === process.pid && /^(conhost|openconsole)\.exe$/i.test(p.name))
+          .map((p) => p.pid);
+
+      const alive = (pid: number): boolean => {
+        try {
+          process.kill(pid, 0);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      async function waitUntil(ok: () => boolean | Promise<boolean>, what: string, timeoutMs = 15000): Promise<void> {
+        const end = Date.now() + timeoutMs;
+        while (Date.now() < end) {
+          if (await ok()) return;
+          await sleep(100);
+        }
+        throw new Error(`${what} in ${id}`);
+      }
+
+      /** Windows PowerShell mit einem Befehl, ohne Profil und ohne Quoting-Fragen (Base64), in der Sprache der Shell. */
+      function powershellLine(script: string): string {
+        const encoded = Buffer.from(script, 'utf16le').toString('base64');
+        const args = `-NoProfile -NonInteractive -EncodedCommand ${encoded}`;
+        if (flavor === 'ps') return `& '${powershell}' ${args}`;
+        if (flavor === 'cmd') return `"${powershell}" ${args}`;
+        return `'${powershell.replace(/\\/g, '/')}' ${args}`;
+      }
+
+      it('ein Prozess mit eigener Konsole (Start-Process), den pty.kill() nicht erreicht, endet mit seinem Tab', async () => {
+        const core = CoreShell.start(def, ws, undefined, { realProcesses: true });
+        cores.push(core);
+        await core.mark();
+        const pidFile = path.join(ws.root, `start-process-${id}.pid`);
+        rmSync(pidFile, { force: true });
+        // Versteckt, ohne Fenster; das wartende powershell.exe hält die Eltern-Kette bis zur Shell.
+        core.write(
+          powershellLine(
+            `$p = Start-Process -FilePath ping.exe -ArgumentList '-t','127.0.0.1' -WindowStyle Hidden -PassThru; ` +
+              `Set-Content -LiteralPath '${pidFile}' -Value $p.Id -Encoding Ascii; Wait-Process -Id $p.Id`,
+          ) + '\r',
+        );
+        await waitUntil(() => existsSync(pidFile) && readFileSync(pidFile, 'utf8').trim() !== '', 'ping.exe startete nicht');
+        const pid = Number(readFileSync(pidFile, 'utf8').trim());
+        expect(alive(pid)).toBe(true);
+
+        core.core.closeTab(core.tabId);
+
+        await waitUntil(() => !alive(pid), 'ping.exe lief nach dem Schliessen weiter');
+      });
+
+      it('endet die Shell mit exit, endet auch ihr Konsolen-Host (node-pty 1.1.0 liesse ihn stehen)', async () => {
+        const before = new Set(await ownHosts());
+        const core = CoreShell.start(def, ws, undefined, { realProcesses: true });
+        cores.push(core);
+        await core.mark();
+        const hosts = (await ownHosts()).filter((pid) => !before.has(pid));
+        expect(hosts).toHaveLength(1);
+
+        core.write('exit\r');
+
+        await waitUntil(async () => !(await ownHosts()).includes(hosts[0]), 'Der Konsolen-Host blieb nach exit bestehen');
       });
     });
   });

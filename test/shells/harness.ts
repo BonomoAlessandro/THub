@@ -22,12 +22,14 @@ import os from 'node:os';
 import path from 'node:path';
 import { HOOK_FILE_NAME, writeHookFile } from '../../src/main/hookFile';
 import { LocalApiServer } from '../../src/main/localApi';
+import { createProcessProbe } from '../../src/main/processProbe';
 import { PtyManager } from '../../src/main/ptyManager';
 import { shellEnv } from '../../src/main/shellEnv';
 import type { LocalApiInfo } from '../../src/main/workspace/claude';
 import type {
   Clock,
   HostSystem,
+  ProcessProbe,
   ShellInfo,
   ShellIntegration,
   StartOrder,
@@ -696,6 +698,11 @@ function testSystem(home: string): HostSystem {
 export interface CoreShellOptions extends Pick<LaunchOptions, 'profileExtra' | 'env' | 'claudeStarter'> {
   /** Ordner im PATH vor den Systemordnern, etwa das nachgemachte claude; Standard: keiner. */
   claudeDir?: string | null;
+  /**
+   * Mit der echten Prozess-Sonde für Kern und Terminal-Backend, wie main.ts: Status, Beenden samt Nachfahren und
+   * Aufräumen des Konsolen-Hosts. Standard: eine Sonde ohne Prozesse, die nichts beendet.
+   */
+  realProcesses?: boolean;
 }
 
 /** Eine laufende echte lokale Schnittstelle samt Hook-Datei, so wie main.ts sie beim Start oeffnet. */
@@ -775,7 +782,15 @@ export class CoreShell {
       env: extra.env,
       claudeDir: extra.claudeDir ?? null,
     });
-    const backend = new PtyManager({ shellDir: ws.shellDir, baseEnv: () => baseEnv, claudeStarter: extra.claudeStarter });
+    const processes: ProcessProbe = extra.realProcesses
+      ? createProcessProbe()
+      : { snapshot: () => Promise.resolve([]), consoleHost: () => null, terminate: () => {} };
+    const backend = new PtyManager({
+      shellDir: ws.shellDir,
+      baseEnv: () => baseEnv,
+      claudeStarter: extra.claudeStarter,
+      processes: extra.realProcesses ? processes : undefined,
+    });
     const orders: StartOrder[] = [];
     const recording: TerminalBackend = {
       start: (tabId, order, listener) => {
@@ -814,7 +829,7 @@ export class CoreShell {
         terminal: recording,
         storage: recordingStorage,
         clock: realClock,
-        processes: { snapshot: () => Promise.resolve([]), consoleHost: () => null },
+        processes,
         system: testSystem(ws.root),
       },
       { shells: [shell], localApi: api?.info },
