@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ProcessInfo } from '../../src/main/workspace/ports';
 import { hookEvent, hookPayload, type HookSample } from '../support/apiClient';
+import { expectHookReply } from '../support/claudeTab';
 import { settle, startWorkspace, startWorkspaceWithApi, type TestWorkspace } from '../support/harness';
 
 // Tabs schliessen mit Rückfrage und wieder öffnen (Ticket 15): Rückfrage nach den eigentlichen Merkmalen, Liste der
@@ -27,8 +28,8 @@ async function setup(): Promise<TestWorkspace> {
 
 /** Claude Code schickt ein Hook-Ereignis. */
 async function hook(h: TestWorkspace, tabId: string, sample: HookSample, overrides: Record<string, unknown>): Promise<void> {
-  const res = await h.api.hook(tabId, hookEvent(sample), hookPayload(sample, overrides));
-  expect(res).toMatchObject({ status: 200, body: '' });
+  const event = hookEvent(sample);
+  expectHookReply(await h.api.hook(tabId, event, hookPayload(sample, overrides)), event);
 }
 
 /** `claude` im Tab: Starter meldet den Fall „neu“ und die Prozess-ID, Claude meldet SessionStart. Liefert die Kennung. */

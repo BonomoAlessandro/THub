@@ -23,14 +23,15 @@ interface SettingsDialogProps {
 }
 
 /**
- * Einstellungen, geöffnet über das Zahnrad: Standardordner, Standard-Shell, Design, Schriftgrösse und Hinweise im
- * Fenster; weitere Felder kommen mit späteren Tickets dazu, je als eigene Zeile in ihrem Abschnitt.
+ * Einstellungen, geöffnet über das Zahnrad: Standardordner, Standard-Shell, Design, Schriftgrösse, Hinweise im Fenster
+ * und offene Punkte aus Claudes Antworten; weitere Felder kommen mit späteren Tickets dazu, je als eigene Zeile in ihrem
+ * Abschnitt.
  * Jede Änderung geht sofort an den Kern und wirkt ohne „Fertig“; der Dialog zeigt, was der Kern meldet.
  */
 export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onClose }: SettingsDialogProps) {
   const changeRef = useRef<HTMLButtonElement>(null);
   const folder = settings.defaultCwd;
-  const { theme, fontSize, notifications } = settings;
+  const { theme, fontSize, notifications, openPoints } = settings;
 
   const update = (patch: Partial<Settings>) => api.send({ type: 'updateSettings', patch });
 
@@ -170,6 +171,24 @@ export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onCl
               aria-checked={notifications}
               aria-label="Hinweise im Fenster"
               onClick={() => update({ notifications: !notifications })}
+            />
+          </div>
+        </div>
+        <div className="set-row">
+          <div>
+            <div className="set-label">Offene Punkte aus Claudes Antworten anzeigen</div>
+            <div className="set-desc">
+              Fragen und offene Punkte am Ende einer Antwort bleiben stehen, bis du sie schliesst.
+            </div>
+          </div>
+          <div className="set-ctl">
+            <button
+              type="button"
+              role="switch"
+              className={openPoints ? 'switch on' : 'switch'}
+              aria-checked={openPoints}
+              aria-label="Offene Punkte aus Claudes Antworten anzeigen"
+              onClick={() => update({ openPoints: !openPoints })}
             />
           </div>
         </div>

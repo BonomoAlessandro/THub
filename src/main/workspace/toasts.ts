@@ -1,5 +1,6 @@
-// Hinweise unten rechts im Fenster (Ticket 14): welche gerade stehen, höchstens einer pro Tab, und der Countdown der
-// Hinweise, die von selbst verschwinden. Wann ein Hinweis kommt und wann er geht, entscheidet der Workspace-Kern.
+// Hinweise unten rechts im Fenster (Tickets 14 und 22): welche gerade stehen, höchstens einer je Platz und Tab, und der
+// Countdown der Hinweise, die von selbst verschwinden. Wann ein Hinweis kommt und wann er geht, entscheidet der
+// Workspace-Kern.
 
 import type { ToastKind, ToastSnapshot } from '../../shared/types';
 import type { CancelTimer, Clock } from './ports';
@@ -10,10 +11,25 @@ export const FINISHED_TOAST_MS = 6000;
 /** Wie lange ein Hinweis dieser Art steht, in Vordergrundzeit; ohne Angabe, bis er weggenommen wird. */
 const LIFETIME_MS: Partial<Record<ToastKind, number>> = { finished: FINISHED_TOAST_MS };
 
+/** Die Hinweise zum Claude-Status eines Tabs; sie teilen sich einen Platz pro Tab. */
+export const STATUS_TOASTS: readonly ToastKind[] = ['waiting', 'finished'];
+
+/**
+ * Welche Hinweise desselben Tabs ein neuer Hinweis dieser Art ersetzt. „Wartet“ und „fertig“ teilen sich einen Platz;
+ * offene Punkte haben einen eigenen und ersetzen dazu „fertig“, weil sie mehr sagen als „Claude ist fertig“.
+ */
+const REPLACES: Record<ToastKind, readonly ToastKind[]> = {
+  waiting: STATUS_TOASTS,
+  finished: STATUS_TOASTS,
+  openPoints: ['openPoints', 'finished'],
+};
+
 interface Toast {
   id: string;
   tabId: string;
   kind: ToastKind;
+  /** Nur bei offenen Punkten. */
+  points?: string[];
   /** Nur bei Hinweisen, die von selbst verschwinden. */
   countdown?: Countdown;
 }
@@ -43,10 +59,17 @@ export class ToastBoard {
     private readonly changed: () => void,
   ) {}
 
-  /** Zeigt für den Tab einen Hinweis dieser Art. Ein Hinweis, den der Tab schon hat, verschwindet dafür. */
-  show(tabId: string, kind: ToastKind): void {
-    this.drop((t) => t.tabId === tabId);
+  /**
+   * Zeigt für den Tab einen Hinweis dieser Art; offene Punkte mit ihren Punkten. Die Hinweise des Tabs, die er ersetzt
+   * (`REPLACES`), verschwinden dafür.
+   */
+  show(tabId: string, kind: 'waiting' | 'finished'): void;
+  show(tabId: string, kind: 'openPoints', points: string[]): void;
+  show(tabId: string, kind: ToastKind, points?: string[]): void {
+    const replaced = REPLACES[kind];
+    this.drop((t) => t.tabId === tabId && replaced.includes(t.kind));
     const toast: Toast = { id: `toast-${this.nextId++}`, tabId, kind };
+    if (kind === 'openPoints') toast.points = [...(points ?? [])];
     const lifetime = LIFETIME_MS[kind];
     if (lifetime !== undefined) {
       toast.countdown = { total: lifetime, remaining: lifetime, held: false };
@@ -56,19 +79,23 @@ export class ToastBoard {
     this.changed();
   }
 
-  /** Nimmt den Hinweis des Tabs weg; mit `kind` nur, wenn er von dieser Art ist. */
-  dismissTab(tabId: string, kind?: ToastKind): void {
-    if (this.drop((t) => t.tabId === tabId && (kind === undefined || t.kind === kind))) this.changed();
+  /** Nimmt die Hinweise des Tabs weg; mit `kinds` nur die dieser Arten. */
+  dismissTab(tabId: string, kinds?: readonly ToastKind[]): void {
+    if (this.drop((t) => t.tabId === tabId && (kinds === undefined || kinds.includes(t.kind)))) this.changed();
   }
 
-  /** Nimmt den Hinweis mit dieser Kennung weg (× am Hinweis). */
-  dismiss(toastId: string): void {
-    if (this.drop((t) => t.id === toastId)) this.changed();
+  /** Nimmt den Hinweis mit dieser Kennung weg (× am Hinweis); liefert, zu welchem Tab er gehörte und welcher Art er war. */
+  dismiss(toastId: string): { tabId: string; kind: ToastKind } | undefined {
+    const toast = this.toasts.find((t) => t.id === toastId);
+    if (!toast) return undefined;
+    this.drop((t) => t === toast);
+    this.changed();
+    return { tabId: toast.tabId, kind: toast.kind };
   }
 
-  /** Nimmt alle Hinweise weg. */
-  clear(): void {
-    if (this.drop(() => true)) this.changed();
+  /** Nimmt alle Hinweise weg; mit `kinds` nur die dieser Arten. */
+  clear(kinds?: readonly ToastKind[]): void {
+    if (this.drop((t) => kinds === undefined || kinds.includes(t.kind))) this.changed();
   }
 
   /** Die Maus steht auf dem Hinweis bzw. nicht mehr: Solange hält sein Countdown an. */
@@ -91,7 +118,8 @@ export class ToastBoard {
 
   snapshot(): ToastSnapshot[] {
     const now = this.clock.now();
-    return this.toasts.map(({ id, tabId, kind, countdown }): ToastSnapshot => {
+    return this.toasts.map(({ id, tabId, kind, points, countdown }): ToastSnapshot => {
+      if (kind === 'openPoints') return { id, tabId, kind, points: [...(points ?? [])] };
       if (kind === 'waiting' || !countdown) return { id, tabId, kind: 'waiting' };
       const remaining = countdown.running
         ? Math.max(0, countdown.remaining - (now - countdown.running.since))

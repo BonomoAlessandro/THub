@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { findCurl } from '../../src/main/hookFile';
 import { ApiClient, hookEvent, hookPayload, type ApiResponse, type HookSample } from '../support/apiClient';
+import { expectHookReply, SESSION_START_CONTEXT } from '../support/claudeTab';
 import { startWorkspace, startWorkspaceWithApi } from '../support/harness';
 
 // Die lokale Schnittstelle läuft echt auf 127.0.0.1; die Tests schicken echte HTTP-Anfragen.
@@ -10,9 +11,8 @@ import { startWorkspace, startWorkspaceWithApi } from '../support/harness';
 const SID = 'ec84ffa6-a2f2-4150-983c-65e55fc1ff58';
 const SID_AFTER_CLEAR = '0f54d6f0-5e3c-45e6-aabf-d76021219bad';
 
-/** Je ein aufgezeichnetes Beispiel für jedes Ereignis der Hook-Datei, das im Spike vorkam. */
+/** Je ein aufgezeichnetes Beispiel für jedes Ereignis der Hook-Datei, das im Spike vorkam, ausser SessionStart. */
 const HOOK_SAMPLES: HookSample[] = [
-  'SessionStart-startup',
   'SessionEnd-prompt_input_exit',
   'UserPromptSubmit',
   'PreToolUse-Bash',
@@ -89,6 +89,49 @@ describe('Lokale Schnittstelle', () => {
       expect(res.ms).toBeLessThan(IMMEDIATE_MS);
     });
 
+    it('SessionStart: sofort die Anweisung für offene Punkte als zusätzlicher Kontext, als JSON nur aus ASCII-Zeichen', async () => {
+      const h = await startWorkspaceWithApi();
+      const tabId = h.activeTab()!.id;
+
+      const res = await h.api.hook(tabId, 'SessionStart', hookPayload('SessionStart-startup'));
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toBe('application/json; charset=utf-8');
+      expect(JSON.parse(res.body)).toEqual(SESSION_START_CONTEXT);
+      // Umlaute und Anführungszeichen der Anweisung als \uXXXX: Die Ausgabe von curl.exe kommt so unabhängig von jeder
+      // Zeichenkodierung bei Claude an.
+      expect(res.body).toMatch(/^[\x20-\x7e]+$/);
+      expect(res.body).toContain('\\u00e4');
+      expect(res.headers['content-length']).toBe(String(res.body.length));
+      expect(res.ms).toBeLessThan(IMMEDIATE_MS);
+    });
+
+    it.each(['SessionStart-resume', 'SessionStart-clear'] as const)(
+      '%s: dieselbe Anweisung, damit sie in jeder Session gilt',
+      async (sample) => {
+        const h = await startWorkspaceWithApi();
+        const tabId = h.activeTab()!.id;
+
+        const res = await h.api.hook(tabId, 'SessionStart', hookPayload(sample));
+
+        expectHookReply(res, 'SessionStart');
+      },
+    );
+
+    it('SessionStart bei ausgeschalteter Einstellung „Offene Punkte“: leer; wieder eingeschaltet kommt die Anweisung wieder', async () => {
+      const h = await startWorkspaceWithApi();
+      const tabId = h.activeTab()!.id;
+      h.workspace.updateSettings({ openPoints: false });
+
+      const off = await h.api.hook(tabId, 'SessionStart', hookPayload('SessionStart-startup'));
+      h.workspace.updateSettings({ openPoints: true });
+      const on = await h.api.hook(tabId, 'SessionStart', hookPayload('SessionStart-clear'));
+
+      expectEmptySuccess(off);
+      expect(off.headers['content-type']).toBeUndefined();
+      expectHookReply(on, 'SessionStart');
+    });
+
     it('auch bei unbekanntem Tab, ohne Tab-Kopfzeile und mit kaputtem Inhalt; der Zustand bleibt, wie er ist', async () => {
       const h = await startWorkspaceWithApi();
       const tabId = h.activeTab()!.id;
@@ -96,9 +139,11 @@ describe('Lokale Schnittstelle', () => {
 
       const responses = [
         await h.api.hook('gibt-es-nicht', 'SessionStart', hookPayload('SessionStart-startup', { session_id: SID })),
+        await h.api.hook('', 'SessionStart', hookPayload('SessionStart-startup', { session_id: SID })),
+        await h.api.post('/hooks/SessionStart', hookPayload('SessionStart-startup', { session_id: SID })),
         await h.api.hook('', 'UserPromptSubmit', hookPayload('UserPromptSubmit', { session_id: SID })),
         await h.api.post('/hooks/UserPromptSubmit', hookPayload('UserPromptSubmit', { session_id: SID })),
-        await h.api.hook(tabId, 'SessionStart', '{ kaputt'),
+        await h.api.hook(tabId, 'UserPromptSubmit', '{ kaputt'),
         await h.api.hook(tabId, 'Stop', ''),
         // Ein Ereignis, das die Hook-Datei gar nicht registriert.
         await h.api.hook('gibt-es-nicht', 'PermissionDenied', hookPayload('Stop', { session_id: SID })),
@@ -118,7 +163,7 @@ describe('Lokale Schnittstelle', () => {
       const first = h.api.slowHook(tabId, 'UserPromptSubmit', hookPayload('UserPromptSubmit', { session_id: SID }));
       await first.arrived;
       const second = await h.api.hook(tabId, 'SessionStart', hookPayload('SessionStart-clear', { session_id: SID_AFTER_CLEAR, cwd: 'C:\\proj' }));
-      expectEmptySuccess(second);
+      expectHookReply(second, 'SessionStart');
       expectEmptySuccess(await first.finish());
 
       // In dieser Reihenfolge gehört der Prompt zur alten Session; die neue hatte noch keinen.
@@ -241,26 +286,42 @@ describe('Lokale Schnittstelle', () => {
     });
   });
 
-  it.skipIf(findCurl() === null)(
-    'der SessionStart-Hook der Hook-Datei leitet mit curl.exe weiter und gibt nichts aus',
-    async () => {
-      const h = await startWorkspaceWithApi();
-      const tabId = h.activeTab()!.id;
+  describe.skipIf(findCurl() === null)('der SessionStart-Hook der Hook-Datei (curl.exe)', () => {
+    /** Wie Claude Code: Exec-Form ohne Shell, Nutzdaten auf stdin, nur die nötige Umgebung. */
+    async function runSessionStartHook(h: Awaited<ReturnType<typeof startWorkspaceWithApi>>, tabId: string) {
       const settings = JSON.parse(fs.readFileSync(h.localApi.hookFile, 'utf8'));
       const { command, args } = settings.hooks.SessionStart[0].hooks[0];
       const payload = hookPayload('SessionStart-startup', { session_id: SID, cwd: 'C:\\proj' });
-
-      // Wie Claude Code: Exec-Form ohne Shell, Nutzdaten auf stdin, nur die nötige Umgebung.
-      const result = await run(command, args, JSON.stringify(payload), {
+      return run(command, args, JSON.stringify(payload), {
         SystemRoot: process.env.SystemRoot ?? 'C:\\Windows',
         THUB_TAB_ID: tabId,
         THUB_TOKEN: h.localApi.token,
       });
+    }
+
+    it('leitet weiter und gibt die Antwort Byte für Byte aus: Claude liest daraus den zusätzlichen Kontext', async () => {
+      const h = await startWorkspaceWithApi();
+      const tabId = h.activeTab()!.id;
+      const direct = await h.api.hook(h.workspace.createTab(), 'SessionStart', hookPayload('SessionStart-startup'));
+
+      const result = await runSessionStartHook(h, tabId);
+
+      expect(result).toEqual({ code: 0, stdout: direct.body, stderr: '' });
+      expect(JSON.parse(result.stdout)).toEqual(SESSION_START_CONTEXT);
+      expect(h.storedTab(tabId)?.claude).toEqual({ sessionId: SID, cwd: 'C:\\proj', confirmed: true, hadPrompt: false });
+    });
+
+    it('gibt bei ausgeschalteter Einstellung „Offene Punkte“ nichts aus', async () => {
+      const h = await startWorkspaceWithApi();
+      const tabId = h.activeTab()!.id;
+      h.workspace.updateSettings({ openPoints: false });
+
+      const result = await runSessionStartHook(h, tabId);
 
       expect(result).toEqual({ code: 0, stdout: '', stderr: '' });
-      expect(h.storedTab(tabId)?.claude).toEqual({ sessionId: SID, cwd: 'C:\\proj', confirmed: true, hadPrompt: false });
-    },
-  );
+      expect(h.storedTab(tabId)?.claude).toMatchObject({ sessionId: SID, confirmed: true });
+    });
+  });
 });
 
 function run(
