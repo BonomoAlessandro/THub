@@ -33,6 +33,18 @@ describe('Übernahme aus Version 1', () => {
     expect(h.snapshot().activeTabId).toBe('s-2');
   });
 
+  it('behält die Namen übernommener Tabs, auch neben neuen Tabs in denselben Ordnern und nach einem Neustart', async () => {
+    const h = startWorkspace({ state: v1State(), directories: V1_DIRECTORIES });
+    h.workspace.createTab({ cwd: 'C:\\proj' });
+    h.workspace.createTab({ cwd: 'D:\\logs' });
+    h.workspace.createTab();
+
+    await h.restart();
+
+    expect(h.tabs().map((t) => t.name)).toEqual(['Mein Projekt', 'Terminal 2', 'proj', 'logs', 'tester', 'Logs ansehen']);
+    for (const id of ['s-1', 's-2', 's-3']) expect(h.storedTab(id)).toMatchObject({ nameIsManual: true });
+  });
+
   it('startet übernommene Tabs in ihrem gespeicherten Ordner', () => {
     const h = startWorkspace({ state: v1State(), directories: V1_DIRECTORIES });
 

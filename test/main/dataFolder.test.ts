@@ -80,7 +80,7 @@ describe('Datenordner', () => {
       expect(takeOverLegacyData(folders)).toBe('taken-over');
 
       const h = startIn(folders.current);
-      expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Projekt']);
+      expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'Projekt']);
       expect(h.tabs().map((t) => t.id)).toEqual([a, b]);
       h.showAllViews();
       expect(h.renderer.screen(a)).toBe('PS C:\\> dir\r\n');
@@ -105,7 +105,7 @@ describe('Datenordner', () => {
       fs.writeFileSync(path.join(folders.current, 'claude-hooks.json'), '{}');
 
       expect(takeOverLegacyData(folders)).toBe('taken-over');
-      expect(startIn(folders.current).tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Projekt']);
+      expect(startIn(folders.current).tabs().map((t) => t.name)).toEqual(['tester', 'Projekt']);
     });
 
     it('übernimmt nichts, wenn der neue Ordner schon eine Zustandsdatei hat', async () => {
@@ -136,7 +136,7 @@ describe('Datenordner', () => {
       running.splice(running.indexOf(h), 1);
 
       expect(takeOverLegacyData(folders)).toBe('not-needed');
-      expect(startIn(folders.current).tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 2']);
+      expect(startIn(folders.current).tabs().map((t) => t.name)).toEqual(['tester', 'tester 2']);
       expect(filesIn(folders.legacy)).toEqual(legacyBefore);
     });
 

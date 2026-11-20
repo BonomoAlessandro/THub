@@ -5,8 +5,8 @@ describe('Tabs', () => {
   it('startet ohne gespeicherten Zustand mit einem Terminal im Benutzerordner', () => {
     const h = startWorkspace({ homeDir: 'C:\\Users\\anna' });
 
-    expect(h.tabs()).toMatchObject([{ name: 'Terminal 1', cwd: 'C:\\Users\\anna', process: 'pending' }]);
-    expect(h.activeTab()?.name).toBe('Terminal 1');
+    expect(h.tabs()).toMatchObject([{ name: 'anna', cwd: 'C:\\Users\\anna', process: 'pending' }]);
+    expect(h.activeTab()?.name).toBe('anna');
   });
 
   it('nimmt bis zur Shell-Erkennung wie in Version 0.1.0 Windows PowerShell als Standard-Shell', () => {
@@ -21,9 +21,9 @@ describe('Tabs', () => {
 
     const id = h.workspace.createTab();
 
-    expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 2']);
+    expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'work']);
     expect(h.snapshot().activeTabId).toBe(id);
-    expect(h.activeTab()).toMatchObject({ name: 'Terminal 2', cwd: 'D:\\work' });
+    expect(h.activeTab()).toMatchObject({ name: 'work', cwd: 'D:\\work' });
   });
 
   describe('ein neuer Tab erscheint rechts neben dem aktiven', () => {
@@ -31,11 +31,11 @@ describe('Tabs', () => {
       const h = startWorkspace();
       h.workspace.createTab();
       h.workspace.createTab();
-      h.workspace.activateTab(h.tabNamed('Terminal 1').id);
+      h.workspace.activateTab(h.tabNamed('tester').id);
 
       const id = h.workspace.createTab();
 
-      expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 4', 'Terminal 2', 'Terminal 3']);
+      expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 4', 'tester 2', 'tester 3']);
       expect(h.snapshot().activeTabId).toBe(id);
     });
 
@@ -45,18 +45,18 @@ describe('Tabs', () => {
 
       h.workspace.createTab();
 
-      expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 2', 'Terminal 3']);
+      expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 2', 'tester 3']);
     });
 
     it('nacheinander angelegte Tabs reihen sich rechts vom ursprünglich aktiven auf', () => {
       const h = startWorkspace();
       h.workspace.createTab();
-      h.workspace.activateTab(h.tabNamed('Terminal 1').id);
+      h.workspace.activateTab(h.tabNamed('tester').id);
 
       h.workspace.createTab();
       h.workspace.createTab();
 
-      expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 3', 'Terminal 4', 'Terminal 2']);
+      expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 3', 'tester 4', 'tester 2']);
     });
 
     it('als einziger Tab, wenn keiner mehr offen ist', () => {
@@ -65,19 +65,19 @@ describe('Tabs', () => {
 
       const id = h.workspace.createTab();
 
-      expect(h.snapshot()).toMatchObject({ tabs: [{ id, name: 'Terminal 1' }], activeTabId: id });
+      expect(h.snapshot()).toMatchObject({ tabs: [{ id, name: 'tester' }], activeTabId: id });
     });
   });
 
-  it('vergibt wie bisher die kleinste freie Nummer im Namen', () => {
+  it('vergibt bei Gleichstand die kleinste freie Nummer im Namen', () => {
     const h = startWorkspace();
     h.workspace.createTab();
     h.workspace.createTab();
-    h.workspace.closeTab(h.tabNamed('Terminal 2').id);
+    h.workspace.closeTab(h.tabNamed('tester 2').id);
 
     h.workspace.createTab();
 
-    expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 3', 'Terminal 2']);
+    expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 3', 'tester 2']);
   });
 
   it('benennt einen Tab um und entfernt Leerraum am Rand', () => {
@@ -117,14 +117,14 @@ describe('Tabs', () => {
       h.workspace.createTab();
 
       h.workspace.activateRelativeTab(1);
-      expect(h.activeTab()?.name).toBe('Terminal 1');
+      expect(h.activeTab()?.name).toBe('tester');
 
       h.workspace.activateRelativeTab(1);
-      expect(h.activeTab()?.name).toBe('Terminal 2');
+      expect(h.activeTab()?.name).toBe('tester 2');
 
       h.workspace.activateRelativeTab(-1);
       h.workspace.activateRelativeTab(-1);
-      expect(h.activeTab()?.name).toBe('Terminal 3');
+      expect(h.activeTab()?.name).toBe('tester 3');
     });
 
     it('wechselt zum Tab an einer Position der Leiste', () => {
@@ -134,7 +134,7 @@ describe('Tabs', () => {
 
       h.workspace.activateTabAt(1);
 
-      expect(h.activeTab()?.name).toBe('Terminal 2');
+      expect(h.activeTab()?.name).toBe('tester 2');
     });
 
     it('bleibt beim aktiven Tab, wenn es an der Position keinen Tab gibt', () => {
@@ -144,7 +144,7 @@ describe('Tabs', () => {
       h.workspace.activateTabAt(5);
       h.workspace.activateTabAt(-1);
 
-      expect(h.activeTab()?.name).toBe('Terminal 2');
+      expect(h.activeTab()?.name).toBe('tester 2');
     });
 
     it('macht ohne offene Tabs nichts', () => {
@@ -208,11 +208,11 @@ describe('Tabs', () => {
       const h = startWorkspace();
       h.workspace.createTab();
       h.workspace.createTab();
-      h.workspace.activateTab(h.tabNamed('Terminal 2').id);
+      h.workspace.activateTab(h.tabNamed('tester 2').id);
 
-      h.workspace.closeTab(h.tabNamed('Terminal 2').id);
+      h.workspace.closeTab(h.tabNamed('tester 2').id);
 
-      expect(h.activeTab()?.name).toBe('Terminal 3');
+      expect(h.activeTab()?.name).toBe('tester 3');
     });
 
     it('der linke Nachbar, wenn der Tab ganz rechts war', () => {
@@ -220,9 +220,9 @@ describe('Tabs', () => {
       h.workspace.createTab();
       h.workspace.createTab();
 
-      h.workspace.closeTab(h.tabNamed('Terminal 3').id);
+      h.workspace.closeTab(h.tabNamed('tester 3').id);
 
-      expect(h.activeTab()?.name).toBe('Terminal 2');
+      expect(h.activeTab()?.name).toBe('tester 2');
     });
   });
 
@@ -230,11 +230,11 @@ describe('Tabs', () => {
     const h = startWorkspace();
     h.workspace.createTab();
     h.workspace.createTab();
-    h.workspace.activateTab(h.tabNamed('Terminal 3').id);
+    h.workspace.activateTab(h.tabNamed('tester 3').id);
 
-    h.workspace.closeTab(h.tabNamed('Terminal 1').id);
+    h.workspace.closeTab(h.tabNamed('tester').id);
 
-    expect(h.activeTab()?.name).toBe('Terminal 3');
+    expect(h.activeTab()?.name).toBe('tester 3');
   });
 
   it('hat nach dem Schliessen des letzten Tabs keinen aktiven Tab mehr', () => {
@@ -253,11 +253,11 @@ describe('Tabs', () => {
     expect(h.events.at(-1)).toMatchObject({
       type: 'tabs',
       activeTabId: second,
-      tabs: [{ name: 'Terminal 1' }, { name: 'Terminal 2' }],
+      tabs: [{ name: 'tester' }, { name: 'tester 2' }],
     });
 
     h.workspace.renameTab(second, 'Build');
-    expect(h.events.at(-1)).toMatchObject({ type: 'tabs', tabs: [{ name: 'Terminal 1' }, { name: 'Build' }] });
+    expect(h.events.at(-1)).toMatchObject({ type: 'tabs', tabs: [{ name: 'tester' }, { name: 'Build' }] });
 
     h.workspace.activateTab(first);
     expect(h.events.at(-1)).toMatchObject({ type: 'tabs', activeTabId: first });

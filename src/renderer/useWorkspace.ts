@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { TabSnapshot } from '../shared/types';
+import type { Settings, TabSnapshot } from '../shared/types';
 import { terminalViews } from './terminal/terminalViews';
 
 const api = window.thub;
@@ -8,6 +8,9 @@ const api = window.thub;
 export interface WorkspaceView {
   tabs: TabSnapshot[];
   activeTabId: string | null;
+  settings: Settings;
+  /** Benutzerordner, zur Anzeige eines leeren Standardordners. */
+  homeDir: string;
 }
 
 /**
@@ -33,7 +36,10 @@ export function useWorkspace(): {
       if (!loaded) return;
       switch (event.type) {
         case 'tabs':
-          setView({ tabs: event.tabs, activeTabId: event.activeTabId });
+          setView((current) => current && { ...current, tabs: event.tabs, activeTabId: event.activeTabId });
+          return;
+        case 'settings':
+          setView((current) => current && { ...current, settings: event.settings });
           return;
         case 'output':
           terminalViews.get(event.tabId)?.write(event.data);
@@ -56,9 +62,6 @@ export function useWorkspace(): {
               .then((content) => api.send({ type: 'saveHistory', tabId, content }));
           }
           return;
-        case 'settings':
-          // Einstellungen zeigt die Oberfläche erst mit dem Einstellungsdialog (Ticket 05) wieder an.
-          return;
       }
     });
 
@@ -66,7 +69,12 @@ export function useWorkspace(): {
       if (disposed) return;
       loaded = true;
       // Die gespeicherten Tabs zeigen; ihre Shells startet der Kern, sobald die Ansichten bereit sind.
-      setView({ tabs: snapshot.tabs, activeTabId: snapshot.activeTabId });
+      setView({
+        tabs: snapshot.tabs,
+        activeTabId: snapshot.activeTabId,
+        settings: snapshot.settings,
+        homeDir: snapshot.homeDir,
+      });
     });
 
     return () => {

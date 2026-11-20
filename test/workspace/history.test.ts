@@ -15,7 +15,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** Zwei laufende Tabs „Terminal 1“ und „Terminal 2“. */
+/** Zwei laufende Tabs „tester“ und „tester 2“. */
 function twoRunningTabs(options?: Parameters<typeof startWorkspace>[0]): { h: TestWorkspace; a: string; b: string } {
   const h = startWorkspace(options);
   const a = h.activeTab()!.id;

@@ -39,6 +39,7 @@ src/
     workspace.ts            Workspace-Kern: die gesamte Tab-Logik, ohne Electron
     ports.ts                Ports des Kerns: Terminal-Backend, Speicher, Uhr, Prozess-Sonde, System
     schema.ts               Gespeicherter Zustand (Version 2) und Übernahme aus Version 1
+    folders.ts              Tab-Namen nach dem Ordner und Liste der zuletzt benutzten Ordner
     windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
     claude.ts               Claude-Zuordnung pro Tab: Vertrag von Starter und Hooks, Regeln
   main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
@@ -57,7 +58,10 @@ src/
     App.tsx                 Fenster: Tab-Leiste und Terminal-Fläche, Tastenkürzel
     useWorkspace.ts         Schnappschuss und Ereignisse des Kerns
     shortcuts.ts            Zuordnung der Tastenkürzel (alles andere geht ans Terminal)
-    tabs/                   Titelleiste mit Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf, Zieh-Fläche
+    tabs/                   Titelleiste mit Tab-Leiste: Tabs, Symbol-Platz, Umbenennen, Tooltip, Überlauf, Zieh-Fläche,
+                            Pfeil-Menü „Neues Terminal in …“
+    popup/                  Menü und Dialog wie im Prototyp, Bedienung mit der Tastatur (menuKeys.ts)
+    settings/               Einstellungsdialog
     terminal/               Ein xterm.js pro Tab, inaktive ausgeblendet; meldet „Ansicht bereit“;
                             Verlauf serialisieren und ausgegraut wiederherstellen (history.ts)
     styles/tokens.css       Design-Variablen und Terminal-Farbschemata aus dem Prototyp
@@ -65,10 +69,12 @@ src/
 test/
   support/                  Test-Gerüst: nachgemachte Ports, simulierter Neustart, Temp-Ordner
   workspace/                Kern-Tests (Teststelle 1)
-  renderer/                 Zuordnung der Tastenkürzel; Verlauf mit echtem xterm.js in Node
+  renderer/                 Zuordnung der Tastenkürzel und der Tasten im Menü; Verlauf mit echtem xterm.js in Node
   main/                     Hauptprozess ohne Electron: Design hell/dunkel, Datenordner und Übernahme, Umgebung der Shells
 build.mjs                   esbuild-Skript, schreibt nach dist/
 ```
+
+**Menüs und Dialoge über der Titelleiste:** Die Titelleiste ist die Zieh-Fläche des Fensters (`-webkit-app-region: drag`). Was darüber liegt oder hineinragt (Pfeil-Menü, Abdunkelung eines Dialogs, Tooltip), braucht `-webkit-app-region: no-drag`, sonst verschiebt ein Klick dort das Fenster. Menüs bleiben links der nativen Fensterknöpfe (`navigator.windowControlsOverlay`). Solange ein Menü oder Dialog offen ist (`usePopupOpen`), ruhen die Tastenkürzel der App.
 
 Der Hauptprozess ist die einzige Quelle der Wahrheit für den Zustand. Der Workspace-Kern besitzt die Tab-Logik: Der Renderer bekommt einen Schnappschuss und danach Änderungsereignisse und schickt nur Befehle. Shells startet nur der Kern, und zwar erst, wenn der Renderer die Ansicht des Tabs mit Spalten und Zeilen als bereit gemeldet hat.
 
@@ -82,7 +88,7 @@ Gespeichert wird in `%APPDATA%\THub\state.json`, im Schema Version 2. Eine Datei
     { "id": "…", "name": "Mein Projekt", "nameIsManual": true, "shellId": "powershell", "startCwd": "C:\\…" }
   ],
   "activeTabId": "…",
-  "recentDirs": [],
+  "recentDirs": ["C:\\…\\Mein Projekt"],
   "closedTabs": [],
   "window": { "bounds": { "x": 200, "y": 100, "width": 1200, "height": 760 }, "maximized": false }
 }
@@ -93,6 +99,9 @@ Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung
 ## Was das Grundgerüst kann
 
 - Mehrere Terminals (PowerShell) als Tabs in einer Tab-Leiste oben; neue Tabs erscheinen rechts neben dem aktiven
+- Neue Tabs heissen wie ihr Ordner, im Benutzerordner wie der Benutzer, auf einem Laufwerk wie das Laufwerk (`D:`); bei Gleichstand mit „ 2“, „ 3“ usw. Der Name wird beim Anlegen festgelegt und ändert sich danach nicht von selbst; ein von Hand vergebener Name wird nie überschrieben. Aus Version 1 übernommene Tabs behalten ihre Namen.
+- Pfeil neben `+`: „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter der Pfad) und „Ordner wählen …“ (Ordner-Dialog von Windows). Zuletzt benutzt sind die Startordner neuer Tabs und der letzte Ordner eines Tabs beim Schliessen: höchstens acht, neueste zuerst, ohne Doppelte; angeboten werden nur Ordner, die es noch gibt. Bedienung auch mit Pfeiltasten, Enter und Escape.
+- Zahnrad: Einstellungen mit dem Standardordner. „Ändern …“ öffnet den Ordner-Dialog, „Zurücksetzen“ stellt auf den Benutzerordner zurück. `+` und `Ctrl+Shift+T` öffnen neue Terminals dort; offene Tabs bleiben, wo sie sind. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
 - Bei vielen Tabs werden die Tabs schmaler und die Leiste scrollbar (auch mit dem Mausrad)
 - Tooltip mit Name, Ordner und Shell; Schliessen mit `×` oder der mittleren Maustaste
 - Tabs umbenennen (Doppelklick auf den Tab oder `F2`; Enter übernimmt, Escape bricht ab)
@@ -100,7 +109,6 @@ Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung
 - Eigene Titelleiste ohne Windows-Rahmen: Die Tabs sitzen direkt in der Titelleiste, rechts die nativen Fensterknöpfe mit den Andock-Layouts von Windows 11. Die freie Fläche neben den Tabs (mindestens 56 px, auch bei vielen Tabs) verschiebt das Fenster, Doppelklick maximiert.
 - Der frühere Inhalt jedes Terminals steht nach einem Neustart ausgegraut über der neuen Eingabezeile, mit der Trennlinie „Wiederhergestellt · <Datum, Uhrzeit der Sicherung>“; er liegt im Scrollback, eine Mausrad-Bewegung nach oben zeigt ihn. Nach einem Absturz fehlen höchstens die letzten etwa 30 Sekunden.
 - Hell oder dunkel nach dem Design von Windows, auch die Terminalfläche und die Fensterknöpfe; ein Wechsel in Windows wirkt sofort
-- Der Standardordner lässt sich vorübergehend nicht einstellen; er kommt mit dem Einstellungsdialog zurück
 - Beendete Shell (z.B. `exit`): Hinweis im Terminal, beliebige Taste startet sie neu
 - Kopieren/Einfügen: Rechtsklick (mit Auswahl kopieren, sonst einfügen), `Ctrl+Shift+C` / `Ctrl+Shift+V`
 - Das Fenster öffnet mit gespeicherter Grösse, Position und Maximiert-Zustand; beim allerersten Start maximiert. Liegt es ausserhalb aller Bildschirme (etwa nach dem Abziehen eines Monitors), öffnet es zentriert auf dem Hauptbildschirm.
@@ -133,7 +141,6 @@ Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem
 
 - **Was heisst „wiederherstellen“?** Aktuell: neue Shell im *Startverzeichnis* der Session, darüber der frühere Inhalt ausgegraut. Nicht erhalten bleiben: laufende Programme und ein später per `cd` gewechseltes Verzeichnis.
 - **Shell-Auswahl:** fest `powershell.exe` (in `state.json` änderbar). PowerShell 7, cmd, Git Bash, WSL? Pro Session wählbar?
-- **Default-Verzeichnis:** global für alle; pro Session überschreibbar? Was passiert mit bestehenden Sessions, wenn es geändert wird?
 - **Schliessen:** ohne Rückfrage. Bestätigung, wenn noch ein Programm läuft?
 - **Darstellung:** Sidebar vs. Tabs oben, Reihenfolge per Drag & Drop, Gruppen, Farben/Icons, Theme, Schriftgrösse
 - **Fenster:** mehrere Fenster, Split-Ansicht (mehrere Terminals nebeneinander)

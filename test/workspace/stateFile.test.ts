@@ -37,7 +37,7 @@ describe('Zustandsdatei', () => {
   ])('legt eine kaputte Datei beiseite, statt sie zu überschreiben (%s)', async (_label, content) => {
     const { h, dir, file } = startWithStateFile(content);
 
-    expect(h.tabs()).toMatchObject([{ name: 'Terminal 1' }]);
+    expect(h.tabs()).toMatchObject([{ name: 'tester' }]);
     const backups = corruptBackups(dir);
     expect(backups).toHaveLength(1);
 
@@ -50,11 +50,11 @@ describe('Zustandsdatei', () => {
   it('sichert Änderungen beim Beenden sofort, auch innerhalb der Entprellzeit', async () => {
     const { h } = startWithStateFile();
     h.workspace.createTab();
-    h.workspace.renameTab(h.tabNamed('Terminal 2').id, 'Gerade eben');
+    h.workspace.renameTab(h.tabNamed('tester 2').id, 'Gerade eben');
 
     await h.restart();
 
-    expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Gerade eben']);
+    expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'Gerade eben']);
     expect(h.activeTab()?.name).toBe('Gerade eben');
   });
 
