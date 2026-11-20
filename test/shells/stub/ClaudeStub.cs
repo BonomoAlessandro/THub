@@ -32,7 +32,7 @@ static class ClaudeStub
     static extern IntPtr LocalFree(IntPtr hMem);
 
     static readonly string[] EnvNames = {
-        "THUB_TAB_ID", "THUB_API", "THUB_TOKEN", "NO_PROXY", "STUB_MARK"
+        "THUB_TAB_ID", "THUB_API", "THUB_TOKEN", "THUB_START_CMD", "NO_PROXY", "STUB_MARK"
     };
 
     static int Main()

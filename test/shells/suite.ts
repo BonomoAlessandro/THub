@@ -1,10 +1,14 @@
-// Gemeinsame Tests fuer alle vier Windows-Shells (Teststelle 2, Ticket 11).
+// Gemeinsame Tests fuer alle vier Windows-Shells (Teststelle 2, Tickets 07 und 11).
 // Jede Shell hat eine eigene Testdatei, damit Vitest die Shells parallel laufen laesst.
-import { existsSync, realpathSync } from 'node:fs';
+// Alle Shells starten ueber das echte Terminal-Backend von THub (PtyManager) mit der Integration.
+import { existsSync, mkdirSync, realpathSync, rmSync } from 'node:fs';
+import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
+  CoreShell,
   FakeTHub,
   SHELLS,
+  SYSTEM_ROOT,
   ShellSession,
   type ShellId,
   type Variant,
@@ -13,9 +17,11 @@ import {
   closedPort,
   configureStub,
   createWorkspace,
+  executionPolicyFromGroupPolicy,
   readStubRecords,
   removeWorkspace,
   sleep,
+  visibleText,
 } from './harness';
 
 const TAB_ID = 'tab-1';
@@ -48,6 +54,13 @@ const CASES: Record<string, Record<Flavor, string>> = {
 
 function flavorOf(id: ShellId): Flavor {
   return id === 'cmd' ? 'cmd' : id === 'gitbash' ? 'bash' : 'ps';
+}
+
+/** Ordnerwechsel, wie ihn ein Nutzer in der jeweiligen Shell tippt. */
+function cdLine(flavor: Flavor, dir: string): string {
+  if (flavor === 'ps') return `Set-Location -LiteralPath '${dir}'`;
+  if (flavor === 'cmd') return `cd /d "${dir}"`;
+  return `cd '${dir.replace(/\\/g, '/')}'`;
 }
 
 export function shellSuite(id: ShellId): void {
@@ -336,6 +349,145 @@ export function shellSuite(id: ShellId): void {
       });
     });
 
+    describe('Ordner melden (Workspace-Kern mit echtem Terminal-Backend)', () => {
+      let spaces: string;
+      let second: string;
+      const cores: CoreShell[] = [];
+      const startCore = (storage?: CoreShell['storage'], extra?: Parameters<typeof CoreShell.start>[3]): CoreShell => {
+        const core = CoreShell.start(def, ws, storage, extra);
+        cores.push(core);
+        return core;
+      };
+      const gitUsrBin = (): string => path.join(path.dirname(path.dirname(def.exe!)), 'usr', 'bin');
+
+      beforeAll(() => {
+        spaces = path.join(ws.root, 'Ordner mit Leerzeichen äöü');
+        second = path.join(ws.root, 'Zweiter Ordner 100%');
+        mkdirSync(spaces, { recursive: true });
+        mkdirSync(second, { recursive: true });
+      });
+
+      afterAll(async () => {
+        for (const core of cores) await core.shutdown();
+      });
+
+      it('lädt das Testprofil und meldet den Startordner, nach cd genau den neuen Ordner', async () => {
+        rmSync(ws.profileLoaded, { force: true });
+        const core = startCore();
+        expect(core.orders).toMatchObject([{ cwd: ws.root, integration: def.integration }]);
+        await core.waitForCwd(ws.root);
+        if (id !== 'cmd') expect(existsSync(ws.profileLoaded)).toBe(true);
+
+        core.write(cdLine(flavor, spaces) + '\r');
+        await core.waitForCwd(spaces);
+        core.write(cdLine(flavor, second) + '\r');
+        await core.waitForCwd(second);
+        // Der Tooltip zeigt den angezeigten Ordner des Tabs.
+        expect(core.core.snapshot().tabs[0].cwd).toBe(second);
+        expect(core.shownCwds.slice(-2)).toEqual([spaces, second]);
+      });
+
+      it('erweitert den eigenen Prompt; die Escape-Sequenzen erscheinen nicht als Text', () => {
+        const raw = cores[0].output;
+        // Die Sequenzen bleiben im Strom ...
+        expect(raw).toMatch(flavor === 'bash' ? /\x1b\]7;file:\/\// : /\x1b\]9;9;/);
+        // ... sichtbar bleibt der Prompt des Testprofils, ohne Reste einer Sequenz.
+        const visible = visibleText(raw);
+        expect(visible).toContain('TH-PROMPT>');
+        expect(visible).not.toMatch(/[\x07\x1b]/);
+        expect(visible).not.toMatch(/\]9;9;|\]7;|file:\/\//);
+      });
+
+      it.runIf(flavor === 'ps')('meldet Orte ausserhalb des Dateisystems nicht', async () => {
+        const core = cores[0];
+        core.write(cdLine(flavor, spaces) + '\r');
+        await core.waitForCwd(spaces);
+        core.write('Set-Location HKLM:\\\r');
+        core.write(cdLine(flavor, second) + '\r');
+        await core.waitForCwd(second);
+        expect(core.shownCwds.slice(-2)).toEqual([spaces, second]);
+      });
+
+      it.runIf(flavor === 'bash')('rechnet Laufwerks- und Mount-Pfade um, virtuelle Orte zählen nicht', async () => {
+        const core = cores[0];
+        // Laufwerkspfad wie /c/Windows: meldet die Shell unverändert, der Kern macht C:\Windows daraus.
+        const drivePath = `/${SYSTEM_ROOT[0].toLowerCase()}${SYSTEM_ROOT.slice(2).replace(/\\/g, '/')}`;
+        core.write(`cd ${drivePath}\r`);
+        await core.waitForCwd(SYSTEM_ROOT);
+        // Mount-Punkt /usr/bin: liegt im Installationsordner von Git.
+        core.write('cd /usr/bin\r');
+        await core.waitForCwd(gitUsrBin());
+        // /proc gibt es nur in MSYS, nicht im Dateisystem.
+        core.write('cd /proc\r');
+        core.write(cdLine(flavor, spaces) + '\r');
+        await core.waitForCwd(spaces);
+        expect(core.shownCwds.slice(-2)).toEqual([gitUsrBin(), spaces]);
+      });
+
+      describe.runIf(flavor === 'ps')('Robust laden', () => {
+        it('funktioniert auch, wenn die Shell im Constrained Language Mode läuft', async () => {
+          // Das Testprofil schaltet den Verlauf ab und danach die Sitzung in den Constrained Language Mode,
+          // wie es WDAC/AppLocker für die ganze Sitzung tun.
+          const core = startCore(undefined, {
+            profileExtra: ["$ExecutionContext.SessionState.LanguageMode = 'ConstrainedLanguage'"],
+          });
+          await core.waitForCwd(ws.root);
+          core.write(cdLine(flavor, spaces) + '\r');
+          await core.waitForCwd(spaces);
+          expect(visibleText(core.output)).toContain('TH-PROMPT>');
+          await core.shutdown();
+        });
+
+        // Nur Windows PowerShell: PowerShell 7 fragt mit AllSigned beim Start, ob es den Herausgeber
+        // Microsoft (PSReadLine) zulassen soll, ausserhalb von THub genauso; das lässt sich nicht ohne
+        // Eingabe prüfen.
+        it.runIf(id === 'powershell' && !executionPolicyFromGroupPolicy())(
+          'startet mit Execution Policy AllSigned: Das unsignierte Profil fehlt, die Integration läuft',
+          async () => {
+            rmSync(ws.profileLoaded, { force: true });
+            // Richtlinie nur für diesen Prozess, ohne Systemeinstellung.
+            const core = startCore(undefined, { env: { PSExecutionPolicyPreference: 'AllSigned' } });
+            try {
+              await core.waitForCwd(ws.root);
+              expect(existsSync(ws.profileLoaded)).toBe(false);
+              // Ohne Profil der Standard-Prompt von PowerShell, ebenfalls mit Ordner-Meldung
+              expect(visibleText(core.output)).toMatch(/PS [A-Z]:\\[^\r\n]*>/);
+            } finally {
+              // Nichts tippen: Ohne Testprofil schriebe PSReadLine in den echten Verlauf des Nutzers.
+              await core.shutdown(false);
+            }
+          },
+        );
+      });
+
+      it('startet nach einem Neustart im zuletzt aktiven Ordner', async () => {
+        const before = cores[0];
+        before.write(cdLine(flavor, spaces) + '\r');
+        await before.waitForCwd(spaces);
+        await before.shutdown();
+
+        const after = startCore(before.storage);
+        expect(after.orders).toMatchObject([{ cwd: spaces, integration: def.integration }]);
+        // Die Shell steht wirklich dort: cd .. führt in den Arbeitsordner.
+        after.write('cd ..\r');
+        await after.waitForCwd(ws.root);
+      });
+
+      it('fällt beim Neustart auf den Startordner zurück, wenn der zuletzt aktive Ordner fehlt', async () => {
+        const before = cores[cores.length - 1];
+        const gone = path.join(ws.root, 'gleich weg');
+        mkdirSync(gone);
+        before.write(cdLine(flavor, gone) + '\r');
+        await before.waitForCwd(gone);
+        await before.shutdown();
+        rmSync(gone, { recursive: true, force: true });
+
+        const after = startCore(before.storage);
+        expect(after.orders).toMatchObject([{ cwd: ws.root }]);
+        await after.waitForCwd(ws.root);
+      });
+    });
+
     describe('Startbefehl', () => {
       it('"Starter mit --resume x" erreicht claude mit --settings, genau einmal', async () => {
         clearStubRecords(ws);
@@ -351,6 +503,9 @@ export function shellSuite(id: ShellId): void {
         expect(hub.paths()).toEqual(['/claude/launch', '/claude/started', '/claude/exit']);
         expect(hub.requests[0].body.case).toBe('withId');
         expect(records[0].env.THUB_TAB_ID).toBe(TAB_ID);
+        // Die Integration entfernt THUB_START_CMD vor dem Ausführen; NO_PROXY ergänzt das Terminal-Backend.
+        expect(records[0].env.THUB_START_CMD).toBeUndefined();
+        expect(records[0].env.NO_PROXY?.split(',')).toEqual(expect.arrayContaining(['127.0.0.1', 'localhost']));
       });
     });
   });
