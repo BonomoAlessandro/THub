@@ -169,3 +169,50 @@ Pro Abweichung einen Eintrag; daraus wird später ein Ticket in [docs/tickets](t
 - **Erwartet:** <was laut Liste, README oder Spezifikation passieren sollte>
 - **Tatsächlich:** <was passiert ist; wenn möglich mit Schritten zum Nachstellen und einem Screenshot>
 ```
+
+### Verwendung von Tastaturpfeilen im Terminal
+→ [Ticket 24](tickets/24-powershell-fluessig.md)
+
+Wenn ich einen Befehl im Terminal eingegeben ahbe und dann zum beispiel einen früheren nochmals ausführen will, kann ich mit den Tastaturpfeilen durch die bereits ausgeführen befehle navigieren. Diese Navigation ist langsam und fühlt sich nicht nach realtime an.
+
+### Die Befehlspreview
+→ [Ticket 24](tickets/24-powershell-fluessig.md)
+
+In den Terminals wird wenn ich zum Beipsiel "cd" eingebe, gleich eine Vorschau angezeigt, was ich noch eingeben könnte. das soll komplett wegfallen.
+
+### Die Tableiste
+→ [Ticket 26](tickets/26-tableiste-und-dropdown.md)
+
+Die einelnen Tabs könnten ein wenig mehr Höhe haben.
+Die einzelnen Tabs sollen ausserdem bis ganz an den oberen Rand der applikation gehen, sodass man nicht daneben klickt
+
+### Nachrichten
+→ [Ticket 27](tickets/27-offene-punkte-seltener.md)
+
+Die Nachrichten für noch offene Puntke sind gut, aber ich denke die können ebenfalls automatische geschlossen werden, wenn darauf geklickt wird
+
+### Links in Claude
+→ [Ticket 25](tickets/25-links-und-rechtsklick.md)
+
+Ich weiss nicht, ob das das Terminal ist oder von wo das kommt, aber Claude hat mir eine URL angezeigt "http://localhost:3100/#/search-input" und die url wir mit einer komischen gestrichelten Linie unterschrichen. Wenn das von THub kommt, will ich das gerne entfernen
+
+### Offene Punkte
+→ [Ticket 27](tickets/27-offene-punkte-seltener.md)
+
+Das mit den offenen Punkten ist grundsätzlch gut, aber aktuell kommt so etwa nach fast jedem prompt was nicht die idee davon war. Die Idee war, dass falls claude mal noch offene punkte hat, diese nicht übersehen werden und nicht, dass claude dazu aufgefordert wird jedesmal noch etwas zu finder oder zu erfinden
+
+### Kopieren mit rechter Maustaste
+→ [Ticket 25](tickets/25-links-und-rechtsklick.md)
+
+Wenn ich etwas auf dem Computer kopiere und dann nach Claude Pase wird der Text 2mal eingefügt anstatt nur einmal
+
+### Dropdown in den Einstellungen
+→ [Ticket 26](tickets/26-tableiste-und-dropdown.md)
+
+Wird das "Standard-Shell" dropdown im darkmodus aufgeklappt sieht man nur eine weisse liste
+
+### Neue Tabs
+→ [Ticket 26](tickets/26-tableiste-und-dropdown.md)
+
+Hat man mehrere Tabs offen und den ganz links ausgewähl und öffnet dann über das + einen neuen Tab wird der neue Tab direkt neben dem ausgewählten Tab geöffnet anstatt am ende der liste. Der neue Tab soll auch am ende der Liste erscheinen
+
