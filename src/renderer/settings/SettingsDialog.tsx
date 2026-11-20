@@ -23,14 +23,14 @@ interface SettingsDialogProps {
 }
 
 /**
- * Einstellungen, geöffnet über das Zahnrad: Standardordner, Standard-Shell, Design und Schriftgrösse; weitere
- * Felder (Hinweise) kommen mit späteren Tickets dazu, je als eigene Zeile in ihrem Abschnitt.
+ * Einstellungen, geöffnet über das Zahnrad: Standardordner, Standard-Shell, Design, Schriftgrösse und Hinweise im
+ * Fenster; weitere Felder kommen mit späteren Tickets dazu, je als eigene Zeile in ihrem Abschnitt.
  * Jede Änderung geht sofort an den Kern und wirkt ohne „Fertig“; der Dialog zeigt, was der Kern meldet.
  */
 export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onClose }: SettingsDialogProps) {
   const changeRef = useRef<HTMLButtonElement>(null);
   const folder = settings.defaultCwd;
-  const { theme, fontSize } = settings;
+  const { theme, fontSize, notifications } = settings;
 
   const update = (patch: Partial<Settings>) => api.send({ type: 'updateSettings', patch });
 
@@ -151,6 +151,26 @@ export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onCl
                 +
               </button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="set-section">
+        <h4>Hinweise</h4>
+        <div className="set-row">
+          <div>
+            <div className="set-label">Hinweise im Fenster</div>
+            <div className="set-desc">Meldet, wenn Claude in einem anderen Tab wartet oder fertig ist.</div>
+          </div>
+          <div className="set-ctl">
+            <button
+              type="button"
+              role="switch"
+              className={notifications ? 'switch on' : 'switch'}
+              aria-checked={notifications}
+              aria-label="Hinweise im Fenster"
+              onClick={() => update({ notifications: !notifications })}
+            />
           </div>
         </div>
       </section>
