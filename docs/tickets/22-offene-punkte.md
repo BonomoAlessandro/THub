@@ -1,6 +1,6 @@
 # 22 – Offene Punkte aus Claudes Antworten als Hinweis
 
-Status: `offen` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 14
 User Stories: 80, 81, 82
 Spezifikation: „Offene Punkte aus Claudes Antworten“, „Hook-Empfänger und lokale Schnittstelle“, „Claude-Status: Zustandsautomat pro Tab“ (Hinweise im Fenster)

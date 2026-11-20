@@ -20,7 +20,10 @@ import { createWorkspace, type Workspace } from './workspace/workspace';
 // Datenordner %APPDATA%\THub, unpaketiert (npm start) %APPDATA%\THub-dev, damit die Entwicklung die
 // installierte App nie berührt. Muss vor dem ersten Zugriff auf userData und vor dem ready-Ereignis
 // passieren, und vor der Einzelinstanz-Sperre: Die hängt am Datenordner, so hat die Entwicklung ihre eigene.
-const folders = dataFolders(app.getPath('appData'), app.isPackaged);
+// Testmodus: THUB_TEST_DATA_DIR ersetzt %APPDATA% als Wurzel der Datenordner, damit automatische Prüfungen
+// eigene Daten und eine eigene Einzelinstanz-Sperre haben. Electron selbst ignoriert ein umgeleitetes APPDATA.
+const appDataRoot = process.env.THUB_TEST_DATA_DIR || app.getPath('appData');
+const folders = dataFolders(appDataRoot, app.isPackaged);
 app.setPath('userData', folders.current);
 
 let mainWindow: BrowserWindow | null = null;

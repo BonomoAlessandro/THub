@@ -1,6 +1,6 @@
 # 14 – Hinweise im Fenster
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 13
 User Stories: 49–55, 75 (Hinweise an/aus)
 Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Hinweise im Fenster)
