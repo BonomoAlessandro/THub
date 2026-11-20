@@ -8,8 +8,9 @@ import { PtyManager } from './ptyManager';
 import { FIXED_SHELLS } from './shells';
 import { STATE_FILE_NAME, StateStore } from './store';
 import { hostSystem, noProcessProbe, systemClock } from './system';
+import { DEV_MENU } from './devMenu';
 import type { LocalApiInfo } from './workspace/claude';
-import { createThemeSource, followTheme, windowChrome, type ThemeSource } from './theme';
+import { createThemeSource, followTheme, followThemeSetting, windowChrome, type ThemeSource } from './theme';
 import { createWorkspace, type Workspace } from './workspace/workspace';
 
 // Datenordner %APPDATA%\THub, unpaketiert (npm start) %APPDATA%\THub-dev, damit die Entwicklung die
@@ -37,8 +38,8 @@ if (app.requestSingleInstanceLock()) {
 
 /** Start der einzigen Instanz: lokale Schnittstelle und Hook-Datei, Zustand laden, Fenster öffnen. */
 async function start(): Promise<void> {
-  // Im Dev-Modus Menü behalten (DevTools, Reload); in der installierten App ausblenden.
-  if (app.isPackaged) Menu.setApplicationMenu(null);
+  // Im Dev-Modus ein Menü mit DevTools und Neu laden, aber ohne Zoom; die installierte App hat keines.
+  Menu.setApplicationMenu(app.isPackaged ? null : Menu.buildFromTemplate(DEV_MENU));
 
   // Erst nach der Einzelinstanz-Sperre, damit nie zwei Starts zugleich übernehmen, und vor dem Laden.
   takeOverOldData(folders);
@@ -57,8 +58,10 @@ async function start(): Promise<void> {
   localApi?.connect(workspace);
   workspace.subscribe((event) => sendToRenderer(IPC.workspaceEvent, event));
 
-  // Design hell/dunkel: folgt Windows (nativeTheme) und zieht bei jedem Wechsel sofort mit.
+  // Design hell/dunkel nach der Wahl in den Einstellungen; bei „System“ folgt es Windows (nativeTheme)
+  // und zieht bei jedem Wechsel sofort mit. Vor dem Fenster, damit es gleich richtig erscheint.
   const theme = createThemeSource(nativeTheme);
+  followThemeSetting(theme, workspace);
   ipcMain.handle(IPC.themeCurrent, () => theme.current());
 
   registerIpc(workspace);
