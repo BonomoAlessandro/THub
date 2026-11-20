@@ -13,6 +13,7 @@ const api: THubApi = {
   loadClosedTabs: () => ipcRenderer.invoke(IPC.workspaceClosedTabs),
 
   pickDirectory: (purpose) => ipcRenderer.invoke(IPC.dialogPickDirectory, purpose),
+  openTabFolder: (tabId) => ipcRenderer.invoke(IPC.tabOpenFolder, tabId),
 
   readClipboard: () => ipcRenderer.invoke(IPC.clipboardRead),
   writeClipboard: (text) => ipcRenderer.invoke(IPC.clipboardWrite, text),

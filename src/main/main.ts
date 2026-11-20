@@ -1,10 +1,11 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme, shell } from 'electron';
 import * as path from 'node:path';
 import { IPC, type DirectoryPurpose, type WorkspaceCommand } from '../shared/types';
 import { dataFolders, takeOverLegacyData, type DataFolders } from './dataFolder';
 import { checkExecutionPolicy, type ExecutionPolicyCheck } from './executionPolicy';
 import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
 import { LocalApiServer } from './localApi';
+import { openTabFolder } from './openFolder';
 import { PtyManager } from './ptyManager';
 import { shellIntegrationDir } from './shellLaunch';
 import { detectShells } from './shells';
@@ -169,8 +170,14 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
         shellId: typeof command.shellId === 'string' ? command.shellId : undefined,
       });
       return;
+    case 'duplicateTab':
+      ws.duplicateTab(command.tabId);
+      return;
     case 'renameTab':
       ws.renameTab(command.tabId, command.name);
+      return;
+    case 'moveTab':
+      ws.moveTab(command.tabId, command.index);
       return;
     case 'activateTab':
       ws.activateTab(command.tabId);
@@ -247,6 +254,19 @@ function registerIpc(ws: Workspace): void {
       properties: ['openDirectory'],
     });
     return result.canceled ? null : (result.filePaths[0] ?? null);
+  });
+
+  // „Ordner im Explorer öffnen“: Den Ordner bestimmt der Kern, aus dem Renderer kommt nur die Tab-Kennung.
+  // Im Testmodus geht kein Explorer-Fenster auf dem Desktop auf; der Ordner steht stattdessen in der Ausgabe.
+  ipcMain.handle(IPC.tabOpenFolder, async (_e, tabId: unknown) => {
+    await openTabFolder(ws, tabId, {
+      directoryExists: (dir) => hostSystem.directoryExists(dir),
+      openPath: (dir) => {
+        if (!TEST_HIDDEN) return shell.openPath(dir);
+        console.log(`Testmodus: Der Explorer würde ${dir} öffnen.`);
+        return Promise.resolve('');
+      },
+    });
   });
 
   ipcMain.handle(IPC.clipboardRead, () => clipboard.readText());
