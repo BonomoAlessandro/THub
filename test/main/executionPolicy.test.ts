@@ -154,7 +154,8 @@ describe('Windows PowerShell versteckt ausführen', () => {
     const lines = (answer as { stdout: string }).stdout.split(/\r?\n/).filter(Boolean);
     expect(lines).toHaveLength(2);
     for (const line of lines) expect(line).toMatch(/^(Undefined|AllSigned|Restricted|RemoteSigned|Unrestricted|Bypass|Default)$/);
-  });
+    // Echtes Windows PowerShell: Unter Last braucht der Start länger als die 5 s, die Vitest sonst gewährt.
+  }, 30_000);
 
   it('meldet ein Zeitlimit und beendet den Prozess', async () => {
     const answer = await runWindowsPowerShell(['-NoProfile', '-NonInteractive', '-Command', 'Start-Sleep -Seconds 30'], 200);
@@ -166,5 +167,5 @@ describe('Windows PowerShell versteckt ausführen', () => {
     const answer = await runWindowsPowerShell(['-NoProfile', '-NonInteractive', '-Command', 'exit 3'], 20_000);
 
     expect(answer).toEqual({ kind: 'failed' });
-  });
+  }, 30_000);
 });

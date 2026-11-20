@@ -20,8 +20,10 @@ describe('Tabs', () => {
     expect(h.activeTab()).toMatchObject({ name: 'work', cwd: 'D:\\work' });
   });
 
-  describe('ein neuer Tab erscheint rechts neben dem aktiven', () => {
-    it('zwischen dem aktiven Tab und seinem rechten Nachbarn', () => {
+  // Ticket 26: am Ende der Leiste, nicht mehr neben dem aktiven Tab. Duplizieren und Wiederöffnen haben eigene Regeln
+  // (tabMenu.test.ts, closeReopen.test.ts).
+  describe('ein neuer Tab erscheint am Ende der Leiste', () => {
+    it('auch wenn der erste Tab aktiv ist', () => {
       const h = startWorkspace();
       h.workspace.createTab();
       h.workspace.createTab();
@@ -29,8 +31,19 @@ describe('Tabs', () => {
 
       const id = h.workspace.createTab();
 
-      expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 4', 'tester 2', 'tester 3']);
+      expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 2', 'tester 3', 'tester 4']);
       expect(h.snapshot().activeTabId).toBe(id);
+    });
+
+    it('auch wenn ein Tab in der Mitte aktiv ist', () => {
+      const h = startWorkspace();
+      h.workspace.createTab();
+      h.workspace.createTab();
+      h.workspace.activateTab(h.tabNamed('tester 2').id);
+
+      h.workspace.createTab();
+
+      expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 2', 'tester 3', 'tester 4']);
     });
 
     it('ganz rechts, wenn der aktive Tab der letzte ist', () => {
@@ -42,7 +55,7 @@ describe('Tabs', () => {
       expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 2', 'tester 3']);
     });
 
-    it('nacheinander angelegte Tabs reihen sich rechts vom ursprünglich aktiven auf', () => {
+    it('nacheinander angelegte Tabs reihen sich in ihrer Reihenfolge am Ende auf', () => {
       const h = startWorkspace();
       h.workspace.createTab();
       h.workspace.activateTab(h.tabNamed('tester').id);
@@ -50,7 +63,18 @@ describe('Tabs', () => {
       h.workspace.createTab();
       h.workspace.createTab();
 
-      expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 3', 'tester 4', 'tester 2']);
+      expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 2', 'tester 3', 'tester 4']);
+    });
+
+    it('auch nach dem Umsortieren der Leiste', () => {
+      const h = startWorkspace();
+      h.workspace.createTab();
+      h.workspace.moveTab(h.tabNamed('tester 2').id, 0);
+      h.workspace.activateTab(h.tabNamed('tester 2').id);
+
+      h.workspace.createTab();
+
+      expect(h.tabs().map((t) => t.name)).toEqual(['tester 2', 'tester', 'tester 3']);
     });
 
     it('als einziger Tab, wenn keiner mehr offen ist', () => {
