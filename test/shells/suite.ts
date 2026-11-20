@@ -88,6 +88,8 @@ export function shellSuite(id: ShellId): void {
       inherited?: Record<string, string>;
       /** Ob das Terminal-Backend THUB_STARTER setzt; Standard ja. */
       claudeStarter?: () => boolean;
+      /** Zusätzliche Zeilen am Ende des Testprofils (PowerShell, Git Bash). */
+      profileExtra?: string[];
     }): Promise<ShellSession> => {
       const variant = opts.variant === undefined ? 'exe' : opts.variant;
       const claudeDir = variant === 'exe' ? ws.stubExeDir : variant === 'cmd' ? ws.stubCmdDir : null;
@@ -99,6 +101,7 @@ export function shellSuite(id: ShellId): void {
         startCommand: opts.startCommand,
         inherited: opts.inherited,
         claudeStarter: opts.claudeStarter,
+        profileExtra: opts.profileExtra,
       });
       sessions.push(s);
       return s;
@@ -153,6 +156,28 @@ export function shellSuite(id: ShellId): void {
         const r = await call(s, 'claude');
         expect(r.records).toHaveLength(1);
         expect(r.requests.map((x) => x.path)).toEqual(['/claude/launch', '/claude/started', '/claude/exit']);
+      });
+
+      it.runIf(flavor === 'ps')('schaltet die Befehlsvorschau von PSReadLine aus, auch wenn das Profil sie einschaltet', async () => {
+        // Wie ein Profil, das die Vorhersage samt Listenansicht einschaltet. PredictionSource gibt es ab PSReadLine 2.1,
+        // PredictionViewStyle ab 2.2; Windows PowerShell bringt 2.0 mit, ohne beides.
+        const hasOption = (name: string) => `(Get-Command Set-PSReadLineOption -ParameterName ${name} -ErrorAction SilentlyContinue)`;
+        const s = await start({
+          profileExtra: [
+            `if (${hasOption('PredictionSource')}) { Set-PSReadLineOption -PredictionSource History }`,
+            `if (${hasOption('PredictionViewStyle')}) { Set-PSReadLineOption -PredictionViewStyle ListView }`,
+          ],
+        });
+        const startOutput = s.plainOutput();
+        const file = path.join(ws.root, `prediction-${id}.txt`);
+        await s.run(
+          `Set-Content -LiteralPath '${file}' -Value ('{0}|{1}' -f [bool]${hasOption('PredictionSource')}, (Get-PSReadLineOption).PredictionSource)`,
+        );
+        const [supported, source] = readFileSync(file, 'utf8').replace(/^﻿/, '').trim().split('|');
+        if (supported === 'True') expect(source).toBe('None');
+        else expect(source).toBe('');
+        // Ohne die Option (PSReadLine 2.0) bleibt die Integration still.
+        expect(startOutput).not.toMatch(/PredictionSource|Set-PSReadLineOption/);
       });
     });
 
