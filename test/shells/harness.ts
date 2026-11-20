@@ -311,7 +311,10 @@ function findGitBash(): string | null {
   return null;
 }
 
-const psMark = (nonce: string) => `Set-Content -LiteralPath $env:TH_MARK -Value ('${nonce} ' + [int]$LASTEXITCODE)`;
+// Liest der Test die Datei gerade, scheitert Set-Content unter Last mit „wird von einem anderen Prozess
+// verwendet“: darum einige Male wiederholen. Der Exit-Code wird vorher festgehalten.
+const psMark = (nonce: string) =>
+  `$__m = [int]$LASTEXITCODE; foreach ($__i in 1..50) { try { Set-Content -LiteralPath $env:TH_MARK -Value ('${nonce} ' + $__m) -ErrorAction Stop; break } catch { Start-Sleep -Milliseconds 20 } }`;
 const psStart = (args: string) =>
   `& "$env:SystemRoot\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -NoLogo -ExecutionPolicy Bypass -File $env:THUB_STARTER ${args}`;
 
