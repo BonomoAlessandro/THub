@@ -230,7 +230,16 @@ export interface Workspace extends ClaudeReceiver {
    */
   windowForeground(foreground: boolean): void;
 
-  /** Nimmt einen Hinweis weg (× am Hinweis); offene Punkte sind damit auch im gespeicherten Zustand weg. */
+  /**
+   * Klick auf einen Hinweis: zeigt seinen Tab an wie `activateTab`. Ein Hinweis mit offenen Punkten verschwindet dabei,
+   * auch aus dem gespeicherten Zustand; „wartet“ und „fertig“ verschwinden wie bei jedem Anzeigen des Tabs. Ein Hinweis,
+   * der nicht mehr steht, ändert nichts.
+   */
+  openToast(toastId: string): void;
+  /**
+   * Nimmt einen Hinweis weg (× am Hinweis), ohne den Tab anzuzeigen; offene Punkte sind damit auch im gespeicherten
+   * Zustand weg.
+   */
   dismissToast(toastId: string): void;
   /** Die Maus steht auf dem Hinweis bzw. nicht mehr: Solange hält sein Countdown an. */
   holdToast(toastId: string, hold: boolean): void;
@@ -1170,6 +1179,15 @@ class WorkspaceCore implements Workspace {
 
   // ---------- Hinweise ----------
 
+  openToast(toastId: string): void {
+    if (this.stopping || typeof toastId !== 'string') return;
+    const toast = this.toasts.find(toastId);
+    if (!toast) return;
+    // Offene Punkte sind mit dem Klick angeschaut (Ticket 27); das blosse Anzeigen des Tabs lässt sie stehen.
+    if (toast.kind === 'openPoints') this.dismissToast(toastId);
+    this.activateTab(toast.tabId);
+  }
+
   dismissToast(toastId: string): void {
     if (this.stopping || typeof toastId !== 'string') return;
     const dismissed = this.toasts.dismiss(toastId);
@@ -1201,9 +1219,9 @@ class WorkspaceCore implements Workspace {
   }
 
   /**
-   * Hinweis mit den offenen Punkten aus Claudes Antwort (Ticket 22): auch für den sichtbaren Tab, bis er mit ×
-   * geschlossen wird, und gespeichert, damit er einen Neustart übersteht. Er ersetzt den bisherigen des Tabs und einen
-   * „fertig“-Hinweis.
+   * Hinweis mit den offenen Punkten aus Claudes Antwort (Ticket 22): auch für den sichtbaren Tab, bis er mit × oder einem
+   * Klick darauf geschlossen wird (`openToast`), und gespeichert, damit er einen Neustart übersteht. Er ersetzt den
+   * bisherigen des Tabs und einen „fertig“-Hinweis.
    */
   private showOpenPoints(tab: PersistedTab, points: string[]): void {
     tab.openPoints = points;

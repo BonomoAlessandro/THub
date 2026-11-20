@@ -1,13 +1,18 @@
-// Offene Punkte aus Claudes Antworten (Ticket 22): die Anweisung, die THub Claude bei jedem SessionStart als
+// Offene Punkte aus Claudes Antworten (Tickets 22 und 27): die Anweisung, die THub Claude bei jedem SessionStart als
 // zusätzlichen Kontext mitgibt, und die Erkennung der offenen Punkte am Ende einer Antwort (`Stop`,
 // `last_assistant_message`), als reine Regeln nach dem Abschnitt „Offene Punkte aus Claudes Antworten“ der
 // Spezifikation. Ob ein Hinweis erscheint, entscheidet der Workspace-Kern.
 
-/** Wortlaut der Anweisung an Claude, genau wie in der Spezifikation. */
+/**
+ * Wortlaut der Anweisung an Claude, genau wie in der Spezifikation. Offene Punkte sind die Ausnahme (Ticket 27): Claude
+ * soll den Abschnitt nicht mit Angeboten, Vorschlägen oder Erfundenem füllen.
+ */
 export const OPEN_POINTS_INSTRUCTION =
-  'Hinweis von THub: Wenn deine Antwort Fragen an den Nutzer oder offene Punkte enthält, die er entscheiden, prüfen ' +
-  'oder erledigen muss, schreibe sie am Ende der Antwort unter der Überschrift ‚Offene Punkte‘ als kurze Aufzählung, ' +
-  'ein Punkt pro Zeile. Gibt es keine, lass den Abschnitt weg.';
+  'Hinweis von THub: Nur wenn du für den nächsten Schritt eine Entscheidung, Antwort oder Handlung des Nutzers ' +
+  'brauchst, die du nicht selbst treffen oder erledigen kannst, schreibe sie am Ende der Antwort unter der Überschrift ' +
+  '‚Offene Punkte‘ als kurze Aufzählung, ein Punkt pro Zeile. Das ist die Ausnahme: Die meisten Antworten haben keine ' +
+  'offenen Punkte, dann lass den Abschnitt weg. Keine Angebote für weitere Arbeit, keine Vorschläge, keine ' +
+  'Zusammenfassung und nichts erfinden, nur um den Abschnitt zu füllen.';
 
 /**
  * Antwort auf `SessionStart` bei eingeschalteter Einstellung: Claude Code liest die Ausgabe des Befehls-Hooks als JSON
@@ -41,26 +46,6 @@ const ATX_HEADING = /^\s{0,3}#{1,6}\s+(.*?)(?:\s+#+)?\s*$/;
 const BOLD_LINE = /^\s*(\*\*|__)(.+?)\1\s*[:：]?\s*$/;
 /** Unterstreichung einer Setext-Überschrift (`===` bzw. `---` unter der Zeile). */
 const SETEXT_UNDERLINE = /^\s{0,3}(?:=+|-+)\s*$/;
-/** Zeichen, die nach dem Fragezeichen am Ende noch stehen dürfen: Hervorhebung, Anführungszeichen, Klammern, Emoji. */
-const TRAILING_DECORATION = /[\s*_`"'“”„‘’«»)\]\p{Extended_Pictographic}\u{FE0F}]+$/u;
-/** Abkürzungen, nach deren Punkt kein neuer Satz beginnt (ohne Punkte, klein geschrieben). */
-const ABBREVIATIONS = new Set([
-  'bzw',
-  'ca',
-  'dh',
-  'etc',
-  'evtl',
-  'ggf',
-  'inkl',
-  'nr',
-  'usw',
-  'vgl',
-  'zb',
-  'bspw',
-  'eg',
-  'ie',
-  'vs',
-]);
 
 /** Eine Zeile der Antwort; `code`: gehört zu einem Code-Block (auch die Zäune selbst). */
 interface Line {
@@ -72,21 +57,17 @@ interface Line {
  * Die offenen Punkte am Ende einer Antwort von Claude, bereinigt (ohne Aufzählungszeichen und Markdown-Hervorhebung),
  * höchstens `MAX_OPEN_POINTS`; leer, wenn es keine gibt.
  *
- * 1. Überschrift „Offene Punkte“, „Offene Fragen“, „Noch offen“, „Fragen an dich“, „Zu klären“, „Open points“ oder
- *    „Open questions“ (Markdown-Überschrift, fette Zeile oder Zeile mit Doppelpunkt): Die Aufzählungspunkte darunter
- *    sind die offenen Punkte. Unterpunkte gehören zu ihrem Punkt und zählen nicht einzeln. Mehrere solche Abschnitte
- *    zählen zusammen.
- * 2. Sonst (oder wenn unter keiner solchen Überschrift eine Aufzählung steht): Endet der letzte Absatz mit einer Frage,
- *    ist diese Frage ein offener Punkt. Endet die Antwort mit einem Code-Block, gibt es keinen solchen Absatz.
+ * Es zählt nur der ausdrückliche Abschnitt: eine Überschrift „Offene Punkte“, „Offene Fragen“, „Noch offen“, „Fragen an
+ * dich“, „Zu klären“, „Open points“ oder „Open questions“ (Markdown-Überschrift, fette Zeile oder Zeile mit
+ * Doppelpunkt), und die Aufzählungspunkte darunter sind die offenen Punkte. Unterpunkte gehören zu ihrem Punkt und
+ * zählen nicht einzeln. Mehrere solche Abschnitte zählen zusammen. Eine Überschrift ohne Aufzählung darunter ergibt
+ * keine Punkte, und eine Frage am Ende der Antwort („Soll ich auch noch …?“) zählt nicht (Ticket 27).
  *
  * Inhalt von Code-Blöcken zählt nie.
  */
 export function findOpenPoints(message: string | undefined): string[] {
   if (!message) return [];
-  const lines = splitLines(message);
-  const listed = pointsUnderHeadings(lines);
-  const points = listed.length > 0 ? listed : closingQuestion(lines);
-  return points
+  return pointsUnderHeadings(splitLines(message))
     .map(cleanPoint)
     .filter((p) => p !== '')
     .slice(0, MAX_OPEN_POINTS);
@@ -206,76 +187,9 @@ function listAfter(lines: Line[], start: number): { items: string[]; end: number
   return { items: items.map((parts) => parts.join(' ')), end: i };
 }
 
-/**
- * Die Frage am Ende des letzten Absatzes, als einziger Punkt; leer, wenn er nicht mit einer Frage endet. Ist der
- * Absatz eine Aufzählung, zählt nur ihr letzter Punkt. Mehrere Fragen direkt hintereinander am Ende bilden einen Punkt
- * („Soll ich X machen? Oder lieber Y?“).
- */
-function closingQuestion(lines: Line[]): string[] {
-  let end = lines.length - 1;
-  while (end >= 0 && !lines[end].code && lines[end].text.trim() === '') end--;
-  if (end < 0 || lines[end].code) return [];
-  // Der Absatz beginnt nach einer Leerzeile, einem Code-Block oder einer Überschrift direkt darüber.
-  let start = end;
-  while (start > 0 && !lines[start - 1].code && lines[start - 1].text.trim() !== '' && !isHeadingLine(lines[start - 1])) {
-    start--;
-  }
-  if (isHeadingLine(lines[end])) return [];
-  const block = lines.slice(start, end + 1).map((l) => l.text);
-
-  let lastItem = -1;
-  block.forEach((text, k) => {
-    if (LIST_ITEM.test(text)) lastItem = k;
-  });
-  const paragraph = (lastItem >= 0 ? block.slice(lastItem) : block)
-    .map((text, k) => {
-      const t = text.replace(/^\s*(?:>\s?)+/, '');
-      return (k === 0 && lastItem >= 0 ? t.replace(LIST_ITEM, '$2') : t).trim();
-    })
-    .join(' ');
-  if (!isQuestion(paragraph)) return [];
-  // Was nach dem letzten Fragezeichen steht (Hervorhebung, Klammer, Emoji), gehört zur letzten Frage.
-  const decoration = TRAILING_DECORATION.exec(paragraph)?.[0] ?? '';
-  const sentences = splitSentences(paragraph.slice(0, paragraph.length - decoration.length));
-  let first = sentences.length;
-  while (first > 0 && isQuestion(sentences[first - 1])) first--;
-  return [sentences.slice(first).join(' ') + decoration.trimEnd()];
-}
-
-/** Markdown-Überschrift oder ganze Zeile fett (ausser einer fetten Frage): kein Teil eines Absatzes. */
+/** Markdown-Überschrift oder ganze Zeile fett: beendet eine Aufzählung. */
 function isHeadingLine(line: Line): boolean {
-  if (ATX_HEADING.test(line.text)) return true;
-  const bold = BOLD_LINE.exec(line.text);
-  return bold !== null && !isQuestion(bold[2]);
-}
-
-function isQuestion(text: string): boolean {
-  return /[?？]$/.test(text.replace(TRAILING_DECORATION, ''));
-}
-
-/**
- * Teilt einen Absatz in Sätze: nach `.`, `!`, `?` oder `…` (samt schliessenden Zeichen) und Leerraum. Nach einem
- * einzelnen Buchstaben („z. B.“, „d. h.“) und nach bekannten Abkürzungen beginnt kein neuer Satz.
- */
-function splitSentences(paragraph: string): string[] {
-  const sentences: string[] = [];
-  const boundary = /([.!?？…]+)["'“”‘’»«)\]*_]*\s+/gu;
-  let start = 0;
-  for (let m = boundary.exec(paragraph); m; m = boundary.exec(paragraph)) {
-    if (m[1] === '.' && isAbbreviation(paragraph.slice(start, m.index))) continue;
-    const end = m.index + m[0].length;
-    sentences.push(paragraph.slice(start, end).trim());
-    start = end;
-  }
-  if (start < paragraph.length) sentences.push(paragraph.slice(start).trim());
-  return sentences.filter((s) => s !== '');
-}
-
-/** Ob das letzte Wort vor einem Punkt eine Abkürzung ist (ein einzelner Buchstabe oder eine bekannte). */
-function isAbbreviation(before: string): boolean {
-  const word = /(\S+)$/.exec(before)?.[1] ?? '';
-  const plain = word.replace(/^[^\p{L}]+/u, '').replace(/\./g, '').toLowerCase();
-  return /^\p{L}$/u.test(plain) || ABBREVIATIONS.has(plain);
+  return ATX_HEADING.test(line.text) || BOLD_LINE.test(line.text);
 }
 
 /**

@@ -1,6 +1,6 @@
 # 27 – Offene Punkte nur, wenn es wirklich welche gibt; Klick schliesst den Hinweis
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: –
 Herkunft: Abnahme von Hand (Ticket 19), „Offene Punkte“ und „Nachrichten“ in [docs/abnahme.md](../abnahme.md)
 Spezifikation: „Offene Punkte aus Claudes Antworten“ (ändert Entscheidungen aus Ticket 22)
