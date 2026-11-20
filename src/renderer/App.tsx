@@ -60,13 +60,23 @@ export function App() {
       <TabBar
         tabs={view.tabs}
         activeTabId={view.activeTabId}
+        shells={view.shells}
+        defaultShellId={view.defaultShellId}
         renamingId={renaming}
         onStartRename={setRenamingId}
         onFinishRename={finishRename}
         onOpenSettings={() => setSettingsOpen(true)}
       />
       <TerminalArea tabs={view.tabs} activeTabId={view.activeTabId} />
-      {settingsOpen && <SettingsDialog settings={view.settings} homeDir={view.homeDir} onClose={closeSettings} />}
+      {settingsOpen && (
+        <SettingsDialog
+          settings={view.settings}
+          homeDir={view.homeDir}
+          shells={view.shells}
+          defaultShellId={view.defaultShellId}
+          onClose={closeSettings}
+        />
+      )}
     </>
   );
 }

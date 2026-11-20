@@ -461,6 +461,14 @@ svg.i {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Etikett rechts im Eintrag, z.B. „Standard“ bei der Standard-Shell. */
+.mi-badge {
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: var(--hover);
+  color: var(--text-muted);
+}
 
 /* ---------- Dialoge ---------- */
 /* Abgedunkeltes Fenster unter einem Dialog; ein Klick darauf schliesst ihn. no-drag: siehe Menüs. */
@@ -565,6 +573,32 @@ svg.i {
 .path-box.placeholder {
   font-family: var(--font-ui);
   color: var(--text-faint);
+}
+
+/* Auswahlfeld, z.B. die Standard-Shell; der Pfeil ist ein eingebettetes Symbol wie im Prototyp. */
+.select {
+  height: 30px;
+  padding: 0 28px 0 10px;
+  font: 13px var(--font-ui);
+  color: var(--text);
+  background: var(--btn-bg)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8a95' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 9px center;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Tasten in Beschreibungen, z.B. „Für + und Ctrl+Shift+T“. */
+kbd {
+  font: 11px var(--font-ui);
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  background: var(--kbd-bg);
+  color: var(--text-muted);
 }
 
 /* ---------- Tooltip ---------- */

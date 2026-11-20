@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import type { Settings } from '../../shared/types';
+import type { Settings, ShellOption } from '../../shared/types';
 import { Dialog } from '../popup/Dialog';
 
 const api = window.thub;
@@ -8,15 +8,19 @@ interface SettingsDialogProps {
   settings: Settings;
   /** Benutzerordner; gilt, solange kein Standardordner eingestellt ist. */
   homeDir: string;
+  /** Die erkannten Shells zur Wahl der Standard-Shell. */
+  shells: ShellOption[];
+  /** Die Standard-Shell, wie sie der Kern aus der Einstellung ableitet. */
+  defaultShellId: string;
   onClose(): void;
 }
 
 /**
- * Einstellungen, geöffnet über das Zahnrad. Bisher mit dem Standardordner; weitere Felder (Standard-Shell,
- * Design, Schriftgrösse, Hinweise) kommen mit späteren Tickets dazu, je als eigene Zeile in ihrem Abschnitt.
+ * Einstellungen, geöffnet über das Zahnrad. Bisher mit Standardordner und Standard-Shell; weitere Felder
+ * (Design, Schriftgrösse, Hinweise) kommen mit späteren Tickets dazu, je als eigene Zeile in ihrem Abschnitt.
  * Jede Änderung geht sofort an den Kern; der Dialog zeigt, was der Kern meldet.
  */
-export function SettingsDialog({ settings, homeDir, onClose }: SettingsDialogProps) {
+export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onClose }: SettingsDialogProps) {
   const changeRef = useRef<HTMLButtonElement>(null);
   const folder = settings.defaultCwd;
 
@@ -61,6 +65,28 @@ export function SettingsDialog({ settings, homeDir, onClose }: SettingsDialogPro
                 Zurücksetzen
               </button>
             )}
+          </div>
+        </div>
+        <div className="set-row">
+          <div>
+            <div className="set-label">Standard-Shell</div>
+            <div className="set-desc">
+              Für <kbd>+</kbd> und <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd>.
+            </div>
+          </div>
+          <div className="set-ctl">
+            <select
+              className="select"
+              aria-label="Standard-Shell"
+              value={defaultShellId}
+              onChange={(e) => api.send({ type: 'updateSettings', patch: { defaultShellId: e.target.value } })}
+            >
+              {shells.map((shell) => (
+                <option key={shell.id} value={shell.id}>
+                  {shell.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </section>
