@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type KeyboardEvent, type MouseEvent } from 'react';
+import { useLayoutEffect, useRef, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import type { TabSnapshot } from '../../shared/types';
 import { CloseIcon } from '../icons';
 import { TabIcon } from './TabIcon';
@@ -7,6 +7,8 @@ interface TabProps {
   tab: TabSnapshot;
   active: boolean;
   renaming: boolean;
+  /** Der Tab wird gerade gezogen; er steht blass an seinem Platz. */
+  dragging: boolean;
   onActivate(): void;
   onClose(): void;
   onStartRename(): void;
@@ -14,11 +16,29 @@ interface TabProps {
   onFinishRename(name: string | null): void;
   /** Maus über dem Tab (Element) bzw. nicht mehr (`null`), für den Tooltip. */
   onHover(el: HTMLElement | null): void;
+  /** Taste gedrückt: Daraus kann ein Ziehen werden. */
+  onPointerDown(e: PointerEvent<HTMLDivElement>): void;
+  /** Rechtsklick: das Menü des Tabs an dieser Stelle im Fenster. */
+  onContextMenu(x: number, y: number): void;
 }
 
 /** Ein Tab der Tab-Leiste, wie im Prototyp: Symbol-Platz, Name, Schliessen-Knopf. */
-export function Tab({ tab, active, renaming, onActivate, onClose, onStartRename, onFinishRename, onHover }: TabProps) {
-  const className = ['tab', active && 'active', renaming && 'renaming'].filter(Boolean).join(' ');
+export function Tab({
+  tab,
+  active,
+  renaming,
+  dragging,
+  onActivate,
+  onClose,
+  onStartRename,
+  onFinishRename,
+  onHover,
+  onPointerDown,
+  onContextMenu,
+}: TabProps) {
+  const className = ['tab', active && 'active', renaming && 'renaming', dragging && 'dragging']
+    .filter(Boolean)
+    .join(' ');
 
   const onMouseDown = (e: MouseEvent) => {
     onHover(null);
@@ -39,9 +59,15 @@ export function Tab({ tab, active, renaming, onActivate, onClose, onStartRename,
       role="tab"
       aria-selected={active}
       data-tab-id={tab.id}
+      onPointerDown={renaming ? undefined : onPointerDown}
       onMouseDown={onMouseDown}
       onClick={renaming ? undefined : onActivate}
       onDoubleClick={onDoubleClick}
+      // Rechtsklick: das Menü des Tabs. Nie das Fenstermenü von Windows; die Tabs liegen ausserhalb der Zieh-Fläche.
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (!renaming) onContextMenu(e.clientX, e.clientY);
+      }}
       onMouseEnter={(e) => onHover(e.currentTarget)}
       onMouseLeave={() => onHover(null)}
     >

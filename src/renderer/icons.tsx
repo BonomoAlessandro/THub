@@ -60,6 +60,55 @@ export function CloseIcon() {
   );
 }
 
+/** „Umbenennen“ im Rechtsklick-Menü. */
+export function PencilIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z" />
+    </svg>
+  );
+}
+
+/** „Duplizieren“ im Rechtsklick-Menü. */
+export function DuplicateIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <rect width="14" height="14" x="8" y="8" rx="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+      <path d="M15 12v6M12 15h6" />
+    </svg>
+  );
+}
+
+/** „Ordner im Explorer öffnen“ im Rechtsklick-Menü. */
+export function FolderOpenIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" />
+    </svg>
+  );
+}
+
+/** „Pfad kopieren“ im Rechtsklick-Menü. */
+export function CopyIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <rect width="14" height="14" x="8" y="8" rx="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+  );
+}
+
+/** „Andere Tabs schliessen“ im Rechtsklick-Menü. */
+export function CloseOthersIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="m15 9-6 6M9 9l6 6" />
+    </svg>
+  );
+}
+
 /** Pfeil nach rechts, etwa in „Zum Tab wechseln →“ auf den Hinweisen. */
 export function ArrowRightIcon() {
   return (
