@@ -1,4 +1,4 @@
-import { useCallback, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { TabSnapshot, TabStatus, ToastCountdown, ToastSnapshot } from '../../shared/types';
 import { ArrowRightIcon, CloseIcon } from '../icons';
 import { TabIcon } from '../tabs/TabIcon';
@@ -20,6 +20,13 @@ interface ToastsProps {
  */
 export function Toasts({ toasts, tabs, activeTabId }: ToastsProps) {
   const [shown, forget] = useShownToasts(toasts);
+
+  // Ein geschlossener Tab nimmt seinen Hinweis ohne Animation mit: Ohne Tab gibt es nichts mehr zu zeigen.
+  useEffect(() => {
+    for (const { toast, leaving } of shown) {
+      if (leaving && !tabs.some((t) => t.id === toast.tabId)) forget(toast.id);
+    }
+  }, [shown, tabs, forget]);
 
   return (
     <div className="toasts" aria-live="polite">
