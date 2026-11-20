@@ -41,6 +41,11 @@ export interface TabSnapshot {
   /** Ordner zur Anzeige: zuletzt aktiver Ordner, sonst Startordner. */
   cwd: string;
   process: TabProcessState;
+  /**
+   * Pausierter Claude-Tab nach einem Neustart: Seine Session wird erst fortgesetzt, wenn er angezeigt wird. Bis dahin
+   * gibt es keinen Prozess, und der Renderer legt noch keine Ansicht an.
+   */
+  paused: boolean;
 }
 
 /** Eine erkannte Shell, wie sie das Pfeil-Menü und die Einstellungen anbieten. */

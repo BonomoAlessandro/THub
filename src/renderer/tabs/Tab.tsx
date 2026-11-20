@@ -45,7 +45,8 @@ export function Tab({ tab, active, renaming, onActivate, onClose, onStartRename,
       onMouseEnter={(e) => onHover(e.currentTarget)}
       onMouseLeave={() => onHover(null)}
     >
-      <TabIcon kind="terminal" status="idle" />
+      {/* Pausiert ist nur ein Claude-Tab; die Art der übrigen Tabs und ihr Status folgen mit Ticket 13. */}
+      <TabIcon kind={tab.paused ? 'claude' : 'terminal'} status={tab.paused ? 'paused' : 'idle'} />
       {renaming ? (
         <RenameInput initial={tab.name} onFinish={onFinishRename} />
       ) : (

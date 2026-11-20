@@ -98,7 +98,8 @@ export function linkAfterHook(
   normalizeCwd: (raw: string) => string,
 ): PersistedClaudeLink | undefined {
   if (hook.event === 'SessionEnd') {
-    // Ticket 12 ergänzt die Ausnahme nach einem von THub gestarteten Fortsetzen ohne SessionStart.
+    // Die Ausnahme nach einem von THub gestarteten Fortsetzen ohne SessionStart wendet der Kern an (Ticket 12):
+    // Bis Claude sich meldet, gibt er SessionEnd gar nicht hierher weiter.
     return hook.reason !== undefined && SESSION_END_CONTINUES.has(hook.reason) ? link : undefined;
   }
 

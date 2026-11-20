@@ -1,4 +1,4 @@
-// Gemeinsame Tests fuer alle vier Windows-Shells (Teststelle 2, Tickets 07 und 11).
+// Gemeinsame Tests fuer alle vier Windows-Shells (Teststelle 2, Tickets 07, 11 und 12).
 // Jede Shell hat eine eigene Testdatei, damit Vitest die Shells parallel laufen laesst.
 // Alle Shells starten ueber das echte Terminal-Backend von THub (PtyManager) mit der Integration; THUB_STARTER
 // setzt das Backend. Die Tests "Ende zu Ende" laufen dazu mit dem echten Kern und der echten lokalen Schnittstelle.
@@ -6,6 +6,9 @@ import { existsSync, mkdirSync, realpathSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { checkExecutionPolicy, type ExecutionPolicyCheck } from '../../src/main/executionPolicy';
+import { resumeCommand } from '../../src/main/workspace/resume';
+import type { WorkspaceEvent } from '../../src/shared/types';
+import { MemoryStorage } from '../support/fakes';
 import {
   CoreShell,
   FakeTHub,
@@ -30,6 +33,8 @@ import {
 const TAB_ID = 'tab-1';
 const TAB_NAME = 'Mein Tab äöü';
 const NEW_ID = '11111111-2222-4333-8444-555555555555';
+/** Kennung einer Session, die THub nach einem Neustart fortsetzt. */
+const RESUME_ID = '8c74988d-a942-4021-a698-4b97d7977f8b';
 
 type Flavor = 'ps' | 'cmd' | 'bash';
 
@@ -80,6 +85,8 @@ export function shellSuite(id: ShellId): void {
       api?: string | null;
       startCommand?: string;
       inherited?: Record<string, string>;
+      /** Ob das Terminal-Backend THUB_STARTER setzt; Standard ja. */
+      claudeStarter?: () => boolean;
     }): Promise<ShellSession> => {
       const variant = opts.variant === undefined ? 'exe' : opts.variant;
       const claudeDir = variant === 'exe' ? ws.stubExeDir : variant === 'cmd' ? ws.stubCmdDir : null;
@@ -90,6 +97,7 @@ export function shellSuite(id: ShellId): void {
         tabId: TAB_ID,
         startCommand: opts.startCommand,
         inherited: opts.inherited,
+        claudeStarter: opts.claudeStarter,
       });
       sessions.push(s);
       return s;
@@ -562,6 +570,37 @@ export function shellSuite(id: ShellId): void {
         expect(records[0].env.NO_PROXY?.split(',')).toEqual(expect.arrayContaining(['127.0.0.1', 'localhost']));
         expect(records[0].env.THUB_STARTER).toBe(ws.starter);
       });
+
+      it('Fortsetzen: der Startbefehl des Kerns erreicht claude über den Starter mit --settings und --resume <Kennung>', async () => {
+        clearStubRecords(ws);
+        hub.clear();
+        const s = await start({ startCommand: resumeCommand(def.integration, RESUME_ID) });
+        await s.mark();
+        await s.mark();
+        await sleep(500);
+
+        const records = readStubRecords(ws);
+        expect(records.map((r) => r.argv)).toEqual([['--settings', ws.hookFile, '--resume', RESUME_ID]]);
+        expect(records[0].env.THUB_STARTER).toBe(ws.starter);
+        expect(records[0].env.THUB_START_CMD).toBeUndefined();
+        expect(hub.paths()).toEqual(['/claude/launch', '/claude/started', '/claude/exit']);
+        expect(hub.requests[0].body).toMatchObject({ tabId: TAB_ID, case: 'withId', sessionId: RESUME_ID });
+        expect(hub.requests[2].body).toEqual({ tabId: TAB_ID, sessionId: RESUME_ID, exitCode: 0 });
+      });
+
+      it('Fortsetzen ohne THUB_STARTER (Gruppenrichtlinie): der Startbefehl ruft claude direkt mit --resume <Kennung> auf', async () => {
+        clearStubRecords(ws);
+        hub.clear();
+        const s = await start({ startCommand: resumeCommand(def.integration, RESUME_ID), claudeStarter: () => false });
+        await s.mark();
+        await s.mark();
+        await sleep(500);
+
+        const records = readStubRecords(ws);
+        expect(records.map((r) => r.argv)).toEqual([['--resume', RESUME_ID]]);
+        expect(records[0].env.THUB_STARTER).toBeUndefined();
+        expect(hub.requests).toEqual([]);
+      });
     });
 
     describe('Ende zu Ende: Kern, echte lokale Schnittstelle, Terminal-Backend, Shell', () => {
@@ -692,6 +731,96 @@ export function shellSuite(id: ShellId): void {
         expect(records[0].env.THUB_STARTER).toBeUndefined();
         expect(records[0].env.THUB_TAB_ID).toBe(core.tabId);
         expect(core.claudeLinks).toEqual([]);
+      });
+
+      describe('Claude-Session nach einem Neustart fortsetzen', () => {
+        /**
+         * THub nach einem Neustart: Der zuletzt aktive Tab ist ein Claude-Tab, dessen Session im Projektordner
+         * fortgesetzt wird; zuletzt stand seine Shell im Arbeitsordner. Hält die Hinweise des Kerns fest.
+         */
+        const restartWithClaudeTab = async (
+          claudeStarter = () => policy.starterAllowed(),
+        ): Promise<{ core: CoreShell; notices: string[] }> => {
+          clearStubRecords(ws);
+          const storage = new MemoryStorage({
+            version: 2,
+            tabs: [
+              {
+                id: 'claude-tab',
+                name: TAB_NAME,
+                nameIsManual: true,
+                shellId: def.id,
+                startCwd: ws.root,
+                lastCwd: ws.root,
+                claude: { sessionId: RESUME_ID, cwd: project, confirmed: true, hadPrompt: true },
+              },
+            ],
+            activeTabId: 'claude-tab',
+          });
+          const core = await CoreShell.startWithApi(def, ws, { claudeDir: ws.stubExeDir, claudeStarter }, storage);
+          cores.push(core);
+          const notices: string[] = [];
+          core.core.subscribe((event: WorkspaceEvent) => {
+            if (event.type === 'notice') notices.push(event.text);
+          });
+          return { core, notices };
+        };
+
+        /** Wartet, bis das nachgemachte claude aufgerufen wurde, und liefert die Aufzeichnungen. */
+        const stubCalled = async (core: CoreShell): Promise<ReturnType<typeof readStubRecords>> => {
+          const end = Date.now() + 20000;
+          while (Date.now() < end) {
+            const records = readStubRecords(ws);
+            if (records.length > 0) return records;
+            await sleep(50);
+          }
+          throw new Error(`claude wurde nicht aufgerufen in ${def.id}. Ausgabe:\n${visibleText(core.output).slice(-3000)}`);
+        };
+
+        it('Shell im Ordner der Session, claude bekommt --settings und --resume <Kennung>; das Ende macht den Tab normal', async (ctx) => {
+          ctx.skip(!policy.starterAllowed(), 'Eine Gruppenrichtlinie blockiert den Starter auf diesem Rechner');
+          const { core, notices } = await restartWithClaudeTab();
+
+          const records = await stubCalled(core);
+          await core.waitForClaudeLink((l) => l === undefined);
+
+          expect(core.orders).toMatchObject([{ cwd: project, startCommand: resumeCommand(def.integration, RESUME_ID) }]);
+          expect(records.map((r) => r.argv)).toEqual([['--settings', core.localApi.hookFile, '--resume', RESUME_ID]]);
+          // claude setzt die Session im aktuellen Ordner fort: Das muss der Ordner der Session sein.
+          expect(records[0].cwd.toLowerCase()).toBe(project.toLowerCase());
+          expect(records[0].env.THUB_TAB_ID).toBe('claude-tab');
+          // Der Starter meldet das Fortsetzen („hatte Prompt“ bleibt), sein Ende macht den Tab wieder normal.
+          expect(core.claudeLinks).toEqual([{ ...unconfirmed(RESUME_ID), hadPrompt: true }, undefined]);
+          expect(notices).toEqual([]);
+          expect(await core.mark()).toBe(0);
+        });
+
+        it('schlägt es fehl (Exit-Code 1, keine Hooks), kommt ein Hinweis, und der Tab bleibt als normales Terminal benutzbar', async (ctx) => {
+          ctx.skip(!policy.starterAllowed(), 'Eine Gruppenrichtlinie blockiert den Starter auf diesem Rechner');
+          configureStub(ws, { exit: 1 });
+          try {
+            const { core, notices } = await restartWithClaudeTab();
+
+            await stubCalled(core);
+            await core.waitForClaudeLink((l) => l === undefined);
+
+            expect(notices).toEqual(['Claude-Session konnte nicht fortgesetzt werden']);
+            await core.mark();
+          } finally {
+            configureStub(ws);
+          }
+        });
+
+        it('ohne THUB_STARTER (Gruppenrichtlinie) läuft claude direkt mit --resume <Kennung>, im Ordner der Session', async () => {
+          const { core } = await restartWithClaudeTab(() => false);
+
+          const records = await stubCalled(core);
+
+          expect(records.map((r) => r.argv)).toEqual([['--resume', RESUME_ID]]);
+          expect(records[0].env.THUB_STARTER).toBeUndefined();
+          expect(records[0].cwd.toLowerCase()).toBe(project.toLowerCase());
+          await core.mark();
+        });
       });
     });
   });

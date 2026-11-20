@@ -305,6 +305,16 @@ svg.i {
   fill: none;
   stroke-linecap: round;
 }
+/* Pausiert: Claude-Tab nach einem Neustart, wird beim Anzeigen fortgesetzt; graues Pause-Symbol. */
+.st[data-s='paused'] {
+  color: var(--st-paused);
+}
+.st[data-s='paused'] svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+  stroke: none;
+}
 
 /* ---------- Terminal-Fläche: abgerundete Karte mit feinem Rand ---------- */
 .terminal-area {
