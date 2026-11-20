@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveShortcut, type KeyInput } from '../../src/renderer/shortcuts';
+import { resolveShortcut, resolveWheel, type KeyInput } from '../../src/renderer/shortcuts';
 
 /**
  * Ein Tastendruck wie im Browser, z.B. key('Ctrl+Shift+KeyT'). Mit `produced` das Zeichen, das die
@@ -31,6 +31,7 @@ describe('Tastenkürzel', () => {
     ['Ctrl+Digit1', { type: 'tabAt', index: 0 }],
     ['Ctrl+Digit9', { type: 'tabAt', index: 8 }],
     ['F2', { type: 'renameTab' }],
+    ['Ctrl+Shift+KeyP', { type: 'palette' }],
   ])('%s', (combo, action) => {
     expect(resolveShortcut(key(combo))).toEqual(action);
   });
@@ -43,6 +44,9 @@ describe('Tastenkürzel', () => {
     ['Buchstaben', 'KeyT'],
     ['AltGr-Zeichen (Windows meldet Ctrl+Alt)', 'Ctrl+Alt+Digit2'],
     ['Alt mit einem Kürzel', 'Ctrl+Shift+Alt+KeyT'],
+    ['Ctrl+P', 'Ctrl+KeyP'],
+    ['Shift+P', 'Shift+KeyP'],
+    ['F2 mit Ctrl', 'Ctrl+F2'],
   ])('lässt %s ans Terminal durch', (_label, combo) => {
     expect(resolveShortcut(key(combo))).toBeNull();
   });
@@ -70,6 +74,16 @@ describe('Tastenkürzel', () => {
 
     it('Ctrl+1 bleibt auf der Schweizer Tastatur der Sprung zum ersten Tab', () => {
       expect(resolveShortcut(key('Ctrl+Digit1', '1'))).toEqual({ type: 'tabAt', index: 0 });
+    });
+
+    it('Ctrl+6 bleibt auf der französischen Tastatur der Sprung zum sechsten Tab, obwohl die Taste - erzeugt', () => {
+      expect(resolveShortcut(key('Ctrl+Digit6', '-'))).toEqual({ type: 'tabAt', index: 5 });
+    });
+
+    it('Ctrl + Mausrad: nach oben grösser, nach unten kleiner; ohne Ctrl scrollt es', () => {
+      expect(resolveWheel({ ctrlKey: true }, 1)).toEqual(bigger);
+      expect(resolveWheel({ ctrlKey: true }, -1)).toEqual(smaller);
+      expect(resolveWheel({ ctrlKey: false }, 1)).toBeNull();
     });
 
     it.each([

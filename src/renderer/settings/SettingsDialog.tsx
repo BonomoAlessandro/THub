@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { FONT_SIZE, type Settings, type ShellOption, type Theme } from '../../shared/types';
+import { pickDefaultFolder } from '../commands';
 import { Dialog } from '../popup/Dialog';
 
 const api = window.thub;
@@ -20,6 +21,8 @@ interface SettingsDialogProps {
   /** Die Standard-Shell, wie sie der Kern aus der Einstellung ableitet. */
   defaultShellId: string;
   onClose(): void;
+  /** „Alle Tastenkürzel …“ öffnet die Übersicht der Tastenkürzel. */
+  onShowShortcuts(): void;
 }
 
 /**
@@ -28,17 +31,12 @@ interface SettingsDialogProps {
  * Abschnitt.
  * Jede Änderung geht sofort an den Kern und wirkt ohne „Fertig“; der Dialog zeigt, was der Kern meldet.
  */
-export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onClose }: SettingsDialogProps) {
+export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onClose, onShowShortcuts }: SettingsDialogProps) {
   const changeRef = useRef<HTMLButtonElement>(null);
   const folder = settings.defaultCwd;
   const { theme, fontSize, notifications, openPoints } = settings;
 
   const update = (patch: Partial<Settings>) => api.send({ type: 'updateSettings', patch });
-
-  const pickFolder = async () => {
-    const dir = await api.pickDirectory('defaultCwd');
-    if (dir) update({ defaultCwd: dir });
-  };
 
   const resetFolder = () => {
     update({ defaultCwd: '' });
@@ -52,9 +50,14 @@ export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onCl
       wide
       onClose={onClose}
       actions={
-        <button type="button" className="btn primary" data-autofocus onClick={onClose}>
-          Fertig
-        </button>
+        <>
+          <button type="button" className="link-btn" onClick={onShowShortcuts}>
+            Alle Tastenkürzel …
+          </button>
+          <button type="button" className="btn primary" data-autofocus onClick={onClose}>
+            Fertig
+          </button>
+        </>
       }
     >
       <section className="set-section">
@@ -68,7 +71,7 @@ export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onCl
             <span className={folder ? 'path-box' : 'path-box placeholder'} title={folder || homeDir}>
               {folder || 'Benutzerordner'}
             </span>
-            <button type="button" ref={changeRef} className="btn sm" onClick={() => void pickFolder()}>
+            <button type="button" ref={changeRef} className="btn sm" onClick={() => void pickDefaultFolder()}>
               Ändern …
             </button>
             {folder && (

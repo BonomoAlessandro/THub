@@ -1,4 +1,5 @@
 import type { RecentDir, ShellOption } from '../../shared/types';
+import { pickFolderForNewTab } from '../commands';
 import { FolderIcon, FolderPlusIcon, TerminalIcon } from '../icons';
 import type { MenuEntry } from '../popup/Menu';
 
@@ -35,10 +36,4 @@ export function newTabMenuEntries(shells: ShellOption[], defaultShellId: string,
     ),
     { kind: 'item', label: 'Ordner wählen …', icon: <FolderPlusIcon />, run: () => void pickFolderForNewTab() },
   ];
-}
-
-/** Öffnet den Ordner-Dialog von Windows; der gewählte Ordner bekommt ein neues Terminal. */
-async function pickFolderForNewTab(): Promise<void> {
-  const dir = await api.pickDirectory('newTab');
-  if (dir) api.send({ type: 'createTab', cwd: dir });
 }

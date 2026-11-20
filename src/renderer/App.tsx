@@ -1,26 +1,30 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FONT_SIZE } from '../shared/types';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { runShortcut } from './commands';
 import { WheelSteps } from './fontSize';
+import { Palette } from './palette/Palette';
+import type { PaletteContext } from './palette/paletteEntries';
 import { isPopupOpen } from './popup/popups';
 import { SettingsDialog } from './settings/SettingsDialog';
-import { resolveShortcut, type ShortcutAction } from './shortcuts';
+import { ShortcutsDialog } from './settings/ShortcutsDialog';
+import { resolveShortcut, resolveWheel, type ShortcutAction } from './shortcuts';
 import { CloseDialog } from './tabs/CloseDialog';
 import { TabBar } from './tabs/TabBar';
 import { TerminalArea } from './terminal/TerminalArea';
 import { Toasts } from './toasts/Toasts';
-import { focusTerminal, terminalViews } from './terminal/terminalViews';
-import { useWorkspace, type WorkspaceView } from './useWorkspace';
-
-const api = window.thub;
+import { focusTerminal } from './terminal/terminalViews';
+import { useWorkspace } from './useWorkspace';
 
 /**
  * Das Fenster: Tab-Leiste oben, darunter die Terminal-Fläche, unten rechts die Hinweise; darüber bei Bedarf die
- * Einstellungen oder die Rückfrage vor dem Schliessen.
+ * Befehlspalette, die Einstellungen, die Übersicht der Tastenkürzel oder die Rückfrage vor dem Schliessen.
  */
 export function App() {
   const { view, renameTab, closeQuestion, answerCloseQuestion } = useWorkspace();
   const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /** Die offene Übersicht der Tastenkürzel und woher sie kam: Aus den Einstellungen geht es danach dorthin zurück. */
+  const [shortcutsFrom, setShortcutsFrom] = useState<'palette' | 'settings' | null>(null);
 
   // Für die Handler ausserhalb von React (Tastenkürzel): immer der zuletzt angezeigte Zustand.
   const viewRef = useRef(view);
@@ -41,6 +45,27 @@ export function App() {
     focusTerminal(viewRef.current?.activeTabId ?? null);
   }, []);
 
+  // Die Palette übergibt den Fokus ans Terminal, bevor ein gewählter Befehl läuft; der kann ihn weitergeben (etwa an
+  // einen Dialog oder das Umbenennen).
+  const closePalette = useCallback(() => {
+    setPaletteOpen(false);
+    focusTerminal(viewRef.current?.activeTabId ?? null);
+  }, []);
+
+  const showShortcutsFromSettings = useCallback(() => {
+    setSettingsOpen(false);
+    setShortcutsFrom('settings');
+  }, []);
+
+  const closeShortcuts = useCallback(() => {
+    if (shortcutsFrom === 'settings') {
+      setSettingsOpen(true);
+    } else {
+      focusTerminal(viewRef.current?.activeTabId ?? null);
+    }
+    setShortcutsFrom(null);
+  }, [shortcutsFrom]);
+
   // Nach der Rückfrage geht der Fokus ins Terminal: beim Abbrechen in das des aktiven Tabs, beim Schliessen in das des
   // Nachbarn, sobald der Kern ihn aktiv meldet.
   const answerClose = useCallback(
@@ -52,21 +77,29 @@ export function App() {
     [closeQuestion, answerCloseQuestion],
   );
 
+  // Führt ein Tastenkürzel aus; was die Oberfläche selbst zeigt (Umbenennen, Palette), regelt sie hier.
+  const runAppShortcut = useCallback((action: ShortcutAction) => {
+    runShortcut(action, {
+      activeTabId: viewRef.current?.activeTabId ?? null,
+      startRename: setRenamingId,
+      openPalette: () => setPaletteOpen(true),
+    });
+  }, []);
+
   // Tastenkürzel in der Capture-Phase, also bevor xterm.js die Taste sieht. Solange ein Menü oder
   // Dialog offen ist, gehören die Tasten ihm.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || isPopupOpen()) return;
-      const current = viewRef.current;
-      const action = current ? resolveShortcut(e) : null;
-      if (!current || !action) return;
+      const action = viewRef.current ? resolveShortcut(e) : null;
+      if (!action) return;
       e.preventDefault();
       e.stopPropagation();
-      runShortcut(action, current, setRenamingId);
+      runAppShortcut(action);
     };
     window.addEventListener('keydown', onKeyDown, true);
     return () => window.removeEventListener('keydown', onKeyDown, true);
-  }, []);
+  }, [runAppShortcut]);
 
   // Ctrl + Mausrad ändert die Schriftgrösse aller Terminals. Abgefangen wird es überall und vor xterm.js:
   // Sonst scrollte das Terminal mit, und Chromium zoomte die ganze Oberfläche. Solange ein Menü oder
@@ -78,11 +111,26 @@ export function App() {
       e.preventDefault();
       e.stopPropagation();
       const step = wheel.add(e.deltaY, e.deltaMode);
-      if (step !== 0 && !isPopupOpen()) api.send({ type: 'stepFontSize', step });
+      const action = step !== 0 && !isPopupOpen() ? resolveWheel(e, step) : null;
+      if (action) runAppShortcut(action);
     };
     window.addEventListener('wheel', onWheel, { capture: true, passive: false });
     return () => window.removeEventListener('wheel', onWheel, { capture: true });
-  }, []);
+  }, [runAppShortcut]);
+
+  // Was die Befehle der Palette brauchen; neu nur, wenn sich die Tabs ändern.
+  const tabs = view?.tabs;
+  const activeTabId = view?.activeTabId ?? null;
+  const paletteContext = useMemo<PaletteContext>(
+    () => ({
+      tabs: tabs ?? [],
+      activeTabId,
+      startRename: setRenamingId,
+      openSettings: () => setSettingsOpen(true),
+      openShortcuts: () => setShortcutsFrom('palette'),
+    }),
+    [tabs, activeTabId],
+  );
 
   if (!view) return null;
 
@@ -110,51 +158,12 @@ export function App() {
           shells={view.shells}
           defaultShellId={view.defaultShellId}
           onClose={closeSettings}
+          onShowShortcuts={showShortcutsFromSettings}
         />
       )}
+      {shortcutsFrom && <ShortcutsDialog onClose={closeShortcuts} />}
+      {paletteOpen && <Palette context={paletteContext} onClose={closePalette} />}
       {closeQuestion && <CloseDialog question={closeQuestion} onAnswer={answerClose} />}
     </>
   );
-}
-
-/** Führt ein Tastenkürzel aus: Tab-Befehle gehen an den Kern, Kopieren und Einfügen ans Terminal. */
-function runShortcut(action: ShortcutAction, view: WorkspaceView, startRename: (tabId: string) => void): void {
-  const activeId = view.activeTabId;
-  switch (action.type) {
-    case 'newTab':
-      api.send({ type: 'createTab' });
-      return;
-    // Der Kern schliesst sofort oder fragt erst zurück.
-    case 'closeTab':
-      if (activeId) api.send({ type: 'requestClose', tabIds: [activeId] });
-      return;
-    case 'reopenTab':
-      api.send({ type: 'reopenClosedTab' });
-      return;
-    case 'copy':
-      if (activeId) void terminalViews.get(activeId)?.copySelection();
-      return;
-    case 'paste':
-      if (activeId) void terminalViews.get(activeId)?.paste();
-      return;
-    case 'nextTab':
-      api.send({ type: 'activateRelativeTab', offset: 1 });
-      return;
-    case 'previousTab':
-      api.send({ type: 'activateRelativeTab', offset: -1 });
-      return;
-    case 'tabAt':
-      api.send({ type: 'activateTabAt', index: action.index });
-      return;
-    case 'renameTab':
-      if (activeId) startRename(activeId);
-      return;
-    // Die Schriftgrösse aller Terminals speichert der Kern; er meldet sie zurück, dann passen sich die Terminals an.
-    case 'fontSize':
-      api.send({ type: 'stepFontSize', step: action.step });
-      return;
-    case 'resetFontSize':
-      api.send({ type: 'updateSettings', patch: { fontSize: FONT_SIZE.default } });
-      return;
-  }
 }
