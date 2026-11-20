@@ -25,6 +25,7 @@ import {
 import { CwdReportScanner } from './cwdReport';
 import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
 import type { CancelTimer, ShellInfo, StartOrder, WorkspacePorts } from './ports';
+import { shellLabel, wslDistribution } from './shellIds';
 import {
   normalizeSettings,
   normalizeWindow,
@@ -46,7 +47,7 @@ const HISTORY_SAVE_INTERVAL_MS = 30_000;
 const HISTORY_QUIT_TIMEOUT_MS = 2000;
 
 export interface WorkspaceOptions {
-  /** Shells, die der Kern starten kann. Bis zur Shell-Erkennung (Ticket 06) eine feste Liste. */
+  /** Die erkannten Shells (Shell-Erkennung), in der Reihenfolge des Pfeil-Menüs; mindestens eine. */
   shells: ShellInfo[];
   /**
    * Die laufende lokale Schnittstelle (Ticket 10). Fehlt sie, weil sie sich nicht starten liess, bekommen die
@@ -59,6 +60,8 @@ export interface WorkspaceOptions {
 export interface NewTabOptions {
   /** Startordner; fehlt er oder gibt es ihn nicht, gilt der Standardordner, sonst der Benutzerordner. */
   cwd?: string;
+  /** Kennung der Shell; fehlt sie oder ist sie nicht erkannt, gilt die Standard-Shell. */
+  shellId?: string;
 }
 
 /**
@@ -75,7 +78,7 @@ export interface Workspace extends ClaudeReceiver {
    * Legt einen Tab rechts neben dem aktiven an, macht ihn aktiv und liefert seine Kennung
    * (leer, wenn der Kern beendet wird). Der Tab heisst wie sein Startordner, bei Gleichstand mit „ 2“,
    * „ 3“ usw.; der Name ändert sich danach nicht mehr von selbst. Der Startordner kommt an die Spitze
-   * der zuletzt benutzten Ordner.
+   * der zuletzt benutzten Ordner. Der Tab behält seine Shell, auch über einen Neustart.
    */
   createTab(options?: NewTabOptions): string;
   /** Leere Namen werden ignoriert. Ein so vergebener Name wird nie automatisch überschrieben. */
@@ -99,7 +102,9 @@ export interface Workspace extends ClaudeReceiver {
 
   /**
    * Die Ansicht des Tabs ist bereit; erst jetzt startet seine Shell, in dieser Grösse. Ein Tab aus dem
-   * gespeicherten Zustand bekommt vorher einmal seinen Verlauf (`restoreHistory`).
+   * gespeicherten Zustand bekommt vorher einmal seinen Verlauf (`restoreHistory`). Fehlt seine Shell auf
+   * diesem Rechner, startet er mit der Standard-Shell und zeigt davor einen Hinweis im Terminal; seine
+   * Shell-Kennung behält er, damit er wieder mit ihr startet, sobald es sie wieder gibt.
    */
   viewReady(tabId: string, cols: number, rows: number): void;
   resizeTab(tabId: string, cols: number, rows: number): void;
@@ -203,7 +208,7 @@ class WorkspaceCore implements Workspace {
 
     const loaded = readPersistedState(ports.storage.loadState(), {
       homeDir: ports.system.homeDir(),
-      defaultShellId: this.defaultShell(undefined).id,
+      defaultShellId: this.automaticShell().id,
     });
     this.state = loaded.state;
     for (const tab of this.state.tabs) this.runtimes.set(tab.id, newRuntime(true));
@@ -222,6 +227,8 @@ class WorkspaceCore implements Workspace {
       tabs: this.tabSnapshots(),
       activeTabId: this.state.activeTabId,
       settings: structuredClone(this.state.settings),
+      shells: this.shells.map((s) => ({ id: s.id, name: s.name })),
+      defaultShellId: this.defaultShell().id,
       homeDir: this.ports.system.homeDir(),
     };
   }
@@ -240,7 +247,7 @@ class WorkspaceCore implements Workspace {
       id: randomUUID(),
       name: this.autoTabName(startCwd),
       nameIsManual: false,
-      shellId: this.defaultShell(this.state.settings.defaultShellId).id,
+      shellId: (this.findShell(options.shellId) ?? this.defaultShell()).id,
       startCwd,
     };
     // Rechts neben dem aktiven Tab, damit zusammengehörige Tabs nebeneinander bleiben; ohne aktiven ganz rechts.
@@ -338,7 +345,7 @@ class WorkspaceCore implements Workspace {
     if (runtime.process === 'pending') {
       // Erst der Verlauf, dann der Startauftrag: So steht er vor der ersten Ausgabe der Shell.
       this.restoreHistory(tabId, runtime);
-      this.startShell(tab, runtime);
+      this.startShell(tab, runtime, true);
     } else if (runtime.process === 'running') this.ports.terminal.resize(tabId, cols, rows);
   }
 
@@ -359,17 +366,28 @@ class WorkspaceCore implements Workspace {
     const tab = this.findTab(tabId);
     const runtime = this.runtimes.get(tabId);
     if (this.stopping || !tab || runtime?.process !== 'exited' || !runtime.view) return;
-    this.startShell(tab, runtime);
+    this.startShell(tab, runtime, false);
   }
 
-  private startShell(tab: PersistedTab, runtime: TabRuntime): void {
+  /** @param firstStart erster Start in der noch leeren Ansicht; nur dann kommt der Hinweis auf eine fehlende Shell */
+  private startShell(tab: PersistedTab, runtime: TabRuntime, firstStart: boolean): void {
     const view = runtime.view;
     if (!view) return;
     const shell = this.shellFor(tab);
+    if (firstStart && shell.id !== tab.shellId) {
+      this.emit({
+        type: 'notice',
+        tabId: tab.id,
+        level: 'info',
+        text: `${shellLabel(tab.shellId)} wurde auf diesem Rechner nicht gefunden. Der Tab startet mit der Standard-Shell ${shell.name}.`,
+        beforeStart: true,
+      });
+    }
+    const cwd = this.resolveCwd(tab);
     const order: StartOrder = {
       file: shell.file,
-      args: [...shell.args],
-      cwd: this.resolveCwd(tab),
+      args: shellArgs(shell, cwd),
+      cwd,
       env: this.terminalEnv(tab),
       cols: view.cols,
       rows: view.rows,
@@ -541,21 +559,23 @@ class WorkspaceCore implements Workspace {
 
   // ---------- Shells ----------
 
-  /** Die eingestellte Standard-Shell, sonst die automatisch gewählte. */
-  private defaultShell(settingId: string | undefined): ShellInfo {
-    // Bis zur Shell-Erkennung (Ticket 06) bleibt Windows PowerShell der Standard wie in Version 0.1.0.
-    return (
-      this.shells.find((s) => s.id === settingId) ??
-      this.shells.find((s) => s.id === 'powershell') ??
-      this.shells[0]
-    );
+  /** Die Standard-Shell: die eingestellte, falls sie erkannt ist, sonst die automatisch gewählte. */
+  private defaultShell(): ShellInfo {
+    return this.findShell(this.state.settings.defaultShellId) ?? this.automaticShell();
   }
 
-  /** Die Shell eines Tabs; fehlt sie, gilt die Standard-Shell. */
+  /** Ohne (erkannte) Einstellung: PowerShell 7, sonst Windows PowerShell, sonst die erste erkannte Shell. */
+  private automaticShell(): ShellInfo {
+    return this.findShell('pwsh') ?? this.findShell('powershell') ?? this.shells[0];
+  }
+
+  /** Die Shell eines Tabs; fehlt sie auf diesem Rechner, gilt die Standard-Shell. */
   private shellFor(tab: PersistedTab): ShellInfo {
-    return (
-      this.shells.find((s) => s.id === tab.shellId) ?? this.defaultShell(this.state.settings.defaultShellId)
-    );
+    return this.findShell(tab.shellId) ?? this.defaultShell();
+  }
+
+  private findShell(shellId: string | undefined): ShellInfo | undefined {
+    return shellId ? this.shells.find((s) => s.id === shellId) : undefined;
   }
 
   // ---------- Einstellungen ----------
@@ -566,7 +586,7 @@ class WorkspaceCore implements Workspace {
     if (JSON.stringify(next) === JSON.stringify(this.state.settings)) return;
     this.state.settings = next;
     this.save();
-    this.emit({ type: 'settings', settings: structuredClone(next) });
+    this.emit({ type: 'settings', settings: structuredClone(next), defaultShellId: this.defaultShell().id });
   }
 
   stepFontSize(step: number): void {
@@ -725,6 +745,14 @@ class WorkspaceCore implements Workspace {
   private emit(event: WorkspaceEvent): void {
     for (const listener of this.listeners) listener(event);
   }
+}
+
+/**
+ * Startargumente einer Shell im Ordner `cwd`. Eine WSL-Distribution bekommt den Ordner als Windows-Pfad
+ * dazu (`wsl.exe -d <Distribution> --cd <Ordner>`); wsl.exe übersetzt ihn selbst.
+ */
+function shellArgs(shell: ShellInfo, cwd: string): string[] {
+  return wslDistribution(shell.id) ? [...shell.args, '--cd', cwd] : [...shell.args];
 }
 
 function isValidSize(cols: number, rows: number): boolean {

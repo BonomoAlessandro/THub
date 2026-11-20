@@ -1,16 +1,28 @@
-import type { RecentDir } from '../../shared/types';
-import { FolderIcon, FolderPlusIcon } from '../icons';
+import type { RecentDir, ShellOption } from '../../shared/types';
+import { FolderIcon, FolderPlusIcon, TerminalIcon } from '../icons';
 import type { MenuEntry } from '../popup/Menu';
 
 const api = window.thub;
 
 /**
- * Einträge des Pfeil-Menüs neben `+`, wie im Prototyp: „Neues Terminal in …“ mit den zuletzt benutzten
- * Ordnern (Name, darunter klein der Pfad) und „Ordner wählen …“. Der Abschnitt „Shell“ mit den erkannten
- * Shells kommt mit Ticket 06 davor, gefolgt von einer Trennlinie.
+ * Einträge des Pfeil-Menüs neben `+`, wie im Prototyp: zuerst „Shell“ mit den erkannten Shells (die
+ * Standard-Shell mit dem Etikett „Standard“), ein Klick öffnet einen Tab mit dieser Shell im Standardordner;
+ * nach einer Trennlinie „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter klein der
+ * Pfad) und „Ordner wählen …“.
  */
-export function newTabMenuEntries(recentDirs: RecentDir[]): MenuEntry[] {
+export function newTabMenuEntries(shells: ShellOption[], defaultShellId: string, recentDirs: RecentDir[]): MenuEntry[] {
   return [
+    { kind: 'header', label: 'Shell' },
+    ...shells.map(
+      (shell): MenuEntry => ({
+        kind: 'item',
+        label: shell.name,
+        icon: <TerminalIcon />,
+        badge: shell.id === defaultShellId ? 'Standard' : undefined,
+        run: () => api.send({ type: 'createTab', shellId: shell.id }),
+      }),
+    ),
+    { kind: 'separator' },
     { kind: 'header', label: 'Neues Terminal in …' },
     ...recentDirs.map(
       (dir): MenuEntry => ({

@@ -6,11 +6,12 @@ import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
 import { LocalApiServer } from './localApi';
 import { PtyManager } from './ptyManager';
 import { shellIntegrationDir } from './shellLaunch';
-import { provisionalShells } from './shells';
+import { detectShells } from './shells';
 import { STATE_FILE_NAME, StateStore } from './store';
 import { hostSystem, noProcessProbe, systemClock } from './system';
 import { DEV_MENU } from './devMenu';
 import type { LocalApiInfo } from './workspace/claude';
+import type { ShellInfo } from './workspace/ports';
 import { createThemeSource, followTheme, followThemeSetting, windowChrome, type ThemeSource } from './theme';
 import { createWorkspace, type Workspace } from './workspace/workspace';
 
@@ -29,23 +30,29 @@ let shutdown: 'running' | 'stopping' | 'done' = 'running';
 // Schnittstelle startet oder Dateien (Zustand, Hook-Datei) schreibt. Die laufende Instanz bekommt dafür
 // 'second-instance' und holt ihr Fenster nach vorne.
 if (app.requestSingleInstanceLock()) {
+  // Die Shell-Erkennung läuft sofort an, parallel zum Start von Electron und der lokalen Schnittstelle.
+  const shells = detectShells();
   app.on('second-instance', bringWindowToFront);
-  app.whenReady().then(start);
+  app.whenReady().then(() => start(shells));
   app.on('before-quit', onBeforeQuit);
   app.on('window-all-closed', () => app.quit());
 } else {
   app.quit();
 }
 
-/** Start der einzigen Instanz: lokale Schnittstelle und Hook-Datei, Zustand laden, Fenster öffnen. */
-async function start(): Promise<void> {
+/**
+ * Start der einzigen Instanz: lokale Schnittstelle und Hook-Datei, Zustand laden, Fenster öffnen.
+ * @param detectedShells die laufende Shell-Erkennung
+ */
+async function start(detectedShells: Promise<ShellInfo[]>): Promise<void> {
   // Im Dev-Modus ein Menü mit DevTools und Neu laden, aber ohne Zoom; die installierte App hat keines.
   Menu.setApplicationMenu(app.isPackaged ? null : Menu.buildFromTemplate(DEV_MENU));
 
   // Erst nach der Einzelinstanz-Sperre, damit nie zwei Starts zugleich übernehmen, und vor dem Laden.
   takeOverOldData(folders);
-  const api = await startLocalApi();
+  const [api, shells] = await Promise.all([startLocalApi(), detectedShells]);
   localApi = api?.server ?? null;
+  console.log(`Erkannte Shells: ${shells.map((s) => `${s.name} (${s.file})`).join(', ')}`);
   workspace = createWorkspace(
     {
       // Die Integrationsdateien liegen im Paket ausserhalb des asar-Archivs (extraResources).
@@ -57,7 +64,7 @@ async function start(): Promise<void> {
       processes: noProcessProbe,
       system: hostSystem,
     },
-    { shells: provisionalShells(), localApi: api?.info },
+    { shells, localApi: api?.info },
   );
   localApi?.connect(workspace);
   workspace.subscribe((event) => sendToRenderer(IPC.workspaceEvent, event));
@@ -135,7 +142,10 @@ function sendToRenderer(channel: string, ...args: unknown[]): void {
 function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
   switch (command.type) {
     case 'createTab':
-      ws.createTab(typeof command.cwd === 'string' ? { cwd: command.cwd } : {});
+      ws.createTab({
+        cwd: typeof command.cwd === 'string' ? command.cwd : undefined,
+        shellId: typeof command.shellId === 'string' ? command.shellId : undefined,
+      });
       return;
     case 'renameTab':
       ws.renameTab(command.tabId, command.name);

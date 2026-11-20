@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Settings, TabSnapshot } from '../shared/types';
+import type { Settings, ShellOption, TabSnapshot } from '../shared/types';
 import { terminalViews } from './terminal/terminalViews';
 
 const api = window.thub;
@@ -9,6 +9,10 @@ export interface WorkspaceView {
   tabs: TabSnapshot[];
   activeTabId: string | null;
   settings: Settings;
+  /** Die erkannten Shells, in der Reihenfolge des Pfeil-Menüs. */
+  shells: ShellOption[];
+  /** Die Standard-Shell, so wie der Kern sie aus der Einstellung ableitet. */
+  defaultShellId: string;
   /** Benutzerordner, zur Anzeige eines leeren Standardordners. */
   homeDir: string;
 }
@@ -39,7 +43,9 @@ export function useWorkspace(): {
           setView((current) => current && { ...current, tabs: event.tabs, activeTabId: event.activeTabId });
           return;
         case 'settings':
-          setView((current) => current && { ...current, settings: event.settings });
+          setView(
+            (current) => current && { ...current, settings: event.settings, defaultShellId: event.defaultShellId },
+          );
           return;
         case 'output':
           terminalViews.get(event.tabId)?.write(event.data);
@@ -48,7 +54,7 @@ export function useWorkspace(): {
           terminalViews.get(event.tabId)?.markExited(event.exitCode);
           return;
         case 'notice':
-          terminalViews.get(event.tabId)?.notice(event.level, event.text);
+          terminalViews.get(event.tabId)?.notice(event.level, event.text, event.beforeStart === true);
           return;
         case 'restoreHistory':
           // Kommt nach „Ansicht bereit“ und vor der ersten Ausgabe der Shell.
@@ -73,6 +79,8 @@ export function useWorkspace(): {
         tabs: snapshot.tabs,
         activeTabId: snapshot.activeTabId,
         settings: snapshot.settings,
+        shells: snapshot.shells,
+        defaultShellId: snapshot.defaultShellId,
         homeDir: snapshot.homeDir,
       });
     });

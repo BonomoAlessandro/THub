@@ -2,7 +2,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { SerializeAddon } from '@xterm/addon-serialize';
 import { Terminal } from '@xterm/xterm';
 import { cssVar, terminalTheme } from '../theme';
-import { restoredHistory, serializeHistory } from './history';
+import { noticeBeforeStart, restoredHistory, serializeHistory } from './history';
 
 const api = window.thub;
 
@@ -70,10 +70,14 @@ export class TerminalView {
     );
   }
 
-  /** Hinweis des Kerns im Terminal. */
-  notice(level: 'info' | 'error', text: string): void {
+  /**
+   * Hinweis des Kerns im Terminal. Kommt er vor dem ersten Start der Shell (`beforeStart`), landet er wie
+   * der wiederhergestellte Verlauf direkt über der ersten Zeile der Shell, sonst wird er einfach angehängt.
+   */
+  notice(level: 'info' | 'error', text: string, beforeStart = false): void {
     const color = level === 'error' ? '31' : '90';
-    this.term.write(`\r\n\x1b[${color}m${text}\x1b[0m\r\n`);
+    const line = `\x1b[${color}m${text}\x1b[0m`;
+    this.term.write(beforeStart ? noticeBeforeStart(line, this.term.rows) : `\r\n${line}\r\n`);
   }
 
   /**

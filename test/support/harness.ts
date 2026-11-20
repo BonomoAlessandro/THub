@@ -118,7 +118,7 @@ export class TestWorkspace {
   readonly clock = new FakeClock();
   readonly processes = new FakeProcessProbe();
   readonly system: FakeSystem;
-  private readonly shells: ShellInfo[];
+  private shells: ShellInfo[];
   private current: Instance;
 
   /** @param api bereits laufende lokale Schnittstelle; ohne sie läuft der Kern wie ohne Server */
@@ -167,8 +167,10 @@ export class TestWorkspace {
    * Simuliert einen Neustart der App: Der Kern wird geordnet beendet, danach entsteht ein neuer
    * Kern auf demselben gespeicherten Zustand, mit frischem Terminal-Backend und, falls vorhanden,
    * neuer lokaler Schnittstelle samt neu geschriebener Hook-Datei.
+   * @param options.shells die Shells, die die Erkennung beim neuen Start findet (etwa nach einer Deinstallation)
    */
-  async restart(): Promise<void> {
+  async restart(options: { shells?: ShellInfo[] } = {}): Promise<void> {
+    if (options.shells) this.shells = options.shells;
     const { workspace, api } = this.current;
     await workspace.shutdown();
     let nextApi: RunningApi | null = null;

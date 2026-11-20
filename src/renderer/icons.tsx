@@ -42,6 +42,16 @@ export function FolderPlusIcon() {
   );
 }
 
+/** Eine Shell im Pfeil-Menü. */
+export function TerminalIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m4 17 6-6-6-6" />
+      <path d="M12 19h8" />
+    </svg>
+  );
+}
+
 export function CloseIcon() {
   return (
     <svg className="i" viewBox="0 0 24 24" aria-hidden="true">

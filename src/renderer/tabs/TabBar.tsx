@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
-import type { RecentDir, TabSnapshot } from '../../shared/types';
+import type { RecentDir, ShellOption, TabSnapshot } from '../../shared/types';
 import { ChevronIcon, GearIcon, PlusIcon } from '../icons';
 import { Menu } from '../popup/Menu';
 import { focusTerminal } from '../terminal/terminalViews';
@@ -17,6 +17,10 @@ const FADE_PX = 28;
 interface TabBarProps {
   tabs: TabSnapshot[];
   activeTabId: string | null;
+  /** Die erkannten Shells für das Pfeil-Menü. */
+  shells: ShellOption[];
+  /** Die Standard-Shell; sie trägt im Pfeil-Menü das Etikett „Standard“. */
+  defaultShellId: string;
   /** Tab, dessen Name gerade bearbeitet wird. */
   renamingId: string | null;
   onStartRename(tabId: string): void;
@@ -41,7 +45,16 @@ type TooltipState = TooltipContent & { anchor: DOMRect };
  * werden die Tabs schmaler und die Leiste scrollbar. Die Leiste zeigt nur an und schickt Befehle;
  * die Tab-Logik liegt im Kern.
  */
-export function TabBar({ tabs, activeTabId, renamingId, onStartRename, onFinishRename, onOpenSettings }: TabBarProps) {
+export function TabBar({
+  tabs,
+  activeTabId,
+  shells,
+  defaultShellId,
+  renamingId,
+  onStartRename,
+  onFinishRename,
+  onOpenSettings,
+}: TabBarProps) {
   const stripRef = useRef<HTMLDivElement>(null);
   const chevronRef = useRef<HTMLButtonElement>(null);
   const [fade, setFade] = useState({ left: false, right: false });
@@ -159,16 +172,18 @@ export function TabBar({ tabs, activeTabId, renamingId, onStartRename, onFinishR
         >
           <PlusIcon />
         </button>
-        {/* Pfeil-Menü: „Neues Terminal in …“; die Shells kommen mit Ticket 06 dazu („Shell oder Ordner wählen“). */}
+        {/* Pfeil-Menü: eine Shell oder einen Ordner für das neue Terminal wählen. */}
         <button
           ref={chevronRef}
           className={menu ? 'icon-btn chevron open' : 'icon-btn chevron'}
-          aria-label="Neues Terminal in …"
+          aria-label="Shell oder Ordner wählen"
           aria-haspopup="menu"
           aria-expanded={menu !== null}
           // Per Tastatur ausgelöst (Enter, Leertaste) ist `detail` 0: dann gleich den ersten Eintrag hervorheben.
           onClick={(e) => toggleMenu(e.detail === 0)}
-          onMouseEnter={(e) => !menu && tooltip.schedule(e.currentTarget, { kind: 'text', text: 'Neues Terminal in …' })}
+          onMouseEnter={(e) =>
+            !menu && tooltip.schedule(e.currentTarget, { kind: 'text', text: 'Shell oder Ordner wählen' })
+          }
           onMouseLeave={hideTooltip}
           onMouseDown={hideTooltip}
         >
@@ -195,8 +210,8 @@ export function TabBar({ tabs, activeTabId, renamingId, onStartRename, onFinishR
 
       {menu && chevronRef.current && (
         <Menu
-          label="Neues Terminal in …"
-          entries={newTabMenuEntries(menu.recentDirs)}
+          label="Shell oder Ordner wählen"
+          entries={newTabMenuEntries(shells, defaultShellId, menu.recentDirs)}
           anchor={chevronRef.current}
           highlightFirst={menu.viaKeyboard}
           onClose={closeMenu}

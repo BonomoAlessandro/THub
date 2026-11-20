@@ -14,7 +14,7 @@ export type ShellIntegration = 'powershell' | 'cmd' | 'bash';
 
 /** Startauftrag für eine Shell. */
 export interface StartOrder {
-  /** Programm, z.B. "pwsh.exe". */
+  /** Programm, z.B. "C:\Program Files\PowerShell\7\pwsh.exe". */
   file: string;
   /**
    * Startargumente ohne Integration. Mit Integration bestimmt das Backend die Argumente selbst; diese hier
@@ -137,14 +137,18 @@ export interface HostSystem {
 
 // ---------- Shells ----------
 
-/** Eine Shell, die der Kern starten kann. Die Liste wird dem Kern übergeben. */
+/** Eine Shell, die der Kern starten kann. Die Liste kommt von der Shell-Erkennung (`src/main/shells.ts`). */
 export interface ShellInfo {
   /** Stabile Kennung: "pwsh", "powershell", "cmd", "gitbash" oder "wsl:<Distribution>". */
   id: string;
-  /** Anzeigename, z.B. "PowerShell 7". */
+  /** Anzeigename, z.B. "PowerShell 7" oder "Ubuntu (WSL)". */
   name: string;
+  /** Programm, wie es die Erkennung gefunden hat, meist mit vollem Pfad. */
   file: string;
-  /** Startargumente ohne Integration, auch für den Rückfall, wenn die Integration fehlt. */
+  /**
+   * Startargumente ohne Integration, auch für den Rückfall, wenn die Integration fehlt. Bei WSL
+   * `-d <Distribution>`; den Ordner ergänzt der Kern mit `--cd <Ordner>`.
+   */
   args: string[];
   /** Ob Claude in dieser Shell erfasst wird (alle ausser WSL). */
   capturesClaude: boolean;
