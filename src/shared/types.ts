@@ -31,12 +31,21 @@ export type TabProcessState = 'pending' | 'running' | 'exited';
 export interface TabSnapshot {
   id: string;
   name: string;
+  /** Kennung der Shell des Tabs. Fehlt sie auf diesem Rechner, läuft er mit der Standard-Shell (`shellName`). */
   shellId: string;
   /** Anzeigename der Shell, mit der der Tab läuft, z.B. "PowerShell 7". */
   shellName: string;
   /** Ordner zur Anzeige: zuletzt aktiver Ordner, sonst Startordner. */
   cwd: string;
   process: TabProcessState;
+}
+
+/** Eine erkannte Shell, wie sie das Pfeil-Menü und die Einstellungen anbieten. */
+export interface ShellOption {
+  /** Stabile Kennung: "pwsh", "powershell", "cmd", "gitbash" oder "wsl:<Distribution>". */
+  id: string;
+  /** Anzeigename, z.B. "PowerShell 7" oder "Ubuntu (WSL)". */
+  name: string;
 }
 
 /** Ein zuletzt benutzter Ordner, wie ihn das Pfeil-Menü unter „Neues Terminal in …“ anbietet. */
@@ -51,6 +60,13 @@ export interface WorkspaceSnapshot {
   tabs: TabSnapshot[];
   activeTabId: string | null;
   settings: Settings;
+  /** Die erkannten Shells, in der Reihenfolge des Pfeil-Menüs. */
+  shells: ShellOption[];
+  /**
+   * Kennung der Standard-Shell, mit der `+` und Ctrl+Shift+T neue Tabs öffnen: die eingestellte, sonst
+   * PowerShell 7, sonst Windows PowerShell. Immer eine der erkannten Shells.
+   */
+  defaultShellId: string;
   /** Benutzerordner, zur Anzeige eines leeren Standardordners. */
   homeDir: string;
 }
@@ -59,13 +75,18 @@ export interface WorkspaceSnapshot {
 export type WorkspaceEvent =
   /** Tabs, Reihenfolge, aktiver Tab oder Prozess-Zustand haben sich geändert. */
   | { type: 'tabs'; tabs: TabSnapshot[]; activeTabId: string | null }
-  | { type: 'settings'; settings: Settings }
+  /** Die Einstellungen haben sich geändert; dazu die daraus folgende Standard-Shell (siehe `WorkspaceSnapshot`). */
+  | { type: 'settings'; settings: Settings; defaultShellId: string }
   /** Rohe Ausgabe der Shell eines Tabs. */
   | { type: 'output'; tabId: string; data: string }
   /** Die Shell eines Tabs hat sich beendet. */
   | { type: 'exit'; tabId: string; exitCode: number }
-  /** Hinweis im Terminal eines Tabs (z.B. Shell liess sich nicht starten). */
-  | { type: 'notice'; tabId: string; level: 'info' | 'error'; text: string }
+  /**
+   * Hinweis im Terminal eines Tabs (z.B. Shell liess sich nicht starten). Mit `beforeStart` kommt er direkt vor
+   * dem ersten Start der Shell, solange die Ansicht noch leer ist (höchstens mit dem wiederhergestellten
+   * Verlauf im Scrollback); ConPTY leert beim Start den sichtbaren Bereich.
+   */
+  | { type: 'notice'; tabId: string; level: 'info' | 'error'; text: string; beforeStart?: boolean }
   /**
    * Gesicherter Verlauf eines Tabs zum Wiederherstellen. Kommt nach „Ansicht bereit“, aber vor dem
    * Startauftrag, und damit vor der ersten Ausgabe der Shell. `savedAt`: Zeitpunkt der Sicherung.
@@ -76,8 +97,11 @@ export type WorkspaceEvent =
 
 /** Befehle vom Renderer an den Kern. */
 export type WorkspaceCommand =
-  /** Neuer Tab im Ordner `cwd`; ohne ihn (oder wenn es ihn nicht gibt) im Standardordner. */
-  | { type: 'createTab'; cwd?: string }
+  /**
+   * Neuer Tab im Ordner `cwd` mit der Shell `shellId`; ohne Ordner (oder wenn es ihn nicht gibt) im
+   * Standardordner, ohne Shell (oder wenn sie nicht erkannt ist) mit der Standard-Shell.
+   */
+  | { type: 'createTab'; cwd?: string; shellId?: string }
   | { type: 'renameTab'; tabId: string; name: string }
   | { type: 'activateTab'; tabId: string }
   /** Zum Tab `offset` Plätze weiter, im Kreis (Ctrl+Tab: 1, Ctrl+Shift+Tab: -1). */

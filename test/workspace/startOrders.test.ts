@@ -16,7 +16,7 @@ describe('Startaufträge', () => {
     h.workspace.viewReady(id, 132, 41);
 
     expect(h.terminal.starts).toMatchObject([
-      { tabId: id, order: { file: 'powershell.exe', args: [], cwd: 'C:\\Users\\anna', cols: 132, rows: 41 } },
+      { tabId: id, order: { file: 'pwsh.exe', args: [], cwd: 'C:\\Users\\anna', cols: 132, rows: 41 } },
     ]);
     expect(h.activeTab()?.process).toBe('running');
     expect(h.events.at(-1)).toMatchObject({ type: 'tabs', tabs: [{ id, process: 'running' }] });
