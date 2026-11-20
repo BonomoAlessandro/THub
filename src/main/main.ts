@@ -5,7 +5,8 @@ import { dataFolders, takeOverLegacyData, type DataFolders } from './dataFolder'
 import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
 import { LocalApiServer } from './localApi';
 import { PtyManager } from './ptyManager';
-import { FIXED_SHELLS } from './shells';
+import { shellIntegrationDir } from './shellLaunch';
+import { provisionalShells } from './shells';
 import { STATE_FILE_NAME, StateStore } from './store';
 import { hostSystem, noProcessProbe, systemClock } from './system';
 import { DEV_MENU } from './devMenu';
@@ -47,13 +48,16 @@ async function start(): Promise<void> {
   localApi = api?.server ?? null;
   workspace = createWorkspace(
     {
-      terminal: new PtyManager(),
+      // Die Integrationsdateien liegen im Paket ausserhalb des asar-Archivs (extraResources).
+      terminal: new PtyManager({
+        shellDir: shellIntegrationDir(app.isPackaged, process.resourcesPath, app.getAppPath()),
+      }),
       storage: new StateStore(path.join(app.getPath('userData'), STATE_FILE_NAME)),
       clock: systemClock,
       processes: noProcessProbe,
       system: hostSystem,
     },
-    { shells: FIXED_SHELLS, localApi: api?.info },
+    { shells: provisionalShells(), localApi: api?.info },
   );
   localApi?.connect(workspace);
   workspace.subscribe((event) => sendToRenderer(IPC.workspaceEvent, event));

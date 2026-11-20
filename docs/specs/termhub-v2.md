@@ -184,7 +184,7 @@ THub startet jede Windows-Shell mit einer mitgelieferten Integration. Sie lädt 
 
 **Robust laden:**
 - PowerShell bekommt den Integrationscode per `-EncodedCommand`, nicht als Skriptdatei, damit eine restriktive Execution Policy ihn nicht blockiert. cmd lädt seine Integration per `/k`. Git Bash lädt über eine eigene Startdatei, was auch eine Login-Shell von Git Bash lädt (`/etc/profile`, dann `~/.bash_profile`, `~/.bash_login` oder `~/.profile`, sonst `~/.bashrc`), und danach die Integration.
-- Fertige, geprüfte Skripte aus dem Spike: `resources/shell/` (`starter.ps1`, `integration.ps1`, `integration.cmd`, `integration.bash`); wie das Terminal-Backend jede Shell startet, zeigt `buildLaunch` in `test/shells/harness.ts`. Befunde: `docs/spikes/starter.md`. Die Skripte liegen im Paket ausserhalb des asar-Archivs (`extraResources`).
+- Fertige, geprüfte Skripte aus dem Spike: `resources/shell/` (`starter.ps1`, `integration.ps1`, `integration.cmd`, `integration.bash`); wie das Terminal-Backend jede Shell startet, steht in `src/main/shellLaunch.ts` (Ticket 07, nach der Vorlage `buildLaunch` aus dem Spike). Befunde: `docs/spikes/starter.md`. Die Skripte liegen im Paket ausserhalb des asar-Archivs (`extraResources`).
 - Mitgelieferte Skripte sind reines ASCII oder UTF-8 mit BOM, weil Windows PowerShell 5 UTF-8 ohne BOM falsch liest.
 - Scheitert die Integration (Gruppenrichtlinie, Constrained Language Mode), startet die Shell trotzdem normal, nur ohne Integration.
 
