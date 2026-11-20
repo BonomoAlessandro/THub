@@ -13,6 +13,8 @@ export type MenuEntry =
       /** Zweite, kleinere Zeile, z.B. der volle Pfad eines Ordners. */
       sub?: string;
       icon?: ReactNode;
+      /** Kleines Etikett rechts, z.B. „Standard“ bei der Standard-Shell. */
+      badge?: string;
       run(): void;
     };
 
@@ -136,6 +138,7 @@ export function Menu({ label, entries, anchor, highlightFirst = false, onClose }
               {entry.label}
               {entry.sub && <small>{entry.sub}</small>}
             </span>
+            {entry.badge && <span className="mi-badge">{entry.badge}</span>}
           </button>
         );
       })}

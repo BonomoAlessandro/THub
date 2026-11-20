@@ -17,7 +17,7 @@ describe('Startaufträge', () => {
     h.workspace.viewReady(id, 132, 41);
 
     expect(h.terminal.starts).toMatchObject([
-      { tabId: id, order: { file: 'powershell.exe', args: [], cwd: 'C:\\Users\\anna', cols: 132, rows: 41 } },
+      { tabId: id, order: { file: 'pwsh.exe', args: [], cwd: 'C:\\Users\\anna', cols: 132, rows: 41 } },
     ]);
     expect(h.activeTab()?.process).toBe('running');
     expect(h.events.at(-1)).toMatchObject({ type: 'tabs', tabs: [{ id, process: 'running' }] });
@@ -141,7 +141,7 @@ describe('Startaufträge', () => {
       expect(h.terminal.startsFor(id)[0].order).toMatchObject({ integration });
     });
 
-    it('startet WSL ohne Integration, mit seinen eigenen Argumenten', () => {
+    it('startet WSL ohne Integration, mit seinen eigenen Argumenten und dem Ordner', () => {
       const h = startWorkspace({ shells });
       h.workspace.updateSettings({ defaultShellId: 'wsl:Ubuntu' });
       const id = h.workspace.createTab();
@@ -149,7 +149,7 @@ describe('Startaufträge', () => {
       h.workspace.viewReady(id, 80, 24);
 
       const { order } = h.terminal.startsFor(id)[0];
-      expect(order).toMatchObject({ file: 'wsl.exe', args: ['-d', 'Ubuntu'] });
+      expect(order).toMatchObject({ file: 'wsl.exe', args: ['-d', 'Ubuntu', '--cd', 'C:\\Users\\tester'] });
       expect(order).not.toHaveProperty('integration');
     });
 

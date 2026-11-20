@@ -23,14 +23,14 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 03 | [React-Oberfläche mit Tab-Leiste](03-react-tab-leiste.md) | AFK | 01, 02 | erledigt |
 | 04 | [Titelleiste und Design hell/dunkel](04-titelleiste-design.md) | AFK | 03 | erledigt |
 | 05 | [Ordner, Tab-Namen und Einstellungsdialog](05-ordner-und-einstellungen.md) | AFK | 04 | erledigt |
-| 06 | [Shells erkennen und pro Tab wählen](06-shells.md) | AFK | 05 | in Arbeit |
+| 06 | [Shells erkennen und pro Tab wählen](06-shells.md) | AFK | 05 | erledigt |
 | 07 | [Shell-Integration: Profil, aktueller Ordner, Startbefehl](07-shell-integration.md) | AFK | 06 | erledigt |
 | 08 | [Verlauf normaler Tabs sichern und wiederherstellen](08-verlauf.md) | AFK | 03 | erledigt |
 | 09 | [Fenster merken und nur eine Instanz](09-fenster-und-einzelinstanz.md) | AFK | 01 | erledigt |
 | 10 | [Lokale Schnittstelle, Hook-Datei und Claude-Zuordnung](10-schnittstelle-und-zuordnung.md) | AFK | 01, 09 | erledigt |
 | 11 | [Starter und `claude`-Ersatz](11-starter-und-ersatz.md) | AFK | 07, 10 | in Arbeit |
 | 12 | [Claude-Sessions nach einem Neustart fortsetzen](12-claude-fortsetzen.md) | AFK | 08, 11 | offen |
-| 13 | [Claude-Status und Prozess-Status am Tab](13-status-am-tab.md) | AFK | 11 | offen |
+| 13 | [Claude-Status und Prozess-Status am Tab](13-status-am-tab.md) | AFK | 11 | in Arbeit |
 | 14 | [Hinweise im Fenster](14-hinweise.md) | AFK | 13 | offen |
 | 15 | [Tabs schliessen mit Rückfrage und wieder öffnen](15-schliessen-und-wiederoeffnen.md) | AFK | 12, 13 | offen |
 | 16 | [Rechtsklick-Menü und Umsortieren per Ziehen](16-rechtsklick-und-ziehen.md) | AFK | 15 | offen |

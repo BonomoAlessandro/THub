@@ -175,8 +175,10 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 - Erkannt werden: PowerShell 7, Windows PowerShell, cmd, Git Bash (Standard-Installationsort und Registry) sowie jede installierte WSL-Distribution einzeln. Distributionen, deren Name mit `docker-desktop` beginnt, werden ausgeblendet.
 - Stabile Kennungen: `pwsh`, `powershell`, `cmd`, `gitbash`, `wsl:<Distribution>`. Jede Shell hat ausserdem einen Anzeigenamen, das Programm, die Startargumente und ein Merkmal, ob Claude darin erfasst wird (alle ausser WSL).
 - Standard-Shell ist PowerShell 7, falls vorhanden, sonst Windows PowerShell. Der Nutzer kann sie in den Einstellungen ändern.
-- Ein Tab speichert die Kennung seiner Shell. Ist sie beim Wiederherstellen nicht mehr vorhanden, fällt der Tab auf die Standard-Shell zurück und zeigt einen Hinweis im Terminal.
+- Ein Tab speichert die Kennung seiner Shell. Ist sie beim Wiederherstellen nicht mehr vorhanden, fällt der Tab auf die Standard-Shell zurück und zeigt einen Hinweis im Terminal. Seine Kennung behält er dabei: Gibt es die Shell wieder (oder hat WSL beim Start nur zu langsam geantwortet), startet er beim nächsten Mal wieder mit ihr. Ebenso bleibt eine eingestellte Standard-Shell, die gerade fehlt, eingestellt; bis dahin gilt die automatische Wahl.
 - Der Kern bekommt die Liste der erkannten Shells übergeben. Die Erkennung selbst ist maschinenabhängig und wird von Hand geprüft.
+- Die Erkennung läuft beim Start parallel zum Start von Electron. PowerShell 7 wird am Standardort, im PATH und als App-Ausführungsalias der Store-Version (`%LOCALAPPDATA%\Microsoft\WindowsApps`, nur mit `lstat` sichtbar) gesucht, Git Bash an den Standardorten und unter `HKLM`/`HKCU\SOFTWARE\GitForWindows` (`InstallPath`), nie als `bash.exe` im PATH. `wsl.exe -l -q` (UTF-16LE) hat ein Zeitlimit von 2 Sekunden; fehlt WSL oder antwortet es nicht, gibt es keine WSL-Shells.
+- Anzeigenamen wie im Prototyp: „PowerShell 7“, „Windows PowerShell“, „Eingabeaufforderung“, „Git Bash“, „<Distribution> (WSL)“.
 
 ### Shell-Integration
 

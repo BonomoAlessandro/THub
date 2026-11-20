@@ -9,12 +9,6 @@ describe('Tabs', () => {
     expect(h.activeTab()?.name).toBe('anna');
   });
 
-  it('nimmt bis zur Shell-Erkennung wie in Version 0.1.0 Windows PowerShell als Standard-Shell', () => {
-    const h = startWorkspace();
-
-    expect(h.activeTab()?.shellId).toBe('powershell');
-  });
-
   it('legt einen neuen Tab im Standardordner an und macht ihn aktiv', () => {
     const h = startWorkspace({ directories: ['D:\\work'] });
     h.workspace.updateSettings({ defaultCwd: 'D:\\work' });
@@ -174,7 +168,7 @@ describe('Tabs', () => {
     });
 
     // Eine Shell, die es nicht mehr gibt, startet als Standard-Shell; so heisst sie dann auch.
-    expect(h.tabs().map((t) => t.shellName)).toEqual(['cmd', 'Windows PowerShell']);
+    expect(h.tabs().map((t) => t.shellName)).toEqual(['cmd', 'PowerShell 7']);
   });
 
   it('ignoriert Befehle für unbekannte Tabs', () => {
