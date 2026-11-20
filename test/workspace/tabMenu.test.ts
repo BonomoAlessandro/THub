@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hookEvent, hookPayload, type HookSample } from '../support/apiClient';
+import { ClaudeTab } from '../support/claudeTab';
 import { startWorkspace, startWorkspaceWithApi, type TestWorkspace } from '../support/harness';
 
 // Rechtsklick-Menü und Umsortieren per Ziehen (Ticket 16): Duplizieren, Verschieben und „Andere Tabs schliessen“ im
@@ -10,7 +10,6 @@ const HOME = 'C:\\Users\\anna';
 const PROJ = 'C:\\proj';
 const WEB = 'C:\\web';
 const SUB = 'C:\\proj\\src';
-const CLAUDE_PID = 30000;
 const ESC = '\x1b';
 
 /** Ordner-Meldung der Shell-Integration (OSC 9;9), wie sie bei jedem Prompt kommt. */
@@ -20,20 +19,12 @@ function setup(): TestWorkspace {
   return startWorkspace({ homeDir: HOME, directories: [PROJ, WEB, SUB] });
 }
 
-/** Claude Code schickt ein Hook-Ereignis. */
-async function hook(h: TestWorkspace, tabId: string, sample: HookSample, overrides: Record<string, unknown>): Promise<void> {
-  const res = await h.api.hook(tabId, hookEvent(sample), hookPayload(sample, overrides));
-  expect(res).toMatchObject({ status: 200, body: '' });
-}
-
-/** `claude` im Tab mit einem Prompt: ein fortzusetzender Claude-Tab. Liefert die Session-Kennung. */
-async function claudeWithPrompt(h: TestWorkspace, tabId: string, cwd: string): Promise<string> {
-  const res = await h.api.launch({ tabId, case: 'new', cwd });
-  const id = JSON.parse(res.body).sessionId as string;
-  await h.api.started(tabId, CLAUDE_PID);
-  await hook(h, tabId, 'SessionStart-startup', { session_id: id, cwd });
-  await hook(h, tabId, 'UserPromptSubmit', { session_id: id, cwd });
-  return id;
+/** Ein Tab mit Claude im Ordner PROJ (Starter und Hooks über die echte lokale Schnittstelle, kein echtes claude). */
+async function setupClaudeTab(): Promise<{ h: TestWorkspace; source: string; claude: ClaudeTab }> {
+  const h = await startWorkspaceWithApi({ homeDir: HOME, directories: [PROJ, WEB, SUB] });
+  const source = h.workspace.createTab({ cwd: PROJ });
+  h.showAllViews();
+  return { h, source, claude: await ClaudeTab.launch(h, source) };
 }
 
 function ids(h: TestWorkspace): string[] {
@@ -110,10 +101,8 @@ describe('Rechtsklick-Menü und Umsortieren', () => {
     });
 
     it('von einem Claude-Tab nur das Terminal, ohne Claude-Session, auch nach einem Neustart', async () => {
-      const h = await startWorkspaceWithApi({ homeDir: HOME, directories: [PROJ, WEB, SUB] });
-      const source = h.workspace.createTab({ cwd: PROJ });
-      h.showAllViews();
-      await claudeWithPrompt(h, source, PROJ);
+      const { h, source, claude } = await setupClaudeTab();
+      await claude.send('UserPromptSubmit');
       expect(h.activeTab()).toMatchObject({ id: source, kind: 'claude', status: 'working' });
 
       const copy = h.workspace.duplicateTab(source);
@@ -132,6 +121,22 @@ describe('Rechtsklick-Menü und Umsortieren', () => {
       expect(h.activeTab()).toMatchObject({ id: copy, kind: 'terminal', paused: false });
       h.workspace.viewReady(copy, 100, 30);
       expect(h.terminal.startsFor(copy)[0].order.startCommand).toBeUndefined();
+    });
+
+    it('übernimmt keine offenen Punkte der Quelle, auch nicht nach einem Neustart', async () => {
+      const { h, source, claude } = await setupClaudeTab();
+      await claude.answer('Ich habe die Datei angepasst.\n\nSoll ich auch die Tests anpassen?');
+      expect(h.storedTab(source)?.openPoints).toEqual(['Soll ich auch die Tests anpassen?']);
+
+      const copy = h.workspace.duplicateTab(source);
+
+      expect(h.storedTab(copy)?.openPoints).toBeUndefined();
+      expect(h.snapshot().toasts.filter((t) => t.tabId === copy)).toEqual([]);
+      expect(claude.toasts()).toMatchObject([{ kind: 'openPoints', points: ['Soll ich auch die Tests anpassen?'] }]);
+
+      await h.restart();
+
+      expect(h.snapshot().toasts.map((t) => t.tabId)).toEqual([source]);
     });
 
     it('unbekannte Tabs übergeht der Kern', () => {
