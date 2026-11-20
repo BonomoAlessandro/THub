@@ -2,7 +2,7 @@
 
 Status: `ready-for-agent` · Typ: AFK
 Blockiert durch: 15
-User Stories: 70, 71, 72
+User Stories: 70, 71, 72, 83
 Spezifikation: „Oberfläche (Renderer)“, Tastenkürzel
 
 ## Was gebaut wird
@@ -12,10 +12,12 @@ Spezifikation: „Oberfläche (Renderer)“, Tastenkürzel
   - **Tabs:** Tippen eines Namens springt zum Tab; angezeigt werden Name, Ordner und Status-Symbol.
   - **Befehle:** Neues Terminal, Neues Terminal in … (zuletzt benutzte Ordner und Ordner wählen), Umbenennen, Schliessen, Andere Tabs schliessen, Zuletzt geschlossen (die Liste aus Ticket 15), Einstellungen, Standardordner ändern.
 - **Keine Claude-Befehle.**
+- **Übersicht der Tastenkürzel:** neuer Befehl „Tastenkürzel anzeigen“ in der Palette und ein Link „Alle Tastenkürzel …“ im Einstellungsdialog öffnen einen Dialog im Stil der Einstellungen, gruppiert nach Tabs, Bearbeiten, Darstellung und Fenster. Kein eigenes Tastenkürzel dafür. Die Übersicht wird aus derselben Tabelle erzeugt, nach der die Tastenkürzel verarbeitet werden, damit sie nie veraltet.
 - **Bedienung:** Pfeiltasten, Enter, Escape. Danach geht der Fokus zurück ins Terminal.
 
 ## Akzeptanzkriterien
 
+- [ ] Die Übersicht der Tastenkürzel listet jedes von THub verarbeitete Kürzel genau einmal; ein Test stellt sicher, dass sie und die Verarbeitung aus derselben Tabelle kommen.
 - [ ] Suche (am besten als reine Funktion getestet):
   - „termhb“ findet „termhub“, „api“ findet „api-gateway“, „neu term“ findet „Neues Terminal“;
   - bei gleich gutem Treffer stehen Tabs vor Befehlen.

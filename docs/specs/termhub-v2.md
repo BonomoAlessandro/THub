@@ -134,6 +134,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 72. Als Nutzer möchte ich, dass `Ctrl+K` in Claude und in den Shells weiterhin funktioniert, damit THub meine gewohnten Tasten nicht stiehlt.
 73. Als Nutzer möchte ich mit `Ctrl+Shift+C` / `Ctrl+Shift+V` und mit Rechtsklick im Terminal kopieren und einfügen, damit das wie gewohnt funktioniert.
 74. Als Nutzer möchte ich die Terminal-Schriftgrösse mit `Ctrl` + Mausrad oder `Ctrl` `+` / `Ctrl` `-` ändern, damit ich sie schnell anpassen kann.
+83. Als Nutzer möchte ich in THub eine Übersicht aller Tastenkürzel öffnen können (über die Befehlspalette und aus den Einstellungen), damit ich sie nachschlagen kann, ohne das README zu suchen.
 
 ### Einstellungen und Aussehen
 
@@ -352,6 +353,14 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 - Hinweise nehmen dem Terminal nie den Fokus.
 - Sind Hinweise in den Einstellungen abgeschaltet, löst der Kern keine aus. Die Status-Symbole bleiben.
 
+**Präzisierungen aus der Umsetzung (Ticket 14):**
+- Ein „wartet“-Hinweis entsteht nur beim Wechsel in „wartet auf dich“; die verspätete Benachrichtigung zur selben Rückfrage löst keinen neuen aus. Wurde der Tab angezeigt und wartet Claude weiter, kommt beim Wegwechseln kein neuer.
+- „Wartet“ verschwindet, sobald der Tab nicht mehr wartet, auf jedem Weg: Hook-Ereignis, Antwort im Terminal, Esc, Ende von Claude oder der Shell.
+- Das × nimmt nur den Hinweis weg; „fertig, noch nicht angeschaut“ und „wartet“ bleiben am Tab. Ein geschlossener Tab nimmt seinen Hinweis mit.
+- Der Countdown von „fertig“ hält auch an, solange die Maus auf dem Hinweis steht (wie im Prototyp). Wird „fertig“ erneut ausgelöst, beginnt er von vorn.
+- Beim Ausschalten der Einstellung verschwinden auch die Hinweise, die gerade stehen.
+- Die Spalte der Hinweise beginnt unter der Titelleiste und überdeckt deren Zieh-Fläche nie; reicht der Platz nicht, scrollt sie. Die Karten sind deckend (kein Mica), auch beim Überfahren.
+
 ### Offene Punkte aus Claudes Antworten
 
 - **Anweisung:** Bei eingeschalteter Einstellung antwortet THub auf `/hooks/SessionStart` mit `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"…"}}`. Wortlaut des Kontexts: „Hinweis von THub: Wenn deine Antwort Fragen an den Nutzer oder offene Punkte enthält, die er entscheiden, prüfen oder erledigen muss, schreibe sie am Ende der Antwort unter der Überschrift ‚Offene Punkte‘ als kurze Aufzählung, ein Punkt pro Zeile. Gibt es keine, lass den Abschnitt weg.“ Weil `SessionStart` auch bei Fortsetzen, `/clear` und Kompaktieren kommt, gilt die Anweisung in jeder Session. Sind Hooks gesperrt, entfällt das Feature.
@@ -476,6 +485,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 | `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-` / `Ctrl` `0` | Schriftgrösse ändern / zurücksetzen |
 
 - `Ctrl+K` wird nicht abgefangen.
+- **Übersicht der Tastenkürzel:** ein Dialog im Stil der Einstellungen, gruppiert (Tabs, Bearbeiten, Darstellung, Fenster). Geöffnet über den Befehl „Tastenkürzel anzeigen“ in der Befehlspalette und den Link „Alle Tastenkürzel …“ im Einstellungsdialog; kein eigenes Kürzel. Erzeugt aus derselben Tabelle, nach der die Tasten verarbeitet werden.
 - Kürzel, die vom Tastaturlayout abhängen (`+`, `-`), werden über das erzeugte Zeichen erkannt, nicht über die Tastenposition. So funktionieren die Schweizer Tastatur (`+` auf Shift+1) und der Ziffernblock.
 - Der eingebaute Zoom von Chromium und die Zoom-Kürzel des Entwicklermenüs sind abgeschaltet.
 

@@ -12,6 +12,7 @@ import type {
   TabProcessState,
   TabSnapshot,
   TabStatus,
+  ToastKind,
   WorkspaceEvent,
   WorkspaceSnapshot,
 } from '../../shared/types';
@@ -44,6 +45,7 @@ import {
   type WindowState,
 } from './schema';
 import { classifyInput, displayedStatus, IDLE_CLAUDE, statusAfterHook, type ClaudeStatus } from './tabStatus';
+import { ToastBoard } from './toasts';
 import { placeWindow } from './windowPlacement';
 
 /** So lange wartet das Beenden höchstens auf die Shells. */
@@ -194,9 +196,15 @@ export interface Workspace extends ClaudeReceiver {
   /**
    * Das Fenster ist im Vordergrund bzw. nicht mehr (der Renderer meldet es beim Laden und bei jedem Wechsel).
    * Bis zur ersten Meldung gilt es als im Hintergrund. Nur im Vordergrund gilt der aktive Tab als angeschaut:
-   * Kommt das Fenster mit einem fertigen Claude-Tab nach vorne, verschwindet dessen „fertig“.
+   * Kommt das Fenster mit einem fertigen Claude-Tab nach vorne, verschwinden dessen „fertig“ und sein Hinweis.
+   * Die Countdowns der Hinweise laufen nur im Vordergrund.
    */
   windowForeground(foreground: boolean): void;
+
+  /** Nimmt einen Hinweis weg (× am Hinweis). */
+  dismissToast(toastId: string): void;
+  /** Die Maus steht auf dem Hinweis bzw. nicht mehr: Solange hält sein Countdown an. */
+  holdToast(toastId: string, hold: boolean): void;
 
   /**
    * THub beendet sich selbst (etwa bei einer Windows-Abmeldung): Die Claude-Zuordnungen werden eingefroren
@@ -329,6 +337,8 @@ class WorkspaceCore implements Workspace {
   private readonly closedHistory = new Set<string>();
   /** Shells geschlossener Tabs, die noch auf die Prozess-Sonde warten, nach Tab. */
   private readonly closingShells = new Map<string, ClosingShell>();
+  /** Die Hinweise unten rechts im Fenster. */
+  private readonly toasts: ToastBoard;
 
   constructor(
     private readonly ports: WorkspacePorts,
@@ -336,6 +346,7 @@ class WorkspaceCore implements Workspace {
     private readonly localApi: LocalApiInfo | undefined,
   ) {
     if (shells.length === 0) throw new Error('Der Workspace-Kern braucht mindestens eine Shell.');
+    this.toasts = new ToastBoard(ports.clock, () => this.emit({ type: 'toasts', toasts: this.toasts.snapshot() }));
 
     const loaded = readPersistedState(ports.storage.loadState(), {
       homeDir: ports.system.homeDir(),
@@ -365,6 +376,7 @@ class WorkspaceCore implements Workspace {
       shells: this.shells.map((s) => ({ id: s.id, name: s.name })),
       defaultShellId: this.defaultShell().id,
       homeDir: this.ports.system.homeDir(),
+      toasts: this.toasts.snapshot(),
     };
   }
 
@@ -467,6 +479,7 @@ class WorkspaceCore implements Workspace {
       const runtime = this.runtimes.get(tab.id);
       if (runtime) this.cancelClaudeTimers(runtime);
       this.runtimes.delete(tab.id);
+      this.toasts.dismissTab(tab.id);
       shells.push({ tabId: tab.id, root: runtime && shellRoot(runtime) });
       // Claude-Tabs haben keinen Verlauf; sonst nur, wenn es seit der letzten Sicherung Neues gibt.
       if (!tab.claude && runtime && runtime.output !== runtime.saved) changed.push(tab.id);
@@ -996,6 +1009,8 @@ class WorkspaceCore implements Workspace {
     this.state.settings = next;
     this.save();
     this.emit({ type: 'settings', settings: structuredClone(next), defaultShellId: this.defaultShell().id });
+    // Ausgeschaltet: Auch die Hinweise, die gerade stehen, verschwinden.
+    if (!next.notifications) this.toasts.clear();
   }
 
   stepFontSize(step: number): void {
@@ -1025,6 +1040,33 @@ class WorkspaceCore implements Workspace {
     if (this.stopping || typeof foreground !== 'boolean' || foreground === this.foreground) return;
     this.foreground = foreground;
     if (this.markShownTabSeen()) this.emitTabs();
+    this.toasts.setForeground(foreground);
+  }
+
+  // ---------- Hinweise ----------
+
+  dismissToast(toastId: string): void {
+    if (this.stopping || typeof toastId !== 'string') return;
+    this.toasts.dismiss(toastId);
+  }
+
+  holdToast(toastId: string, hold: boolean): void {
+    if (this.stopping || typeof toastId !== 'string' || typeof hold !== 'boolean') return;
+    this.toasts.hold(toastId, hold);
+  }
+
+  /**
+   * Hinweis für einen Tab, der gerade nicht sichtbar ist: Claude wartet dort auf dich bzw. ist fertig. Ein Hinweis, den
+   * der Tab schon hat, verschwindet dafür. Ausgeschaltet in den Einstellungen gibt es keine; die Status-Symbole bleiben.
+   */
+  private notify(tabId: string, kind: ToastKind): void {
+    if (this.state.settings.notifications && !this.isVisible(tabId)) this.toasts.show(tabId, kind);
+  }
+
+  /** Ein „wartet“-Hinweis gilt nur, solange Claude im Tab auf dich wartet. */
+  private dropStaleWaitingToast(tab: PersistedTab): void {
+    if (tab.claude && this.runtimes.get(tab.id)?.claude.activity === 'waiting') return;
+    this.toasts.dismissTab(tab.id, 'waiting');
   }
 
   // ---------- Claude ----------
@@ -1092,9 +1134,13 @@ class WorkspaceCore implements Workspace {
       // Jedes Hook-Ereignis zeigt, dass Claude nach Esc weitermacht. Ausgenommen sind Benachrichtigungen: Sie
       // kommen verzögert (Rückfrage nach etwa 6 s, idle_prompt nach etwa 60 s) und sagen darüber nichts.
       if (hook.event !== 'Notification') this.cancelClaudeTimers(runtime);
+      const wasWaiting = runtime.claude.activity === 'waiting';
       const step = statusAfterHook(runtime.claude, hook, startsSession(previous, hook), this.ports.clock.now());
       runtime.claude = step.status;
-      if (step.stopped && !this.isVisible(tab.id)) runtime.finished = true;
+      if (step.stopped && !this.isVisible(tab.id)) {
+        runtime.finished = true;
+        this.notify(tab.id, 'finished');
+      } else if (!wasWaiting && step.status.activity === 'waiting') this.notify(tab.id, 'waiting');
     });
   }
 
@@ -1202,6 +1248,8 @@ class WorkspaceCore implements Workspace {
         runtime.finished = false;
         this.cancelClaudeTimers(runtime);
       }
+      // Mit Claude endet auch das Warten.
+      this.dropStaleWaitingToast(tab);
     }
     this.save();
   }
@@ -1218,13 +1266,16 @@ class WorkspaceCore implements Workspace {
   }
 
   /**
-   * Der aktive Tab wird gerade angezeigt (Tab gewechselt oder Fenster nach vorne gekommen): Sein „fertig, noch
-   * nicht angeschaut“ entfällt. Liefert, ob sich dabei etwas geändert hat.
+   * Der aktive Tab wird gerade angezeigt (Tab gewechselt, auf welchem Weg auch immer, oder Fenster nach vorne
+   * gekommen): Sein „fertig, noch nicht angeschaut“ entfällt, und sein Hinweis verschwindet; die Hinweise der anderen
+   * Tabs bleiben. Liefert, ob sich dabei der Status des Tabs geändert hat (die Hinweise meldet der Kern selbst).
    */
   private markShownTabSeen(): boolean {
     const id = this.state.activeTabId;
-    const runtime = id ? this.runtimes.get(id) : undefined;
-    if (!id || !runtime?.finished || !this.isVisible(id)) return false;
+    if (!id || !this.isVisible(id)) return false;
+    this.toasts.dismissTab(id);
+    const runtime = this.runtimes.get(id);
+    if (!runtime?.finished) return false;
     runtime.finished = false;
     return true;
   }
@@ -1241,11 +1292,15 @@ class WorkspaceCore implements Workspace {
     });
   }
 
-  /** Führt `change` aus und meldet die Tabs, wenn sich dabei Art oder angezeigter Status des Tabs geändert haben. */
+  /**
+   * Führt `change` aus und meldet die Tabs, wenn sich dabei Art oder angezeigter Status des Tabs geändert haben. Wartet
+   * Claude danach nicht mehr, verschwindet ein „wartet“-Hinweis des Tabs.
+   */
   private updateTab(tab: PersistedTab, change: () => void): void {
     const badge = () => `${tab.claude ? 'claude' : 'terminal'}:${this.tabStatus(tab)}`;
     const before = badge();
     change();
+    this.dropStaleWaitingToast(tab);
     if (badge() !== before) this.emitTabs();
   }
 
@@ -1362,6 +1417,7 @@ class WorkspaceCore implements Workspace {
       this.cancelProbeTimer?.();
       this.cancelProbeTimer = null;
       for (const runtime of this.runtimes.values()) this.cancelClaudeTimers(runtime);
+      this.toasts.clear();
       // Sofort einfrieren: Ab jetzt ändern Meldungen von Starter und Claude die Zuordnungen nicht mehr.
       this.frozen = true;
       // Erst den Verlauf, solange die Shells noch laufen und der Renderer ihn zeigt; dann sichern und beenden.

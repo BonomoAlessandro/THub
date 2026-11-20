@@ -7,14 +7,15 @@ import { resolveShortcut, type ShortcutAction } from './shortcuts';
 import { CloseDialog } from './tabs/CloseDialog';
 import { TabBar } from './tabs/TabBar';
 import { TerminalArea } from './terminal/TerminalArea';
+import { Toasts } from './toasts/Toasts';
 import { focusTerminal, terminalViews } from './terminal/terminalViews';
 import { useWorkspace, type WorkspaceView } from './useWorkspace';
 
 const api = window.thub;
 
 /**
- * Das Fenster: Tab-Leiste oben, darunter die Terminal-Fläche; darüber bei Bedarf die Einstellungen oder die Rückfrage
- * vor dem Schliessen.
+ * Das Fenster: Tab-Leiste oben, darunter die Terminal-Fläche, unten rechts die Hinweise; darüber bei Bedarf die
+ * Einstellungen oder die Rückfrage vor dem Schliessen.
  */
 export function App() {
   const { view, renameTab, closeQuestion, answerCloseQuestion } = useWorkspace();
@@ -101,6 +102,7 @@ export function App() {
         onOpenSettings={() => setSettingsOpen(true)}
       />
       <TerminalArea tabs={view.tabs} activeTabId={view.activeTabId} fontSize={view.settings.fontSize} />
+      <Toasts toasts={view.toasts} tabs={view.tabs} activeTabId={view.activeTabId} />
       {settingsOpen && (
         <SettingsDialog
           settings={view.settings}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { BusyTab, Settings, ShellOption, TabSnapshot } from '../shared/types';
+import type { BusyTab, Settings, ShellOption, TabSnapshot, ToastSnapshot } from '../shared/types';
 import { terminalViews } from './terminal/terminalViews';
 
 const api = window.thub;
@@ -15,6 +15,8 @@ export interface WorkspaceView {
   defaultShellId: string;
   /** Benutzerordner, zur Anzeige eines leeren Standardordners. */
   homeDir: string;
+  /** Die Hinweise unten rechts, ältester zuerst. */
+  toasts: ToastSnapshot[];
 }
 
 /** Eine offene Rückfrage des Kerns vor dem Schliessen: diese Tabs schliessen, in `busy` läuft noch etwas. */
@@ -52,6 +54,9 @@ export function useWorkspace(): {
       switch (event.type) {
         case 'tabs':
           setView((current) => current && { ...current, tabs: event.tabs, activeTabId: event.activeTabId });
+          return;
+        case 'toasts':
+          setView((current) => current && { ...current, toasts: event.toasts });
           return;
         case 'settings':
           setView(
@@ -96,6 +101,7 @@ export function useWorkspace(): {
         shells: snapshot.shells,
         defaultShellId: snapshot.defaultShellId,
         homeDir: snapshot.homeDir,
+        toasts: snapshot.toasts,
       });
     });
 

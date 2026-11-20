@@ -60,6 +60,16 @@ export function CloseIcon() {
   );
 }
 
+/** Pfeil nach rechts, etwa in „Zum Tab wechseln →“ auf den Hinweisen. */
+export function ArrowRightIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 12h14" />
+      <path d="m13 6 6 6-6 6" />
+    </svg>
+  );
+}
+
 /** Typ-Symbol eines normalen Terminals: `>_`. */
 export function TerminalTypeIcon() {
   return (

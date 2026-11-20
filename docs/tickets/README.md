@@ -10,7 +10,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
   - Agenten installieren den Installer nicht über eine bestehende THub-Installation. Zum Prüfen dient das ungepackte Paket (`release/win-unpacked`) bzw. `npm start` mit eigenem Entwicklungs-Datenordner.
 - **Der Desktop des Nutzers ist tabu:** Agenten senden keine echten Maus- oder Tastatureingaben, holen keine Fenster in den Vordergrund und ändern keine Systemeinstellungen (auch nicht vorübergehend, etwa das Windows-Design). Geprüft wird über Tests, die Entwicklerwerkzeuge der App (Chrome DevTools Protocol), Fenster-Nachrichten ohne Fokuswechsel (z.B. `WM_NCHITTEST`) und Screenshots per `PrintWindow`. Was sich nur mit echter Bedienung prüfen lässt, kommt in die Prüfliste „Abnahme von Hand“.
 - **Shell-Verlauf des Nutzers:** In der echten App nie Befehle in eine PowerShell mit dem echten Profil tippen; sonst landen sie im PSReadLine-Verlauf des Nutzers (`%APPDATA%\Microsoft\Windows\PowerShell\PSReadLine`). Für eigene Starts `APPDATA` und `USERPROFILE` auf einen Temp-Ordner umleiten oder einen cmd-Tab verwenden.
-- **Testmodus der App:** Für jede Prüfung der echten App (`npm start`, `electron .` oder die gebaute `THub.exe`) die Umgebungsvariable `THUB_TEST_HIDDEN=1` setzen: Das Fenster öffnet ausserhalb des Bildschirms, ohne Aktivierung und ohne Taskleisten-Eintrag, speichert seine Lage nicht und kommt bei einem zweiten Start nicht nach vorne. Zusätzlich einen eigenen Datenordner verwenden (`APPDATA` auf einen Temp-Ordner) und die Prüfung nur über CDP auf der eigenen Seite fahren. Ohne `THUB_TEST_HIDDEN=1` die App nie starten.
+- **Testmodus der App:** Für jede Prüfung der echten App (`npm start`, `electron .` oder die gebaute `THub.exe`) die Umgebungsvariable `THUB_TEST_HIDDEN=1` setzen: Das Fenster öffnet ausserhalb des Bildschirms, ohne Aktivierung und ohne Taskleisten-Eintrag, speichert seine Lage nicht und kommt bei einem zweiten Start nicht nach vorne. Zusätzlich `THUB_TEST_DATA_DIR=<Temp-Ordner>` setzen: Er ersetzt `%APPDATA%` als Wurzel der Datenordner (eigene Daten, eigene Einzelinstanz-Sperre). Ein umgeleitetes `APPDATA` allein genügt nicht, Electron ignoriert es. Die Prüfung nur über CDP auf der eigenen Seite fahren. Ohne `THUB_TEST_HIDDEN=1` und `THUB_TEST_DATA_DIR` die App nie starten.
 - **Gebaute App:** Das gepackte `release\win-unpacked\THub.exe` ignoriert `NODE_OPTIONS`; ein Start damit öffnet ein echtes, sichtbares Fenster mit Fokus und legt `%APPDATA%\THub` an. Gepackte Prüfungen nur ohne Fenster (`ELECTRON_RUN_AS_NODE`) oder über einen eigenen Electron-Wrapper, der das Fenster ausserhalb des Bildschirms ohne Aktivierung öffnet.
 - **Debug-Ports:** Für die Entwicklerwerkzeuge der App (`--remote-debugging-port`) immer einen zufälligen hohen Port verwenden, nie 9222 oder 9333; auf dem Rechner laufen andere Werkzeuge, die diese Ports nutzen. Nur mit Seiten der eigenen App verbinden.
 - **HITL** (Status `ready-for-human`): Das Ticket braucht dich laufend, zum Beispiel für Rückmeldungen.
@@ -33,7 +33,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 11 | [Starter und `claude`-Ersatz](11-starter-und-ersatz.md) | AFK | 07, 10 | erledigt |
 | 12 | [Claude-Sessions nach einem Neustart fortsetzen](12-claude-fortsetzen.md) | AFK | 08, 11 | erledigt |
 | 13 | [Claude-Status und Prozess-Status am Tab](13-status-am-tab.md) | AFK | 11 | erledigt |
-| 14 | [Hinweise im Fenster](14-hinweise.md) | AFK | 13 | in Arbeit |
+| 14 | [Hinweise im Fenster](14-hinweise.md) | AFK | 13 | erledigt |
 | 15 | [Tabs schliessen mit Rückfrage und wieder öffnen](15-schliessen-und-wiederoeffnen.md) | AFK | 12, 13 | in Arbeit |
 | 16 | [Rechtsklick-Menü und Umsortieren per Ziehen](16-rechtsklick-und-ziehen.md) | AFK | 15 | offen |
 | 17 | [Befehlspalette](17-befehlspalette.md) | AFK | 15 | offen |
@@ -41,7 +41,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 19 | [README und Abschluss-Prüfung auf einem frischen Rechner](19-readme-und-abschluss.md) | HITL | alle | offen |
 | 20 | [Umbenennen in THub](20-umbenennen-thub.md) | AFK | 04, 08 | erledigt |
 | 21 | [Verlauf nach dem Neustart direkt sichtbar](21-verlauf-direkt-sichtbar.md) | AFK | 08 | erledigt (verworfen) |
-| 22 | [Offene Punkte aus Claudes Antworten als Hinweis](22-offene-punkte.md) | AFK | 14 | offen |
+| 22 | [Offene Punkte aus Claudes Antworten als Hinweis](22-offene-punkte.md) | AFK | 14 | in Arbeit |
 
 ```mermaid
 flowchart LR

@@ -44,6 +44,7 @@ src/
     windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
     claude.ts               Claude-Zuordnung pro Tab: Vertrag von Starter und Hooks, Regeln
     tabStatus.ts            Status am Tab: Status-Zeilen des Zustandsautomaten, Eingaben (Esc), Vorrang der Anzeige
+    toasts.ts               Hinweise im Fenster: höchstens einer pro Tab, Countdown nur im Vordergrund
     processRules.ts         Prozess-Regeln: ob in einem Tab Prozesse laufen (innerste Shell, Waisen, Claude-Tabs)
     resume.ts               Claude-Sessions nach einem Neustart fortsetzen: welche, und der Startbefehl pro Shell
     cwdReport.ts            Ordner-Meldungen der Shell (OSC 7, OSC 9;9) im rohen Ausgabestrom erkennen
@@ -76,6 +77,7 @@ src/
                             Pfeil-Menü mit den Shells und „Neues Terminal in …“
     popup/                  Menü und Dialog wie im Prototyp, Bedienung mit der Tastatur (menuKeys.ts)
     settings/               Einstellungsdialog
+    toasts/                 Hinweise unten rechts: Karten, Herein- und Hinausgleiten, Countdown-Linie
     terminal/               Ein xterm.js pro Tab, inaktive ausgeblendet; meldet „Ansicht bereit“;
                             Verlauf serialisieren und ausgegraut wiederherstellen (history.ts)
     styles/tokens.css       Design-Variablen und Terminal-Farbschemata aus dem Prototyp
@@ -120,11 +122,12 @@ Der Inhalt jedes normalen Terminals liegt daneben in `%APPDATA%\THub\history\<Ta
 - THub erkennt die Shells selbst: PowerShell 7 (auch die Store-Version), Windows PowerShell, cmd („Eingabeaufforderung“), Git Bash (Standardort oder laut Registry) und jede WSL-Distribution einzeln, ohne die internen von Docker Desktop. Standard-Shell ist PowerShell 7, sonst Windows PowerShell; in den Einstellungen wählbar. Jeder Tab behält seine Shell, auch über einen Neustart. Fehlt sie beim Wiederherstellen (etwa nach einer Deinstallation), startet der Tab mit der Standard-Shell und zeigt einen Hinweis über der ersten Zeile; seine Shell behält er, sobald es sie wieder gibt, startet er wieder mit ihr. WSL-Tabs starten mit `wsl.exe -d <Distribution> --cd <Ordner>`.
 - Neue Tabs heissen wie ihr Ordner, im Benutzerordner wie der Benutzer, auf einem Laufwerk wie das Laufwerk (`D:`); bei Gleichstand mit „ 2“, „ 3“ usw. Der Name wird beim Anlegen festgelegt und ändert sich danach nicht von selbst; ein von Hand vergebener Name wird nie überschrieben. Aus Version 1 übernommene Tabs behalten ihre Namen.
 - Pfeil neben `+` („Shell oder Ordner wählen“): zuerst die erkannten Shells, die Standard-Shell mit dem Etikett „Standard“; ein Klick öffnet einen Tab mit dieser Shell im Standardordner. Darunter „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter der Pfad) und „Ordner wählen …“ (Ordner-Dialog von Windows). Zuletzt benutzt sind die Startordner neuer Tabs und der letzte Ordner eines Tabs beim Schliessen: höchstens acht, neueste zuerst, ohne Doppelte; angeboten werden nur Ordner, die es noch gibt. Bedienung auch mit Pfeiltasten, Enter und Escape.
-- Zahnrad: Einstellungen mit Standardordner, Standard-Shell, Design und Schriftgrösse; jede Änderung wirkt sofort. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
+- Zahnrad: Einstellungen mit Standardordner, Standard-Shell, Design, Schriftgrösse und Hinweisen im Fenster; jede Änderung wirkt sofort. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
   - Standardordner: „Ändern …“ öffnet den Ordner-Dialog, „Zurücksetzen“ stellt auf den Benutzerordner zurück. `+` und `Ctrl+Shift+T` öffnen neue Terminals dort; offene Tabs bleiben, wo sie sind.
   - Standard-Shell: die Shell für `+` und `Ctrl+Shift+T`, wählbar unter den erkannten; offene Tabs behalten ihre Shell.
   - Design: System (Standard), Hell oder Dunkel. Die Wahl gilt für Oberfläche, Terminalfläche, Fensterknöpfe und die Dialoge von Windows; bei „System“ zieht ein Wechsel in Windows sofort mit.
   - Schriftgrösse im Terminal: 8 bis 32, Standard 14.
+  - Hinweise im Fenster: an (Standard) oder aus, siehe „Hinweise im Fenster“.
 - Schriftgrösse für alle Tabs zugleich auch mit `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-` und `Ctrl` `0` (zurück auf 14). `+` und `-` werden am erzeugten Zeichen erkannt, nicht an der Tastenposition: Die Schweizer Tastatur (`+` auf Shift+1) und der Ziffernblock funktionieren, `Ctrl` `=` zählt wie `Ctrl` `+`. Die Terminals passen danach Spalten und Zeilen an, die Shells erfahren die neue Grösse. Der Zoom der ganzen Oberfläche ist abgeschaltet, `Ctrl` + Mausrad scrollt das Terminal nicht.
 - Bei vielen Tabs werden die Tabs schmaler und die Leiste scrollbar (auch mit dem Mausrad)
 - Tooltip mit Name, Ordner, Shell und Status; Schliessen mit `×` oder der mittleren Maustaste
@@ -182,6 +185,17 @@ Links vom Tab-Namen zeigt ein Symbol, was im Tab los ist; der Tooltip nennt es a
 - WSL-Tabs zeigen nie „Prozesse laufen“.
 - Grenzen: Aus der Shell geöffnete GUI-Programme halten den Tab blau, solange sie offen sind; ein Prompt, der länger als 1,5 Sekunden rechnet, kann kurz blau aufblitzen.
 - koffi ist exakt auf 3.3.8 gepinnt. Die Binärdatei kommt als optionales Paket `@koromix/koffi-win32-x64`; nie mit `--omit=optional` installieren. Im Paket liegt sie ausserhalb des asar-Archivs (`asarUnpack`), esbuild lässt koffi als `external` stehen.
+
+### Hinweise im Fenster
+
+Wartet Claude in einem Tab, den du gerade nicht siehst, auf dich oder wird dort fertig, erscheint unten rechts im Fenster ein Hinweis mit Status-Symbol, Tab-Name und Text („Claude wartet auf deine Bestätigung.“ bzw. „Claude ist fertig.“). Nicht sichtbar heisst: nicht der aktive Tab, oder das Fenster ist nicht im Vordergrund.
+
+- Pro Tab höchstens ein Hinweis; ein neuer ersetzt den alten. Hinweise mehrerer Tabs stehen übereinander, der neueste oben. Reicht der Platz nicht, scrollt die Spalte; sie beginnt immer unter der Titelleiste.
+- Ein Klick auf die Karte zeigt den Tab an; das × (beim Überfahren) nimmt nur den Hinweis weg, das Status-Symbol am Tab bleibt. Die Karten nehmen dem Terminal nie den Fokus: Tippen geht weiter ins aktive Terminal, auch nach einem Klick auf das ×.
+- Wird ein Tab angezeigt, auf welchem Weg auch immer (Klick auf Hinweis oder Tab, Tastenkürzel, Schliessen des Nachbarn, Fenster kommt mit ihm nach vorne), verschwindet nur sein Hinweis.
+- „Fertig“ verschwindet nach 6 Sekunden Vordergrundzeit; die Linie am unteren Rand zeigt die übrige Zeit. Im Hintergrund und solange die Maus auf der Karte steht, hält der Countdown an.
+- „Wartet“ bleibt, bis der Tab angezeigt wird oder Claude dort nicht mehr wartet (arbeitet wieder, ist fertig, wurde beendet).
+- In den Einstellungen abschaltbar („Hinweise im Fenster“); dann gibt es keine, auch die stehenden verschwinden, die Status-Symbole bleiben. Keine Windows-Benachrichtigungen, kein Blinken in der Taskleiste.
 
 ### Shell-Integration
 
