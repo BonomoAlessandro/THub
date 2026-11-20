@@ -183,7 +183,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 
 ### Shell-Integration
 
-THub startet jede Windows-Shell mit einer mitgelieferten Integration. Sie lädt **zuerst das normale Profil des Nutzers** und richtet dann drei Dinge ein.
+THub startet jede Windows-Shell mit einer mitgelieferten Integration. Sie lädt **zuerst das normale Profil des Nutzers** und richtet dann drei Dinge ein; in PowerShell schaltet sie davor die Befehlsvorschau ab (Punkt 4).
 
 **Robust laden:**
 - PowerShell bekommt den Integrationscode per `-EncodedCommand`, nicht als Skriptdatei, damit eine restriktive Execution Policy ihn nicht blockiert. cmd lädt seine Integration per `/k`. Git Bash lädt über eine eigene Startdatei, was auch eine Login-Shell von Git Bash lädt (`/etc/profile`, dann `~/.bash_profile`, `~/.bash_login` oder `~/.profile`, sonst `~/.bashrc`), und danach die Integration.
@@ -224,6 +224,8 @@ Der Starter arbeitet in diesen Schritten:
 
 **3. Startbefehl einmalig ausführen:** Die Integration kann einen von THub mitgegebenen Befehl genau einmal ausführen, sobald die Shell bereit ist; es werden keine Tastendrücke simuliert. THub setzt damit Claude-Sessions fort. Der Startbefehl ruft den Starter direkt auf (mit `--resume <Kennung>`), nicht das Wort `claude`, weil doskey-Makros in cmd in Skripten nicht wirken. Übergabe: In PowerShell und Git Bash über die Umgebungsvariable `THUB_START_CMD`, die die Integration vor dem Ausführen entfernt (so läuft er genau einmal, auch nicht in verschachtelten Shells); in cmd in der `/k`-Zeile hinter der Integration, nicht in der Integrationsdatei, sonst fragt cmd nach `Ctrl+C` „Batchvorgang abbrechen?“.
 
+**4. Keine Befehlsvorschau (PowerShell, Ticket 24):** Direkt nach dem Profil setzt die Integration `Set-PSReadLineOption -PredictionSource None`, wenn PSReadLine geladen ist und die Option kennt. Damit fallen die graue Vorschau beim Tippen und die Listenansicht weg, auch wenn das Profil sie einschaltet. Windows PowerShell 5.1 bringt PSReadLine 2.0 ohne die Option mit; dort ändert sich nichts. Das Profil selbst bleibt unverändert, ausserhalb von THub gilt es wie bisher.
+
 **Umgebung jedes Terminals:**
 - `THUB_TAB_ID` (Tab-Kennung), `THUB_API` (Adresse der lokalen Schnittstelle), `THUB_TOKEN` (pro App-Start zufällig) und `THUB_STARTER` (Pfad zum Starter).
 - **Execution Policy:** THub prüft einmal beim Start die Richtlinien-Ebenen (`Get-ExecutionPolicy -Scope MachinePolicy` und `UserPolicy`). Steht dort `AllSigned` oder `Restricted`, lässt THub `THUB_STARTER` weg: `claude` läuft dann direkt, ohne Erfassung, aber ohne Fehler. Ein vorher erfasster Claude-Tab wird nach einem Neustart so ebenfalls ohne Erfassung fortgesetzt; ohne Start-Meldung fällt seine Zuordnung nach einer Frist weg (siehe „Wiederherstellen“).
@@ -246,6 +248,27 @@ Der Starter arbeitet in diesen Schritten:
 - In Git Bash wandelt MSYS auch Prompts um, die mit `/` beginnen (etwa `/review`), genau wie bei einem direkten Aufruf.
 - Läuft der Starter selbst im Constrained Language Mode (WDAC/AppLocker), scheitert er; ein Rückfall ist nicht vorgesehen.
 - Jeder Start über den Ersatz kostet rund 0,5 Sekunden.
+
+**Präzisierungen aus der Umsetzung (Ticket 24):**
+- **Ursache der trägen Pfeiltasten:** die ConPTY von Windows (`conhost.exe`). Sie schickt, was PSReadLine beim Blättern im Verlauf neu zeichnet, erst mit ihrem nächsten Bild, rund 16 ms nach der Taste; sofort kommt nur `ESC[?25l` (Cursor aus). Das Windows Terminal benutzt seine eigene ConPTY (`OpenConsole.exe`), dieselbe liefert node-pty 1.1.0 mit (`useConptyDll`, Version 1.23); sie reicht die Zeile nach 1 bis 5 ms weiter.
+- **Gemessen** von der Taste bis zur neu gezeichneten Zeile (PowerShell 7, Median aus 40 Tasten):
+
+  | Stelle | vorher | nachher |
+  |---|---|---|
+  | node-pty, eigenes pwsh ohne THub | 15,8 ms | 1,1–1,5 ms |
+  | Terminal-Backend mit Integration (`PtyManager`) | 15,7 ms | 1,5 ms |
+  | nach dem Workspace-Kern | 15,7 ms | 1,8 ms |
+  | Shell-Test mit Zeitgrenze (15 Tasten, Grenze 10 ms) | 15,2–15,4 ms | grün |
+  | in der App: Zeile im Renderer angekommen | 14,3 ms | 3,2 ms |
+  | in der App: im DOM gezeichnet (nach `term.write` und Rendern) | 17,2 ms | 11,5 ms |
+  | in der App: nächstes Bild danach | 23,0 ms | 17,2 ms |
+
+  Kern (Zähler, Erkennung der Ordner-Meldung pro Stück, keine Sammlung der Ausgabe), IPC und xterm.js kosten zusammen rund 4 ms plus das Warten auf das nächste Bild des Renderers; das bleibt. Weder das Tastenkürzel-Handling (0,5 ms bis zum eigenen Handler) noch eine Pufferung um Esc (nur in Claude-Tabs, ohne Verzögerung der Eingabe) noch die Integration (nichts läuft pro Taste) tragen bei. Die App-Messung lief im Testmodus mit synthetischen Tasten über CDP.
+- **Terminal-Backend:** startet jede Shell über die mitgelieferte ConPTY. Lässt sie sich nicht starten (etwa wenn `conpty.dll` oder `OpenConsole.exe` im Paket fehlt), startet es dieselbe Shell über die ConPTY von Windows und bleibt für den Rest der Sitzung dabei; scheitert auch das, gilt dieser Fehler.
+- **Abfrage der Terminal-Merkmale:** Die mitgelieferte ConPTY schickt beim Start `ESC[c` (DA1) und startet die Shell erst nach der Antwort, ohne Antwort nach gut 3 Sekunden. In der App antwortet xterm.js, in den Shell-Tests das Testgerüst genauso.
+- **Start im leeren Bereich:** Die mitgelieferte ConPTY leert den sichtbaren Bereich beim Start nicht, zeichnet aber ab seiner ersten Zeile und setzt den Cursor danach auch absolut. Darum setzt die Oberfläche vor jedem Start den Cursor oben links in einen leeren Bereich (`startArea` in `history.ts`): nach dem wiederhergestellten Verlauf, nach einem Hinweis vor dem Start und beim Neustart nach dem Ende der Shell. Beim Neustart rutscht das Bisherige samt der Zeile „Prozess beendet“ in den Scrollback; vorher löschte das `ESC[2J` der ConPTY von Windows den sichtbaren Teil.
+- **Konsolen-Host:** `OpenConsole.exe` statt `conhost.exe`, wie schon von Prozess-Sonde und Regeln vorgesehen; nach einem `exit` endet er von selbst. Das Aufräumen nach Ticket 15 bleibt für den Rückfall und für den Worker von node-pty.
+- **Befehlsvorschau:** geprüft wird mit `Get-Command Set-PSReadLineOption -ParameterName PredictionSource`, das auch im Constrained Language Mode geht. Ein Nutzer kann sie in einem THub-Tab von Hand wieder einschalten; die Integration setzt sie nur beim Start.
 
 ### Hook-Empfänger und lokale Schnittstelle
 
@@ -390,7 +413,7 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 
 - **Beim Start**, pro Tab in gespeicherter Reihenfolge:
   - **Normaler Tab:** Shell im zuletzt aktiven Ordner starten, mit Rückfall auf Startordner, Standardordner und Benutzerordner.
-    - Vor dem Start der Shell schreibt der Renderer den gespeicherten Verlauf ausgegraut ins Terminal, dazu eine Trennlinie „Wiederhergestellt · <Datum, Uhrzeit>“ und so viele Leerzeilen, dass alles im Scrollback liegt. ConPTY leert beim Start den sichtbaren Bereich.
+    - Vor dem Start der Shell schreibt der Renderer den gespeicherten Verlauf ausgegraut ins Terminal, dazu eine Trennlinie „Wiederhergestellt · <Datum, Uhrzeit>“ und so viele Leerzeilen, dass alles im Scrollback liegt; danach steht der Cursor oben links im leeren sichtbaren Bereich, wo ConPTY die Shell zeichnet (Ticket 24, siehe „Shell-Integration“).
     - Den Verlauf mit `conptyInheritCursor` direkt über dem neuen Prompt stehen zu lassen, wurde versucht und verworfen (Ticket 21): ConPTY zeichnet beim Ändern der Fenstergrösse seinen Bereich an festen Zeilen neu und überschreibt dabei Trennlinie, Verlauf oder Zeilen der Shell, und ohne Antwort auf die Cursor-Abfrage startet die Shell gar nicht. Befunde: `docs/spikes/verlauf-sichtbar.md`.
     - Das Ausgrauen muss auch über Farb-Resets im gespeicherten Inhalt hinweg wirken.
   - **Claude-Tab, der fortgesetzt werden soll:** Er hat eine Session-Kennung und entweder einen Prompt erlebt oder ist unbestätigt (Sicherheitsnetz ohne Hooks).
@@ -601,6 +624,8 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Ohne THub:** Ohne erreichbare Schnittstelle startet `claude` unverändert. Ohne `claude` im PATH kommt eine verständliche Meldung mit Exit-Code 1.
   - **Ordner:** `cd` in einen Testordner (auch mit Leerzeichen und Umlauten) führt zur Meldung dieses Ordners.
   - **Profil:** Ein Testprofil wird weiterhin geladen.
+  - **Befehlsvorschau (PowerShell):** Mit einem Profil, das die Vorhersage einschaltet, ist `PredictionSource` danach `None`; mit PSReadLine 2.0 bleibt die Integration still.
+  - **Pfeiltasten (PowerShell):** Die Zeile aus dem Verlauf kommt im Median nach weniger als 10 ms beim Terminal-Backend an (mit der ConPTY von Windows rund 15 ms). Der Konsolen-Host jeder Shell ist `OpenConsole.exe`.
   - **Startbefehl:** Ein Startbefehl „Starter mit `--resume x`“ erreicht das nachgemachte `claude` mit `--settings`, in allen vier Shells, genau einmal.
   - **Ende zu Ende:** mit dem echten Kern und der echten lokalen Schnittstelle statt der Testattrappe. `claude` im Tab macht ihn zum unbestätigten Claude-Tab mit der Kennung, die der Kern vergeben hat; das Ende macht ihn wieder normal. Tab-Name und Ordner mit Umlauten kommen richtig an. Mit nachgemachter Gruppenrichtlinie `AllSigned` fehlt der Ersatz, und `claude` läuft direkt. Ein Fortsetzen ohne `THUB_STARTER` lässt die Zuordnung nach der (verkürzten) Frist fallen, während `claude` weiterläuft; ein weiterer Neustart setzt nichts fort.
 - Diese Tests sind langsamer und laufen in einem eigenen Testlauf, getrennt von Teststelle 1.

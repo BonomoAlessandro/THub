@@ -526,6 +526,19 @@ export function buildStart(def: ShellDef, ws: Workspace, opts: LaunchOptions): T
 
 const SESSION_TAB = 'tab';
 
+/** Abfrage der Terminal-Merkmale (DA1). */
+const DA1_QUERY = '\x1b[c';
+/** So antwortet xterm.js auf DA1 (VT100 mit erweiterten Funktionen). */
+const DA1_REPLY = '\x1b[?1;2c';
+
+/**
+ * Antwortet wie das Terminal in der Oberfläche (xterm.js) auf die Abfrage der Terminal-Merkmale. Die mitgelieferte
+ * ConPTY (Ticket 24) fragt beim Start danach und startet die Shell erst nach der Antwort, ohne sie nach gut 3 s.
+ */
+function answerTerminal(chunk: string, write: (data: string) => void): void {
+  if (chunk.includes(DA1_QUERY)) write(DA1_REPLY);
+}
+
 /**
  * Wartet, bis die Markierungszeile mit `nonce` ihren Exit-Code in `ws.mark` geschrieben hat.
  * @param what wofuer gewartet wird, fuer die Fehlermeldung
@@ -562,6 +575,8 @@ export class ShellSession {
   exited = false;
   private counter = 0;
   private procPid = 0;
+  /** Werden bei jedem Ausgabestück aufgerufen, gleich nachdem es an `output` angehängt ist. */
+  private readonly outputListeners = new Set<() => void>();
 
   private constructor(
     readonly def: ShellDef,
@@ -577,6 +592,8 @@ export class ShellSession {
     s.procPid = backend.start(SESSION_TAB, order, {
       data: (d) => {
         s.output += d;
+        answerTerminal(d, (reply) => backend.write(SESSION_TAB, reply));
+        for (const listener of [...s.outputListeners]) listener();
       },
       exit: () => {
         s.exited = true;
@@ -635,6 +652,33 @@ export class ShellSession {
       await sleep(50);
     }
     throw new Error(`Ausgabe ${re} kam nicht in ${this.def.id}. Ausgabe:\n${this.plainOutput().slice(-3000)}`);
+  }
+
+  /**
+   * Tippt `data` und misst die Zeit in Millisekunden, bis die Ausgabe danach (ohne Escape-Sequenzen) `re` enthält.
+   * Geprüft wird bei jedem Ausgabestück, nicht in Abständen; die Zeit ist also die Ankunft des Stücks, das die Ausgabe
+   * vollständig macht, wie sie das Terminal-Backend im Hauptprozess von THub erhält.
+   */
+  writeAndTime(data: string, re: RegExp, timeoutMs = 5000): Promise<number> {
+    const offset = this.output.length;
+    return new Promise((resolve, reject) => {
+      const done = (): void => {
+        clearTimeout(timer);
+        this.outputListeners.delete(check);
+      };
+      const check = (): void => {
+        if (!re.test(stripEscapes(this.output.slice(offset)))) return;
+        done();
+        resolve(performance.now() - sent);
+      };
+      const timer = setTimeout(() => {
+        done();
+        reject(new Error(`Ausgabe ${re} kam nicht in ${this.def.id}. Ausgabe:\n${this.plainOutput().slice(-3000)}`));
+      }, timeoutMs);
+      this.outputListeners.add(check);
+      const sent = performance.now();
+      this.write(data);
+    });
   }
 
   /** Ausgabe ohne Escape-Sequenzen */
@@ -841,7 +885,11 @@ export class CoreShell {
     // Wie main.ts: Erst wenn der Kern laeuft, gehen die Anfragen an ihn.
     api?.server.connect(core);
     core.subscribe((event) => {
-      if (event.type === 'output') s.output += event.data;
+      if (event.type === 'output') {
+        s.output += event.data;
+        // Wie die Oberfläche: Antworten des Terminals gehen über den Kern an die Shell.
+        answerTerminal(event.data, (reply) => core.writeToTab(event.tabId, reply));
+      }
       if (event.type === 'exit') s.exited = true;
       if (event.type === 'requestHistory') for (const id of event.tabIds) core.saveHistory(id, '');
       if (event.type === 'tabs' && event.tabs[0] && event.tabs[0].cwd !== s.shownCwds.at(-1)) {

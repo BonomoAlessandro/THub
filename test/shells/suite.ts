@@ -88,6 +88,8 @@ export function shellSuite(id: ShellId): void {
       inherited?: Record<string, string>;
       /** Ob das Terminal-Backend THUB_STARTER setzt; Standard ja. */
       claudeStarter?: () => boolean;
+      /** Zusätzliche Zeilen am Ende des Testprofils (PowerShell, Git Bash). */
+      profileExtra?: string[];
     }): Promise<ShellSession> => {
       const variant = opts.variant === undefined ? 'exe' : opts.variant;
       const claudeDir = variant === 'exe' ? ws.stubExeDir : variant === 'cmd' ? ws.stubCmdDir : null;
@@ -99,6 +101,7 @@ export function shellSuite(id: ShellId): void {
         startCommand: opts.startCommand,
         inherited: opts.inherited,
         claudeStarter: opts.claudeStarter,
+        profileExtra: opts.profileExtra,
       });
       sessions.push(s);
       return s;
@@ -153,6 +156,58 @@ export function shellSuite(id: ShellId): void {
         const r = await call(s, 'claude');
         expect(r.records).toHaveLength(1);
         expect(r.requests.map((x) => x.path)).toEqual(['/claude/launch', '/claude/started', '/claude/exit']);
+      });
+
+      it.runIf(flavor === 'ps')('schaltet die Befehlsvorschau von PSReadLine aus, auch wenn das Profil sie einschaltet', async () => {
+        // Wie ein Profil, das die Vorhersage samt Listenansicht einschaltet. PredictionSource gibt es ab PSReadLine 2.1,
+        // PredictionViewStyle ab 2.2; Windows PowerShell bringt 2.0 mit, ohne beides.
+        const hasOption = (name: string) => `(Get-Command Set-PSReadLineOption -ParameterName ${name} -ErrorAction SilentlyContinue)`;
+        const s = await start({
+          profileExtra: [
+            `if (${hasOption('PredictionSource')}) { Set-PSReadLineOption -PredictionSource History }`,
+            `if (${hasOption('PredictionViewStyle')}) { Set-PSReadLineOption -PredictionViewStyle ListView }`,
+          ],
+        });
+        const startOutput = s.plainOutput();
+        const file = path.join(ws.root, `prediction-${id}.txt`);
+        await s.run(
+          `Set-Content -LiteralPath '${file}' -Value ('{0}|{1}' -f [bool]${hasOption('PredictionSource')}, (Get-PSReadLineOption).PredictionSource)`,
+        );
+        const [supported, source] = readFileSync(file, 'utf8').replace(/^﻿/, '').trim().split('|');
+        if (supported === 'True') expect(source).toBe('None');
+        else expect(source).toBe('');
+        // Ohne die Option (PSReadLine 2.0) bleibt die Integration still.
+        expect(startOutput).not.toMatch(/PredictionSource|Set-PSReadLineOption/);
+      });
+    });
+
+    describe.runIf(flavor === 'ps')('Pfeiltasten im Befehlsverlauf (Ticket 24)', () => {
+      /** Pfeil nach oben und unten, wie xterm.js sie schickt. */
+      const UP = '\x1b[A';
+      const DOWN = '\x1b[B';
+      const PRESSES = 15;
+
+      it('zeichnet die Zeile aus dem Verlauf in wenigen Millisekunden, nicht erst im nächsten Bild von ConPTY', async () => {
+        const s = await start({});
+        // Ohne Markierung, damit die Zeile im Verlauf kurz bleibt; die Markierung danach zeigt, dass sie gelaufen ist.
+        s.write('echo verlauf-abcdefghijklmnopqrstuvwxyz\r');
+        await s.mark();
+        const times: number[] = [];
+        for (let n = 0; n < PRESSES; n++) {
+          // Zweimal hoch, an der Markierung vorbei. Gemessen wird der zweite Schritt: Dann schickt jede ConPTY die
+          // ganze Zeile, weil sie sich ab dem Anfang ändert, nicht nur einzelne geänderte Zeichen.
+          await s.writeAndTime(UP, /TH_MARK/);
+          // `\s*`: Die ConPTY von Windows überspringt ein unverändertes Leerzeichen per Cursorbewegung.
+          times.push(await s.writeAndTime(UP, /echo\s*verlauf-abcdefghijklmnopqrstuvwxyz/));
+          // Zurück auf die leere Zeile; danach soll nichts mehr unterwegs sein.
+          s.write(DOWN + DOWN);
+          await sleep(150);
+        }
+        times.sort((a, b) => a - b);
+        const median = times[Math.floor(times.length / 2)];
+        // Die ConPTY von Windows schickt die Zeile erst mit ihrem nächsten Bild, rund 16 ms nach der Taste; die
+        // mitgelieferte (wie im Windows Terminal) nach 1 bis 5 ms.
+        expect(median, `Zeiten in ms: ${times.map((t) => t.toFixed(1)).join(', ')}`).toBeLessThan(10);
       });
     });
 
@@ -930,6 +985,18 @@ export function shellSuite(id: ShellId): void {
         core.core.closeTab(core.tabId);
 
         await waitUntil(() => !alive(pid), 'ping.exe lief nach dem Schliessen weiter');
+      });
+
+      it('läuft über die mitgelieferte ConPTY: Konsolen-Host ist OpenConsole.exe wie im Windows Terminal (Ticket 24)', async () => {
+        const before = new Set(await ownHosts());
+        const core = CoreShell.start(def, ws, undefined, { realProcesses: true });
+        cores.push(core);
+        await core.mark();
+        const hosts = (await probe.snapshot()).filter(
+          (p) => p.ppid === process.pid && !before.has(p.pid) && /^(conhost|openconsole)\.exe$/i.test(p.name),
+        );
+        expect(hosts.map((p) => p.name)).toEqual(['OpenConsole.exe']);
+        core.write('exit\r');
       });
 
       it('endet die Shell mit exit, endet auch ihr Konsolen-Host (node-pty 1.1.0 liesse ihn stehen)', async () => {

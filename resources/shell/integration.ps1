@@ -3,9 +3,10 @@
 # THub startet die Shell mit
 #   pwsh.exe|powershell.exe -NoLogo -NoProfile -NoExit -EncodedCommand <dieser Text, UTF-16LE, Base64>
 # -EncodedCommand ist keine Skriptdatei, darum blockiert eine Execution Policy diesen Code nicht.
-# Der Code laeuft im globalen Bereich: zuerst die Profile des Nutzers wie ohne -NoProfile, dann die
-# Ordner-Meldung im Prompt, der claude-Ersatz, zuletzt einmal der Startbefehl. Schlaegt etwas fehl
-# (Execution Policy, Constrained Language Mode), bleibt die Shell normal benutzbar.
+# Der Code laeuft im globalen Bereich: zuerst die Profile des Nutzers wie ohne -NoProfile, dann das
+# Abschalten der Befehlsvorschau, die Ordner-Meldung im Prompt, der claude-Ersatz, zuletzt einmal der
+# Startbefehl. Schlaegt etwas fehl (Execution Policy, Constrained Language Mode), bleibt die Shell normal
+# benutzbar.
 #
 # Umgebung: THUB_STARTER (voller Pfad zu starter.ps1), optional THUB_START_CMD (Startbefehl,
 # PowerShell-Code, wird vor dem Ausfuehren entfernt). Nur fuer Tests: THUB_TEST_PROFILE ersetzt
@@ -30,7 +31,18 @@ foreach ($__THubProfile in $__THubProfiles) {
 }
 Remove-Variable -Name __THubProfiles, __THubProfile -ErrorAction SilentlyContinue
 
-# 2. Ordner melden: Der Prompt des Nutzers (auch oh-my-posh usw.) bleibt, wie er ist, und laeuft
+# 2. Keine Befehlsvorschau: Die Vorhersage von PSReadLine (graue Vorschau beim Tippen und Listenansicht) ist in
+# THub-Tabs aus, auch wenn das Profil sie einschaltet; darum erst nach dem Profil. Nur wenn PSReadLine geladen ist
+# und die Option kennt: Windows PowerShell 5.1 bringt PSReadLine 2.0 ohne PredictionSource mit. Das Profil selbst
+# bleibt unveraendert, ausserhalb von THub aendert sich nichts.
+try {
+    if ((Get-Module PSReadLine) -and (Get-Command Set-PSReadLineOption -ParameterName PredictionSource -ErrorAction SilentlyContinue)) {
+        Set-PSReadLineOption -PredictionSource None
+    }
+} catch {
+}
+
+# 3. Ordner melden: Der Prompt des Nutzers (auch oh-my-posh usw.) bleibt, wie er ist, und laeuft
 # zuerst, damit er $? und $LASTEXITCODE unveraendert sieht. Danach meldet die Shell den aktuellen
 # Ordner per OSC 9;9 (Ende BEL), nur fuer Orte im Dateisystem, nicht etwa fuer HKLM:\.
 try {
@@ -53,7 +65,7 @@ try {
 } catch {
 }
 
-# 3. claude-Ersatz: ruft den Starter mit genau den Argumenten auf, die ein direkt aufgerufenes
+# 4. claude-Ersatz: ruft den Starter mit genau den Argumenten auf, die ein direkt aufgerufenes
 # claude.exe bekaeme. PowerShell baut die Befehlszeile fuer powershell.exe nach denselben Regeln
 # wie fuer claude.exe (beides .exe), der Starter liest sie roh.
 try {
@@ -65,7 +77,7 @@ try {
 } catch {
 }
 
-# 4. Startbefehl genau einmal
+# 5. Startbefehl genau einmal
 if ($env:THUB_START_CMD) {
     $__THubStart = $env:THUB_START_CMD
     Remove-Item -LiteralPath Env:THUB_START_CMD -ErrorAction SilentlyContinue

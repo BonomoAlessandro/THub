@@ -37,23 +37,34 @@ export function serializeHistory(term: Terminal, serializer: SerializeAddon): st
 }
 
 /**
+ * Bereitet den sichtbaren Bereich auf den Start einer Shell vor: Was darin steht, rutscht in den Scrollback,
+ * der Bereich ist leer, und der Cursor steht oben links. Dort beginnt ConPTY: Es zeichnet die Zeilen der Shell
+ * ab der ersten Zeile des sichtbaren Bereichs und setzt den Cursor danach auch absolut. Die mitgelieferte
+ * ConPTY (Ticket 24) leert den Bereich beim Start nicht selbst; die des Systems tat es (`ESC[2J ESC[H`) und
+ * löschte dabei, was noch sichtbar war.
+ */
+export function startArea(rows: number): string {
+  return `${'\r\n'.repeat(rows)}\x1b[H`;
+}
+
+/**
  * Was die Ansicht vor dem Start der Shell ins Terminal schreibt: den Verlauf ausgegraut, darunter die
- * Trennlinie und so viele Leerzeilen, dass beides im Scrollback liegt. ConPTY leert beim Start den
- * sichtbaren Bereich; die erste Eingabezeile steht danach direkt unter der Trennlinie.
+ * Trennlinie, beides im Scrollback (`startArea`); die erste Eingabezeile steht danach direkt unter der
+ * Trennlinie.
  * Warum der Verlauf nicht mit `conptyInheritCursor` sichtbar stehen bleibt: docs/spikes/verlauf-sichtbar.md.
  */
 export function restoredHistory(content: string, savedAt: number, cols: number, rows: number): string {
-  return `${dimmed(content)}\r\n${separator(savedAt, cols)}${'\r\n'.repeat(rows)}`;
+  return `${dimmed(content)}\r\n${separator(savedAt, cols)}${startArea(rows)}`;
 }
 
 /**
  * Ein Hinweis direkt vor dem ersten Start der Shell, etwa dass die gespeicherte Shell fehlt. Wie der
- * Verlauf kommt er in den Scrollback, weil ConPTY beim Start den sichtbaren Bereich leert: direkt unter
- * die Trennlinie (bzw. ganz oben) und über die erste Zeile der Shell. Setzt voraus, dass der sichtbare
- * Bereich noch leer ist: eine frische Ansicht, höchstens mit `restoredHistory` davor.
+ * Verlauf kommt er in den Scrollback (`startArea`): direkt unter die Trennlinie (bzw. ganz oben) und über
+ * die erste Zeile der Shell. Setzt voraus, dass der sichtbare Bereich noch leer ist: eine frische Ansicht,
+ * höchstens mit `restoredHistory` davor.
  */
 export function noticeBeforeStart(line: string, rows: number): string {
-  return `\x1b[H${line}${'\r\n'.repeat(rows)}`;
+  return `\x1b[H${line}${startArea(rows)}`;
 }
 
 /**

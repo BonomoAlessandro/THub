@@ -1,6 +1,6 @@
 import * as pty from 'node-pty';
 import { shellEnv } from './shellEnv';
-import { shellLaunch } from './shellLaunch';
+import { shellLaunch, type ShellLaunch } from './shellLaunch';
 import type { ProcessInfo, ProcessProbe, StartOrder, TerminalBackend, TerminalListener } from './workspace/ports';
 import { ptyConsoleHost } from './workspace/processRules';
 
@@ -39,6 +39,14 @@ interface PtyInternals {
 /**
  * Terminal-Backend über node-pty/ConPTY: verwaltet die laufenden Shells, eine pro Tab, und startet jede
  * Windows-Shell mit ihrer Integration (`shellLaunch`).
+ *
+ * ConPTY ist die mit node-pty gelieferte (`conpty.dll` und `OpenConsole.exe`, dieselbe wie im Windows Terminal), nicht
+ * die von Windows (Ticket 24). Die von Windows schickt, was eine Shell neu zeichnet, erst mit ihrem nächsten Bild, rund
+ * 16 ms nach der Taste; beim Blättern im Befehlsverlauf fühlte sich das träge an. Die mitgelieferte reicht es nach 1 bis
+ * 5 ms weiter. Sie fragt beim Start nach den Merkmalen des Terminals (DA1, `ESC[c`) und startet die Shell erst nach der
+ * Antwort, die xterm.js in der Oberfläche gibt (ohne Antwort nach gut 3 s). Den sichtbaren Bereich leert sie beim Start
+ * nicht; das macht die Oberfläche (`startArea`). Lässt sie sich nicht starten, nimmt das Backend für den Rest der
+ * Sitzung die ConPTY von Windows.
  */
 export class PtyManager implements TerminalBackend {
   private readonly ptys = new Map<string, pty.IPty>();
@@ -46,6 +54,8 @@ export class PtyManager implements TerminalBackend {
   private readonly baseEnv: () => Record<string, string>;
   private readonly claudeStarter: () => boolean;
   private readonly processes: ProcessProbe | undefined;
+  /** Ob die Shells über die mitgelieferte ConPTY laufen; nach einem Fehlschlag die von Windows. */
+  private bundledConpty = true;
 
   constructor(options: PtyManagerOptions) {
     this.shellDir = options.shellDir;
@@ -57,7 +67,8 @@ export class PtyManager implements TerminalBackend {
   /**
    * Startet die Shell. Endet sie von selbst (etwa mit `exit`), räumt das Backend hinter node-pty 1.1.0 auf: Es schliesst
    * die Pseudokonsole nur in `kill`, und `kill` taugt nach dem Ende nicht mehr (siehe `skipConsoleListKill`). Ohne
-   * Aufräumen blieben pro beendeter Shell ihr `conhost.exe` und ein Worker-Thread bis zum Ende von THub bestehen.
+   * Aufräumen blieben pro beendeter Shell ein Worker-Thread und, mit der ConPTY von Windows, ihr `conhost.exe` bis zum
+   * Ende von THub bestehen; `OpenConsole.exe` der mitgelieferten endet von selbst.
    */
   start(tabId: string, order: StartOrder, listener: TerminalListener): number {
     if (this.ptys.has(tabId)) throw new Error(`Für diesen Tab läuft bereits eine Shell: ${tabId}`);
@@ -65,14 +76,7 @@ export class PtyManager implements TerminalBackend {
     const launch = shellLaunch(order, { ...this.baseEnv(), ...order.env }, this.shellDir, {
       claudeStarter: this.claudeStarter(),
     });
-    const proc = pty.spawn(launch.file, launch.args, {
-      name: 'xterm-256color',
-      cols: order.cols,
-      rows: order.rows,
-      cwd: order.cwd,
-      env: launch.env,
-      useConpty: true,
-    });
+    const proc = this.spawn(launch, order);
     skipConsoleListKill(proc);
     // Sofort, solange die Shell sicher läuft: Nach ihrem Ende lässt sich der Host nicht mehr zuordnen.
     const host = this.findConsoleHost(proc.pid);
@@ -139,6 +143,32 @@ export class PtyManager implements TerminalBackend {
   }
 
   /**
+   * Startet die Shell in einer Pseudokonsole, möglichst über die mitgelieferte ConPTY. Scheitert das, aber nicht mit der
+   * ConPTY von Windows (etwa wenn `conpty.dll` oder `OpenConsole.exe` im Paket fehlt), bleibt es bei der von Windows.
+   */
+  private spawn(launch: ShellLaunch, order: StartOrder): pty.IPty {
+    const options = (useConptyDll: boolean): pty.IWindowsPtyForkOptions => ({
+      name: 'xterm-256color',
+      cols: order.cols,
+      rows: order.rows,
+      cwd: order.cwd,
+      env: launch.env,
+      useConpty: true,
+      useConptyDll,
+    });
+    if (!this.bundledConpty) return pty.spawn(launch.file, launch.args, options(false));
+    try {
+      return pty.spawn(launch.file, launch.args, options(true));
+    } catch (bundledError) {
+      // Scheitert auch die ConPTY von Windows, liegt es an der Shell, nicht an der ConPTY: Dieser Fehler gilt.
+      const proc = pty.spawn(launch.file, launch.args, options(false));
+      this.bundledConpty = false;
+      console.error('Die mitgelieferte ConPTY lässt sich nicht starten, die Shells laufen über die von Windows:', bundledError);
+      return proc;
+    }
+  }
+
+  /**
    * Der Konsolen-Host der Pseudokonsole einer gerade gestarteten Shell, über die Prozess-Sonde (`ptyConsoleHost`). Eine
    * Abfrage, die schon vor dem Start lief, kennt die Shell noch nicht; dann wird noch einmal gefragt.
    */
@@ -176,7 +206,8 @@ export class PtyManager implements TerminalBackend {
  * Electron als Node) soll sie auflisten. Das scheitert, weil ConPTY die Shell bis dahin schon beendet hat; nach
  * 5 Sekunden beendet node-pty dann ersatzweise die Prozess-ID der Shell, die inzwischen an einen anderen Prozess
  * vergeben sein kann. THub beendet die Nachfahren selbst, genau und über den Prozessbaum der Sonde (Ticket 15);
- * deshalb fällt dieser Schritt weg. Das Schliessen der Pseudokonsole bleibt.
+ * deshalb fällt dieser Schritt weg. Das Schliessen der Pseudokonsole bleibt. Mit der mitgelieferten ConPTY lässt
+ * node-pty den Schritt ohnehin aus; nötig ist das nur noch, wenn das Backend auf die ConPTY von Windows ausweicht.
  */
 function skipConsoleListKill(proc: pty.IPty): void {
   const agent = (proc as unknown as PtyInternals)._agent;
