@@ -336,6 +336,7 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 - **Beim Start**, pro Tab in gespeicherter Reihenfolge:
   - **Normaler Tab:** Shell im zuletzt aktiven Ordner starten, mit Rückfall auf Startordner, Standardordner und Benutzerordner.
     - Vor dem Start der Shell schreibt der Renderer den gespeicherten Verlauf ausgegraut ins Terminal, dazu eine Trennlinie „Wiederhergestellt · <Datum, Uhrzeit>“ und so viele Leerzeilen, dass alles im Scrollback liegt. ConPTY leert beim Start den sichtbaren Bereich.
+    - Den Verlauf mit `conptyInheritCursor` direkt über dem neuen Prompt stehen zu lassen, wurde versucht und verworfen (Ticket 21): ConPTY zeichnet beim Ändern der Fenstergrösse seinen Bereich an festen Zeilen neu und überschreibt dabei Trennlinie, Verlauf oder Zeilen der Shell, und ohne Antwort auf die Cursor-Abfrage startet die Shell gar nicht. Befunde: `docs/spikes/verlauf-sichtbar.md`.
     - Das Ausgrauen muss auch über Farb-Resets im gespeicherten Inhalt hinweg wirken.
   - **Claude-Tab, der fortgesetzt werden soll:** Er hat eine Session-Kennung und entweder einen Prompt erlebt oder ist unbestätigt (Sicherheitsnetz ohne Hooks).
     - Ist er der zuletzt aktive Tab, startet die Shell sofort im Ordner der Session (Rückfallkette, falls er fehlt) mit dem Startbefehl „Starter mit `--resume <Kennung>`“. Kein alter Verlauf.
