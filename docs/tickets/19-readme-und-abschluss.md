@@ -21,6 +21,8 @@ Spezifikation: „Weitere Hinweise“
 
 ## Abnahme von Hand
 
+Alle Punkte dieses Tickets und der übrigen Tickets stehen gesammelt und nach Bereichen geordnet in [docs/abnahme.md](../abnahme.md).
+
 - [ ] Die Prüflisten „Abnahme von Hand“ aller Tickets 01 bis 18 sind durchgeklickt; Abweichungen sind als neue Tickets erfasst.
 
 - [ ] Auf dem frischen Rechner bzw. Benutzer, mit installiertem Claude Code:
