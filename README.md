@@ -114,7 +114,7 @@ Gespeichert wird in `%APPDATA%\THub\state.json`, im Schema Version 2. Eine Datei
 }
 ```
 
-Der Inhalt jedes normalen Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung>.json` (`{ "version": 1, "savedAt": …, "content": "…" }`): die letzten etwa 1000 Zeilen, serialisiert mit Farben, ohne den Bildschirm von Vollbildprogrammen wie `vim` oder `less`. Gesichert wird alle 30 Sekunden für Tabs mit neuer Ausgabe, beim Beenden (THub wartet höchstens 2 Sekunden auf den Renderer) und bei einer Windows-Abmeldung (sofort, mit dem zuletzt gesicherten Stand). Beim Schliessen eines Tabs wird seine Datei gelöscht. Claude-Tabs haben keinen Verlauf: Wird ein Tab zum Claude-Tab, fällt seine Datei weg; wird er wieder normal, wird sein Inhalt wieder gesichert.
+Der Inhalt jedes normalen Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung>.json` (`{ "version": 1, "savedAt": …, "content": "…" }`): die letzten etwa 1000 Zeilen, serialisiert mit Farben, ohne den Bildschirm von Vollbildprogrammen wie `vim` oder `less`. Gesichert wird alle 30 Sekunden für Tabs mit neuer Ausgabe, beim Beenden (THub wartet höchstens 2 Sekunden auf den Renderer) und bei einer Windows-Abmeldung (sofort, mit dem zuletzt gesicherten Stand). Beim Schliessen eines Tabs wird sein aktueller Inhalt noch gesichert; die Datei bleibt, solange der Tab unter den zuletzt geschlossenen steht, und wird gelöscht, wenn er aus dieser Liste fällt. Claude-Tabs haben keinen Verlauf: Wird ein Tab zum Claude-Tab, fällt seine Datei weg; wird er wieder normal, wird sein Inhalt wieder gesichert.
 
 ## Was das Grundgerüst kann
 
@@ -197,6 +197,15 @@ Wartet Claude in einem Tab, den du gerade nicht siehst, auf dich oder wird dort 
 - „Wartet“ bleibt, bis der Tab angezeigt wird oder Claude dort nicht mehr wartet (arbeitet wieder, ist fertig, wurde beendet).
 - In den Einstellungen abschaltbar („Hinweise im Fenster“); dann gibt es keine, auch die stehenden verschwinden, die Status-Symbole bleiben. Keine Windows-Benachrichtigungen, kein Blinken in der Taskleiste.
 
+### Schliessen und wieder öffnen
+
+- **Rückfrage nur, wenn noch etwas läuft:** Ein ruhender Tab, auch ein ruhender Claude-Tab, schliesst sofort (`×`, mittlere Maustaste, `Ctrl+Shift+W`). Wartet Claude auf dich, arbeitet Claude oder laufen im Terminal Prozesse, fragt THub nach, mit dem Grund, dem Hinweis auf `Ctrl+Shift+Z` und dem Gefahr-Knopf „Schliessen“; den Fokus hat „Abbrechen“. Massgeblich ist, was wirklich läuft, nicht das Symbol: Ein grüner Tab mit einem noch laufenden Dev-Server fragt nach; grün allein oder pausiert nicht.
+- **Mehrere Tabs** („Andere Tabs schliessen“, im Menü ab Ticket 16): höchstens eine gemeinsame Rückfrage mit der Liste der Tabs, in denen noch etwas läuft; Abbrechen lässt alle offen.
+- **Fenster schliessen oder THub beenden** fragt nie nach, auch nicht, wenn Claude gerade arbeitet: Alles kommt beim nächsten Start zurück.
+- **Alles endet mit dem Tab:** die Shell und alle ihre Nachfahren, auch Programme mit eigener Konsole (etwa per `Start-Process` gestartet), die das Schliessen der Pseudokonsole überleben würden. THub fragt dazu vorher die Prozessliste ab und beendet jeden Prozess nur, wenn Prozess-ID und Startzeit noch stimmen. Dasselbe beim Beenden von THub. Endet eine Shell von selbst (`exit`), beendet THub auch ihren Konsolen-Host, den node-pty sonst bis zum Ende von THub stehen liesse.
+- **Zuletzt geschlossen:** Ein geschlossener Tab wird eingefroren und kommt mit Name, Shell, Ordnern, Verlauf bzw. Claude-Zuordnung an die Spitze einer Liste der letzten zehn (`closedTabs` im Zustand), die einen Neustart übersteht. Ein normaler Tab sichert dabei noch seinen aktuellen Inhalt. Fällt ein Tab aus der Liste, wird seine Verlaufsdatei gelöscht.
+- **`Ctrl+Shift+Z`** öffnet den zuletzt geschlossenen Tab wieder, aus jedem Tab heraus; die Taste geht nicht an die Shell. Er kommt an seiner alten Position zurück und wird aktiv: ein normaler Tab mit seinem Verlauf im zuletzt aktiven Ordner, ein fortzusetzender Claude-Tab setzt seine Session sofort fort. Erkannt wird `Z` am erzeugten Buchstaben, also auch auf der Schweizer Tastatur (dort liegt `Z`, wo die US-Tastatur `Y` hat). Die Befehlspalette (Ticket 17) bietet später die ganze Liste an.
+
 ### Shell-Integration
 
 Jede Windows-Shell startet mit der mitgelieferten Integration aus `resources/shell/` (im installierten Paket ausserhalb des asar-Archivs unter `resources\shell`). Sie lädt zuerst das normale Profil des Nutzers und meldet danach bei jedem Prompt den aktuellen Ordner; ein eigener Prompt (etwa oh-my-posh) bleibt, wie er ist.
@@ -223,7 +232,8 @@ Jede Windows-Shell startet mit der mitgelieferten Integration aus `resources/she
 | Kürzel | Aktion |
 |---|---|
 | `Ctrl+Shift+T` | Neues Terminal |
-| `Ctrl+Shift+W` | Aktiven Tab schliessen |
+| `Ctrl+Shift+W` | Aktiven Tab schliessen (mit Rückfrage, wenn noch etwas läuft) |
+| `Ctrl+Shift+Z` | Zuletzt geschlossenen Tab wieder öffnen |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | Nächster / vorheriger Tab |
 | `Ctrl+PageDown` / `Ctrl+PageUp` | Nächster / vorheriger Tab |
 | `Ctrl+1` … `Ctrl+9` | Zum n-ten Tab springen |
@@ -235,7 +245,6 @@ Jede Windows-Shell startet mit der mitgelieferten Integration aus `resources/she
 ## Offene Punkte (zum Ausspezifizieren)
 
 - **Was heisst „wiederherstellen“?** Aktuell: neue Shell im zuletzt aktiven Ordner des Tabs, darüber der frühere Inhalt ausgegraut. Nicht erhalten bleiben laufende Programme.
-- **Schliessen:** ohne Rückfrage. Bestätigung, wenn noch ein Programm läuft?
 - **Darstellung:** Sidebar vs. Tabs oben, Reihenfolge per Drag & Drop, Gruppen, Farben/Icons, Theme, Schriftgrösse
 - **Fenster:** mehrere Fenster, Split-Ansicht (mehrere Terminals nebeneinander)
 - **Installation/Updates:** Installer (NSIS) für den eigenen Benutzer, Auto-Update, Autostart, Code-Signing
