@@ -84,6 +84,12 @@ export class ToastBoard {
     if (this.drop((t) => t.tabId === tabId && (kinds === undefined || kinds.includes(t.kind)))) this.changed();
   }
 
+  /** Zu welchem Tab der Hinweis mit dieser Kennung gehört und welcher Art er ist; nichts, wenn er nicht (mehr) steht. */
+  find(toastId: string): { tabId: string; kind: ToastKind } | undefined {
+    const toast = this.toasts.find((t) => t.id === toastId);
+    return toast && { tabId: toast.tabId, kind: toast.kind };
+  }
+
   /** Nimmt den Hinweis mit dieser Kennung weg (× am Hinweis); liefert, zu welchem Tab er gehörte und welcher Art er war. */
   dismiss(toastId: string): { tabId: string; kind: ToastKind } | undefined {
     const toast = this.toasts.find((t) => t.id === toastId);

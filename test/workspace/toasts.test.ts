@@ -154,7 +154,8 @@ describe('Hinweise im Fenster', () => {
 
   describe('Tab angezeigt: nur dessen Hinweis verschwindet', () => {
     it.each([
-      ['Klick auf den Hinweis oder auf den Tab', (s: Scene) => s.h.workspace.activateTab(s.a.id)],
+      ['Klick auf den Hinweis', (s: Scene) => s.h.workspace.openToast(s.a.toast()!.id)],
+      ['Klick auf den Tab', (s: Scene) => s.h.workspace.activateTab(s.a.id)],
       ['Ctrl+Tab', (s: Scene) => s.h.workspace.activateRelativeTab(1)],
       ['Ctrl+Shift+Tab', (s: Scene) => s.h.workspace.activateRelativeTab(-2)],
       ['Ctrl+2', (s: Scene) => s.h.workspace.activateTabAt(1)],
@@ -171,14 +172,18 @@ describe('Hinweise im Fenster', () => {
       expect(s.h.eventsOfType('toasts').at(-1)?.toasts.map((t) => t.tabId)).toEqual([s.b.id]);
     });
 
-    it('„fertig“ verschwindet beim Anzeigen sofort, mit dem grünen Punkt', async () => {
-      const { h, a } = await startScene();
-      await a.answer();
+    it.each([
+      ['Klick auf den Hinweis', (s: Scene) => s.h.workspace.openToast(s.a.toast()!.id)],
+      ['Klick auf den Tab', (s: Scene) => s.h.workspace.activateTab(s.a.id)],
+    ])('„fertig“ verschwindet beim Anzeigen per %s sofort, mit dem grünen Punkt', async (_way, show) => {
+      const s = await startScene();
+      await s.a.answer();
 
-      h.workspace.activateTab(a.id);
+      show(s);
 
-      expect(a.toast()).toBeUndefined();
-      expect(a.status()).toBe('idle');
+      expect(s.h.activeTab()?.id).toBe(s.a.id);
+      expect(s.a.toast()).toBeUndefined();
+      expect(s.a.status()).toBe('idle');
     });
 
     it('wird der aktive Tab geschlossen, ist der Nachbar angezeigt: sein Hinweis verschwindet, der des anderen bleibt', async () => {

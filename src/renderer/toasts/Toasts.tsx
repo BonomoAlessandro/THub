@@ -105,14 +105,19 @@ interface ToastCardProps {
 
 /**
  * Eine Karte: Symbol, Tab-Name, Inhalt der Art und die dezente Zeile „Zum Tab wechseln →“. Die ganze Karte zeigt den
- * Tab an, das × (beim Überfahren) nimmt nur den Hinweis weg. Ein Countdown erscheint als Linie am unteren Rand;
- * solange die Maus auf der Karte steht, hält er an.
+ * Tab an (ein Hinweis mit offenen Punkten verschwindet dabei), das × (beim Überfahren) nimmt nur den Hinweis weg. Ein
+ * Countdown erscheint als Linie am unteren Rand; solange die Maus auf der Karte steht, hält er an.
  */
 function ToastCard({ toast, tabName, active, leaving, onLeft }: ToastCardProps) {
   const hold = (on: boolean) => {
     if (toast.kind === 'finished') api.send({ type: 'holdToast', toastId: toast.id, hold: on });
   };
-  const open = () => (active ? focusTerminal(toast.tabId) : api.send({ type: 'activateTab', tabId: toast.tabId }));
+  // Der Kern zeigt den Tab an und nimmt einen Hinweis mit offenen Punkten dabei weg; ist der Tab schon aktiv, bekommt
+  // nur sein Terminal den Fokus.
+  const open = () => {
+    api.send({ type: 'openToast', toastId: toast.id });
+    if (active) focusTerminal(toast.tabId);
+  };
   const { icon, message } = toastContent(toast);
 
   return (

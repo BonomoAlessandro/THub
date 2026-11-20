@@ -43,11 +43,11 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 20 | [Umbenennen in THub](20-umbenennen-thub.md) | AFK | 04, 08 | erledigt |
 | 21 | [Verlauf nach dem Neustart direkt sichtbar](21-verlauf-direkt-sichtbar.md) | AFK | 08 | erledigt (verworfen) |
 | 22 | [Offene Punkte aus Claudes Antworten als Hinweis](22-offene-punkte.md) | AFK | 14 | erledigt |
-| 23 | [Fortsetzen ohne Starter endet nicht in einer Endlosschleife](23-fortsetzen-ohne-starter.md) | AFK | – | offen |
+| 23 | [Fortsetzen ohne Starter endet nicht in einer Endlosschleife](23-fortsetzen-ohne-starter.md) | AFK | – | in Arbeit |
 | 24 | [PowerShell in THub: flüssige Pfeiltasten, keine Befehlsvorschau](24-powershell-fluessig.md) | AFK | – | in Arbeit |
 | 25 | [Links und Rechtsklick im Terminal](25-links-und-rechtsklick.md) | AFK | – | in Arbeit |
 | 26 | [Tab-Leiste, neue Tabs am Ende, Stern-Farbe und Dropdown im dunklen Design](26-tableiste-und-dropdown.md) | AFK | – | in Arbeit |
-| 27 | [Offene Punkte nur, wenn es wirklich welche gibt; Klick schliesst den Hinweis](27-offene-punkte-seltener.md) | AFK | – | in Arbeit |
+| 27 | [Offene Punkte nur, wenn es wirklich welche gibt; Klick schliesst den Hinweis](27-offene-punkte-seltener.md) | AFK | – | erledigt |
 
 ```mermaid
 flowchart LR

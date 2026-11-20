@@ -98,6 +98,10 @@ describe('Lokale Schnittstelle', () => {
       expect(res.status).toBe(200);
       expect(res.headers['content-type']).toBe('application/json; charset=utf-8');
       expect(JSON.parse(res.body)).toEqual(SESSION_START_CONTEXT);
+      // Der Wortlaut aus Ticket 27: offene Punkte nur ausnahmsweise, keine Angebote oder Vorschläge.
+      expect(JSON.parse(res.body).hookSpecificOutput.additionalContext).toMatch(
+        /^Hinweis von THub: Nur wenn du für den nächsten Schritt .+ Das ist die Ausnahme: .+ Keine Angebote für weitere Arbeit, keine Vorschläge, .+ nur um den Abschnitt zu füllen\.$/,
+      );
       // Umlaute und Anführungszeichen der Anweisung als \uXXXX: Die Ausgabe von curl.exe kommt so unabhängig von jeder
       // Zeichenkodierung bei Claude an.
       expect(res.body).toMatch(/^[\x20-\x7e]+$/);

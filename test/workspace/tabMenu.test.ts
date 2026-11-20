@@ -125,14 +125,14 @@ describe('Rechtsklick-Menü und Umsortieren', () => {
 
     it('übernimmt keine offenen Punkte der Quelle, auch nicht nach einem Neustart', async () => {
       const { h, source, claude } = await setupClaudeTab();
-      await claude.answer('Ich habe die Datei angepasst.\n\nSoll ich auch die Tests anpassen?');
-      expect(h.storedTab(source)?.openPoints).toEqual(['Soll ich auch die Tests anpassen?']);
+      await claude.answer('Ich habe die Datei angepasst.\n\n## Offene Punkte\n- Sollen die Tests auch angepasst werden?');
+      expect(h.storedTab(source)?.openPoints).toEqual(['Sollen die Tests auch angepasst werden?']);
 
       const copy = h.workspace.duplicateTab(source);
 
       expect(h.storedTab(copy)?.openPoints).toBeUndefined();
       expect(h.snapshot().toasts.filter((t) => t.tabId === copy)).toEqual([]);
-      expect(claude.toasts()).toMatchObject([{ kind: 'openPoints', points: ['Soll ich auch die Tests anpassen?'] }]);
+      expect(claude.toasts()).toMatchObject([{ kind: 'openPoints', points: ['Sollen die Tests auch angepasst werden?'] }]);
 
       await h.restart();
 
