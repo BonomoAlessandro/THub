@@ -290,6 +290,12 @@ export interface THubApi {
   readClipboard(): Promise<string>;
   writeClipboard(text: string): Promise<void>;
 
+  /**
+   * Ctrl+Klick auf einen Link im Terminal: öffnet die Adresse im Standardbrowser. Nur `http:` und `https:`; der
+   * Hauptprozess prüft das selbst noch einmal.
+   */
+  openLink(url: string): Promise<void>;
+
   /** Das geltende Design; es bestimmt der Hauptprozess. */
   loadTheme(): Promise<ResolvedTheme>;
   /** Meldet jeden Wechsel des Designs, zum Beispiel wenn Windows von dunkel auf hell wechselt. */
@@ -307,6 +313,7 @@ export const IPC = {
   tabOpenFolder: 'tab:open-folder',
   clipboardRead: 'clipboard:read',
   clipboardWrite: 'clipboard:write',
+  linkOpen: 'link:open',
   themeCurrent: 'theme:current',
   themeChanged: 'theme:changed',
 } as const;
