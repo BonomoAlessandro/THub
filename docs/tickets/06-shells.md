@@ -1,6 +1,6 @@
 # 06 – Shells erkennen und pro Tab wählen
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 05
 User Stories: 6–9, 75 (Standard-Shell)
 Spezifikation: „Shell-Erkennung“, „Gespeicherter Zustand“ (Übernahme aus Version 1)

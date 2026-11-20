@@ -21,8 +21,8 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 02 | [Klickbarer Design-Prototyp](02-design-prototyp.md) | HITL | – | erledigt |
 | 03 | [React-Oberfläche mit Tab-Leiste](03-react-tab-leiste.md) | AFK | 01, 02 | erledigt |
 | 04 | [Titelleiste und Design hell/dunkel](04-titelleiste-design.md) | AFK | 03 | erledigt |
-| 05 | [Ordner, Tab-Namen und Einstellungsdialog](05-ordner-und-einstellungen.md) | AFK | 04 | in Arbeit |
-| 06 | [Shells erkennen und pro Tab wählen](06-shells.md) | AFK | 05 | offen |
+| 05 | [Ordner, Tab-Namen und Einstellungsdialog](05-ordner-und-einstellungen.md) | AFK | 04 | erledigt |
+| 06 | [Shells erkennen und pro Tab wählen](06-shells.md) | AFK | 05 | in Arbeit |
 | 07 | [Shell-Integration: Profil, aktueller Ordner, Startbefehl](07-shell-integration.md) | AFK | 06 | in Arbeit |
 | 08 | [Verlauf normaler Tabs sichern und wiederherstellen](08-verlauf.md) | AFK | 03 | erledigt |
 | 09 | [Fenster merken und nur eine Instanz](09-fenster-und-einzelinstanz.md) | AFK | 01 | erledigt |
@@ -34,10 +34,11 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 15 | [Tabs schliessen mit Rückfrage und wieder öffnen](15-schliessen-und-wiederoeffnen.md) | AFK | 12, 13 | offen |
 | 16 | [Rechtsklick-Menü und Umsortieren per Ziehen](16-rechtsklick-und-ziehen.md) | AFK | 15 | offen |
 | 17 | [Befehlspalette](17-befehlspalette.md) | AFK | 15 | offen |
-| 18 | [Design-Wahl und Schriftgrösse](18-design-und-schrift.md) | AFK | 05 | offen |
+| 18 | [Design-Wahl und Schriftgrösse](18-design-und-schrift.md) | AFK | 05 | in Arbeit |
 | 19 | [README und Abschluss-Prüfung auf einem frischen Rechner](19-readme-und-abschluss.md) | HITL | alle | offen |
 | 20 | [Umbenennen in THub](20-umbenennen-thub.md) | AFK | 04, 08 | erledigt |
 | 21 | [Verlauf nach dem Neustart direkt sichtbar](21-verlauf-direkt-sichtbar.md) | AFK | 08 | in Arbeit |
+| 22 | [Offene Punkte aus Claudes Antworten als Hinweis](22-offene-punkte.md) | AFK | 14 | offen |
 
 ```mermaid
 flowchart LR
@@ -69,6 +70,7 @@ flowchart LR
   T04 --> T20[20 Umbenennen in THub]
   T08 --> T20
   T08 --> T21[21 Verlauf direkt sichtbar]
+  T14 --> T22[22 Offene Punkte]
 ```
 
 **Parallel möglich:**

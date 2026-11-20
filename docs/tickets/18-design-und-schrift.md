@@ -1,6 +1,6 @@
 # 18 – Design-Wahl und Schriftgrösse
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 05
 User Stories: 74, 75 (Design, Schriftgrösse), 76, 77
 Spezifikation: „Gespeicherter Zustand“ (Einstellungen), „Oberfläche (Renderer)“ (Design, Tastenkürzel)

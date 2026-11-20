@@ -24,7 +24,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 - **Tabs benennen sich selbst nach ihrem Ordner** und lassen sich jederzeit umbenennen.
 - **Claude startest du wie gewohnt mit `claude`.** THub erkennt das von selbst, ohne Knopf und ohne Einrichtung, und zeigt am Tab, ob Claude arbeitet, auf dich wartet, fertig ist oder ob noch Prozesse laufen.
 - **Nach einem Neustart ist alles wieder da:** Normale Terminals starten im zuletzt aktiven Ordner und zeigen ihren früheren Inhalt ausgegraut als Verlauf. Claude-Sessions werden direkt fortgesetzt, die zuletzt aktive sofort, die übrigen beim ersten Anklicken.
-- **Hinweise unten rechts im Fenster** melden, wenn Claude in einem Tab, den du gerade nicht siehst, auf dich wartet oder fertig wird.
+- **Hinweise unten rechts im Fenster** melden, wenn Claude in einem Tab, den du gerade nicht siehst, auf dich wartet oder fertig wird, und zeigen offene Fragen oder Punkte am Ende von Claudes Antworten, bis du sie wegklickst.
 - **Einfache Bedienung:** Maus, die bekannten Tastenkürzel und eine Befehlspalette (`Ctrl+Shift+P`).
 - **Moderner Look:** eigene Titelleiste, deckender Hintergrund, hell und dunkel nach Windows, Stil wie Warp, Linear oder Raycast, ohne Akzentfarbe.
 - **Funktioniert auf jedem Rechner direkt nach der Installation.** Deine Claude-Konfiguration wird nicht verändert.
@@ -143,6 +143,12 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 78. Als Nutzer möchte ich eine moderne Oberfläche mit eigener Titelleiste, deckendem Hintergrund, abgerundeten Ecken, neutraler Hervorhebung ohne Akzentfarbe und dezenten Animationen, damit ich gern damit arbeite.
 79. Als Nutzer möchte ich, dass eine Änderung des Standardordners nur für neue Tabs gilt, damit meine offenen Tabs nicht durcheinanderkommen.
 
+### Offene Punkte aus Claudes Antworten
+
+80. Als Nutzer möchte ich, dass offene Fragen oder Punkte am Ende einer Antwort von Claude als Hinweis unten rechts erscheinen, damit sie nicht in einer langen Antwort untergehen.
+81. Als Nutzer möchte ich, dass dieser Hinweis stehen bleibt, bis ich ihn schliesse, auch über einen Neustart hinweg und auch im gerade sichtbaren Tab, damit ich nichts vergesse.
+82. Als Nutzer möchte ich diese Hinweise in den Einstellungen abschalten können, damit mich THub nicht stört, wenn ich das nicht will.
+
 ## Implementierungsentscheidungen
 
 ### Architektur im Überblick
@@ -260,7 +266,7 @@ Der Starter arbeitet in diesen Schritten:
   - `PermissionRequest` kommt sofort, auch bei Rückfragen von `AskUserQuestion`;
   - `Stop.background_tasks` ist immer vorhanden. Endet eine Hintergrund-Aufgabe, schickt Claude ein `UserPromptSubmit` (Prompt beginnt mit `<task-notification>`) und danach wieder `Stop`.
   - Beispiel-Nutzdaten und alle Befunde: `docs/spikes/claude-hooks.md`, `spikes/claude-hooks/samples/`.
-- Der Empfänger antwortet **immer sofort mit einem leeren Erfolg** und gibt nie Entscheidungsfelder zurück. THub beeinflusst Claudes Verhalten also nie, es hört nur zu.
+- Der Empfänger antwortet **immer sofort mit einem leeren Erfolg** und gibt nie Entscheidungsfelder zurück. Einzige Ausnahme: Auf `SessionStart` liefert er bei eingeschalteter Einstellung die Anweisung für offene Punkte als zusätzlichen Kontext (siehe „Offene Punkte aus Claudes Antworten“). Darüber hinaus beeinflusst THub Claude nicht.
 - Ereignisse werden in der Reihenfolge ihres Eintreffens verarbeitet (`PreToolUse` kommt vor `PermissionRequest`).
 - In einem noch nicht vertrauten Ordner laufen keine Hooks, bis der Nutzer den Vertrauensdialog von Claude bestätigt.
 - Ist der Empfänger nicht erreichbar, zeigt Claude bei jedem Hook eine Fehlerzeile im Terminal; hängt er, verzögert er jedes Ereignis bis zum Timeout. Deshalb antwortet der Empfänger immer sofort.
@@ -330,6 +336,14 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 - „Wartet“ verschwindet beim Anzeigen des Tabs oder wenn der Tab wieder arbeitet.
 - Hinweise nehmen dem Terminal nie den Fokus.
 - Sind Hinweise in den Einstellungen abgeschaltet, löst der Kern keine aus. Die Status-Symbole bleiben.
+
+### Offene Punkte aus Claudes Antworten
+
+- **Anweisung:** Bei eingeschalteter Einstellung antwortet THub auf `/hooks/SessionStart` mit `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"…"}}`. Wortlaut des Kontexts: „Hinweis von THub: Wenn deine Antwort Fragen an den Nutzer oder offene Punkte enthält, die er entscheiden, prüfen oder erledigen muss, schreibe sie am Ende der Antwort unter der Überschrift ‚Offene Punkte‘ als kurze Aufzählung, ein Punkt pro Zeile. Gibt es keine, lass den Abschnitt weg.“ Weil `SessionStart` auch bei Fortsetzen, `/clear` und Kompaktieren kommt, gilt die Anweisung in jeder Session. Sind Hooks gesperrt, entfällt das Feature.
+- **Erkennung** beim Ereignis `Stop` im Feld `last_assistant_message`: eine Überschrift (Markdown-Überschrift, fette Zeile oder Zeile mit Doppelpunkt) „Offene Punkte“, „Offene Fragen“, „Noch offen“, „Fragen an dich“, „Zu klären“, „Open points“ oder „Open questions“, mit den Aufzählungspunkten darunter; ohne solche Überschrift gilt eine Frage am Ende des letzten Absatzes als ein offener Punkt. Inhalt von Code-Blöcken zählt nie.
+- **Hinweis:** unten rechts mit Tab-Name, „Offene Punkte (n)“ und höchstens vier Punkten (je höchstens zwei Zeilen, darunter „+ k weitere“). Ein Klick springt in den Tab. Er bleibt, bis er mit × geschlossen wird, auch beim Anzeigen des Tabs, und er erscheint auch für den sichtbaren Tab. Pro Tab höchstens einer; eine neue Antwort mit offenen Punkten ersetzt ihn, eine ohne lässt ihn stehen; er ersetzt den „Fertig“-Hinweis desselben Tabs.
+- **Gespeichert:** Nicht geschlossene Hinweise stehen pro Tab im Zustand und erscheinen nach einem Neustart wieder; mit einem geschlossenen Tab verschwindet auch sein Hinweis.
+- **Einstellung** „Offene Punkte aus Claudes Antworten anzeigen“ im Abschnitt „Hinweise“, Standard: an. Ausgeschaltet entfallen Hinweis und Anweisung.
 
 ### Wiederherstellen
 
