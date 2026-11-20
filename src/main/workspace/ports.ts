@@ -96,16 +96,28 @@ export interface Clock {
 
 // ---------- Prozess-Sonde ----------
 
+/**
+ * Ein Prozess, wie ihn die Sonde sieht. Er ist erst mit (Prozess-ID, Startzeit) eindeutig: Windows vergibt
+ * Prozess-IDs wieder, und die Eltern-ID kann auf einen beendeten Prozess zeigen.
+ */
 export interface ProcessInfo {
   pid: number;
+  /** Prozess-ID des Elternprozesses beim Start; zeigt womöglich auf einen beendeten oder neuen Prozess. */
   ppid: number;
   /** Programmname, z.B. "node.exe". */
   name: string;
+  /** Startzeit in Millisekunden seit 1970, mit Bruchteilen; dieselbe Zeitbasis wie `Clock.now()`. */
+  startTime: number;
 }
 
 export interface ProcessProbe {
-  /** Liefert in einer einzigen Abfrage den Prozessbaum aller Prozesse. */
+  /** Liefert in einer einzigen Abfrage alle Prozesse des Systems. Der Kern ruft nie zwei Abfragen zugleich auf. */
   snapshot(): Promise<ProcessInfo[]>;
+  /**
+   * Prozess-ID des Konsolen-Hosts (`conhost.exe`, `OpenConsole.exe`), an dem der Prozess hängt; `null`, wenn
+   * sie sich nicht lesen lässt. Der Kern fragt nur für einzelne Prozesse (Git-Bash-Shells und Waisen).
+   */
+  consoleHost(pid: number): number | null;
 }
 
 // ---------- System ----------

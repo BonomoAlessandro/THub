@@ -8,6 +8,7 @@ import type {
   Settings,
   TabProcessState,
   TabSnapshot,
+  TabStatus,
   WorkspaceEvent,
   WorkspaceSnapshot,
 } from '../../shared/types';
@@ -17,6 +18,7 @@ import {
   normalizeDirectory,
   readHook,
   sameLink,
+  startsSession,
   type ClaudeLaunchRequest,
   type ClaudeLaunchResponse,
   type ClaudeReceiver,
@@ -25,6 +27,7 @@ import {
 import { CwdReportScanner } from './cwdReport';
 import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
 import type { CancelTimer, ShellInfo, StartOrder, WorkspacePorts } from './ports';
+import { ProcessTracker, type ProcessTab, type ShellTree } from './processRules';
 import { shellLabel, wslDistribution } from './shellIds';
 import {
   normalizeSettings,
@@ -35,6 +38,7 @@ import {
   type PersistedTab,
   type WindowState,
 } from './schema';
+import { classifyInput, displayedStatus, IDLE_CLAUDE, statusAfterHook, type ClaudeStatus } from './tabStatus';
 import { placeWindow } from './windowPlacement';
 
 /** So lange wartet das Beenden höchstens auf die Shells. */
@@ -45,6 +49,13 @@ const WINDOW_SAVE_DELAY_MS = 500;
 const HISTORY_SAVE_INTERVAL_MS = 30_000;
 /** So lange wartet das Beenden höchstens auf den Verlauf aus dem Renderer. */
 const HISTORY_QUIT_TIMEOUT_MS = 2000;
+/** In diesem Abstand fragt der Kern die Prozess-Sonde ab, für alle Tabs zusammen. */
+const PROBE_INTERVAL_MS = 1500;
+/**
+ * Kommt nach Esc in einem arbeitenden oder wartenden Claude-Tab so lange kein Hook-Ereignis, ruht Claude: Nach
+ * einer Unterbrechung oder einer abgelehnten Rückfrage meldet Claude nichts.
+ */
+const ESC_QUIET_MS = 1500;
 
 export interface WorkspaceOptions {
   /** Die erkannten Shells (Shell-Erkennung), in der Reihenfolge des Pfeil-Menüs; mindestens eine. */
@@ -136,6 +147,12 @@ export interface Workspace extends ClaudeReceiver {
    * Gespeichert wird entprellt und spätestens beim Beenden.
    */
   windowChanged(state: WindowState): void;
+  /**
+   * Das Fenster ist im Vordergrund bzw. nicht mehr (der Renderer meldet es beim Laden und bei jedem Wechsel).
+   * Bis zur ersten Meldung gilt es als im Hintergrund. Nur im Vordergrund gilt der aktive Tab als angeschaut:
+   * Kommt das Fenster mit einem fertigen Claude-Tab nach vorne, verschwindet dessen „fertig“.
+   */
+  windowForeground(foreground: boolean): void;
 
   /**
    * THub beendet sich selbst (etwa bei einer Windows-Abmeldung): Die Claude-Zuordnungen werden eingefroren
@@ -169,8 +186,20 @@ interface TabRuntime {
   /** Kennzeichen des laufenden Prozesses, damit Meldungen früherer Prozesse ins Leere gehen. */
   run?: object;
   pid?: number;
-  /** Prozess-ID von Claude, vom Starter gemeldet; für die Prozess-Regeln (Ticket 13). */
+  /** Wann der laufende Prozess gestartet wurde (Uhr des Kerns); für die Prozess-Regeln. */
+  startedAt?: number;
+  /** Wie der Prozessbaum der laufenden Shell aussieht; für die Prozess-Regeln. */
+  tree?: ShellTree;
+  /** Prozess-ID von Claude, vom Starter gemeldet; für die Prozess-Regeln. */
   claudePid?: number;
+  /** Was Claude tut; bei normalen Tabs „ruht“. */
+  claude: ClaudeStatus;
+  /** „Fertig, noch nicht angeschaut“: Claude wurde fertig, während der Tab nicht sichtbar war. */
+  finished: boolean;
+  /** Im Terminal laufen Prozesse, nach den Prozess-Regeln und der letzten Abfrage der Sonde. */
+  processes: boolean;
+  /** Läuft nach Esc: Kommt bis dahin kein Hook-Ereignis, ruht Claude. */
+  cancelEsc?: CancelTimer;
   /** Der Tab kommt aus dem gespeicherten Zustand: Vor dem ersten Start bekommt die Ansicht seinen Verlauf. */
   restorePending: boolean;
   /** Zählt die Ausgabestücke der Shell; daran erkennt die Sicherung, ob sich der Inhalt geändert hat. */
@@ -182,7 +211,16 @@ interface TabRuntime {
 }
 
 function newRuntime(restorePending: boolean): TabRuntime {
-  return { process: 'pending', restorePending, output: 0, requested: 0, saved: 0 };
+  return {
+    process: 'pending',
+    restorePending,
+    output: 0,
+    requested: 0,
+    saved: 0,
+    claude: IDLE_CLAUDE,
+    finished: false,
+    processes: false,
+  };
 }
 
 class WorkspaceCore implements Workspace {
@@ -198,6 +236,16 @@ class WorkspaceCore implements Workspace {
   private cancelHistoryTimer: CancelTimer | null = null;
   /** Beim Beenden: Tabs, deren Verlauf noch aussteht, und wie es danach weitergeht. */
   private quitHistory: { pending: Set<string>; finish: () => void } | null = null;
+  /** Das Fenster ist im Vordergrund; bis zur ersten Meldung des Renderers nicht. */
+  private foreground = false;
+  /** Wertet die Abfragen der Prozess-Sonde aus. */
+  private readonly processTracker = new ProcessTracker();
+  /** Nächste Abfrage der Prozess-Sonde; `null` nach dem Beenden. */
+  private cancelProbeTimer: CancelTimer | null = null;
+  /** Eine Abfrage der Sonde läuft; solange fällt der Takt aus. */
+  private probing = false;
+  /** Ein Fehler der Sonde wurde schon gemeldet; danach nicht bei jedem Takt wieder. */
+  private probeErrorLogged = false;
 
   constructor(
     private readonly ports: WorkspacePorts,
@@ -218,6 +266,7 @@ class WorkspaceCore implements Workspace {
     else if (loaded.migrated) this.save();
 
     this.scheduleHistorySave();
+    this.scheduleProbe();
   }
 
   // ---------- Abfragen und Ereignisse ----------
@@ -273,6 +322,7 @@ class WorkspaceCore implements Workspace {
   activateTab(tabId: string): void {
     if (this.stopping || !this.findTab(tabId) || this.state.activeTabId === tabId) return;
     this.state.activeTabId = tabId;
+    this.markShownTabSeen();
     this.tabsChanged();
   }
 
@@ -294,6 +344,7 @@ class WorkspaceCore implements Workspace {
     if (this.stopping || index < 0) return;
     // Zuerst austragen: Das Ende der Shell gehört dann zu keinem Tab mehr, ein später eintreffender
     // Verlauf ebenfalls nicht.
+    this.runtimes.get(tabId)?.cancelEsc?.();
     this.runtimes.delete(tabId);
     this.ports.terminal.kill(tabId);
     // Bis zur Liste der geschlossenen Tabs (Ticket 15) verschwindet der Verlauf mit dem Tab.
@@ -305,6 +356,7 @@ class WorkspaceCore implements Workspace {
     if (this.state.activeTabId === tabId) {
       const neighbour = this.state.tabs[index] ?? this.state.tabs[index - 1];
       this.state.activeTabId = neighbour?.id ?? null;
+      this.markShownTabSeen();
     }
     this.tabsChanged();
   }
@@ -358,8 +410,10 @@ class WorkspaceCore implements Workspace {
   }
 
   writeToTab(tabId: string, data: string): void {
-    if (this.stopping || this.runtimes.get(tabId)?.process !== 'running') return;
+    const runtime = this.runtimes.get(tabId);
+    if (this.stopping || runtime?.process !== 'running') return;
     this.ports.terminal.write(tabId, data);
+    this.takeInput(tabId, runtime, data);
   }
 
   restartTab(tabId: string): void {
@@ -400,6 +454,8 @@ class WorkspaceCore implements Workspace {
     const isCurrent = () => !this.stopping && this.runtimes.get(tab.id) === runtime && runtime.run === run;
     runtime.run = run;
     runtime.process = 'running';
+    runtime.startedAt = this.ports.clock.now();
+    runtime.tree = shellTree(shell);
     try {
       const pid = this.ports.terminal.start(tab.id, order, {
         data: (chunk) => {
@@ -414,6 +470,7 @@ class WorkspaceCore implements Workspace {
           runtime.process = 'exited';
           runtime.run = undefined;
           runtime.pid = undefined;
+          runtime.processes = false;
           // Mit der Shell endet auch ein Claude darin: Der Tab wird ein normales Terminal.
           if (!this.frozen) this.setClaudeLink(tab, undefined);
           this.emit({ type: 'exit', tabId: tab.id, exitCode });
@@ -612,6 +669,12 @@ class WorkspaceCore implements Workspace {
     });
   }
 
+  windowForeground(foreground: boolean): void {
+    if (this.stopping || typeof foreground !== 'boolean' || foreground === this.foreground) return;
+    this.foreground = foreground;
+    if (this.markShownTabSeen()) this.emitTabs();
+  }
+
   // ---------- Claude ----------
 
   claudeLaunch(request: ClaudeLaunchRequest): ClaudeLaunchResponse | null {
@@ -622,7 +685,15 @@ class WorkspaceCore implements Workspace {
     const newId = request.case === 'new' ? randomUUID() : undefined;
     const sessionId = newId ?? (request.case === 'withId' ? request.sessionId : undefined);
     const reported = request.cwd ? this.normalizeDir(request.cwd) : '';
-    this.setClaudeLink(tab, linkAfterLaunch(tab.claude, sessionId, reported || (tab.lastCwd ?? tab.startCwd)));
+    this.updateTab(tab, () => {
+      this.setClaudeLink(tab, linkAfterLaunch(tab.claude, sessionId, reported || (tab.lastCwd ?? tab.startCwd)));
+      // Ein neu gestartetes Claude ruht, auch wenn das vorige ohne Ende-Meldung verschwunden ist.
+      const runtime = this.runtimes.get(tab.id);
+      if (runtime) {
+        this.cancelEscTimer(runtime);
+        runtime.claude = IDLE_CLAUDE;
+      }
+    });
 
     const { hookFile } = this.localApi;
     return newId ? { tabName: tab.name, sessionId: newId, hookFile } : { tabName: tab.name, hookFile };
@@ -637,13 +708,58 @@ class WorkspaceCore implements Workspace {
     // Claude hat sich beendet, auch ohne SessionEnd (etwa nach einem Absturz): normales Terminal.
     // Session-Kennung und Exit-Code braucht erst das fehlgeschlagene Fortsetzen (Ticket 12).
     const tab = this.claudeTab(tabId);
-    if (tab) this.setClaudeLink(tab, undefined);
+    if (tab) this.updateTab(tab, () => this.setClaudeLink(tab, undefined));
   }
 
   claudeHook(tabId: string, event: string, payload: unknown): void {
     const tab = this.claudeTab(tabId);
     if (!tab) return;
-    this.setClaudeLink(tab, linkAfterHook(tab.claude, readHook(event, payload), (raw) => this.normalizeDir(raw)));
+    const hook = readHook(event, payload);
+    this.updateTab(tab, () => {
+      const previous = tab.claude;
+      const link = linkAfterHook(previous, hook, (raw) => this.normalizeDir(raw));
+      this.setClaudeLink(tab, link);
+      const runtime = this.runtimes.get(tab.id);
+      if (!link || !runtime) return;
+      // Jedes Hook-Ereignis zeigt, dass Claude nach Esc weitermacht. Ausgenommen sind Benachrichtigungen: Sie
+      // kommen verzögert (Rückfrage nach etwa 6 s, idle_prompt nach etwa 60 s) und sagen darüber nichts.
+      if (hook.event !== 'Notification') this.cancelEscTimer(runtime);
+      const step = statusAfterHook(runtime.claude, hook, startsSession(previous, hook), this.ports.clock.now());
+      runtime.claude = step.status;
+      if (step.stopped && !this.isVisible(tab.id)) runtime.finished = true;
+    });
+  }
+
+  /**
+   * Eingabe des Nutzers in einem Claude-Tab: Esc während „arbeitet“ oder „wartet“ startet die Wartezeit, nach der
+   * Claude ruht; jede andere Eingabe in einem wartenden Tab heisst „arbeitet“, weil nach einer Bestätigung bis
+   * `PostToolUse` kein Ereignis kommt. Antworten des Terminals (Fokus, Maus usw.) zählen nicht als Eingabe.
+   */
+  private takeInput(tabId: string, runtime: TabRuntime, data: string): void {
+    const tab = this.findTab(tabId);
+    const { activity } = runtime.claude;
+    if (this.frozen || !tab?.claude || activity === 'idle') return;
+    const kind = classifyInput(data);
+    if (kind === 'escape') {
+      this.cancelEscTimer(runtime);
+      runtime.cancelEsc = this.ports.clock.schedule(ESC_QUIET_MS, () => {
+        runtime.cancelEsc = undefined;
+        if (this.runtimes.get(tabId) !== runtime || runtime.claude.activity === 'idle') return;
+        // Ohne „fertig“: Der Nutzer hat selbst unterbrochen.
+        this.updateTab(tab, () => {
+          runtime.claude = { ...runtime.claude, activity: 'idle', toolUnanswered: false };
+        });
+      });
+    } else if (kind === 'input' && activity === 'waiting') {
+      this.updateTab(tab, () => {
+        runtime.claude = { ...runtime.claude, activity: 'working' };
+      });
+    }
+  }
+
+  private cancelEscTimer(runtime: TabRuntime): void {
+    runtime.cancelEsc?.();
+    runtime.cancelEsc = undefined;
   }
 
   /** Der Tab, für den eine Meldung von Starter oder Claude gilt; keiner, wenn unbekannt oder eingefroren. */
@@ -651,7 +767,10 @@ class WorkspaceCore implements Workspace {
     return this.frozen || this.stopping ? undefined : this.findTab(tabId);
   }
 
-  /** Setzt die Claude-Zuordnung eines Tabs; `undefined` macht ihn zum normalen Terminal. */
+  /**
+   * Setzt die Claude-Zuordnung eines Tabs; `undefined` macht ihn zum normalen Terminal. Mit der Zuordnung
+   * entfallen auch Prozess-ID und Status von Claude.
+   */
   private setClaudeLink(tab: PersistedTab, link: PersistedClaudeLink | undefined): void {
     if (sameLink(tab.claude, link)) return;
     if (link) {
@@ -659,13 +778,129 @@ class WorkspaceCore implements Workspace {
     } else {
       delete tab.claude;
       const runtime = this.runtimes.get(tab.id);
-      if (runtime) runtime.claudePid = undefined;
+      if (runtime) {
+        runtime.claudePid = undefined;
+        runtime.claude = IDLE_CLAUDE;
+        runtime.finished = false;
+        this.cancelEscTimer(runtime);
+      }
     }
     this.save();
   }
 
   private normalizeDir(raw: string): string {
     return normalizeDirectory(raw, (dir) => this.ports.system.longPath(dir));
+  }
+
+  // ---------- Status am Tab ----------
+
+  /** Der Tab ist sichtbar: aktiv, und das Fenster ist im Vordergrund. */
+  private isVisible(tabId: string): boolean {
+    return this.foreground && this.state.activeTabId === tabId;
+  }
+
+  /**
+   * Der aktive Tab wird gerade angezeigt (Tab gewechselt oder Fenster nach vorne gekommen): Sein „fertig, noch
+   * nicht angeschaut“ entfällt. Liefert, ob sich dabei etwas geändert hat.
+   */
+  private markShownTabSeen(): boolean {
+    const id = this.state.activeTabId;
+    const runtime = id ? this.runtimes.get(id) : undefined;
+    if (!id || !runtime?.finished || !this.isVisible(id)) return false;
+    runtime.finished = false;
+    return true;
+  }
+
+  private tabStatus(tab: PersistedTab): TabStatus {
+    const runtime = this.runtimes.get(tab.id);
+    if (!runtime) return 'idle';
+    return displayedStatus({
+      // Pausierte Claude-Tabs kommen mit Ticket 12.
+      paused: false,
+      activity: tab.claude ? runtime.claude.activity : 'idle',
+      finished: runtime.finished,
+      processes: runtime.processes,
+    });
+  }
+
+  /** Führt `change` aus und meldet die Tabs, wenn sich dabei Art oder angezeigter Status des Tabs geändert haben. */
+  private updateTab(tab: PersistedTab, change: () => void): void {
+    const badge = () => `${tab.claude ? 'claude' : 'terminal'}:${this.tabStatus(tab)}`;
+    const before = badge();
+    change();
+    if (badge() !== before) this.emitTabs();
+  }
+
+  // ---------- Prozess-Sonde ----------
+
+  /** Fragt etwa alle 1,5 Sekunden die Prozess-Sonde ab, für alle Tabs zusammen. */
+  private scheduleProbe(): void {
+    this.cancelProbeTimer = this.ports.clock.schedule(PROBE_INTERVAL_MS, () => {
+      this.probe();
+      this.scheduleProbe();
+    });
+  }
+
+  /** Eine Abfrage; läuft die vorige noch, fällt dieser Takt aus. Ohne laufende Shell wird nicht abgefragt. */
+  private probe(): void {
+    if (this.probing || this.stopping) return;
+    if (this.processTabs().length === 0) {
+      this.processTracker.forgetPrevious();
+      return;
+    }
+    this.probing = true;
+    this.ports.processes.snapshot().then(
+      (processes) => {
+        this.probing = false;
+        if (this.stopping) return;
+        // Ausgewertet wird mit dem Stand von jetzt: Während der Abfrage kann sich ein Tab geändert haben.
+        const tabs = this.processTabs();
+        const running = this.processTracker.update(processes, tabs, (pid) => this.ports.processes.consoleHost(pid));
+        this.setProcesses(running);
+      },
+      (err: unknown) => {
+        this.probing = false;
+        if (this.probeErrorLogged) return;
+        this.probeErrorLogged = true;
+        console.error('Prozess-Sonde: Abfrage fehlgeschlagen:', err);
+      },
+    );
+  }
+
+  /**
+   * Die Tabs mit laufender Shell, so wie die Prozess-Regeln sie brauchen. WSL-Tabs fehlen: Ihre Prozesse sind für
+   * Windows unsichtbar, sie zeigen nie „Prozesse laufen“.
+   */
+  private processTabs(): ProcessTab[] {
+    const result: ProcessTab[] = [];
+    for (const tab of this.state.tabs) {
+      const runtime = this.runtimes.get(tab.id);
+      if (runtime?.process !== 'running' || !runtime.pid || runtime.startedAt === undefined) continue;
+      if (!runtime.tree || runtime.tree === 'wsl') continue;
+      const entry: ProcessTab = { id: tab.id, rootPid: runtime.pid, startedAt: runtime.startedAt, tree: runtime.tree };
+      if (tab.claude) {
+        entry.claude = {
+          pid: runtime.claudePid,
+          promptAt: runtime.claude.promptAt,
+          idle: runtime.claude.activity === 'idle',
+        };
+      }
+      result.push(entry);
+    }
+    return result;
+  }
+
+  /** Übernimmt das Ergebnis einer Abfrage: In diesen Tabs laufen Prozesse, in allen anderen nicht. */
+  private setProcesses(running: Set<string>): void {
+    let changed = false;
+    for (const tab of this.state.tabs) {
+      const runtime = this.runtimes.get(tab.id);
+      if (!runtime || runtime.processes === running.has(tab.id)) continue;
+      const before = this.tabStatus(tab);
+      runtime.processes = running.has(tab.id);
+      if (this.tabStatus(tab) !== before) changed = true;
+    }
+    if (changed) this.emitTabs();
   }
 
   // ---------- Beenden ----------
@@ -680,6 +915,9 @@ class WorkspaceCore implements Workspace {
     if (!this.stopping) {
       this.cancelHistoryTimer?.();
       this.cancelHistoryTimer = null;
+      this.cancelProbeTimer?.();
+      this.cancelProbeTimer = null;
+      for (const runtime of this.runtimes.values()) this.cancelEscTimer(runtime);
       // Sofort einfrieren: Ab jetzt ändern Meldungen von Starter und Claude die Zuordnungen nicht mehr.
       this.frozen = true;
       // Erst den Verlauf, solange die Shells noch laufen und der Renderer ihn zeigt; dann sichern und beenden.
@@ -718,6 +956,8 @@ class WorkspaceCore implements Workspace {
       shellName: this.shellFor(tab).name,
       cwd: tab.lastCwd ?? tab.startCwd,
       process: this.runtimes.get(tab.id)?.process ?? 'pending',
+      kind: tab.claude ? 'claude' : 'terminal',
+      status: this.tabStatus(tab),
     }));
   }
 
@@ -753,6 +993,12 @@ class WorkspaceCore implements Workspace {
  */
 function shellArgs(shell: ShellInfo, cwd: string): string[] {
   return wslDistribution(shell.id) ? [...shell.args, '--cd', cwd] : [...shell.args];
+}
+
+/** Wie der Prozessbaum einer Shell aussieht: Git Bash startet über einen Starter, WSL bleibt unsichtbar. */
+function shellTree(shell: ShellInfo): ShellTree {
+  if (wslDistribution(shell.id)) return 'wsl';
+  return shell.id === 'gitbash' ? 'gitbash' : 'direct';
 }
 
 function isValidSize(cols: number, rows: number): boolean {

@@ -1,6 +1,5 @@
 import { spawn } from 'node:child_process';
 import * as fs from 'node:fs';
-import * as http from 'node:http';
 import { describe, expect, it } from 'vitest';
 import { findCurl } from '../../src/main/hookFile';
 import { ApiClient, hookEvent, hookPayload, type ApiResponse, type HookSample } from '../support/apiClient';
@@ -116,7 +115,7 @@ describe('Lokale Schnittstelle', () => {
       expect(launch.status).toBe(200);
 
       // UserPromptSubmit trifft zuerst ein, sein Inhalt wird aber erst nach dem folgenden SessionStart fertig.
-      const first = startSlowHook(h.api, tabId, 'UserPromptSubmit', hookPayload('UserPromptSubmit', { session_id: SID }));
+      const first = h.api.slowHook(tabId, 'UserPromptSubmit', hookPayload('UserPromptSubmit', { session_id: SID }));
       await first.arrived;
       const second = await h.api.hook(tabId, 'SessionStart', hookPayload('SessionStart-clear', { session_id: SID_AFTER_CLEAR, cwd: 'C:\\proj' }));
       expectEmptySuccess(second);
@@ -263,55 +262,6 @@ describe('Lokale Schnittstelle', () => {
     },
   );
 });
-
-/**
- * Ein Hook-Ereignis, dessen Kopfzeilen sofort und dessen Inhalt erst mit `finish` ankommt.
- * `arrived` erfüllt sich, sobald der Server die Anfrage angenommen hat (das erste Stück ist bei ihm).
- */
-function startSlowHook(
-  api: ApiClient,
-  tabId: string,
-  event: string,
-  payload: unknown,
-): { arrived: Promise<void>; finish: () => Promise<ApiResponse> } {
-  const text = JSON.stringify(payload);
-  const half = Math.floor(text.length / 2);
-  let resolveResponse: (res: ApiResponse) => void;
-  const response = new Promise<ApiResponse>((resolve) => (resolveResponse = resolve));
-  const req = http.request(`${api.url}/hooks/${event}`, {
-    method: 'POST',
-    agent: false,
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(text),
-      'X-THub-Tab': tabId,
-      'X-THub-Token': api.token ?? '',
-    },
-  });
-  const started = performance.now();
-  req.on('response', (res) => {
-    const chunks: Buffer[] = [];
-    res.on('data', (c: Buffer) => chunks.push(c));
-    res.on('end', () =>
-      resolveResponse({
-        status: res.statusCode ?? 0,
-        headers: res.headers,
-        body: Buffer.concat(chunks).toString('utf8'),
-        ms: performance.now() - started,
-      }),
-    );
-  });
-  const arrived = new Promise<void>((resolve) => {
-    req.write(text.slice(0, half), () => setTimeout(resolve, 100));
-  });
-  return {
-    arrived,
-    finish: () => {
-      req.end(text.slice(half));
-      return response;
-    },
-  };
-}
 
 function run(
   command: string,
