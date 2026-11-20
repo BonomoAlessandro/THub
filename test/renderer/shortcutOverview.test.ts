@@ -1,4 +1,7 @@
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { ShortcutList } from '../../src/renderer/settings/ShortcutsDialog';
 import {
   SHORTCUTS,
   comboText,
@@ -157,6 +160,18 @@ describe('Übersicht der Tastenkürzel', () => {
     expect(handled).toBeGreaterThan(0);
     // Jedes Kürzel mit Tasten ist dabei vorgekommen; das Mausrad prüft der Test oben.
     expect(hit).toEqual(new Set(SHORTCUTS.filter((s) => s.id !== 'fontWheel').map((s) => s.id)));
+  });
+
+  it('der Dialog zeigt die Übersicht: jede Bezeichnung genau einmal, die Abschnitte in ihrer Reihenfolge', () => {
+    const html = renderToStaticMarkup(createElement(ShortcutList));
+    for (const shortcut of SHORTCUTS) {
+      expect(html.split(`>${shortcut.label}<`).length - 1, shortcut.label).toBe(1);
+    }
+    const headings = [...html.matchAll(/<h4>([^<]+)<\/h4>/g)].map((m) => m[1]);
+    expect(headings).toEqual(['Tabs', 'Bearbeiten', 'Darstellung', 'Fenster']);
+    expect(html).toContain('<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>');
+    expect(html).toContain('<kbd>Ctrl</kbd>+<kbd>1</kbd> … <kbd>9</kbd>');
+    expect(html).toContain('<kbd>Ctrl</kbd> + Mausrad');
   });
 
   it('Ctrl+K und Ctrl+C stehen nicht darin; sie gehören dem Terminal', () => {
