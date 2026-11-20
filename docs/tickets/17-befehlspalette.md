@@ -1,6 +1,6 @@
 # 17 – Befehlspalette
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: 15
 User Stories: 70, 71, 72, 83
 Spezifikation: „Oberfläche (Renderer)“, Tastenkürzel

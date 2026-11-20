@@ -36,7 +36,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 14 | [Hinweise im Fenster](14-hinweise.md) | AFK | 13 | erledigt |
 | 15 | [Tabs schliessen mit Rückfrage und wieder öffnen](15-schliessen-und-wiederoeffnen.md) | AFK | 12, 13 | erledigt |
 | 16 | [Rechtsklick-Menü und Umsortieren per Ziehen](16-rechtsklick-und-ziehen.md) | AFK | 15 | in Arbeit |
-| 17 | [Befehlspalette](17-befehlspalette.md) | AFK | 15 | in Arbeit |
+| 17 | [Befehlspalette](17-befehlspalette.md) | AFK | 15 | erledigt |
 | 18 | [Design-Wahl und Schriftgrösse](18-design-und-schrift.md) | AFK | 05 | erledigt |
 | 19 | [README und Abschluss-Prüfung auf einem frischen Rechner](19-readme-und-abschluss.md) | HITL | alle | offen |
 | 20 | [Umbenennen in THub](20-umbenennen-thub.md) | AFK | 04, 08 | erledigt |

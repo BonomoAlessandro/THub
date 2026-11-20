@@ -26,6 +26,7 @@ import {
   type PaletteMode,
 } from './paletteEntries';
 import { searchGroups } from './search';
+import { shortPath } from './shortPath';
 
 const api = window.thub;
 
@@ -242,7 +243,7 @@ export function Palette({ context, onClose }: PaletteProps) {
                     </span>
                     <span className="pal-main">
                       {item.label}
-                      {item.detail && <small>{item.detail}</small>}
+                      {item.detail && <small title={item.detail}>{shortPath(item.detail)}</small>}
                     </span>
                     {item.hint ? (
                       <span className="mi-kbd">{item.hint}</span>
