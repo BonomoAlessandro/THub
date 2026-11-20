@@ -43,6 +43,8 @@ src/
     folders.ts              Tab-Namen nach dem Ordner und Liste der zuletzt benutzten Ordner
     windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
     claude.ts               Claude-Zuordnung pro Tab: Vertrag von Starter und Hooks, Regeln
+    tabStatus.ts            Status am Tab: Status-Zeilen des Zustandsautomaten, Eingaben (Esc), Vorrang der Anzeige
+    processRules.ts         Prozess-Regeln: ob in einem Tab Prozesse laufen (innerste Shell, Waisen, Claude-Tabs)
     cwdReport.ts            Ordner-Meldungen der Shell (OSC 7, OSC 9;9) im rohen Ausgabestrom erkennen
     shellIds.ts             Shell-Kennungen (pwsh, powershell, cmd, gitbash, wsl:<Distribution>) und Anzeigenamen
   main/localApi.ts          Lokale Schnittstelle: HTTP-Server auf 127.0.0.1 für Starter und Claude-Hooks
@@ -53,7 +55,8 @@ src/
                             NO_PROXY um 127.0.0.1,localhost ergänzt
   main/store.ts             Speicher: entprelltes, atomares Schreiben nach state.json; Verlauf pro Tab unter history\
   main/dataFolder.ts        Datenordner (THub bzw. THub-dev) und einmalige Übernahme aus dem alten Ordner
-  main/system.ts            Uhr, System und (vorerst leere) Prozess-Sonde für den Betrieb
+  main/system.ts            Uhr und System für den Betrieb
+  main/processProbe.ts      Prozess-Sonde: NtQuerySystemInformation über koffi, ein asynchroner Aufruf pro Abfrage
   main/shells.ts            Shell-Erkennung: PowerShell 7 (auch aus dem Store), Windows PowerShell, cmd, Git Bash, WSL
   main/theme.ts             Design hell/dunkel nach der Wahl in den Einstellungen, bei „System“ nach Windows (nativeTheme);
                             zieht Fensterfarbe, Fensterknöpfe und Oberfläche nach
@@ -121,7 +124,7 @@ Der Inhalt jedes Terminals liegt daneben in `%APPDATA%\THub\history\<Tab-Kennung
   - Schriftgrösse im Terminal: 8 bis 32, Standard 14.
 - Schriftgrösse für alle Tabs zugleich auch mit `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-` und `Ctrl` `0` (zurück auf 14). `+` und `-` werden am erzeugten Zeichen erkannt, nicht an der Tastenposition: Die Schweizer Tastatur (`+` auf Shift+1) und der Ziffernblock funktionieren, `Ctrl` `=` zählt wie `Ctrl` `+`. Die Terminals passen danach Spalten und Zeilen an, die Shells erfahren die neue Grösse. Der Zoom der ganzen Oberfläche ist abgeschaltet, `Ctrl` + Mausrad scrollt das Terminal nicht.
 - Bei vielen Tabs werden die Tabs schmaler und die Leiste scrollbar (auch mit dem Mausrad)
-- Tooltip mit Name, Ordner und Shell; Schliessen mit `×` oder der mittleren Maustaste
+- Tooltip mit Name, Ordner, Shell und Status; Schliessen mit `×` oder der mittleren Maustaste
 - Tabs umbenennen (Doppelklick auf den Tab oder `F2`; Enter übernimmt, Escape bricht ab)
 - Beim Beenden werden alle Tabs gespeichert und beim nächsten Start in ihrem Verzeichnis neu gestartet; der zuletzt aktive Tab wird wieder angezeigt
 - Eigene Titelleiste ohne Windows-Rahmen: Die Tabs sitzen direkt in der Titelleiste, rechts die nativen Fensterknöpfe mit den Andock-Layouts von Windows 11. Die freie Fläche neben den Tabs (mindestens 56 px, auch bei vielen Tabs) verschiebt das Fenster, Doppelklick maximiert.
@@ -140,6 +143,34 @@ Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem
 - Die Hook-Datei `claude-hooks.json` schreibt THub bei jedem Start neu in seinen Datenordner, nach der im Spike geprüften Vorlage (`spikes/claude-hooks/empfohlene-hook-datei.json`). `SessionStart` läuft über `curl.exe`, weil Claude dafür keine HTTP-Hooks kennt. Die globale Claude-Konfiguration bleibt unberührt.
 - Beendet THub sich selbst (App beenden, Tab schliessen, Windows-Abmeldung), wird die Zuordnung eingefroren: Spätere Ereignisse ändern sie nicht mehr.
 - Ein zweiter Start öffnet keinen Server und schreibt keine Hook-Datei.
+
+### Status am Tab
+
+Links vom Tab-Namen zeigt ein Symbol, was im Tab los ist; der Tooltip nennt es als Text. Im Ruhezustand steht dort gedämpft die Art des Tabs: `>_` für ein Terminal, ein Stern für einen Claude-Tab.
+
+| Symbol | Status | Wann |
+|---|---|---|
+| violetter Stern, rotiert und pulsiert | Claude arbeitet | `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`; eine Eingabe in einem wartenden Tab (nach einer Bestätigung kommt bis `PostToolUse` kein Ereignis) |
+| oranger Punkt mit Ping-Ring | Claude wartet auf dich | `PermissionRequest` (sofort, auch bei Rückfragen); `Notification` `permission_prompt`/`elicitation_dialog` nur, wenn der Tab noch arbeitet und seit `PreToolUse` weder `PermissionRequest` noch `PostToolUse` kam |
+| grüner Punkt | Claude ist fertig, noch nicht angeschaut | `Stop`/`StopFailure`, während der Tab nicht sichtbar war (nicht aktiv oder Fenster nicht im Vordergrund); verschwindet, sobald der Tab angezeigt wird |
+| blauer, atmender Punkt | Prozesse laufen | siehe unten |
+| graues Pause-Symbol | pausiert | Claude-Session nach einem Neustart noch nicht fortgesetzt (Ticket 12) |
+
+- Vorrang, wenn mehreres zutrifft: pausiert → wartet → arbeitet → fertig → Prozesse laufen → nichts.
+- `Stop` und `StopFailure` setzen Claude auf „ruht“. Esc in einem arbeitenden oder wartenden Claude-Tab setzt ihn nach etwa 1,5 Sekunden ohne weiteres Hook-Ereignis ebenfalls auf „ruht“, ohne grün: Nach einer Unterbrechung oder abgelehnten Rückfrage meldet Claude nichts. `idle_prompt` ändert nichts.
+- Antworten des Terminals (Fokus-Meldungen, Maus, Cursor-Position, Farben) zählen nicht als Eingabe.
+- Der Renderer meldet dem Kern beim Laden und bei jedem Fokuswechsel, ob das Fenster im Vordergrund ist.
+- Bei reduzierter Bewegung (Windows-Einstellung) stehen die Animationen still; nur der Stern dreht sich langsam.
+
+**Prozesse laufen:** Etwa alle 1,5 Sekunden fragt THub für alle Tabs zusammen einmal die Prozessliste von Windows ab (`NtQuerySystemInformation` über [koffi](https://koffi.dev/), asynchron, ohne Prozess zu starten; rund 7 ms auf einem Hilfs-Thread). Befunde: `docs/spikes/prozess-sonde.md`.
+
+- Ein Prozess ist (Prozess-ID, Startzeit); ein Kind zählt nur unter einem Elternprozess, der nicht jünger ist als es selbst.
+- Gezählt wird unter der innersten Shell: die Prozess-ID von node-pty, bei Git Bash genau eine Ebene tiefer das `bash.exe`-Kind des Starters `bin\bash.exe`. Ein Prozess zählt erst, wenn er in zwei aufeinanderfolgenden Abfragen vorkommt (kurzlebige Prompt-Helfer wie `git.exe` von posh-git zählen so nicht); `conhost.exe` und `OpenConsole.exe` nie.
+- Git Bash: Verwaiste MSYS-Programme (`sleep`, `ssh`, `vim`, `less`) zählen, wenn ihr Konsolen-Host der des Tabs ist.
+- Claude-Tabs: nur Nachfahren des Claude-Prozesses, die nach dem letzten Prompt gestartet sind, und nur, solange Claude ruht. MCP-Server zählen so nicht, ein während der Antwort gestarteter Dev-Server schon.
+- WSL-Tabs zeigen nie „Prozesse laufen“.
+- Grenzen: Aus der Shell geöffnete GUI-Programme halten den Tab blau, solange sie offen sind; ein Prompt, der länger als 1,5 Sekunden rechnet, kann kurz blau aufblitzen.
+- koffi ist exakt auf 3.3.8 gepinnt. Die Binärdatei kommt als optionales Paket `@koromix/koffi-win32-x64`; nie mit `--omit=optional` installieren. Im Paket liegt sie ausserhalb des asar-Archivs (`asarUnpack`), esbuild lässt koffi als `external` stehen.
 
 ### Shell-Integration
 

@@ -332,6 +332,13 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 5. Prozesse laufen (blau)
 6. nichts
 
+**Präzisierungen aus der Umsetzung (Ticket 13):**
+- Als Eingabe des Nutzers zählt, was xterm.js für Tasten, Text und Einfügen schickt. Antworten des Terminals auf dem gleichen Weg (Fokus-Meldungen, Maus, Cursor-Position, Geräteattribute, OSC- und DCS-Antworten) zählen nicht; sonst setzte schon das Anklicken eines wartenden Tabs ihn auf „arbeitet“, weil Claude Code Fokus-Meldungen einschaltet. Esc ist genau die Taste Esc allein, nicht Pfeiltasten oder Alt-Kombinationen.
+- Die Wartezeit nach Esc beendet jedes Hook-Ereignis ausser `Notification`: Benachrichtigungen kommen verzögert (Rückfrage nach etwa 6 Sekunden) und zeigen nicht, dass Claude weitermacht.
+- Bis der Renderer zum ersten Mal meldet, ob das Fenster im Vordergrund ist, gilt es als im Hintergrund.
+- Mit der Claude-Zuordnung entfallen auch Zustand und „fertig, noch nicht angeschaut“. Ein neuer Start von Claude beginnt bei „ruht“. Der Zeitpunkt des letzten Prompts bleibt bei einer neuen Session (`/clear`) stehen, weil der Claude-Prozess derselbe bleibt.
+- Verwaiste MSYS-Programme zählen nur in normalen Git-Bash-Tabs; in Claude-Tabs zählen allein die Nachfahren des Claude-Prozesses.
+
 **Hinweise im Fenster:**
 - Der Kern löst einen Hinweis aus, wenn ein nicht sichtbarer Tab in „wartet auf dich“ wechselt oder fertig wird. Pro Tab gibt es höchstens einen Hinweis; ein neuer ersetzt den alten. Hinweise verschiedener Tabs stehen gleichzeitig übereinander; wird ein Tab angezeigt (auf welchem Weg auch immer), verschwindet nur dessen Hinweis.
 - „Fertig“ verschwindet nach etwa 6 Sekunden Vordergrundzeit oder beim Anzeigen des Tabs.
