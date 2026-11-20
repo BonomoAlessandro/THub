@@ -130,6 +130,26 @@ svg.i {
     color var(--dur-fast),
     box-shadow var(--dur-fast);
   animation: tab-in var(--dur) var(--ease);
+  /* Eigene Stapelebene, damit die Klickfläche (::before) hinter dem Inhalt des Tabs liegt, aber vor der Leiste. */
+  isolation: isolate;
+}
+/*
+ * Unsichtbare Klickfläche (Ticket 26): Sie reicht vom Tab bis an den oberen und unteren Rand der Titelleiste, damit ein
+ * Klick knapp über (oder unter) der Karte nicht ins Leere geht. Sie gehört zum Tab: Klick, Rechtsklick, mittlere Taste,
+ * Ziehen, Überfahren und Tooltip wirken auch dort. Gemessen wird weiterhin die Karte (getBoundingClientRect zählt das
+ * Pseudo-Element nicht mit), also bleiben Tooltip, Abbild und Einfügemarke beim Ziehen wo sie waren.
+ * Im maximierten Fenster reicht sie so bis zur obersten Pixelreihe des Bildschirms. Im nicht maximierten Fenster
+ * meldet Electron die oberen Pixel vor der Seite als Rand zum Grössenziehen (HTTOP); dort bleibt das Fenster ziehbar
+ * wie bei Chrome. z-index -1 in der eigenen Stapelebene: über dem Hintergrund des Tabs, unter Name, Symbol und ×.
+ */
+.tab::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc((var(--tab-h) - var(--titlebar-h)) / 2);
+  bottom: calc((var(--tab-h) - var(--titlebar-h)) / 2);
+  z-index: -1;
 }
 .tab:hover {
   background: var(--tab-hover);
@@ -243,8 +263,9 @@ svg.i {
 }
 .drop-mark {
   position: absolute;
-  top: 8px;
-  bottom: 8px;
+  /* 3 px kürzer als die Karte, oben und unten. */
+  top: calc((var(--titlebar-h) - var(--tab-h)) / 2 + 3px);
+  bottom: calc((var(--titlebar-h) - var(--tab-h)) / 2 + 3px);
   width: 2px;
   border-radius: 2px;
   background: var(--accent);
@@ -803,15 +824,24 @@ kbd {
   background: var(--on-accent);
 }
 
-/* Auswahlfeld, z.B. die Standard-Shell; der Pfeil ist ein eingebettetes Symbol wie im Prototyp. */
+/*
+ * Auswahlfeld, z.B. die Standard-Shell; der Pfeil ist ein eingebettetes Symbol wie im Prototyp.
+ * Die aufgeklappte Liste zeichnet Chromium als eigenes Fenster: Es übernimmt die Hintergrund- und Textfarbe des Felds,
+ * das Farbschema (color-scheme, vom Design über data-theme geerbt, auch bei „System“) und legt die Liste auf eine weisse
+ * Fläche. Eine halbdurchsichtige Hintergrundfarbe wie --btn-bg im dunklen Design ergab dort eine weisse Liste mit heller,
+ * kaum lesbarer Schrift (Ticket 26). Darum ist die Hintergrundfarbe deckend (die Dialogfläche, wie bei den Menüs), und
+ * --btn-bg liegt als Bild-Ebene darüber: Geschlossen sieht das Feld aus wie bisher, die Liste folgt dem Design.
+ */
 .select {
   height: 30px;
   padding: 0 28px 0 10px;
   font: 13px var(--font-ui);
   color: var(--text);
-  background: var(--btn-bg)
+  background:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8a95' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
-    no-repeat right 9px center;
+      no-repeat right 9px center,
+    linear-gradient(var(--btn-bg), var(--btn-bg)),
+    var(--dialog-bg);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
   -webkit-appearance: none;

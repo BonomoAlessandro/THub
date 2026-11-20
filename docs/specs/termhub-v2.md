@@ -42,7 +42,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 7. Als Nutzer möchte ich, dass PowerShell 7 die Standard-Shell ist, wenn sie installiert ist, damit ich die moderne PowerShell bekomme.
 8. Als Nutzer möchte ich beim Anlegen eines Tabs über das Pfeil-Menü eine andere Shell wählen (Windows PowerShell, cmd, Git Bash, WSL), damit ich für jede Aufgabe die passende Shell habe.
 9. Als Nutzer möchte ich, dass ein Tab seine Shell auch nach einem Neustart behält, damit eine Git-Bash-Session nicht plötzlich eine PowerShell ist.
-10. Als Nutzer möchte ich, dass neue Tabs rechts neben dem aktiven Tab erscheinen, damit zusammengehörige Tabs nebeneinander bleiben.
+10. Als Nutzer möchte ich, dass neue Tabs am Ende der Leiste erscheinen, damit ich einen neuen Tab immer an derselben Stelle finde, egal welcher Tab gerade aktiv ist. (Bis Ticket 26 „rechts neben dem aktiven Tab“; nach der Abnahme geändert. Duplizieren und Wiederöffnen behalten ihre eigene Stelle.)
 11. Als Nutzer möchte ich, dass meine PowerShell-, Bash- und cmd-Profile wie gewohnt geladen werden, damit mein Prompt, meine Aliase und Module auch in THub funktionieren.
 
 ### Tabs benennen und ordnen
@@ -485,7 +485,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Hinweise:** 320 px breit, Titel 14 px, Text 13 px. Die ganze Karte ist anklickbar und öffnet den Tab; es gibt keinen „Öffnen“-Button. Eine dezente Zeile „Zum Tab wechseln →“ zeigt, dass man klicken kann, und wird beim Überfahren hell. Das × zum Wegklicken erscheint beim Überfahren.
   - **Symbol-Platz links vom Tab-Namen:** Im Ruhezustand zeigt er gedämpft den Typ des Tabs (`>_` für ein normales Terminal, ein Stern für einen Claude-Tab), sonst den Status.
   - **Status-Animationen:** „arbeitet“ = violetter Claude-Stern, der rotiert und pulsiert; „wartet auf dich“ = oranger Punkt mit Ping-Ring; „Prozesse laufen“ = blauer, ruhig atmender Punkt; „fertig“ = grüner Punkt; „pausiert“ = graues Pause-Symbol. Bei reduzierter Bewegung (Windows-Einstellung) stehen die Animationen still; nur der Claude-Stern dreht sich langsam weiter.
-- **Design-Variablen** (vom Nutzer am 2026-11-19 freigegeben; vollständige Liste mit allen Werten in `prototype/styles.css`):
+- **Design-Variablen** (vom Nutzer am 2026-11-19 freigegeben, `--st-working` im dunklen Design am 2026-11-20 aufgehellt; vollständige Liste mit allen Werten in `prototype/styles.css`):
 
 | Zweck | Variable | Dunkel | Hell |
 |---|---|---|---|
@@ -496,13 +496,13 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 | Neutrale Hervorhebung (kein Akzent) | `--accent`, `--on-accent` | `#f4f4f5` auf `#111114` | `#18181b` auf `#ffffff` |
 | Dialoge, Menüs, Hinweise | `--dialog-bg` | `#25252b` | `#ffffff` |
 | Gefahr (Schliessen-Bestätigung) | `--danger` | `#f2555a` | `#dc2626` |
-| Status arbeitet / wartet / Prozesse | `--st-working`, `--st-waiting`, `--st-processes` | `#a78bfa`, `#fb923c`, `#60a5fa` | `#7c3aed`, `#ea580c`, `#2563eb` |
+| Status arbeitet / wartet / Prozesse | `--st-working`, `--st-waiting`, `--st-processes` | `#c4b5fd`, `#fb923c`, `#60a5fa` | `#7c3aed`, `#ea580c`, `#2563eb` |
 | Status fertig / pausiert | `--st-finished`, `--st-paused` | `#4ade80`, `#8b8b96` | `#16a34a`, `#9090a0` |
 | Terminal Hintergrund / Text | `--term-bg`, `--term-fg` | `#141417`, `#d4d4dc` | `#ffffff`, `#24242b` |
 | Terminal Rot / Grün / Gelb / Blau | `--a-red` … `--a-blue` | `#f87171`, `#4ade80`, `#facc15`, `#60a5fa` | `#c62828`, `#1a7f37`, `#9a6700`, `#0550ae` |
 | Terminal Magenta / Cyan / Gedämpft | `--a-magenta`, `--a-cyan`, `--a-dim` | `#c084fc`, `#22d3ee`, `#6e6e7a` | `#8250df`, `#0e7490`, `#8a8a95` |
 
-- **Masse:** Titelleiste 44 px; Tabs 30 px hoch, 200 px breit, mindestens 112 px, 5 px Abstand; Radien 4 / 6 / 8 / 12 px, Terminal-Karte 10 px mit 7 px Rand zum Fenster; Status-Feld 14 px mit 8-px-Punkten; Hinweise 320 px breit.
+- **Masse:** Titelleiste 44 px; Tabs 34 px hoch (bis Ticket 26: 30 px; die Klickfläche reicht über die ganze Titelleiste), 200 px breit, mindestens 112 px, 5 px Abstand; Radien 4 / 6 / 8 / 12 px, Terminal-Karte 10 px mit 7 px Rand zum Fenster; Status-Feld 14 px mit 8-px-Punkten; Hinweise 320 px breit.
 - **Schriften:** Oberfläche Segoe UI Variable (Text 13 px, Tabs 12,5 px, Dialog-Titel 16 px), Terminal Cascadia Mono (Standard 14 px).
 - **Bewegung:** kurze Übergänge 120 ms, Standard 180 ms, Ease `cubic-bezier(0.2, 0.8, 0.2, 1)`; Claude-Stern 1,6 s, Ping 1,4 s, Atmen 2,2 s.
 - **Tastenkürzel:**
@@ -540,6 +540,12 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Ctrl+Klick:** OSC-8-Links über die Option `linkHandler` von xterm.js (ersetzt dessen Rückfrage per `window.confirm`), URLs im Klartext über `@xterm/addon-web-links` 0.12 (erschienen mit xterm.js 6.0.0). xterm.js meldet das Loslassen jeder Maustaste; geöffnet wird nur bei der linken Taste mit Ctrl. Andere Protokolle als `http:` und `https:` erkennt xterm.js für OSC 8 gar nicht erst (`allowNonHttpProtocols` bleibt aus). Überlappen ein OSC-8-Link und eine erkannte URL, gilt nur der OSC-8-Link; ein Klick öffnet einmal.
 - **Öffnen im Hauptprozess:** neuer IPC-Kanal `link:open` (`window.thub.openLink`). Der Hauptprozess prüft die Adresse selbst mit dem URL-Parser (nur `http:`/`https:`, höchstens 8192 Zeichen) und öffnet die normalisierte Form mit `shell.openExternal`. Im Testmodus öffnet er nichts und schreibt „Testmodus: Der Browser würde … öffnen.“ in die Ausgabe.
 - **Keine gestrichelte Linie:** xterm.js 6 liefert im Getter `underlineStyle` der erweiterten Zellattribute für jede Zelle mit Link-Kennung „gestrichelt“ (5), egal, was das Programm verlangt hat; der DOM-Renderer setzt daraus die Klasse `xterm-underline-5`, dieselbe wie für SGR 4:5. CSS kann die beiden nicht trennen, und eine Option gibt es nicht. THub ersetzt deshalb diesen einen Getter (`linkUnderline.ts`): Für Link-Zellen liefert er den Stil, den das Programm gesetzt hat, meist keinen. Ausdrücklich verlangte Unterstreichungen bleiben, auch SGR 4:5 in einem Link. Hand-Zeiger und durchgezogene Unterstreichung beim Überfahren zeichnet xterm.js selbst. Passt der Aufbau von xterm.js nach einem Update nicht mehr, bleibt alles wie bisher, und die Tests schlagen an.
+
+**Präzisierungen aus der Umsetzung (Ticket 26):**
+- **Klickfläche der Tabs:** Die Karte ist 34 px hoch und steht mittig in der 44 px hohen Titelleiste. Ein unsichtbares Pseudo-Element jedes Tabs (`::before`, in der eigenen Stapelebene des Tabs hinter Name, Symbol und ×) reicht über die ganze Höhe der Titelleiste, also auch 5 px unter die Karte, nicht nur darüber. Klick, Rechtsklick, mittlere Taste, Doppelklick, Ziehen, Überfahren und Tooltip wirken dort wie auf der Karte. Gemessen wird weiter die Karte: Tooltip, Abbild und Einfügemarke beim Ziehen stehen wie bisher. Die 5-px-Lücken zwischen den Tabs bleiben Leiste (kein Ziehen des Fensters, kein Tab).
+- **Rand zum Grössenziehen:** Den regelt Electron, nicht die Oberfläche. Im nicht maximierten Fenster meldet es die obersten Pixel vor der Seite als `HTTOP` (Rahmen plus Polsterung von Windows, gemessen bei 150 %: 8 CSS-px, also die Fläche über der Karte und deren oberste 3 px); das Fenster lässt sich dort wie bei Chrome in der Höhe ziehen. Im maximierten Fenster gibt es keinen Rand: Ab der obersten Pixelreihe trifft ein Klick über einem Tab den Tab, die freie Fläche bleibt `HTCAPTION`. Der Renderer braucht dafür den Maximiert-Zustand nicht zu kennen.
+- **Neue Tabs am Ende:** `createTab` hängt an, egal welcher Tab aktiv ist; das gilt für `+`, `Ctrl+Shift+T`, das Pfeil-Menü, die Befehlspalette und den Knopf „Neues Terminal“ ohne offene Tabs. Nur Duplizieren (rechts neben der Quelle) und Wiederöffnen (alte Stelle) setzen eine Position.
+- **Aufgeklappte Auswahlliste:** Chromium zeichnet die Liste eines `<select>` als eigenes Fenster. Es übernimmt das Farbschema des Felds (`color-scheme`, vom Design über `data-theme` geerbt, auch bei „System“), seine Hintergrund- und Textfarbe, und legt die Liste auf eine weisse Fläche. Das halbdurchsichtige `--btn-bg` des dunklen Designs ergab so eine weisse Liste mit heller Schrift. Die Hintergrundfarbe des Felds ist deshalb deckend (`--dialog-bg`), `--btn-bg` liegt als Bild-Ebene darüber; geschlossen sieht es aus wie vorher. Die Hervorhebung des gewählten Eintrags kommt von Chromium selbst und lässt sich ohne eigene Liste nicht gestalten: im dunklen Design hellblau mit dunkler Schrift, im hellen dunkelblau mit weisser Schrift. Andere native Bedienelemente: Die Bildlaufleisten folgen über `color-scheme` dem Design; ein weiteres `<select>` gibt es nicht. Native Tooltips (`title`, etwa am Standardordner) sind nicht Teil dieses Tickets.
 
 ### App-Verhalten
 

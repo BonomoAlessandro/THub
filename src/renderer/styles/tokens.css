@@ -15,7 +15,8 @@
   --r-term: 10px;
 
   --titlebar-h: 44px;
-  --tab-h: 30px;
+  /* Ticket 26: 34 statt 30 px. Die Klickfläche reicht unsichtbar über die ganze Höhe der Titelleiste (app.css). */
+  --tab-h: 34px;
   --tab-w: 200px;
   --tab-min-w: 112px;
   --drag-min-w: 56px;
@@ -73,8 +74,9 @@
 
   --danger: #f2555a;
 
-  /* Status am Tab (ab Ticket 13). */
-  --st-working: #a78bfa;
+  /* Status am Tab (ab Ticket 13). Der Claude-Stern ist heller als das Violett im hellen Design, damit er
+     sich auf der dunklen Tab-Leiste abhebt (Ticket 26: 6,7–8,2 : 1 statt 4,6–5,5 : 1). */
+  --st-working: #c4b5fd;
   --st-waiting: #fb923c;
   --st-processes: #60a5fa;
   --st-finished: #4ade80;
