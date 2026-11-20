@@ -134,6 +134,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 72. Als Nutzer möchte ich, dass `Ctrl+K` in Claude und in den Shells weiterhin funktioniert, damit THub meine gewohnten Tasten nicht stiehlt.
 73. Als Nutzer möchte ich mit `Ctrl+Shift+C` / `Ctrl+Shift+V` und mit Rechtsklick im Terminal kopieren und einfügen, damit das wie gewohnt funktioniert.
 74. Als Nutzer möchte ich die Terminal-Schriftgrösse mit `Ctrl` + Mausrad oder `Ctrl` `+` / `Ctrl` `-` ändern, damit ich sie schnell anpassen kann.
+83. Als Nutzer möchte ich in THub eine Übersicht aller Tastenkürzel öffnen können (über die Befehlspalette und aus den Einstellungen), damit ich sie nachschlagen kann, ohne das README zu suchen.
 
 ### Einstellungen und Aussehen
 
@@ -476,6 +477,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 | `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-` / `Ctrl` `0` | Schriftgrösse ändern / zurücksetzen |
 
 - `Ctrl+K` wird nicht abgefangen.
+- **Übersicht der Tastenkürzel:** ein Dialog im Stil der Einstellungen, gruppiert (Tabs, Bearbeiten, Darstellung, Fenster). Geöffnet über den Befehl „Tastenkürzel anzeigen“ in der Befehlspalette und den Link „Alle Tastenkürzel …“ im Einstellungsdialog; kein eigenes Kürzel. Erzeugt aus derselben Tabelle, nach der die Tasten verarbeitet werden.
 - Kürzel, die vom Tastaturlayout abhängen (`+`, `-`), werden über das erzeugte Zeichen erkannt, nicht über die Tastenposition. So funktionieren die Schweizer Tastatur (`+` auf Shift+1) und der Ziffernblock.
 - Der eingebaute Zoom von Chromium und die Zoom-Kürzel des Entwicklermenüs sind abgeschaltet.
 
