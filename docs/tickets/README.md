@@ -47,7 +47,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 24 | [PowerShell in THub: flüssige Pfeiltasten, keine Befehlsvorschau](24-powershell-fluessig.md) | AFK | – | in Arbeit |
 | 25 | [Links und Rechtsklick im Terminal](25-links-und-rechtsklick.md) | AFK | – | in Arbeit |
 | 26 | [Tab-Leiste, neue Tabs am Ende, Stern-Farbe und Dropdown im dunklen Design](26-tableiste-und-dropdown.md) | AFK | – | in Arbeit |
-| 27 | [Offene Punkte nur, wenn es wirklich welche gibt; Klick schliesst den Hinweis](27-offene-punkte-seltener.md) | AFK | – | in Arbeit |
+| 27 | [Offene Punkte nur, wenn es wirklich welche gibt; Klick schliesst den Hinweis](27-offene-punkte-seltener.md) | AFK | – | erledigt |
 
 ```mermaid
 flowchart LR
