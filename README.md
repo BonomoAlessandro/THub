@@ -44,7 +44,8 @@ src/
     windowPlacement.ts      Wo das Fenster beim Start öffnet (gespeichert, zentriert oder maximiert)
     claude.ts               Claude-Zuordnung pro Tab: Vertrag von Starter und Hooks, Regeln
     tabStatus.ts            Status am Tab: Status-Zeilen des Zustandsautomaten, Eingaben (Esc), Vorrang der Anzeige
-    toasts.ts               Hinweise im Fenster: höchstens einer pro Tab, Countdown nur im Vordergrund
+    toasts.ts               Hinweise im Fenster: je Platz einer pro Tab, Countdown nur im Vordergrund
+    openPoints.ts           Offene Punkte: Anweisung an Claude und Erkennung am Ende einer Antwort
     processRules.ts         Prozess-Regeln: ob in einem Tab Prozesse laufen (innerste Shell, Waisen, Claude-Tabs)
     resume.ts               Claude-Sessions nach einem Neustart fortsetzen: welche, und der Startbefehl pro Shell
     cwdReport.ts            Ordner-Meldungen der Shell (OSC 7, OSC 9;9) im rohen Ausgabestrom erkennen
@@ -103,9 +104,12 @@ Gespeichert wird in `%APPDATA%\THub\state.json`, im Schema Version 2. Eine Datei
 ```json
 {
   "version": 2,
-  "settings": { "defaultCwd": "", "defaultShellId": "pwsh", "theme": "system", "fontSize": 14, "notifications": true },
+  "settings": { "defaultCwd": "", "defaultShellId": "pwsh", "theme": "system", "fontSize": 14, "notifications": true, "openPoints": true },
   "tabs": [
-    { "id": "…", "name": "Mein Projekt", "nameIsManual": true, "shellId": "gitbash", "startCwd": "C:\\…" }
+    { "id": "…", "name": "Mein Projekt", "nameIsManual": true, "shellId": "gitbash", "startCwd": "C:\\…" },
+    { "id": "…", "name": "api", "nameIsManual": false, "shellId": "pwsh", "startCwd": "C:\\…\\api",
+      "claude": { "sessionId": "…", "cwd": "C:\\…\\api", "confirmed": true, "hadPrompt": true },
+      "openPoints": ["Soll der alte Login parallel weiterlaufen?"] }
   ],
   "activeTabId": "…",
   "recentDirs": ["C:\\…\\Mein Projekt"],
@@ -122,12 +126,13 @@ Der Inhalt jedes normalen Terminals liegt daneben in `%APPDATA%\THub\history\<Ta
 - THub erkennt die Shells selbst: PowerShell 7 (auch die Store-Version), Windows PowerShell, cmd („Eingabeaufforderung“), Git Bash (Standardort oder laut Registry) und jede WSL-Distribution einzeln, ohne die internen von Docker Desktop. Standard-Shell ist PowerShell 7, sonst Windows PowerShell; in den Einstellungen wählbar. Jeder Tab behält seine Shell, auch über einen Neustart. Fehlt sie beim Wiederherstellen (etwa nach einer Deinstallation), startet der Tab mit der Standard-Shell und zeigt einen Hinweis über der ersten Zeile; seine Shell behält er, sobald es sie wieder gibt, startet er wieder mit ihr. WSL-Tabs starten mit `wsl.exe -d <Distribution> --cd <Ordner>`.
 - Neue Tabs heissen wie ihr Ordner, im Benutzerordner wie der Benutzer, auf einem Laufwerk wie das Laufwerk (`D:`); bei Gleichstand mit „ 2“, „ 3“ usw. Der Name wird beim Anlegen festgelegt und ändert sich danach nicht von selbst; ein von Hand vergebener Name wird nie überschrieben. Aus Version 1 übernommene Tabs behalten ihre Namen.
 - Pfeil neben `+` („Shell oder Ordner wählen“): zuerst die erkannten Shells, die Standard-Shell mit dem Etikett „Standard“; ein Klick öffnet einen Tab mit dieser Shell im Standardordner. Darunter „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter der Pfad) und „Ordner wählen …“ (Ordner-Dialog von Windows). Zuletzt benutzt sind die Startordner neuer Tabs und der letzte Ordner eines Tabs beim Schliessen: höchstens acht, neueste zuerst, ohne Doppelte; angeboten werden nur Ordner, die es noch gibt. Bedienung auch mit Pfeiltasten, Enter und Escape.
-- Zahnrad: Einstellungen mit Standardordner, Standard-Shell, Design, Schriftgrösse und Hinweisen im Fenster; jede Änderung wirkt sofort. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
+- Zahnrad: Einstellungen mit Standardordner, Standard-Shell, Design, Schriftgrösse, Hinweisen im Fenster und offenen Punkten aus Claudes Antworten; jede Änderung wirkt sofort. Escape oder „Fertig“ schliesst den Dialog, der Fokus geht zurück ins Terminal.
   - Standardordner: „Ändern …“ öffnet den Ordner-Dialog, „Zurücksetzen“ stellt auf den Benutzerordner zurück. `+` und `Ctrl+Shift+T` öffnen neue Terminals dort; offene Tabs bleiben, wo sie sind.
   - Standard-Shell: die Shell für `+` und `Ctrl+Shift+T`, wählbar unter den erkannten; offene Tabs behalten ihre Shell.
   - Design: System (Standard), Hell oder Dunkel. Die Wahl gilt für Oberfläche, Terminalfläche, Fensterknöpfe und die Dialoge von Windows; bei „System“ zieht ein Wechsel in Windows sofort mit.
   - Schriftgrösse im Terminal: 8 bis 32, Standard 14.
   - Hinweise im Fenster: an (Standard) oder aus, siehe „Hinweise im Fenster“.
+  - Offene Punkte aus Claudes Antworten anzeigen: an (Standard) oder aus, siehe „Offene Punkte aus Claudes Antworten“.
 - Schriftgrösse für alle Tabs zugleich auch mit `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-` und `Ctrl` `0` (zurück auf 14). `+` und `-` werden am erzeugten Zeichen erkannt, nicht an der Tastenposition: Die Schweizer Tastatur (`+` auf Shift+1) und der Ziffernblock funktionieren, `Ctrl` `=` zählt wie `Ctrl` `+`. Die Terminals passen danach Spalten und Zeilen an, die Shells erfahren die neue Grösse. Der Zoom der ganzen Oberfläche ist abgeschaltet, `Ctrl` + Mausrad scrollt das Terminal nicht.
 - Bei vielen Tabs werden die Tabs schmaler und die Leiste scrollbar (auch mit dem Mausrad)
 - Tooltip mit Name, Ordner, Shell und Status; Schliessen mit `×` oder der mittleren Maustaste
@@ -145,7 +150,7 @@ Der Inhalt jedes normalen Terminals liegt daneben in `%APPDATA%\THub\history\<Ta
 
 Beim Start öffnet THub einen kleinen HTTP-Server nur auf `127.0.0.1`, auf einem zufälligen freien Port und mit einem pro Start zufälligen Token. Jedes Terminal bekommt `THUB_TAB_ID`, `THUB_API` (Adresse) und `THUB_TOKEN`. Über diese Schnittstelle melden der `claude`-Starter (siehe „Shell-Integration“) und die Hooks von Claude Code, welche Claude-Session in welchem Tab läuft; THub merkt sich das als Claude-Zuordnung im gespeicherten Zustand (Session-Kennung, Ordner, bestätigt, hatte Prompt).
 
-- Endpunkte: `POST /claude/launch`, `/claude/started`, `/claude/exit` und `/hooks/<Ereignis>`. Ohne gültiges Token (`X-THub-Token`) antwortet der Server mit 403. Hook-Antworten sind immer sofort leer; THub hört nur zu und beeinflusst Claude nie.
+- Endpunkte: `POST /claude/launch`, `/claude/started`, `/claude/exit` und `/hooks/<Ereignis>`. Ohne gültiges Token (`X-THub-Token`) antwortet der Server mit 403. Hook-Antworten kommen immer sofort und sind leer, ohne Entscheidungsfelder; THub hört nur zu. Einzige Ausnahme: Auf `SessionStart` gibt THub Claude bei eingeschalteter Einstellung die Anweisung für offene Punkte mit (siehe „Offene Punkte aus Claudes Antworten“).
 - Die Hook-Datei `claude-hooks.json` schreibt THub bei jedem Start neu in seinen Datenordner, nach der im Spike geprüften Vorlage (`spikes/claude-hooks/empfohlene-hook-datei.json`). `SessionStart` läuft über `curl.exe`, weil Claude dafür keine HTTP-Hooks kennt. Die globale Claude-Konfiguration bleibt unberührt.
 - Beendet THub sich selbst (App beenden, Tab schliessen, Windows-Abmeldung), wird die Zuordnung eingefroren: Spätere Ereignisse ändern sie nicht mehr.
 - Ein zweiter Start öffnet keinen Server und schreibt keine Hook-Datei.
@@ -195,7 +200,18 @@ Wartet Claude in einem Tab, den du gerade nicht siehst, auf dich oder wird dort 
 - Wird ein Tab angezeigt, auf welchem Weg auch immer (Klick auf Hinweis oder Tab, Tastenkürzel, Schliessen des Nachbarn, Fenster kommt mit ihm nach vorne), verschwindet nur sein Hinweis.
 - „Fertig“ verschwindet nach 6 Sekunden Vordergrundzeit; die Linie am unteren Rand zeigt die übrige Zeit. Im Hintergrund und solange die Maus auf der Karte steht, hält der Countdown an.
 - „Wartet“ bleibt, bis der Tab angezeigt wird oder Claude dort nicht mehr wartet (arbeitet wieder, ist fertig, wurde beendet).
-- In den Einstellungen abschaltbar („Hinweise im Fenster“); dann gibt es keine, auch die stehenden verschwinden, die Status-Symbole bleiben. Keine Windows-Benachrichtigungen, kein Blinken in der Taskleiste.
+- In den Einstellungen abschaltbar („Hinweise im Fenster“); dann gibt es keine, auch die stehenden verschwinden, die Status-Symbole bleiben. Keine Windows-Benachrichtigungen, kein Blinken in der Taskleiste. Die offenen Punkte (nächster Abschnitt) haben ihre eigene Einstellung.
+
+### Offene Punkte aus Claudes Antworten
+
+Endet eine Antwort von Claude mit Fragen oder Punkten, die du entscheiden, prüfen oder erledigen musst, zeigt THub sie unten rechts als Hinweis an, damit sie nicht in einer langen Antwort untergehen: Aufzählungssymbol, Tab-Name, „Offene Punkte (n)“ und höchstens vier Punkte zu je höchstens zwei Zeilen (der ganze Text im Tooltip), darunter „+ k weitere“.
+
+- **Anweisung an Claude:** Auf `SessionStart` (der curl-Hook) antwortet THub mit `hookSpecificOutput.additionalContext`: Claude soll Fragen und offene Punkte am Ende der Antwort unter der Überschrift „Offene Punkte“ als kurze Aufzählung schreiben und den Abschnitt sonst weglassen. `SessionStart` kommt auch beim Fortsetzen, nach `/clear` und beim Kompaktieren, die Anweisung gilt also in jeder Session. Die Antwort ist JSON nur aus ASCII-Zeichen (Umlaute als `\uXXXX`), damit sie über die Ausgabe von `curl.exe` unverändert ankommt.
+- **Erkennung** beim Ende einer Antwort (`Stop`, Feld `last_assistant_message`): eine Überschrift „Offene Punkte“, „Offene Fragen“, „Noch offen“ (auch „Noch offene Punkte/Fragen“), „Fragen an dich“, „Zu klären“, „Open points“ oder „Open questions“, als Markdown-Überschrift, fette Zeile oder Zeile mit Doppelpunkt; die Aufzählungspunkte darunter sind die offenen Punkte. Unterpunkte gehören zu ihrem Punkt und zählen nicht einzeln. Ohne solche Überschrift (oder ohne Aufzählung darunter) zählt eine Frage am Ende des letzten Absatzes als ein Punkt. Inhalt von Code-Blöcken zählt nie; endet die Antwort mit einem Code-Block, gibt es keine Frage am Ende. Höchstens 20 Punkte zu je höchstens 300 Zeichen.
+- **Der Hinweis bleibt, bis du ihn mit × schliesst**, auch wenn du den Tab anzeigst, und er erscheint auch für den Tab, den du gerade siehst. Ein Klick zeigt den Tab an.
+- Pro Tab höchstens einer: Eine neue Antwort mit offenen Punkten ersetzt ihn, eine ohne lässt ihn stehen. Er ersetzt den „Fertig“-Hinweis desselben Tabs (der grüne Punkt am Tab bleibt); neben „Wartet“ kann er stehen.
+- Nicht geschlossene Hinweise stehen pro Tab im Zustand (`openPoints`) und erscheinen nach einem Neustart wieder. Ein geschlossener Tab nimmt seinen Hinweis mit, auch beim Wiederöffnen kommt er nicht zurück.
+- In den Einstellungen abschaltbar („Offene Punkte aus Claudes Antworten anzeigen“): dann gibt es keine solchen Hinweise, die stehenden verschwinden, und THub gibt Claude die Anweisung nicht mehr mit. Unabhängig von „Hinweise im Fenster“. Sind die Hooks gesperrt (`disableAllHooks`), entfällt das Feature.
 
 ### Schliessen und wieder öffnen
 
