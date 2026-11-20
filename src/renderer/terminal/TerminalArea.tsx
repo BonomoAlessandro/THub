@@ -14,7 +14,8 @@ interface TerminalAreaProps {
 
 /**
  * Terminal-Fläche als Karte: ein xterm.js pro Tab, alle übereinander. Inaktive Ansichten werden
- * ausgeblendet, nicht zerstört, damit Inhalt und laufende Programme erhalten bleiben.
+ * ausgeblendet, nicht zerstört, damit Inhalt und laufende Programme erhalten bleiben. Ein pausierter
+ * Claude-Tab bekommt seine Ansicht erst, wenn er angezeigt wird: Dann setzt der Kern seine Session fort.
  */
 export function TerminalArea({ tabs, activeTabId, fontSize }: TerminalAreaProps) {
   const stackRef = useRef<HTMLDivElement>(null);
@@ -36,15 +37,17 @@ export function TerminalArea({ tabs, activeTabId, fontSize }: TerminalAreaProps)
     <main className="terminal-area">
       <div className="terminal-card">
         <div className="terminal-stack" ref={stackRef}>
-          {tabs.map((tab) => (
-            <TerminalPane
-              key={tab.id}
-              tabId={tab.id}
-              active={tab.id === activeTabId}
-              exited={tab.process === 'exited'}
-              fontSize={fontSize}
-            />
-          ))}
+          {tabs
+            .filter((tab) => !tab.paused)
+            .map((tab) => (
+              <TerminalPane
+                key={tab.id}
+                tabId={tab.id}
+                active={tab.id === activeTabId}
+                exited={tab.process === 'exited'}
+                fontSize={fontSize}
+              />
+            ))}
         </div>
         {tabs.length === 0 && (
           <div className="empty-state">
