@@ -10,7 +10,7 @@ Desktop-App für Windows: mehrere Terminals als Tabs in einem Fenster. THub merk
 
 ### Tabs
 
-- **Neues Terminal:** `+` oder `Ctrl+Shift+T` öffnet sofort ein Terminal mit der Standard-Shell im Standardordner, rechts neben dem aktiven Tab.
+- **Neues Terminal:** `+` oder `Ctrl+Shift+T` öffnet sofort ein Terminal mit der Standard-Shell im Standardordner, am Ende der Leiste. Das gilt für jeden neuen Tab (Pfeil-Menü, Befehlspalette), egal welcher Tab aktiv ist; nur „Duplizieren“ legt ihn direkt neben die Quelle, und ein wieder geöffneter Tab kommt an seine alte Stelle.
 - **Pfeil neben `+`** („Shell oder Ordner wählen“): zuerst die erkannten Shells, die Standard-Shell mit dem Etikett „Standard“; ein Klick öffnet einen Tab mit dieser Shell im Standardordner. Darunter „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter der Pfad) und „Ordner wählen …“ (Ordner-Dialog von Windows).
 - **Namen:** Ein neuer Tab heisst wie sein Ordner, im Benutzerordner wie der Benutzer, auf einem Laufwerk wie das Laufwerk (`D:`). Bei Gleichstand kommt „ 2“, „ 3“ usw. dazu; Gross- und Kleinschreibung zählen dabei nicht. Der Name bleibt danach, auch nach `cd`.
 - **Umbenennen:** Doppelklick auf den Tab, `F2`, Rechtsklick-Menü oder Befehlspalette. Der Tab wird selbst zum Eingabefeld; Enter oder ein Klick daneben übernimmt, Escape bricht ab. Ein leerer Name zählt nicht; ein von Hand vergebener Name wird nie automatisch überschrieben.

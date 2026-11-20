@@ -41,7 +41,7 @@ describe('Übernahme aus Version 1', () => {
 
     await h.restart();
 
-    expect(h.tabs().map((t) => t.name)).toEqual(['Mein Projekt', 'Terminal 2', 'proj', 'logs', 'tester', 'Logs ansehen']);
+    expect(h.tabs().map((t) => t.name)).toEqual(['Mein Projekt', 'Terminal 2', 'Logs ansehen', 'proj', 'logs', 'tester']);
     for (const id of ['s-1', 's-2', 's-3']) expect(h.storedTab(id)).toMatchObject({ nameIsManual: true });
   });
 

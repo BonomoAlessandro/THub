@@ -17,15 +17,16 @@ describe('Neustart', () => {
     expect(h.activeTab()?.name).toBe('Server');
   });
 
-  it('behält die Reihenfolge, wenn neue Tabs rechts neben dem aktiven eingefügt wurden', async () => {
+  it('behält die Reihenfolge, wenn Tabs umsortiert und neue am Ende angehängt wurden', async () => {
     const h = startWorkspace();
     h.workspace.createTab();
+    h.workspace.moveTab(h.tabNamed('tester 2').id, 0);
     h.workspace.activateTab(h.tabNamed('tester').id);
     h.workspace.createTab();
 
     await h.restart();
 
-    expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 3', 'tester 2']);
+    expect(h.tabs().map((t) => t.name)).toEqual(['tester 2', 'tester', 'tester 3']);
     expect(h.activeTab()?.name).toBe('tester 3');
   });
 

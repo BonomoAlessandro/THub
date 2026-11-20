@@ -42,7 +42,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 7. Als Nutzer möchte ich, dass PowerShell 7 die Standard-Shell ist, wenn sie installiert ist, damit ich die moderne PowerShell bekomme.
 8. Als Nutzer möchte ich beim Anlegen eines Tabs über das Pfeil-Menü eine andere Shell wählen (Windows PowerShell, cmd, Git Bash, WSL), damit ich für jede Aufgabe die passende Shell habe.
 9. Als Nutzer möchte ich, dass ein Tab seine Shell auch nach einem Neustart behält, damit eine Git-Bash-Session nicht plötzlich eine PowerShell ist.
-10. Als Nutzer möchte ich, dass neue Tabs rechts neben dem aktiven Tab erscheinen, damit zusammengehörige Tabs nebeneinander bleiben.
+10. Als Nutzer möchte ich, dass neue Tabs am Ende der Leiste erscheinen, damit ich einen neuen Tab immer an derselben Stelle finde, egal welcher Tab gerade aktiv ist. (Bis Ticket 26 „rechts neben dem aktiven Tab“; nach der Abnahme geändert. Duplizieren und Wiederöffnen behalten ihre eigene Stelle.)
 11. Als Nutzer möchte ich, dass meine PowerShell-, Bash- und cmd-Profile wie gewohnt geladen werden, damit mein Prompt, meine Aliase und Module auch in THub funktionieren.
 
 ### Tabs benennen und ordnen

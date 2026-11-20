@@ -105,7 +105,7 @@ export interface Workspace extends ClaudeReceiver {
   subscribe(listener: (event: WorkspaceEvent) => void): () => void;
 
   /**
-   * Legt einen Tab rechts neben dem aktiven an, macht ihn aktiv und liefert seine Kennung
+   * Legt einen Tab am Ende der Leiste an, macht ihn aktiv und liefert seine Kennung
    * (leer, wenn der Kern beendet wird). Der Tab heisst wie sein Startordner, bei Gleichstand mit „ 2“,
    * „ 3“ usw.; der Name ändert sich danach nicht mehr von selbst. Der Startordner kommt an die Spitze
    * der zuletzt benutzten Ordner. Der Tab behält seine Shell, auch über einen Neustart.
@@ -411,11 +411,10 @@ class WorkspaceCore implements Workspace {
 
   createTab(options: NewTabOptions = {}): string {
     if (this.stopping) return '';
-    // Rechts neben dem aktiven Tab, damit zusammengehörige Tabs nebeneinander bleiben; ohne aktiven ganz rechts.
-    const activeIndex = this.state.tabs.findIndex((t) => t.id === this.state.activeTabId);
-    const index = activeIndex < 0 ? this.state.tabs.length : activeIndex + 1;
+    // Am Ende der Leiste, egal welcher Tab aktiv ist (Ticket 26, Wunsch aus der Abnahme). Nur Duplizieren und
+    // Wiederöffnen legen den Tab an eine bestimmte Stelle.
     const shellId = (this.findShell(options.shellId) ?? this.defaultShell()).id;
-    return this.insertNewTab(index, this.newTabDir(options.cwd), shellId);
+    return this.insertNewTab(this.state.tabs.length, this.newTabDir(options.cwd), shellId);
   }
 
   duplicateTab(tabId: string): string {

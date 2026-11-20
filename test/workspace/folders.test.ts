@@ -240,14 +240,14 @@ describe('Neues Terminal in einem gewählten Ordner', () => {
     expect(h.workspace.recentDirs()[0]).toEqual({ path: 'D:\\kunden\\acme-portal', name: 'acme-portal' });
   });
 
-  it('erscheint wie jeder neue Tab rechts neben dem aktiven', () => {
+  it('erscheint wie jeder neue Tab am Ende der Leiste, auch wenn der erste Tab aktiv ist', () => {
     const h = startWorkspace({ directories: ['C:\\a', 'C:\\b'] });
     createTabsIn(h, ['C:\\a']);
     h.workspace.activateTab(h.tabNamed('tester').id);
 
     h.workspace.createTab({ cwd: 'C:\\b' });
 
-    expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'b', 'a']);
+    expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'a', 'b']);
   });
 
   it('gilt unabhängig vom Standardordner und ändert ihn nicht', () => {

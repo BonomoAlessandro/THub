@@ -141,6 +141,16 @@ describe('Shells', () => {
       ]);
     });
 
+    it('legt den Tab mit der gewählten Shell am Ende der Leiste an, auch wenn der erste Tab aktiv ist', () => {
+      const h = startWorkspace({ shells: ALL });
+      const second = h.workspace.createTab();
+      h.workspace.activateTab(h.tabs()[0].id);
+
+      const id = h.workspace.createTab({ shellId: 'gitbash' });
+
+      expect(h.tabs().map((t) => t.id).slice(1)).toEqual([second, id]);
+    });
+
     it('nimmt für eine nicht erkannte Shell die Standard-Shell', () => {
       const h = startWorkspace({ shells: WITHOUT_WSL });
 
