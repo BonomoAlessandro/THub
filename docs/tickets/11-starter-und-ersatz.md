@@ -1,6 +1,6 @@
 # 11 – Starter und `claude`-Ersatz
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 07, 10
 User Stories: 30, 33, 34, 35, 37, 39, 40
 Spezifikation: „Shell-Integration“ (Punkt 2, Bekannte Grenzen), „Hook-Empfänger und lokale Schnittstelle“ (Endpunkte), „Testentscheidungen → Teststelle 2“
