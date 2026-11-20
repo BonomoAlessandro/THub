@@ -1,6 +1,6 @@
 # 26 – Tab-Leiste, neue Tabs am Ende, Stern-Farbe und Dropdown im dunklen Design
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt` (2026-11-20, Abnahme von Hand am Schluss in Ticket 19) · Typ: AFK
 Blockiert durch: –
 Herkunft: Abnahme von Hand (Ticket 19), „Die Tableiste“, „Neue Tabs“ und „Dropdown in den Einstellungen“ in [docs/abnahme.md](../abnahme.md), dazu die Farbe des Claude-Sterns (Wunsch des Nutzers während der Abnahme)
 Spezifikation: „Oberfläche (Renderer)“, Design-Tokens
