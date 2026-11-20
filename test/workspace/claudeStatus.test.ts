@@ -484,6 +484,24 @@ describe('Claude-Status am Tab', () => {
       expect(c.status()).toBe('waiting');
     });
 
+    it('pausiert (nach einem Neustart noch nicht fortgesetzt) hat Vorrang; nach dem Anzeigen ruht der Tab', async () => {
+      const link = { sessionId: SID_AFTER_CLEAR, cwd: 'C:\\Users\\anna', confirmed: true, hadPrompt: true };
+      const tab = (id: string) => ({ id, name: id, nameIsManual: true, shellId: 'pwsh', startCwd: 'C:\\Users\\anna', claude: link });
+      const h = await startWorkspaceWithApi({
+        homeDir: 'C:\\Users\\anna',
+        state: { version: 2, tabs: [tab('t1'), tab('t2')], activeTabId: 't1' },
+      });
+      h.showAllViews();
+      h.workspace.windowForeground(true);
+
+      expect(tabOf(h, 't2')).toMatchObject({ kind: 'claude', status: 'paused', paused: true });
+      await h.probe([]);
+      expect(tabOf(h, 't2').status).toBe('paused');
+
+      h.workspace.activateTab('t2');
+      expect(tabOf(h, 't2')).toMatchObject({ kind: 'claude', status: 'idle', paused: false });
+    });
+
     it('bis zur ersten Meldung des Renderers gilt das Fenster als im Hintergrund', async () => {
       const h = await startWorkspaceWithApi();
       const tabId = h.activeTab()!.id;

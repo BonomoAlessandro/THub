@@ -453,11 +453,13 @@ describe('Claude-Zuordnung', () => {
     });
 
     it('übernimmt unbrauchbare Felder mit Standardwerten und verwirft eine unbrauchbare Zuordnung', async () => {
+      // Unbestätigt und mit Kennung: Der Tab bleibt ein Claude-Tab (fortzusetzen, Ticket 12).
       const state = {
         version: 2,
         tabs: [
-          claudeTab('t1', { sessionId: 42, cwd: 7, confirmed: 'ja', hadPrompt: 1 }),
+          claudeTab('t1', { sessionId: SID, cwd: 7, confirmed: 'ja', hadPrompt: 1 }),
           claudeTab('t2', 'kaputt'),
+          claudeTab('t3', { sessionId: 42, confirmed: false }),
         ],
         activeTabId: 't1',
       };
@@ -465,8 +467,10 @@ describe('Claude-Zuordnung', () => {
 
       h.workspace.renameTab('t1', 'Speichern auslösen');
 
-      expect(h.storedTab('t1')?.claude).toEqual({ cwd: '', confirmed: false, hadPrompt: false });
+      expect(h.storedTab('t1')?.claude).toEqual({ sessionId: SID, cwd: '', confirmed: false, hadPrompt: false });
       expect(h.storedTab('t2')).not.toHaveProperty('claude');
+      // Ohne brauchbare Kennung lässt sich nichts fortsetzen: normales Terminal.
+      expect(h.storedTab('t3')).not.toHaveProperty('claude');
     });
   });
 });

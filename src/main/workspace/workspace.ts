@@ -28,6 +28,7 @@ import { CwdReportScanner } from './cwdReport';
 import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
 import type { CancelTimer, ShellInfo, StartOrder, WorkspacePorts } from './ports';
 import { ProcessTracker, type ProcessTab, type ShellTree } from './processRules';
+import { resumeCommand, sessionToResume } from './resume';
 import { shellLabel, wslDistribution } from './shellIds';
 import {
   normalizeSettings,
@@ -94,6 +95,7 @@ export interface Workspace extends ClaudeReceiver {
   createTab(options?: NewTabOptions): string;
   /** Leere Namen werden ignoriert. Ein so vergebener Name wird nie automatisch überschrieben. */
   renameTab(tabId: string, name: string): void;
+  /** Zeigt den Tab an; ein pausierter Claude-Tab setzt dabei seine Session fort. */
   activateTab(tabId: string): void;
   /** Aktiviert den Tab `offset` Plätze weiter, über die Enden hinweg im Kreis. */
   activateRelativeTab(offset: number): void;
@@ -116,6 +118,10 @@ export interface Workspace extends ClaudeReceiver {
    * gespeicherten Zustand bekommt vorher einmal seinen Verlauf (`restoreHistory`). Fehlt seine Shell auf
    * diesem Rechner, startet er mit der Standard-Shell und zeigt davor einen Hinweis im Terminal; seine
    * Shell-Kennung behält er, damit er wieder mit ihr startet, sobald es sie wieder gibt.
+   *
+   * Ein fortzusetzender Claude-Tab bekommt keinen Verlauf: Seine Shell startet im Ordner der Session mit dem
+   * Startbefehl „Starter mit `--resume <Kennung>`“. Ist er pausiert (`TabSnapshot.paused`), startet er erst, wenn er
+   * angezeigt wird; die Grösse merkt sich der Kern bis dahin.
    */
   viewReady(tabId: string, cols: number, rows: number): void;
   resizeTab(tabId: string, cols: number, rows: number): void;
@@ -202,6 +208,18 @@ interface TabRuntime {
   cancelEsc?: CancelTimer;
   /** Der Tab kommt aus dem gespeicherten Zustand: Vor dem ersten Start bekommt die Ansicht seinen Verlauf. */
   restorePending: boolean;
+  /**
+   * Pausierter Claude-Tab nach einem Neustart: noch kein Prozess. Er startet erst, wenn er angezeigt wird, und setzt
+   * dann seine Session fort (`resume`).
+   */
+  paused: boolean;
+  /** Der nächste Start setzt diese Claude-Session fort (Startbefehl „Starter mit `--resume <Kennung>`“). */
+  resume?: string;
+  /**
+   * Von THub gestartetes Fortsetzen dieser Session, von dem Claude sich noch nicht gemeldet hat (kein Hook-Ereignis
+   * ausser `SessionEnd`). Solange entscheidet erst die Ende-Meldung des Starters, ob der Tab normal wird.
+   */
+  resuming?: string;
   /** Zählt die Ausgabestücke der Shell; daran erkennt die Sicherung, ob sich der Inhalt geändert hat. */
   output: number;
   /** Stand von `output`, als der Verlauf zuletzt angefordert wurde. */
@@ -214,6 +232,7 @@ function newRuntime(restorePending: boolean): TabRuntime {
   return {
     process: 'pending',
     restorePending,
+    paused: false,
     output: 0,
     requested: 0,
     saved: 0,
@@ -259,11 +278,14 @@ class WorkspaceCore implements Workspace {
       defaultShellId: this.automaticShell().id,
     });
     this.state = loaded.state;
-    for (const tab of this.state.tabs) this.runtimes.set(tab.id, newRuntime(true));
+    let restoredChanged = false;
+    for (const tab of this.state.tabs) {
+      restoredChanged = this.restoreTab(tab, tab.id === this.state.activeTabId) || restoredChanged;
+    }
 
     // Wie bisher: Ohne gespeicherte Tabs startet THub mit einem neuen Terminal.
     if (this.state.tabs.length === 0) this.createTab();
-    else if (loaded.migrated) this.save();
+    else if (loaded.migrated || restoredChanged) this.save();
 
     this.scheduleHistorySave();
     this.scheduleProbe();
@@ -322,6 +344,7 @@ class WorkspaceCore implements Workspace {
   activateTab(tabId: string): void {
     if (this.stopping || !this.findTab(tabId) || this.state.activeTabId === tabId) return;
     this.state.activeTabId = tabId;
+    this.showTab(tabId);
     this.markShownTabSeen();
     this.tabsChanged();
   }
@@ -348,14 +371,13 @@ class WorkspaceCore implements Workspace {
     this.runtimes.delete(tabId);
     this.ports.terminal.kill(tabId);
     // Bis zur Liste der geschlossenen Tabs (Ticket 15) verschwindet der Verlauf mit dem Tab.
-    this.withHistoryStorage('Verlauf konnte nicht gelöscht werden', () =>
-      this.ports.storage.deleteHistory(tabId),
-    );
+    this.deleteHistory(tabId);
     const [tab] = this.state.tabs.splice(index, 1);
     this.state.recentDirs = rememberDir(this.state.recentDirs, tab.lastCwd ?? tab.startCwd);
     if (this.state.activeTabId === tabId) {
       const neighbour = this.state.tabs[index] ?? this.state.tabs[index - 1];
       this.state.activeTabId = neighbour?.id ?? null;
+      this.showTab(this.state.activeTabId);
       this.markShownTabSeen();
     }
     this.tabsChanged();
@@ -394,6 +416,8 @@ class WorkspaceCore implements Workspace {
     const runtime = this.runtimes.get(tabId);
     if (this.stopping || !tab || !runtime || !isValidSize(cols, rows)) return;
     runtime.view = { cols, rows };
+    // Ein pausierter Claude-Tab startet erst, wenn er angezeigt wird (`showTab`).
+    if (runtime.paused) return;
     if (runtime.process === 'pending') {
       // Erst der Verlauf, dann der Startauftrag: So steht er vor der ersten Ausgabe der Shell.
       this.restoreHistory(tabId, runtime);
@@ -437,7 +461,8 @@ class WorkspaceCore implements Workspace {
         beforeStart: true,
       });
     }
-    const cwd = this.resolveCwd(tab);
+    const resume = this.resumeStart(tab, runtime, shell);
+    const cwd = resume ? this.sessionCwd(tab) : this.resolveCwd(tab);
     const order: StartOrder = {
       file: shell.file,
       args: shellArgs(shell, cwd),
@@ -447,6 +472,7 @@ class WorkspaceCore implements Workspace {
       rows: view.rows,
     };
     if (shell.integration) order.integration = shell.integration;
+    if (resume) order.startCommand = resume.command;
 
     const run = {};
     // Pro Prozess neu: Eine angefangene Sequenz eines früheren Prozesses gehört nicht dazu.
@@ -471,13 +497,19 @@ class WorkspaceCore implements Workspace {
           runtime.run = undefined;
           runtime.pid = undefined;
           runtime.processes = false;
+          runtime.resuming = undefined;
           // Mit der Shell endet auch ein Claude darin: Der Tab wird ein normales Terminal.
           if (!this.frozen) this.setClaudeLink(tab, undefined);
           this.emit({ type: 'exit', tabId: tab.id, exitCode });
           this.emitTabs();
         },
       });
-      if (isCurrent()) runtime.pid = pid;
+      if (resume) runtime.resume = undefined;
+      if (isCurrent()) {
+        runtime.pid = pid;
+        // Von THub gestartetes Fortsetzen: Bis Claude sich meldet, entscheidet erst die Ende-Meldung des Starters.
+        if (resume) runtime.resuming = resume.sessionId;
+      }
     } catch (err) {
       if (runtime.run === run) {
         runtime.process = 'exited';
@@ -521,9 +553,82 @@ class WorkspaceCore implements Workspace {
 
   /** Startordner: zuletzt aktiver Ordner → Startordner → Standardordner → Benutzerordner. */
   private resolveCwd(tab: PersistedTab): string {
-    const candidates = [tab.lastCwd, tab.startCwd, this.state.settings.defaultCwd];
+    return this.firstExistingDir([tab.lastCwd, tab.startCwd, this.state.settings.defaultCwd]);
+  }
+
+  /**
+   * Startordner beim Fortsetzen einer Claude-Session: der Ordner der Session, weil Claude nach `--resume <Kennung>` im
+   * aktuellen Ordner läuft; fehlt er, Startordner → Standardordner → Benutzerordner.
+   */
+  private sessionCwd(tab: PersistedTab): string {
+    return this.firstExistingDir([tab.claude?.cwd, tab.startCwd, this.state.settings.defaultCwd]);
+  }
+
+  /** Der erste dieser Ordner, den es gibt, sonst der Benutzerordner. */
+  private firstExistingDir(candidates: (string | undefined)[]): string {
     const existing = candidates.find((dir) => dir && this.ports.system.directoryExists(dir));
     return existing ?? this.ports.system.homeDir();
+  }
+
+  // ---------- Claude-Sessions fortsetzen ----------
+
+  /**
+   * Bereitet einen Tab aus dem gespeicherten Zustand auf seinen ersten Start vor. Ein normaler Tab bekommt davor seinen
+   * Verlauf. Ein fortzusetzender Claude-Tab (`sessionToResume`) setzt seine Session fort: sofort, wenn er angezeigt
+   * wird (`shown`), sonst ist er pausiert, bis er angezeigt wird. Ein anderer Claude-Tab kommt als normales Terminal im
+   * Ordner der Session zurück. Claude-Tabs bekommen keinen Verlauf.
+   * @returns ob sich der gespeicherte Tab dabei geändert hat
+   */
+  private restoreTab(tab: PersistedTab, shown: boolean): boolean {
+    const link = tab.claude;
+    if (!link) {
+      this.runtimes.set(tab.id, newRuntime(true));
+      return false;
+    }
+    const runtime = newRuntime(false);
+    this.runtimes.set(tab.id, runtime);
+    this.deleteHistory(tab.id);
+    const sessionId = sessionToResume(link);
+    if (sessionId) {
+      runtime.resume = sessionId;
+      runtime.paused = !shown;
+      return false;
+    }
+    delete tab.claude;
+    if (link.cwd) tab.lastCwd = link.cwd;
+    return true;
+  }
+
+  /** Der Tab wird angezeigt: Ein pausierter Claude-Tab setzt jetzt seine Session fort. */
+  private showTab(tabId: string | null): void {
+    const tab = tabId ? this.findTab(tabId) : undefined;
+    const runtime = tabId ? this.runtimes.get(tabId) : undefined;
+    if (!tab || !runtime?.paused) return;
+    runtime.paused = false;
+    // Hat der Renderer die Ansicht schon gemeldet, startet die Shell sofort, sonst mit „Ansicht bereit“.
+    if (runtime.view && runtime.process === 'pending') this.startShell(tab, runtime, true);
+  }
+
+  /**
+   * Ob dieser Start eine Claude-Session fortsetzt: Kennung und Startbefehl in der Sprache der Shell. Ohne Integration
+   * (etwa wenn statt der fehlenden Shell eine WSL-Distribution einspringt) kann die Shell keinen Startbefehl ausführen;
+   * dann kommt der Tab wie jeder nicht fortgesetzte Claude-Tab als normales Terminal im Ordner der Session zurück.
+   */
+  private resumeStart(
+    tab: PersistedTab,
+    runtime: TabRuntime,
+    shell: ShellInfo,
+  ): { sessionId: string; command: string } | undefined {
+    const sessionId = runtime.resume;
+    if (sessionId === undefined) return undefined;
+    const link = tab.claude;
+    if (!link || !shell.integration || !shell.capturesClaude) {
+      runtime.resume = undefined;
+      if (link?.cwd) tab.lastCwd = link.cwd;
+      this.setClaudeLink(tab, undefined);
+      return undefined;
+    }
+    return { sessionId, command: resumeCommand(shell.integration, sessionId) };
   }
 
   // ---------- Verlauf ----------
@@ -534,10 +639,13 @@ class WorkspaceCore implements Workspace {
     const awaited = quit?.pending.has(tabId) ?? false;
     // Beim Beenden zählen nur noch die Antworten, auf die das Beenden wartet.
     if (!runtime || typeof content !== 'string' || (this.stopping && !awaited)) return;
-    this.withHistoryStorage('Verlauf konnte nicht gesichert werden', () => {
-      this.ports.storage.saveHistory(tabId, { content, savedAt: this.ports.clock.now() });
-      runtime.saved = runtime.requested;
-    });
+    // Claude-Tabs bekommen keinen Verlauf, auch nicht aus einer Antwort, die erst nach dem Start von Claude eintrifft.
+    if (!this.findTab(tabId)?.claude) {
+      this.withHistoryStorage('Verlauf konnte nicht gesichert werden', () => {
+        this.ports.storage.saveHistory(tabId, { content, savedAt: this.ports.clock.now() });
+        runtime.saved = runtime.requested;
+      });
+    }
     if (quit && awaited) {
       quit.pending.delete(tabId);
       if (quit.pending.size === 0) quit.finish();
@@ -564,9 +672,10 @@ class WorkspaceCore implements Workspace {
     });
   }
 
-  /** Tabs mit Ausgabe seit der letzten Sicherung, in der Reihenfolge der Leiste. */
+  /** Normale Tabs mit Ausgabe seit der letzten Sicherung, in der Reihenfolge der Leiste; Claude-Tabs haben keinen Verlauf. */
   private changedTabIds(): string[] {
     return this.state.tabs
+      .filter((tab) => !tab.claude)
       .map((tab) => tab.id)
       .filter((id) => {
         const runtime = this.runtimes.get(id);
@@ -599,6 +708,10 @@ class WorkspaceCore implements Workspace {
       this.quitHistory = { pending: new Set(tabIds), finish };
       this.requestHistory(tabIds);
     });
+  }
+
+  private deleteHistory(tabId: string): void {
+    this.withHistoryStorage('Verlauf konnte nicht gelöscht werden', () => this.ports.storage.deleteHistory(tabId));
   }
 
   /**
@@ -684,11 +797,13 @@ class WorkspaceCore implements Workspace {
     // bekannt (Sicherheitsnetz).
     const newId = request.case === 'new' ? randomUUID() : undefined;
     const sessionId = newId ?? (request.case === 'withId' ? request.sessionId : undefined);
+    // Ein anderer Start als das von THub gestartete Fortsetzen selbst: Dieses ist dann vorbei.
+    const runtime = this.runtimes.get(tab.id);
+    if (runtime?.resuming !== undefined && sessionId !== runtime.resuming) runtime.resuming = undefined;
     const reported = request.cwd ? this.normalizeDir(request.cwd) : '';
     this.updateTab(tab, () => {
       this.setClaudeLink(tab, linkAfterLaunch(tab.claude, sessionId, reported || (tab.lastCwd ?? tab.startCwd)));
       // Ein neu gestartetes Claude ruht, auch wenn das vorige ohne Ende-Meldung verschwunden ist.
-      const runtime = this.runtimes.get(tab.id);
       if (runtime) {
         this.cancelEscTimer(runtime);
         runtime.claude = IDLE_CLAUDE;
@@ -704,22 +819,36 @@ class WorkspaceCore implements Workspace {
     if (this.claudeTab(tabId)?.claude && runtime) runtime.claudePid = pid;
   }
 
-  claudeExit(tabId: string, _sessionId: string | undefined, _exitCode: number): void {
-    // Claude hat sich beendet, auch ohne SessionEnd (etwa nach einem Absturz): normales Terminal.
-    // Session-Kennung und Exit-Code braucht erst das fehlgeschlagene Fortsetzen (Ticket 12).
+  claudeExit(tabId: string, sessionId: string | undefined, exitCode: number): void {
     const tab = this.claudeTab(tabId);
-    if (tab) this.updateTab(tab, () => this.setClaudeLink(tab, undefined));
+    if (!tab) return;
+    const runtime = this.runtimes.get(tabId);
+    const resuming = runtime?.resuming;
+    if (runtime) runtime.resuming = undefined;
+    // Claude hat sich beendet, auch ohne SessionEnd (etwa nach einem Absturz): normales Terminal.
+    this.updateTab(tab, () => this.setClaudeLink(tab, undefined));
+    // Ein von THub gestartetes Fortsetzen, von dem Claude sich nie gemeldet hat, endet mit einem Fehler: unbekannte
+    // Kennung oder abgelehnter Vertrauensdialog. `/exit` und zweimal Ctrl+C enden mit 0. Der Tab bleibt offen.
+    if (resuming !== undefined && exitCode !== 0 && (sessionId === undefined || sessionId === resuming)) {
+      this.emit({ type: 'notice', tabId, level: 'error', text: 'Claude-Session konnte nicht fortgesetzt werden' });
+    }
   }
 
   claudeHook(tabId: string, event: string, payload: unknown): void {
     const tab = this.claudeTab(tabId);
     if (!tab) return;
     const hook = readHook(event, payload);
+    const runtime = this.runtimes.get(tabId);
+    if (runtime?.resuming !== undefined) {
+      // Nach einem von THub gestarteten Fortsetzen entscheidet erst die Ende-Meldung des Starters, bis Claude sich
+      // meldet: Ein fehlgeschlagenes Fortsetzen schickt SessionEnd (other) etwa 1,5 s vor seinem Ende.
+      if (hook.event === 'SessionEnd') return;
+      runtime.resuming = undefined;
+    }
     this.updateTab(tab, () => {
       const previous = tab.claude;
       const link = linkAfterHook(previous, hook, (raw) => this.normalizeDir(raw));
       this.setClaudeLink(tab, link);
-      const runtime = this.runtimes.get(tab.id);
       if (!link || !runtime) return;
       // Jedes Hook-Ereignis zeigt, dass Claude nach Esc weitermacht. Ausgenommen sind Benachrichtigungen: Sie
       // kommen verzögert (Rückfrage nach etwa 6 s, idle_prompt nach etwa 60 s) und sagen darüber nichts.
@@ -773,13 +902,16 @@ class WorkspaceCore implements Workspace {
    */
   private setClaudeLink(tab: PersistedTab, link: PersistedClaudeLink | undefined): void {
     if (sameLink(tab.claude, link)) return;
+    const runtime = this.runtimes.get(tab.id);
     if (link) {
+      // Claude-Tabs bekommen keinen Verlauf. Wird der Tab wieder normal, sichert ihn die nächste Sicherung neu.
+      if (!tab.claude) this.deleteHistory(tab.id);
       tab.claude = link;
     } else {
       delete tab.claude;
-      const runtime = this.runtimes.get(tab.id);
       if (runtime) {
         runtime.claudePid = undefined;
+        runtime.resuming = undefined;
         runtime.claude = IDLE_CLAUDE;
         runtime.finished = false;
         this.cancelEscTimer(runtime);
@@ -815,8 +947,8 @@ class WorkspaceCore implements Workspace {
     const runtime = this.runtimes.get(tab.id);
     if (!runtime) return 'idle';
     return displayedStatus({
-      // Pausierte Claude-Tabs kommen mit Ticket 12.
-      paused: false,
+      // Pausiert: Claude-Tab nach einem Neustart, noch nicht angezeigt; er hat keinen Prozess.
+      paused: runtime.paused,
       activity: tab.claude ? runtime.claude.activity : 'idle',
       finished: runtime.finished,
       processes: runtime.processes,
@@ -958,6 +1090,7 @@ class WorkspaceCore implements Workspace {
       process: this.runtimes.get(tab.id)?.process ?? 'pending',
       kind: tab.claude ? 'claude' : 'terminal',
       status: this.tabStatus(tab),
+      paused: this.runtimes.get(tab.id)?.paused ?? false,
     }));
   }
 
