@@ -1,9 +1,11 @@
 # 21 – Verlauf nach dem Neustart direkt sichtbar
 
-Status: `in Arbeit` · Typ: AFK
+Status: `erledigt (verworfen)` · Typ: AFK
 Blockiert durch: 08
 User Stories: 58
 Spezifikation: „Wiederherstellen“ (normaler Tab)
+
+> **Ergebnis (2026-11-20):** nicht eingebaut. Beim Start funktioniert `conptyInheritCursor` in allen vier Shells, beim Verändern der Fenstergrösse beschädigt ConPTY aber Trennlinie, Verlauf oder Shell-Zeilen. Der Verlauf bleibt im Scrollback. Befunde: `docs/spikes/verlauf-sichtbar.md`.
 
 ## Was gebaut wird
 

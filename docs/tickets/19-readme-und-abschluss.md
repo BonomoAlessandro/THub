@@ -29,6 +29,7 @@ Spezifikation: „Weitere Hinweise“
   - `claude` in einem Tab → die Status-Symbole funktionieren;
   - `~/.claude/settings.json` ist unverändert;
   - nach einem Neustart des Rechners ist alles wieder da: normale Tabs mit Verlauf im letzten Ordner, der aktive Claude-Tab läuft weiter, die anderen sind pausiert.
+- [ ] Windows PowerShell 5.1: Fenstergrösse mehrmals ändern, dann tippen. Im Versuch zu Ticket 21 blieb die Shell einmal ohne Ausgabe hängen; falls es sich bestätigt, als Ticket erfassen.
 - [ ] Ohne installiertes Claude Code funktioniert THub als normales Terminal-Fenster, ohne Fehlermeldungen beim Start.
 - [ ] Hinter einem Firmen-Proxy (falls vorhanden) funktionieren Status und Fortsetzen.
 - [ ] Ob die helle Terminalfläche mit Claude gut aussieht, ist entschieden und in der Spezifikation vermerkt.
