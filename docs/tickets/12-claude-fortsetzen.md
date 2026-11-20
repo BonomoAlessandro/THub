@@ -1,6 +1,6 @@
 # 12 – Claude-Sessions nach einem Neustart fortsetzen
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 08, 11
 User Stories: 38, 46, 59–64
 Spezifikation: „Wiederherstellen“ (Claude-Tabs), „Claude-Status: Zustandsautomat pro Tab“ (Ende-Meldung, fehlgeschlagenes Fortsetzen, Einfrieren)

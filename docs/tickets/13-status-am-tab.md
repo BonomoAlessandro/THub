@@ -1,6 +1,6 @@
 # 13 – Claude-Status und Prozess-Status am Tab
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: 11
 User Stories: 41–48
 Spezifikation: „Claude-Status: Zustandsautomat pro Tab“ (Status-Zeilen, „Prozesse laufen“, angezeigter Status)
