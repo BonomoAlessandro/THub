@@ -54,7 +54,7 @@ describe('Claude-Zuordnung', () => {
       expect(res.headers['content-type']).toBe('application/json; charset=utf-8');
       const body = JSON.parse(res.body);
       expect(body).toEqual({
-        tabName: 'Terminal 1',
+        tabName: 'anna.mueller',
         sessionId: expect.stringMatching(UUID),
         hookFile: h.localApi.hookFile,
       });
@@ -90,7 +90,7 @@ describe('Claude-Zuordnung', () => {
 
       const res = await h.api.launch({ tabId, case: 'withId', sessionId: SID, cwd: 'C:\\proj' });
 
-      expect(JSON.parse(res.body)).toEqual({ tabName: 'Terminal 1', hookFile: h.localApi.hookFile });
+      expect(JSON.parse(res.body)).toEqual({ tabName: 'anna.mueller', hookFile: h.localApi.hookFile });
       expect(h.storedTab(tabId)?.claude).toEqual({ sessionId: SID, cwd: 'C:\\proj', confirmed: false, hadPrompt: false });
     });
 
@@ -99,7 +99,7 @@ describe('Claude-Zuordnung', () => {
 
       const res = await h.api.launch({ tabId, case: 'withoutId', cwd: 'C:\\proj' });
 
-      expect(JSON.parse(res.body)).toEqual({ tabName: 'Terminal 1', hookFile: h.localApi.hookFile });
+      expect(JSON.parse(res.body)).toEqual({ tabName: 'anna.mueller', hookFile: h.localApi.hookFile });
       expect(h.storedTab(tabId)?.claude).toEqual({ cwd: 'C:\\proj', confirmed: false, hadPrompt: false });
     });
 

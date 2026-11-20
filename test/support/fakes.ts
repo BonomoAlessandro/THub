@@ -205,6 +205,7 @@ export class FakeProcessProbe implements ProcessProbe {
 
 export interface FakeSystemOptions {
   homeDir?: string;
+  /** Ohne Angabe der letzte Teil des Benutzerordners, wie bei einem Windows-Konto meist. */
   userName?: string;
   /** Vorhandene Ordner; der Benutzerordner ist immer vorhanden. */
   directories?: string[];
@@ -229,7 +230,7 @@ export class FakeSystem implements HostSystem {
 
   constructor(options: FakeSystemOptions = {}) {
     this.home = options.homeDir ?? 'C:\\Users\\tester';
-    this.user = options.userName ?? 'tester';
+    this.user = options.userName ?? this.home.split('\\').filter(Boolean).pop() ?? 'tester';
     this.screens = options.displays ?? [PRIMARY_DISPLAY];
     this.shortPaths = options.shortPaths ?? {};
     this.addDirectory(this.home);

@@ -1,6 +1,6 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeTheme } from 'electron';
 import * as path from 'node:path';
-import { IPC, type WorkspaceCommand } from '../shared/types';
+import { IPC, type DirectoryPurpose, type WorkspaceCommand } from '../shared/types';
 import { dataFolders, takeOverLegacyData, type DataFolders } from './dataFolder';
 import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
 import { LocalApiServer } from './localApi';
@@ -128,7 +128,7 @@ function sendToRenderer(channel: string, ...args: unknown[]): void {
 function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
   switch (command.type) {
     case 'createTab':
-      ws.createTab();
+      ws.createTab(typeof command.cwd === 'string' ? { cwd: command.cwd } : {});
       return;
     case 'renameTab':
       ws.renameTab(command.tabId, command.name);
@@ -169,12 +169,15 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
 function registerIpc(ws: Workspace): void {
   ipcMain.handle(IPC.workspaceSnapshot, () => ws.snapshot());
   ipcMain.on(IPC.workspaceCommand, (_e, command: WorkspaceCommand) => handleCommand(ws, command));
+  ipcMain.handle(IPC.workspaceRecentDirs, () => ws.recentDirs());
 
-  ipcMain.handle(IPC.dialogPickDirectory, async (_e, initial?: string) => {
+  // Ordner-Dialog von Windows. Er startet im Standardordner, ohne ihn im Benutzerordner.
+  ipcMain.handle(IPC.dialogPickDirectory, async (_e, purpose: DirectoryPurpose) => {
     if (!mainWindow) return null;
+    const defaultCwd = ws.snapshot().settings.defaultCwd;
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: 'Standardverzeichnis wählen',
-      defaultPath: initial && hostSystem.directoryExists(initial) ? initial : hostSystem.homeDir(),
+      title: purpose === 'defaultCwd' ? 'Standardordner wählen' : 'Ordner für das neue Terminal wählen',
+      defaultPath: defaultCwd && hostSystem.directoryExists(defaultCwd) ? defaultCwd : hostSystem.homeDir(),
       properties: ['openDirectory'],
     });
     return result.canceled ? null : (result.filePaths[0] ?? null);

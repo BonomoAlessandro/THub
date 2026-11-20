@@ -9,8 +9,9 @@ const api: THubApi = {
     return () => ipcRenderer.off(IPC.workspaceEvent, handler);
   },
   send: (command) => ipcRenderer.send(IPC.workspaceCommand, command),
+  loadRecentDirs: () => ipcRenderer.invoke(IPC.workspaceRecentDirs),
 
-  pickDirectory: (initial) => ipcRenderer.invoke(IPC.dialogPickDirectory, initial),
+  pickDirectory: (purpose) => ipcRenderer.invoke(IPC.dialogPickDirectory, purpose),
 
   readClipboard: () => ipcRenderer.invoke(IPC.clipboardRead),
   writeClipboard: (text) => ipcRenderer.invoke(IPC.clipboardWrite, text),

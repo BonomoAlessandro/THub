@@ -4,6 +4,7 @@
 
 import { randomUUID } from 'node:crypto';
 import type {
+  RecentDir,
   Settings,
   TabProcessState,
   TabSnapshot,
@@ -21,6 +22,7 @@ import {
   type ClaudeReceiver,
   type LocalApiInfo,
 } from './claude';
+import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
 import type { CancelTimer, ShellInfo, StartOrder, WorkspacePorts } from './ports';
 import {
   normalizeSettings,
@@ -52,6 +54,12 @@ export interface WorkspaceOptions {
   localApi?: LocalApiInfo;
 }
 
+/** Wie ein neuer Tab angelegt wird. */
+export interface NewTabOptions {
+  /** Startordner; fehlt er oder gibt es ihn nicht, gilt der Standardordner, sonst der Benutzerordner. */
+  cwd?: string;
+}
+
 /**
  * Der Kern. Die Eingänge von Starter und Claude Code (`claudeLaunch`, `claudeStarted`, `claudeExit`,
  * `claudeHook`) beschreibt `ClaudeReceiver`.
@@ -64,18 +72,29 @@ export interface Workspace extends ClaudeReceiver {
 
   /**
    * Legt einen Tab rechts neben dem aktiven an, macht ihn aktiv und liefert seine Kennung
-   * (leer, wenn der Kern beendet wird).
+   * (leer, wenn der Kern beendet wird). Der Tab heisst wie sein Startordner, bei Gleichstand mit „ 2“,
+   * „ 3“ usw.; der Name ändert sich danach nicht mehr von selbst. Der Startordner kommt an die Spitze
+   * der zuletzt benutzten Ordner.
    */
-  createTab(): string;
-  /** Leere Namen werden ignoriert. */
+  createTab(options?: NewTabOptions): string;
+  /** Leere Namen werden ignoriert. Ein so vergebener Name wird nie automatisch überschrieben. */
   renameTab(tabId: string, name: string): void;
   activateTab(tabId: string): void;
   /** Aktiviert den Tab `offset` Plätze weiter, über die Enden hinweg im Kreis. */
   activateRelativeTab(offset: number): void;
   /** Aktiviert den Tab an Position `index` (ab 0); gibt es dort keinen, bleibt alles, wie es ist. */
   activateTabAt(index: number): void;
-  /** Beendet die Shell und löscht den Verlauf; war der Tab aktiv, wird sein Nachbar aktiv. */
+  /**
+   * Beendet die Shell und löscht den Verlauf; war der Tab aktiv, wird sein Nachbar aktiv. Der zuletzt
+   * aktive Ordner des Tabs kommt an die Spitze der zuletzt benutzten Ordner.
+   */
   closeTab(tabId: string): void;
+
+  /**
+   * Die zuletzt benutzten Ordner, neueste zuerst, höchstens acht; nur die, die es noch gibt. Gespeichert
+   * bleiben auch die anderen, etwa ein gerade nicht verbundenes Netzlaufwerk.
+   */
+  recentDirs(): RecentDir[];
 
   /**
    * Die Ansicht des Tabs ist bereit; erst jetzt startet seine Shell, in dieser Grösse. Ein Tab aus dem
@@ -208,14 +227,15 @@ class WorkspaceCore implements Workspace {
 
   // ---------- Tabs ----------
 
-  createTab(): string {
+  createTab(options: NewTabOptions = {}): string {
     if (this.stopping) return '';
+    const startCwd = this.newTabDir(options.cwd);
     const tab: PersistedTab = {
       id: randomUUID(),
-      name: this.nextTabName(),
+      name: this.autoTabName(startCwd),
       nameIsManual: false,
       shellId: this.defaultShell(this.state.settings.defaultShellId).id,
-      startCwd: this.state.settings.defaultCwd || this.ports.system.homeDir(),
+      startCwd,
     };
     // Rechts neben dem aktiven Tab, damit zusammengehörige Tabs nebeneinander bleiben; ohne aktiven ganz rechts.
     const activeIndex = this.state.tabs.findIndex((t) => t.id === this.state.activeTabId);
@@ -223,6 +243,7 @@ class WorkspaceCore implements Workspace {
     this.state.tabs.splice(index, 0, tab);
     this.runtimes.set(tab.id, newRuntime(false));
     this.state.activeTabId = tab.id;
+    this.state.recentDirs = rememberDir(this.state.recentDirs, startCwd);
     this.tabsChanged();
     return tab.id;
   }
@@ -266,12 +287,39 @@ class WorkspaceCore implements Workspace {
     this.withHistoryStorage('Verlauf konnte nicht gelöscht werden', () =>
       this.ports.storage.deleteHistory(tabId),
     );
-    this.state.tabs.splice(index, 1);
+    const [tab] = this.state.tabs.splice(index, 1);
+    this.state.recentDirs = rememberDir(this.state.recentDirs, tab.lastCwd ?? tab.startCwd);
     if (this.state.activeTabId === tabId) {
       const neighbour = this.state.tabs[index] ?? this.state.tabs[index - 1];
       this.state.activeTabId = neighbour?.id ?? null;
     }
     this.tabsChanged();
+  }
+
+  // ---------- Ordner und Namen ----------
+
+  recentDirs(): RecentDir[] {
+    const ctx = this.namingContext();
+    return this.state.recentDirs
+      .filter((dir) => this.ports.system.directoryExists(dir))
+      .map((dir) => ({ path: dir, name: folderName(dir, ctx) }));
+  }
+
+  /** Startordner eines neuen Tabs: gewünschter Ordner → Standardordner → Benutzerordner, der erste, den es gibt. */
+  private newTabDir(requested: string | undefined): string {
+    const candidates = [requested?.trim(), this.state.settings.defaultCwd];
+    const existing = candidates.find((dir) => dir && this.ports.system.directoryExists(dir));
+    return existing ?? this.ports.system.homeDir();
+  }
+
+  /** Name nach dem Ordner, eindeutig unter allen offenen Tabs, auch den von Hand benannten. */
+  private autoTabName(dir: string): string {
+    const base = folderName(dir, this.namingContext()) || 'Terminal';
+    return uniqueName(base, this.state.tabs.map((t) => t.name));
+  }
+
+  private namingContext(): NamingContext {
+    return { homeDir: this.ports.system.homeDir(), userName: this.ports.system.userName() };
   }
 
   // ---------- Ansichten und Shells ----------
@@ -608,15 +656,6 @@ class WorkspaceCore implements Workspace {
 
   private findTab(tabId: string): PersistedTab | undefined {
     return this.state.tabs.find((t) => t.id === tabId);
-  }
-
-  /** Wie bisher: „Terminal 1“, „Terminal 2“ …, die kleinste freie Nummer. */
-  private nextTabName(): string {
-    const used = new Set(this.state.tabs.map((t) => t.name));
-    for (let n = 1; ; n++) {
-      const name = `Terminal ${n}`;
-      if (!used.has(name)) return name;
-    }
   }
 
   private tabSnapshots(): TabSnapshot[] {

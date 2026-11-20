@@ -7,7 +7,7 @@ describe('Neustart', () => {
     const h = startWorkspace();
     h.workspace.createTab();
     h.workspace.createTab();
-    h.workspace.renameTab(h.tabNamed('Terminal 2').id, 'Server');
+    h.workspace.renameTab(h.tabNamed('tester 2').id, 'Server');
     h.workspace.activateTab(h.tabNamed('Server').id);
     const before = h.tabs().map((t) => ({ id: t.id, name: t.name, shellId: t.shellId, cwd: t.cwd }));
 
@@ -20,23 +20,23 @@ describe('Neustart', () => {
   it('behält die Reihenfolge, wenn neue Tabs rechts neben dem aktiven eingefügt wurden', async () => {
     const h = startWorkspace();
     h.workspace.createTab();
-    h.workspace.activateTab(h.tabNamed('Terminal 1').id);
+    h.workspace.activateTab(h.tabNamed('tester').id);
     h.workspace.createTab();
 
     await h.restart();
 
-    expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 1', 'Terminal 3', 'Terminal 2']);
-    expect(h.activeTab()?.name).toBe('Terminal 3');
+    expect(h.tabs().map((t) => t.name)).toEqual(['tester', 'tester 3', 'tester 2']);
+    expect(h.activeTab()?.name).toBe('tester 3');
   });
 
   it('lässt geschlossene Tabs weg', async () => {
     const h = startWorkspace();
     h.workspace.createTab();
-    h.workspace.closeTab(h.tabNamed('Terminal 1').id);
+    h.workspace.closeTab(h.tabNamed('tester').id);
 
     await h.restart();
 
-    expect(h.tabs().map((t) => t.name)).toEqual(['Terminal 2']);
+    expect(h.tabs().map((t) => t.name)).toEqual(['tester 2']);
   });
 
   it('startet ohne Tabs wieder mit einem neuen Terminal', async () => {
@@ -45,7 +45,7 @@ describe('Neustart', () => {
 
     await h.restart();
 
-    expect(h.tabs()).toMatchObject([{ name: 'Terminal 1' }]);
+    expect(h.tabs()).toMatchObject([{ name: 'tester' }]);
   });
 
   it('startet die Shells erst, wenn ihre Ansichten bereit sind, in gespeicherter Reihenfolge', async () => {
@@ -96,7 +96,7 @@ describe('Neustart', () => {
     h.workspace.createTab();
     h.workspace.viewReady(id, 80, 24);
 
-    expect(h.tabs()).toMatchObject([{ id, name: 'Terminal 1' }]);
+    expect(h.tabs()).toMatchObject([{ id, name: 'tester' }]);
     expect(h.terminal.starts).toEqual([]);
   });
 
@@ -109,7 +109,7 @@ describe('Neustart', () => {
       await h.restart();
       h.showAllViews();
 
-      expect(h.terminal.startsFor(h.tabNamed('Terminal 2').id)[0].order.cwd).toBe('C:\\proj');
+      expect(h.terminal.startsFor(h.tabNamed('proj').id)[0].order.cwd).toBe('C:\\proj');
     });
 
     it('fällt auf den Standardordner zurück, wenn der Ordner des Tabs fehlt', async () => {
@@ -122,7 +122,7 @@ describe('Neustart', () => {
       await h.restart();
       h.showAllViews();
 
-      expect(h.terminal.startsFor(h.tabNamed('Terminal 2').id)[0].order.cwd).toBe('D:\\default');
+      expect(h.terminal.startsFor(h.tabNamed('proj').id)[0].order.cwd).toBe('D:\\default');
     });
 
     it('fällt auf den Benutzerordner zurück, wenn auch der Standardordner fehlt', async () => {
@@ -134,7 +134,7 @@ describe('Neustart', () => {
       await h.restart();
       h.showAllViews();
 
-      expect(h.terminal.startsFor(h.tabNamed('Terminal 2').id)[0].order.cwd).toBe('C:\\Users\\anna');
+      expect(h.terminal.startsFor(h.tabNamed('proj').id)[0].order.cwd).toBe('C:\\Users\\anna');
     });
 
     it('nimmt den Benutzerordner, wenn kein Standardordner eingestellt ist', async () => {
@@ -147,7 +147,7 @@ describe('Neustart', () => {
       await h.restart();
       h.showAllViews();
 
-      expect(h.terminal.startsFor(h.tabNamed('Terminal 2').id)[0].order.cwd).toBe('C:\\Users\\anna');
+      expect(h.terminal.startsFor(h.tabNamed('proj').id)[0].order.cwd).toBe('C:\\Users\\anna');
     });
   });
 });

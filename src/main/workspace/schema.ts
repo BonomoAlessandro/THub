@@ -3,6 +3,7 @@
 
 import * as path from 'node:path';
 import type { Settings, Theme } from '../../shared/types';
+import { rememberDir, samePath } from './folders';
 import type { Rect } from './ports';
 
 /** Claude-Zuordnung eines Tabs, soweit sie gespeichert wird (Ticket 10). */
@@ -58,7 +59,6 @@ export interface PersistedState {
   window?: WindowState;
 }
 
-export const MAX_RECENT_DIRS = 8;
 export const MAX_CLOSED_TABS = 10;
 export const MIN_FONT_SIZE = 8;
 export const MAX_FONT_SIZE = 32;
@@ -176,9 +176,10 @@ function normalizeV2(raw: Record<string, unknown>, ctx: SchemaContext): Persiste
     settings: normalizeSettings(raw.settings),
     tabs,
     activeTabId: validActiveTabId(raw.activeTabId, tabs),
+    // Von hinten eingereiht, damit die Reihenfolge bleibt; Doppelte und alles über acht fallen weg.
     recentDirs: (Array.isArray(raw.recentDirs) ? raw.recentDirs : [])
       .filter(isNonEmptyString)
-      .slice(0, MAX_RECENT_DIRS),
+      .reduceRight<string[]>(rememberDir, []),
     closedTabs: (Array.isArray(raw.closedTabs) ? raw.closedTabs : [])
       .map((item) => normalizeClosedTab(item, ctx))
       .filter((item): item is ClosedTab => item !== null)
@@ -246,12 +247,6 @@ export function normalizeWindow(raw: unknown): WindowState | null {
 function validActiveTabId(raw: unknown, tabs: PersistedTab[]): string | null {
   if (typeof raw === 'string' && tabs.some((t) => t.id === raw)) return raw;
   return tabs[0]?.id ?? null;
-}
-
-/** Vergleicht Windows-Pfade ohne Rücksicht auf Gross-/Kleinschreibung und abschliessende Trenner. */
-function samePath(a: string, b: string): boolean {
-  const key = (p: string) => path.win32.normalize(p).replace(/[\\/]+$/, '').toLowerCase();
-  return key(a) === key(b);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

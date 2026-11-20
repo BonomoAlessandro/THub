@@ -39,6 +39,13 @@ export interface TabSnapshot {
   process: TabProcessState;
 }
 
+/** Ein zuletzt benutzter Ordner, wie ihn das Pfeil-Menü unter „Neues Terminal in …“ anbietet. */
+export interface RecentDir {
+  path: string;
+  /** Name, den ein neuer Tab in diesem Ordner bekäme (ohne „ 2“ usw.). */
+  name: string;
+}
+
 /** Vollständiger Zustand für den Renderer, beim Laden abgeholt. */
 export interface WorkspaceSnapshot {
   tabs: TabSnapshot[];
@@ -69,7 +76,8 @@ export type WorkspaceEvent =
 
 /** Befehle vom Renderer an den Kern. */
 export type WorkspaceCommand =
-  | { type: 'createTab' }
+  /** Neuer Tab im Ordner `cwd`; ohne ihn (oder wenn es ihn nicht gibt) im Standardordner. */
+  | { type: 'createTab'; cwd?: string }
   | { type: 'renameTab'; tabId: string; name: string }
   | { type: 'activateTab'; tabId: string }
   /** Zum Tab `offset` Plätze weiter, im Kreis (Ctrl+Tab: 1, Ctrl+Shift+Tab: -1). */
@@ -89,13 +97,19 @@ export type WorkspaceCommand =
 
 export type Unsubscribe = () => void;
 
+/** Wofür der Ordner-Dialog einen Ordner wählt; davon hängen Titel und Startordner des Dialogs ab. */
+export type DirectoryPurpose = 'newTab' | 'defaultCwd';
+
 /** Die API, die der Preload-Skript dem Renderer unter `window.thub` bereitstellt. */
 export interface THubApi {
   loadSnapshot(): Promise<WorkspaceSnapshot>;
   onEvent(listener: (event: WorkspaceEvent) => void): Unsubscribe;
   send(command: WorkspaceCommand): void;
+  /** Zuletzt benutzte Ordner, die es noch gibt, neueste zuerst; abgefragt beim Öffnen des Pfeil-Menüs. */
+  loadRecentDirs(): Promise<RecentDir[]>;
 
-  pickDirectory(initial?: string): Promise<string | null>;
+  /** Öffnet den Ordner-Dialog von Windows; `null`, wenn er abgebrochen wurde. */
+  pickDirectory(purpose: DirectoryPurpose): Promise<string | null>;
 
   readClipboard(): Promise<string>;
   writeClipboard(text: string): Promise<void>;
@@ -111,6 +125,7 @@ export const IPC = {
   workspaceSnapshot: 'workspace:snapshot',
   workspaceCommand: 'workspace:command',
   workspaceEvent: 'workspace:event',
+  workspaceRecentDirs: 'workspace:recent-dirs',
   dialogPickDirectory: 'dialog:pick-directory',
   clipboardRead: 'clipboard:read',
   clipboardWrite: 'clipboard:write',
