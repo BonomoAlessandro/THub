@@ -8,8 +8,9 @@ import {
   openPointsContext,
 } from '../../src/main/workspace/openPoints';
 
-// Offene Punkte aus Claudes Antworten (Ticket 22): die Erkennung als reine Funktion, mit Antworten, wie Claude sie
-// schreibt (deutsch und englisch, Markdown-Varianten, verschachtelte Listen, Code-Blöcke).
+// Offene Punkte aus Claudes Antworten (Tickets 22 und 27): die Erkennung als reine Funktion, mit Antworten, wie Claude
+// sie schreibt (deutsch und englisch, Markdown-Varianten, verschachtelte Listen, Code-Blöcke). Es zählt nur der
+// ausdrückliche Abschnitt; Antworten, die bloss mit einer Frage oder einem Angebot enden, ergeben keinen Hinweis.
 
 /** Mehrzeiliger Text ohne die Einrückung des Quelltexts: Die erste Zeile gibt die Einrückung vor. */
 function md(strings: TemplateStringsArray, ...values: unknown[]): string {
@@ -178,6 +179,7 @@ describe('findOpenPoints', () => {
       expect(findOpenPoints('## Offene Punkte\n- Eins\n- Zwei\n\nSag Bescheid, wenn du Fragen hast.')).toEqual(['Eins', 'Zwei']);
       expect(findOpenPoints('## Offene Punkte\n- Eins\n## Zusammenfassung\n- Zwei')).toEqual(['Eins']);
       expect(findOpenPoints('**Offene Punkte**\n- Eins\n**Details**\n- Zwei')).toEqual(['Eins']);
+      expect(findOpenPoints('## Offene Punkte\n- Eins\n**Soll ich noch etwas tun?**')).toEqual(['Eins']);
       expect(findOpenPoints('## Offene Punkte\n- Eins\n\n---\n\n- Zwei')).toEqual(['Eins']);
     });
 
@@ -315,101 +317,61 @@ describe('findOpenPoints', () => {
     });
   });
 
-  describe('ohne Überschrift: Frage am Ende des letzten Absatzes', () => {
-    it('die Frage am Ende ist ein offener Punkt, ohne die Sätze davor', () => {
-      const answer = md`
-        Ich habe den Fehler gefunden: Die Zeitzone wurde beim Parsen ignoriert.
-
-        Der Fix steckt in \`src/date.ts\`, die Tests sind ergänzt. Soll ich auch die alten Einträge in der Datenbank korrigieren?
-      `;
-
-      expect(findOpenPoints(answer)).toEqual(['Soll ich auch die alten Einträge in der Datenbank korrigieren?']);
-    });
-
-    it('mehrere Fragen direkt hintereinander am Ende bilden einen Punkt', () => {
-      expect(findOpenPoints('Alles umgebaut. Soll ich die Tests anpassen? Oder lieber zuerst die Doku?')).toEqual([
-        'Soll ich die Tests anpassen? Oder lieber zuerst die Doku?',
-      ]);
-    });
-
-    it('Abkürzungen beenden keinen Satz', () => {
-      expect(findOpenPoints('Erledigt. Soll ich z. B. die Logs bzw. Caches auch leeren?')).toEqual([
-        'Soll ich z. B. die Logs bzw. Caches auch leeren?',
-      ]);
-      expect(findOpenPoints('Done. Should I also bump the version, e.g. to 2.1?')).toEqual([
-        'Should I also bump the version, e.g. to 2.1?',
-      ]);
-    });
-
-    it('ein Absatz über mehrere Zeilen', () => {
-      const answer = 'Die Migration ist fertig.\nSoll ich sie gleich auf dem\nTestsystem ausführen?';
-
-      expect(findOpenPoints(answer)).toEqual(['Soll ich sie gleich auf dem Testsystem ausführen?']);
-    });
-
-    it('nach dem Fragezeichen dürfen Hervorhebung, Anführungszeichen, Klammern oder ein Emoji stehen', () => {
-      expect(findOpenPoints('Fertig. **Soll ich committen?**')).toEqual(['Soll ich committen?']);
-      expect(findOpenPoints('Fertig. Passt das so? 🙂')).toEqual(['Passt das so? 🙂']);
-      expect(findOpenPoints('Fertig. (Oder brauchst du noch etwas?)')).toEqual(['(Oder brauchst du noch etwas?)']);
-    });
-
-    it('eine fette Frage als ganze Zeile', () => {
-      expect(findOpenPoints('Alles erledigt.\n\n**Soll ich die Änderungen committen?**')).toEqual([
-        'Soll ich die Änderungen committen?',
-      ]);
-    });
-
-    it('endet der letzte Absatz mit einer Aufzählung, zählt nur ihr letzter Punkt', () => {
-      const answer = md`
-        Ich sehe zwei Wege:
-        - Wir cachen die Antworten im Speicher.
-        - Wir nutzen Redis. Welche Variante bevorzugst du?
-      `;
-
-      expect(findOpenPoints(answer)).toEqual(['Welche Variante bevorzugst du?']);
-    });
-
-    it('eine Überschrift direkt über der Frage gehört nicht dazu', () => {
-      expect(findOpenPoints('## Nächster Schritt\nSoll ich deployen?')).toEqual(['Soll ich deployen?']);
-      expect(findOpenPoints('Fertig.\n\n**Offene Punkte**\nSoll ich deployen?')).toEqual(['Soll ich deployen?']);
-    });
-
-    it('ein Zitat am Ende', () => {
-      expect(findOpenPoints('Fertig.\n\n> Soll ich das so übernehmen?')).toEqual(['Soll ich das so übernehmen?']);
-    });
-
-    it('englisch', () => {
-      const answer = md`
-        I've added the retry logic with exponential backoff (max 5 attempts).
-
-        Would you like me to make the retry count configurable via an environment variable?
-      `;
-
-      expect(findOpenPoints(answer)).toEqual([
-        'Would you like me to make the retry count configurable via an environment variable?',
-      ]);
-    });
-
-    it('keine Frage am Ende: keine Punkte', () => {
-      expect(findOpenPoints('Ich habe die Datei angepasst. Sag Bescheid, wenn du Fragen hast!')).toEqual([]);
-      expect(findOpenPoints('Warum war das kaputt? Die Zeitzone fehlte. Jetzt ist es behoben.')).toEqual([]);
-    });
-
-    it('eine Frage weiter oben, aber nicht am Ende des letzten Absatzes: keine Punkte', () => {
-      const answer = md`
-        Soll ich auch die Tests anpassen?
-
-        Ich habe das schon mal vorbereitet.
-      `;
-
+  describe('nur der ausdrückliche Abschnitt zählt: eine Frage am Ende ergibt keinen Hinweis', () => {
+    it.each([
+      [
+        'Angebot für weitere Arbeit',
+        'Der Fix steckt in `src/date.ts`, die Tests sind ergänzt. Soll ich auch noch die alten Einträge in der Datenbank korrigieren?',
+      ],
+      ['Angebot mit „noch“', 'Erledigt. Soll ich noch einen Test für den Randfall schreiben?'],
+      ['Wahl zwischen zwei Angeboten', 'Alles umgebaut. Soll ich die Tests anpassen? Oder lieber zuerst die Doku?'],
+      ['Frage mit Abkürzungen', 'Erledigt. Soll ich z. B. die Logs bzw. Caches auch leeren?'],
+      ['Rückfrage nach dem Ergebnis', 'Die Migration ist fertig.\nPasst das so für dich?'],
+      ['fett', 'Alles erledigt.\n\n**Soll ich die Änderungen committen?**'],
+      ['mit Emoji', 'Fertig. Passt das so? 🙂'],
+      ['in Klammern', 'Fertig. (Oder brauchst du noch etwas?)'],
+      ['als Zitat', 'Fertig.\n\n> Soll ich das so übernehmen?'],
+      ['letzter Punkt einer Aufzählung', 'Ich sehe zwei Wege:\n- Wir cachen im Speicher.\n- Wir nutzen Redis. Welche Variante bevorzugst du?'],
+      ['unter einer anderen Überschrift', '## Nächster Schritt\nSoll ich deployen?'],
+      ['englisch: „Want me to …?“', 'Done, the parser now handles empty lines. Want me to also add tests for the edge cases?'],
+      ['englisch: „Should I …?“', 'Done. Should I also bump the version, e.g. to 2.1?'],
+      [
+        'englisch: „Would you like me to …?“',
+        "I've added the retry logic with exponential backoff (max 5 attempts).\n\nWould you like me to make the retry count configurable via an environment variable?",
+      ],
+      ['englisch: „Let me know …?“', 'All set. Let me know if you want me to push the branch?'],
+    ])('%s', (_label, answer) => {
       expect(findOpenPoints(answer)).toEqual([]);
     });
 
-    it('eine Überschrift als letzte Zeile ist kein Absatz', () => {
+    it.each([
+      ['Frage im Absatz darunter', 'Fertig.\n\n**Offene Punkte**\nSoll ich deployen?'],
+      ['Frage nach einer Leerzeile', '## Offene Punkte\n\nWelche Datenbank sollen wir verwenden?'],
+      ['„keine“ im Absatz darunter', '## Offene Punkte\n\nKeine.'],
+      ['Überschrift als letzte Zeile', 'Fertig.\n\n## Offene Punkte'],
+      ['Überschrift mit Doppelpunkt, Text in derselben Zeile', 'Fertig.\n\n**Offene Punkte:** keine'],
+      ['die nächste Überschrift folgt direkt', '## Offene Fragen\n## Zusammenfassung\n- Alles erledigt'],
+    ])('eine Überschrift ohne Aufzählung darunter ergibt keinen Hinweis (%s)', (_label, answer) => {
+      expect(findOpenPoints(answer)).toEqual([]);
+    });
+
+    it('ohne Frage am Ende und ohne Abschnitt: keine Punkte', () => {
+      expect(findOpenPoints('Ich habe die Datei angepasst. Sag Bescheid, wenn du Fragen hast!')).toEqual([]);
+      expect(findOpenPoints('Warum war das kaputt? Die Zeitzone fehlte. Jetzt ist es behoben.')).toEqual([]);
       expect(findOpenPoints('Fertig.\n\n## Was nun?')).toEqual([]);
     });
 
-    it('unter der Überschrift steht eine Liste ohne Frage am Ende: nur die Liste zählt', () => {
+    it('mit Abschnitt zählen nur seine Punkte, nicht die Frage am Ende', () => {
+      const answer = md`
+        Die Migration ist vorbereitet.
+
+        ## Offene Punkte
+        - Auf welchem Server soll sie zuerst laufen?
+
+        Soll ich danach auch gleich die Doku nachziehen?
+      `;
+
+      expect(findOpenPoints(answer)).toEqual(['Auf welchem Server soll sie zuerst laufen?']);
       expect(findOpenPoints('## Offene Punkte\n- Eins\n\nAlles klar?')).toEqual(['Eins']);
     });
   });

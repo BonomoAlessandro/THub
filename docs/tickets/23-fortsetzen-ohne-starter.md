@@ -1,6 +1,6 @@
 # 23 – Fortsetzen ohne Starter endet nicht in einer Endlosschleife
 
-Status: `offen` · Typ: AFK
+Status: `in Arbeit` · Typ: AFK
 Blockiert durch: –
 User Stories: 28, 60, 63
 Spezifikation: „Wiederherstellen“ und die Abschnitte zu Starter und Ausführungsrichtlinie
@@ -24,6 +24,7 @@ Kommt nach einem von THub abgesetzten Fortsetzen innerhalb einer grosszügigen F
 - Die Claude-Zuordnung des Tabs fällt weg. Der Tab ist ein normales Terminal, wie bei einem `claude`, das ohne Starter getippt wurde. Die Session läuft in der Shell ungestört weiter.
 - Beim nächsten Neustart wird nichts fortgesetzt.
 - Kommt die Meldung später doch noch (sehr langsames Profil), stellt sie die Zuordnung wie üblich wieder her (`linkAfterLaunch`).
+- Die Frist beginnt erst, wenn THub den Startbefehl zum Fortsetzen tatsächlich absetzt: beim zuletzt aktiven Claude-Tab gleich beim Start, bei einem pausierten Tab erst, wenn er geöffnet wird. Ein pausierter, nie geöffneter Tab behält seine Zuordnung.
 
 ## Akzeptanzkriterien
 
@@ -31,7 +32,8 @@ Kommt nach einem von THub abgesetzten Fortsetzen innerhalb einer grosszügigen F
   - Fortsetzen ohne Start-Meldung → nach der Frist keine Claude-Zuordnung mehr, nach einem Neustart kein Fortsetzen;
   - Start-Meldung innerhalb der Frist → nichts ändert sich;
   - Start-Meldung erst nach der Frist → die Zuordnung ist wieder da;
-  - Beenden oder Einfrieren während der Frist → kein Effekt.
+  - Beenden oder Einfrieren während der Frist → kein Effekt;
+  - ein pausierter Tab startet die Frist erst beim Öffnen.
 - [ ] Bestehende Tests zum Fortsetzen (`resume.test.ts`, Shell-Tests) bleiben grün.
 
 ## Abnahme von Hand

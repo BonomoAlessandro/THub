@@ -251,7 +251,12 @@ export type WorkspaceCommand =
    * Wechsel; der aktive Tab gilt nur im Vordergrund als angeschaut.
    */
   | { type: 'windowForeground'; foreground: boolean }
-  /** Hinweis mit × wegklicken. */
+  /**
+   * Klick auf einen Hinweis: Der Kern zeigt dessen Tab an; ein Hinweis mit offenen Punkten verschwindet dabei, auch aus
+   * dem gespeicherten Zustand.
+   */
+  | { type: 'openToast'; toastId: string }
+  /** Hinweis mit × wegklicken, ohne den Tab anzuzeigen. */
   | { type: 'dismissToast'; toastId: string }
   /** Die Maus steht auf dem Hinweis (`hold`) bzw. nicht mehr; solange hält sein Countdown an. */
   | { type: 'holdToast'; toastId: string; hold: boolean }
