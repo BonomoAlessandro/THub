@@ -25,7 +25,8 @@ export function sessionToResume(link: PersistedClaudeLink): string | undefined {
  * Startbefehl zum Fortsetzen, in der Sprache der Shell: der Starter mit `--resume <Kennung>`. Er ruft den Starter
  * direkt auf, nicht das Wort `claude`, weil doskey-Makros in der `/k`-Zeile von cmd nicht wirken. Fehlt THUB_STARTER
  * (eine Gruppenrichtlinie würde den Starter blockieren), ruft er `claude --resume <Kennung>` direkt auf, wie getippt
- * und ohne Erfassung.
+ * und ohne Erfassung; der Kern erkennt das an der fehlenden Start-Meldung und lässt die Claude-Zuordnung fallen
+ * (Ticket 23).
  * @param sessionId eine Kennung aus `sessionToResume`
  */
 export function resumeCommand(integration: ShellIntegration, sessionId: string): string {
