@@ -42,8 +42,10 @@ export function useTabDrag(
     (e: ReactPointerEvent<HTMLElement>, tabId: string) => {
       const strip = stripRef.current;
       // Nur mit der linken Taste und nicht auf dem × oder im Eingabefeld beim Umbenennen.
-      if (!strip || cancelRef.current || e.button !== 0 || !e.isPrimary) return;
+      if (!strip || e.button !== 0 || !e.isPrimary) return;
       if ((e.target as Element).closest('button, input')) return;
+      // Ein neuer Druck beendet ein liegengebliebenes Ziehen, etwa wenn sein Loslassen nie ankam.
+      cancelRef.current?.();
 
       const tabEl = e.currentTarget;
       const { pointerId } = e;
