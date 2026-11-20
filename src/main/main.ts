@@ -24,6 +24,13 @@ const folders = dataFolders(app.getPath('appData'), app.isPackaged);
 app.setPath('userData', folders.current);
 
 let mainWindow: BrowserWindow | null = null;
+
+/**
+ * Testmodus für automatische Prüfungen der echten App (Agenten, Tests): Mit `THUB_TEST_HIDDEN=1` öffnet
+ * das Fenster ausserhalb des Bildschirms, ohne Aktivierung und ohne Taskleisten-Eintrag; Grösse und Lage
+ * werden nicht gespeichert, und ein zweiter Start holt es nicht nach vorne. Gilt auch für die gebaute App.
+ */
+const TEST_HIDDEN = process.env.THUB_TEST_HIDDEN === '1';
 let workspace: Workspace | null = null;
 let localApi: LocalApiServer | null = null;
 let shutdown: 'running' | 'stopping' | 'done' = 'running';
@@ -120,7 +127,7 @@ async function startLocalApi(): Promise<{ server: LocalApiServer; info: LocalApi
 
 /** Ein zweiter Start: Das bestehende Fenster kommt nach vorne, auch aus minimiertem Zustand. */
 function bringWindowToFront(): void {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (!mainWindow || mainWindow.isDestroyed() || TEST_HIDDEN) return;
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.show();
   mainWindow.focus();
@@ -223,6 +230,8 @@ function createWindow(ws: Workspace, theme: ThemeSource): void {
   const { bounds, maximized } = ws.windowState();
   const win = new BrowserWindow({
     ...bounds,
+    // Testmodus: ausserhalb des Bildschirms, ohne Taskleisten-Eintrag (siehe TEST_HIDDEN).
+    ...(TEST_HIDDEN ? { x: -32000, y: -32000, skipTaskbar: true } : {}),
     minWidth: 600,
     minHeight: 360,
     show: false,
@@ -251,7 +260,7 @@ function createWindow(ws: Workspace, theme: ThemeSource): void {
   // Gemeldet werden die normale Grösse und Lage (auch im maximierten Zustand) und ob maximiert.
   // Minimiert bleibt der zuletzt gemeldete Zustand stehen, sonst ginge „maximiert“ verloren.
   const reportWindow = (): void => {
-    if (win.isDestroyed() || win.isMinimized() || win.isFullScreen()) return;
+    if (TEST_HIDDEN || win.isDestroyed() || win.isMinimized() || win.isFullScreen()) return;
     ws.windowChanged({ bounds: win.getNormalBounds(), maximized: win.isMaximized() });
   };
   win.on('resize', reportWindow);
@@ -266,6 +275,11 @@ function createWindow(ws: Workspace, theme: ThemeSource): void {
   handleWindowEnd(win, ws);
 
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+  if (TEST_HIDDEN) {
+    // Ohne Aktivierung zeigen: Das Fenster nimmt niemandem den Fokus weg.
+    win.showInactive();
+    return;
+  }
   // Maximiert öffnen: Darunter bleibt die gespeicherte normale Grösse, „Wiederherstellen“ führt dorthin.
   if (maximized) win.maximize();
   win.show();
