@@ -1,7 +1,7 @@
 # THub 2: Tabs, Claude-Sessions, die einen Neustart überleben, und neuer Look
 
 > Status: `ready-for-agent`
-> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
+> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
 
 > **Name:** Die App heisst **THub** (bis 2026-11-19 „TermHub“). Datenordner `%APPDATA%\THub`, in der Entwicklung `%APPDATA%\THub-dev`. Umsetzung des Namenswechsels: Ticket 20.
 
@@ -26,6 +26,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 - **Nach einem Neustart ist alles wieder da:** Normale Terminals starten im zuletzt aktiven Ordner und zeigen ihren früheren Inhalt ausgegraut als Verlauf. Claude-Sessions werden direkt fortgesetzt, die zuletzt aktive sofort, die übrigen beim ersten Anklicken.
 - **Hinweise unten rechts im Fenster** melden, wenn Claude in einem Tab, den du gerade nicht siehst, auf dich wartet oder fertig wird, und zeigen offene Fragen oder Punkte am Ende von Claudes Antworten, bis du sie wegklickst.
 - **Einfache Bedienung:** Maus, die bekannten Tastenkürzel und eine Befehlspalette (`Ctrl+Shift+P`).
+- **Rechner wach halten:** Ein Schalter neben dem Zahnrad verhindert den Energiesparmodus, solange THub läuft, wahlweise auch das Ausschalten des Bildschirms. Er bleibt über einen Neustart von THub eingeschaltet.
 - **Moderner Look:** eigene Titelleiste, deckender Hintergrund, hell und dunkel nach Windows, Stil wie Warp, Linear oder Raycast, ohne Akzentfarbe.
 - **Funktioniert auf jedem Rechner direkt nach der Installation.** Deine Claude-Konfiguration wird nicht verändert.
 
@@ -150,6 +151,15 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 81. Als Nutzer möchte ich, dass dieser Hinweis stehen bleibt, bis ich ihn schliesse, auch über einen Neustart hinweg und auch im gerade sichtbaren Tab, damit ich nichts vergesse.
 82. Als Nutzer möchte ich diese Hinweise in den Einstellungen abschalten können, damit mich THub nicht stört, wenn ich das nicht will.
 
+### Rechner wach halten
+
+84. Als Nutzer möchte ich oben neben dem Zahnrad einen Schalter haben, der meinen Rechner wach hält, damit Claude-Sessions, Builds und Testläufe weiterlaufen, während ich nicht am Rechner bin, ohne dass ich in jeder Claude-Session ein Wachhalte-Skript starten lassen muss.
+85. Als Nutzer möchte ich zwischen zwei Stufen wählen: nur den Rechner wach halten (der Bildschirm schaltet sich aus und sperrt wie gewohnt) oder Rechner und Bildschirm wach halten, damit ich je nach Lage den Fortschritt im Blick behalten oder den Rechner abgedunkelt arbeiten lassen kann.
+86. Als Nutzer möchte ich das Wachhalten mit einem Klick auf den Schalter ein- und ausschalten, mit der zuletzt gewählten Stufe, und die Stufe über ein Pfeil-Menü neben dem Schalter wählen, damit das Umschalten schnell geht.
+87. Als Nutzer möchte ich, dass ein eingeschaltetes Wachhalten nach einem Neustart von THub mit derselben Stufe von selbst wieder läuft, damit ich nicht daran denken muss.
+88. Als Nutzer möchte ich, dass das Wachhalten endet, sobald ich es ausschalte oder THub beende, und dass weder ein Prozess noch eine geänderte Energieeinstellung zurückbleibt, damit mein System sauber bleibt.
+89. Als Nutzer möchte ich das Wachhalten auch über die Befehlspalette ein- und ausschalten können, damit ich die Hände an der Tastatur behalte.
+
 ## Implementierungsentscheidungen
 
 ### Architektur im Überblick
@@ -162,6 +172,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
   - **Uhr**: Zeitstempel und Zeitgeber (Countdown der Hinweise, periodisches Sichern, Abfrage der Prozess-Sonde).
   - **Prozess-Sonde**: liefert in **einer** Abfrage alle Prozesse mit Prozess-ID, Eltern-ID, Programmname und Startzeit (und für verwaiste Git-Bash-Prozesse den Konsolen-Host).
   - **System**: ob ein Ordner existiert, Benutzerordner und Benutzername, angeschlossene Bildschirme.
+  - **Wachhalten** (Ticket 28): die Stufe, auf der Windows den Rechner wach hält (aus, nur Rechner, Rechner und Bildschirm).
 - **Eingänge** in den Kern: Befehle aus dem Renderer (darunter „Ansicht des Tabs bereit“ mit Spalten und Zeilen, angezeigter Tab, Fenster im Vordergrund ja/nein), Ausgabe und Ende aus dem Terminal-Backend (der Kern erkennt darin die Ordner-Meldungen der Shell), Meldungen des `claude`-Starters, Claude-Hook-Ereignisse und Prozess-Schnappschüsse.
 - **Ausgänge**: der Zustand an den Renderer (vollständiger Schnappschuss beim Laden, danach Änderungsereignisse: Tabs, Status, Hinweise, Einstellungen), Startaufträge an das Terminal-Backend, Verlauf zum Wiederherstellen.
 - **Vertrag zwischen Renderer und Kern:**
@@ -498,6 +509,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - Terminal-Schriftgrösse (8 bis 32)
   - Hinweise an/aus
   - offene Punkte aus Claudes Antworten an/aus
+  - Rechner wach halten an/aus und die gewählte Stufe (nur Rechner / Rechner und Bildschirm); fehlen die Angaben, gilt aus und „nur Rechner“, ohne neue Schema-Version (Ticket 28)
 - **Tabs (geordnet):**
   - Kennung, Name, ob der Name von Hand vergeben wurde
   - Shell-Kennung, Startordner, zuletzt aktiver Ordner
@@ -528,6 +540,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - Titelleiste mit Tab-Leiste: Ziehen zum Umsortieren, Status-Symbole, Inline-Umbenennen, Tooltip, Scrollen bei Überlauf
   - `+`-Knopf mit Pfeil-Menü: Shells, „Neues Terminal in …“ mit zuletzt benutzten Ordnern und „Ordner wählen …“
   - Zahnrad mit Einstellungsdialog
+  - Schalter „Rechner wach halten“ mit Pfeil-Menü für die Stufe, links neben dem Zahnrad (siehe „Rechner wach halten“)
   - Rechtsklick-Menü am Tab
   - Befehlspalette mit unscharfer Suche über Tabs und Befehle
   - Hinweise unten rechts
@@ -612,6 +625,49 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Neue Tabs am Ende:** `createTab` hängt an, egal welcher Tab aktiv ist; das gilt für `+`, `Ctrl+Shift+T`, das Pfeil-Menü, die Befehlspalette und den Knopf „Neues Terminal“ ohne offene Tabs. Nur Duplizieren (rechts neben der Quelle) und Wiederöffnen (alte Stelle) setzen eine Position.
 - **Aufgeklappte Auswahlliste:** Chromium zeichnet die Liste eines `<select>` als eigenes Fenster. Es übernimmt das Farbschema des Felds (`color-scheme`, vom Design über `data-theme` geerbt, auch bei „System“), seine Hintergrund- und Textfarbe, und legt die Liste auf eine weisse Fläche. Das halbdurchsichtige `--btn-bg` des dunklen Designs ergab so eine weisse Liste mit heller Schrift. Die Hintergrundfarbe des Felds ist deshalb deckend (`--dialog-bg`), `--btn-bg` liegt als Bild-Ebene darüber; geschlossen sieht es aus wie vorher. Die Hervorhebung des gewählten Eintrags kommt von Chromium selbst und lässt sich ohne eigene Liste nicht gestalten: im dunklen Design hellblau mit dunkler Schrift, im hellen dunkelblau mit weisser Schrift. Andere native Bedienelemente: Die Bildlaufleisten folgen über `color-scheme` dem Design; ein weiteres `<select>` gibt es nicht. Native Tooltips (`title`, etwa am Standardordner) sind nicht Teil dieses Tickets.
 
+### Rechner wach halten
+
+Umsetzung: Ticket 28.
+
+- **Zweck:** Lange Claude-Sessions, Builds und Testläufe sollen weiterlaufen, während der Nutzer nicht am Rechner ist, ohne dass Windows nach der eingestellten Zeit in den Energiesparmodus geht. Bisher liess der Nutzer dafür in einzelnen Claude-Sessions ein Wachhalte-Skript starten: PowerShell, das in einer Schleife `SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)` aufruft. THub übernimmt das mit derselben Wirkung und bietet zusätzlich eine Stufe, die auch den Bildschirm anlässt.
+- **Stufen:**
+  - **Nur Rechner:** Windows geht nach einer Zeit ohne Eingabe nicht in den Energiesparmodus. Der Bildschirm schaltet sich nach der eingestellten Zeit weiterhin aus, und die Sperre greift wie gewohnt. Das entspricht dem bisherigen Skript.
+  - **Rechner und Bildschirm:** zusätzlich bleibt der Bildschirm an und wird nicht abgedunkelt.
+  - Die Energieeinstellungen von Windows bleiben in beiden Stufen unverändert. THub simuliert keine Eingaben.
+- **Technik:** kein Skript und kein eigener Prozess.
+  - Der Hauptprozess stellt über koffi (wie die Prozess-Sonde) Energie-Anforderungen bei Windows. Beim ersten Einschalten erzeugt er eine Anforderung mit `PowerCreateRequest`, als Grund der einfache Text „THub hält den Rechner wach“ (`POWER_REQUEST_CONTEXT_SIMPLE_STRING`).
+  - „Nur Rechner“ setzt darauf `PowerSetRequest(…, PowerRequestSystemRequired)`; „Rechner und Bildschirm“ setzt zusätzlich `PowerRequestDisplayRequired`. Ausschalten hebt die gesetzten Arten mit `PowerClearRequest` auf.
+  - Wechselt die Stufe bei eingeschaltetem Wachhalten, setzt THub zuerst die neue Art und hebt danach die nicht mehr gewünschte auf, damit keine Lücke entsteht.
+  - Endet THub, auf welchem Weg auch immer (auch bei einem Absturz), gibt Windows die Anforderung mit dem Prozess frei. Es bleibt nichts zurück.
+  - Die Anforderung erscheint in `powercfg /requests` (braucht Administratorrechte) unter `SYSTEM` bzw. zusätzlich `DISPLAY`, mit dem Grund.
+  - **Verworfen:** `powerSaveBlocker` von Electron. `prevent-app-suspension` stellt unter Windows eine `PowerRequestExecutionRequired`-Anforderung (Chromium, `services/device/wake_lock/power_save_blocker/power_save_blocker_win.cc`). Laut Microsoft hält diese nur auf Rechnern mit klassischem Standby (S3) auch das System wach. Der Rechner des Nutzers hat Modern Standby (`powercfg /a`: „Standby (S0 Niedriger Energiestand – Leerlauf)“), dort wäre die Wirkung nicht gesichert. `prevent-display-sleep` setzt unter Windows 11 nur `PowerRequestDisplayRequired`.
+  - **Verworfen:** ein mitgeliefertes PowerShell-Skript als eigener Prozess. Es könnte nach einem Absturz von THub weiterlaufen, braucht `powershell.exe` und scheitert im Constrained Language Mode.
+- **Eingeschaltet bleiben:**
+  - An/aus und die Stufe sind Einstellungen (`keepAwake`, Standard aus; `keepAwakeMode` mit `system` oder `display`, Standard `system`) und stehen im gespeicherten Zustand.
+  - Beenden von THub, Windows-Abmeldung und Absturz ändern sie nicht. Beim nächsten Start stellt der Kern die Anforderung von selbst wieder, sobald er den Zustand geladen hat.
+  - Ein Neustart des Rechners startet THub nicht (kein Autostart); das Wachhalten beginnt mit dem nächsten Start von THub.
+  - Eine zweite Instanz stellt keine Anforderung.
+- **Kern:**
+  - Er besitzt beide Einstellungen und meldet über den Port **Wachhalten** die wirksame Stufe (aus, nur Rechner, Rechner und Bildschirm): einmal beim Start mit dem geladenen Zustand, danach bei jeder Änderung, die die wirksame Stufe ändert.
+  - Der Port ist idempotent: Dieselbe Stufe zweimal ergibt eine einzige Anforderung.
+  - Umgeschaltet wird über den bestehenden Befehl `updateSettings` mit `keepAwake` und `keepAwakeMode`.
+  - Eine Änderung der Stufe bei ausgeschaltetem Wachhalten schaltet es nicht ein; das tut nur die Wahl im Pfeil-Menü (siehe unten), die beides zusammen ändert.
+- **Oberfläche:**
+  - **Platz:** in der Titelleiste links neben dem Zahnrad, rechts von der freien Zieh-Fläche, deren Mindestbreite bleibt. Schalter und Pfeil sind von der Zieh-Fläche ausgenommen.
+  - **Schalter:** ein Symbol für die gewählte Stufe (Kaffeetasse für „nur Rechner“, Bildschirm für „Rechner und Bildschirm“) und ein kleiner Schalter im Stil der Schalter im Einstellungsdialog, neutral ohne Akzentfarbe, in der Höhe der Symbolknöpfe. Symbol und Schalter sind eine einzige Schaltfläche (`role="switch"`, `aria-checked`, Name „Rechner wach halten“), per Tab erreichbar; Leertaste und Enter schalten um. Ausgeschaltet ist das Symbol gedämpft, eingeschaltet in voller Textfarbe.
+  - **Ein Klick** auf den Schalter schaltet ein oder aus, mit der gewählten Stufe.
+  - **Pfeil-Menü:** Der Pfeil rechts neben dem Schalter öffnet ein Menü wie der Pfeil neben dem `+`, mit den Einträgen „Nur Rechner wach halten“ und „Rechner und Bildschirm wach halten“, je mit ihrem Symbol. Die gewählte Stufe hat ein Häkchen. Eine Wahl setzt die Stufe und schaltet das Wachhalten ein; die schon laufende Stufe noch einmal zu wählen, ändert nichts und schaltet nicht aus.
+  - **Tooltips:** Schalter „Rechner wach halten: aus“, „Rechner wach halten: an“ bzw. „Rechner und Bildschirm wach halten: an“; Pfeil „Stufe wählen“.
+  - **Befehlspalette:** „Rechner wach halten“ und „Rechner und Bildschirm wach halten“ (setzen die Stufe und schalten ein, wie das Pfeil-Menü), bei eingeschaltetem Wachhalten zusätzlich „Wachhalten beenden“. Kein Tastenkürzel, kein Eintrag im Einstellungsdialog.
+- **Testmodus:** Mit `THUB_TEST_HIDDEN=1` stellt THub keine echte Anforderung, sondern schreibt „Testmodus: THub würde jetzt den Rechner wach halten.“, „… den Rechner und den Bildschirm wach halten.“ bzw. „… nichts mehr wach halten.“ in die Ausgabe.
+- **Fehler:** Scheitert eine Anforderung (etwa weil koffi nicht lädt), bleibt die Einstellung, wie sie ist, und der Fehler steht in der Ausgabe des Hauptprozesses. THub versucht es bei der nächsten Änderung oder beim nächsten Start erneut.
+- **Grenzen:**
+  - Zuklappen des Deckels, der Ein-/Aus-Knopf und „Energie sparen“ im Startmenü versetzen den Rechner trotzdem in den Energiesparmodus; Windows hebt die Anforderungen dabei auf.
+  - Im Akkubetrieb beendet Windows auf Rechnern mit Modern Standby die Anforderung, den Rechner wach zu halten, 5 Minuten nach Ablauf der eingestellten Zeit bis zum Energiesparmodus. Über Nacht braucht der Rechner deshalb das Netzteil.
+  - Ob eine von einer Firmenrichtlinie vorgegebene Sperre nach Inaktivität in der Stufe „Rechner und Bildschirm“ ausbleibt, hängt von deren Einrichtung ab. THub umgeht sie nicht; das Verhalten wird von Hand geprüft.
+  - Ein Administrator kann die Anforderungen eines Programms übergehen (`powercfg /requestsoverride`).
+  - Der Ruhezustand bei fast leerem Akku greift weiterhin.
+
 ### App-Verhalten
 
 - **Nur eine Instanz:** Ein zweiter Start gibt sofort auf und holt das bestehende Fenster nach vorne, auch aus minimiertem Zustand. Er startet keine Shells und keinen Server, schreibt keine Hook-Datei und keinen Zustand.
@@ -653,6 +709,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - **Hinweise:** nur für nicht sichtbare Tabs, Countdown nur im Vordergrund, höchstens einer pro Tab, abgeschaltet heisst keine Hinweise.
   - **Wiederherstellen:** alle Fälle aus dem Abschnitt „Wiederherstellen“.
   - **Übernahme** eines Zustands der Version 1.
+  - **Wachhalten:** Mit nachgemachtem Port meldet der Kern die wirksame Stufe beim Start und bei jeder Änderung; Ein- und Ausschalten, Wechsel der Stufe bei eingeschaltetem und ausgeschaltetem Wachhalten, dieselbe Stufe zweimal; nach einem Neustart läuft ein eingeschaltetes Wachhalten mit derselben Stufe von selbst wieder; Beenden und Einfrieren ändern die gespeicherte Einstellung nicht; ein Zustand ohne die Angaben ergibt „aus“ und „nur Rechner“.
 
 ### Teststelle 2: Shell-Integration mit echten Shells
 
@@ -676,6 +733,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 
 - Die React-Oberfläche: Das Aussehen wird am Prototyp abgestimmt, die Bedienung von Hand anhand der User Stories abgenommen.
 - Die Shell-Erkennung selbst und das Verhalten unter Gruppenrichtlinien: werden von Hand geprüft.
+- Die tatsächliche Wirkung des Wachhaltens (kein Energiesparmodus, Bildschirm bleibt an): Sie zeigt sich erst nach der eingestellten Zeit ohne Eingabe und wird von Hand geprüft. Automatisch geprüft wird, dass der echte Port die Anforderungen ohne Fehler von Windows setzt und wieder aufhebt.
 
 ### Werkzeuge und Vorlagen
 
@@ -695,6 +753,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - Ein globaler Hook in `~/.claude/settings.json`.
 - Weitere Einstellungen wie Terminal-Schriftart. Eine Akzentfarbe gibt es bewusst nicht.
 - Auto-Update, Autostart und Code-Signing.
+- Beim Wachhalten: simulierte Eingaben (etwa Tastendrücke gegen Sperre oder „Abwesend“-Status), eine Zeitbegrenzung („für 2 Stunden“) und ein automatisches Wachhalten nur, solange Claude arbeitet oder Prozesse laufen.
 - Automatisierte Tests der Oberfläche.
 
 ## Weitere Hinweise
