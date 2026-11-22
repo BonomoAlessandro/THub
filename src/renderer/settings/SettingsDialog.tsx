@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FONT_SIZE, type Settings, type ShellOption, type Theme } from '../../shared/types';
-import { pickDefaultFolder } from '../commands';
+import { copyVersion, pickDefaultFolder } from '../commands';
 import { Dialog } from '../popup/Dialog';
+import { versionLabel } from '../version';
 
 const api = window.thub;
 
@@ -37,6 +38,22 @@ export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onCl
   const { theme, fontSize, notifications, openPoints } = settings;
 
   const update = (patch: Partial<Settings>) => api.send({ type: 'updateSettings', patch });
+
+  // Versionszeile (Ticket 30): beim Öffnen abgefragt; ein Klick kopiert sie und meldet das kurz.
+  const [version, setVersion] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void api.loadAppInfo().then((info) => live && setVersion(versionLabel(info)));
+    return () => {
+      live = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(false), 1500);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
 
   const resetFolder = () => {
     update({ defaultCwd: '' });
@@ -196,6 +213,18 @@ export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onCl
           </div>
         </div>
       </section>
+      {version && (
+        <div className="set-version">
+          <button
+            type="button"
+            title="Version kopieren"
+            aria-label={`Version kopieren: ${version}`}
+            onClick={() => void copyVersion().then(() => setCopied(true))}
+          >
+            {copied ? 'In die Zwischenablage kopiert' : version}
+          </button>
+        </div>
+      )}
     </Dialog>
   );
 }

@@ -20,6 +20,8 @@ const api: THubApi = {
 
   openLink: (url) => ipcRenderer.invoke(IPC.linkOpen, url),
 
+  loadAppInfo: () => ipcRenderer.invoke(IPC.appInfo),
+
   loadTheme: () => ipcRenderer.invoke(IPC.themeCurrent),
   onThemeChange: (listener) => {
     const handler = (_e: IpcRendererEvent, theme: ResolvedTheme) => listener(theme);

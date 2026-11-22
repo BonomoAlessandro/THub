@@ -5,6 +5,7 @@ import type { ClosedTabInfo, KeepAwakeMode, RecentDir, TabKind, TabSnapshot, Tab
 import {
   closeOtherTabs,
   closeTab,
+  copyVersion,
   keepAwake,
   newTab,
   pickDefaultFolder,
@@ -34,7 +35,8 @@ export type PaletteIcon =
   | 'sliders'
   | 'keyboard'
   | 'coffee'
-  | 'monitor';
+  | 'monitor'
+  | 'copy';
 
 export interface PaletteItem {
   /** Eindeutig in der Palette. */
@@ -111,6 +113,8 @@ export function rootGroups(ctx: PaletteContext): PaletteGroup[] {
       run: () => void pickDefaultFolder().then(() => focusTerminal(active)),
     },
     { id: 'shortcuts', icon: 'keyboard', label: 'Tastenkürzel anzeigen', run: ctx.openShortcuts },
+    // Wie ein Klick auf die Versionszeile in den Einstellungen (Ticket 30).
+    { id: 'copyVersion', icon: 'copy', label: 'Version kopieren', run: () => void copyVersion() },
     // Wie das Pfeil-Menü am Schalter: Stufe setzen und einschalten. Kein Tastenkürzel.
     { id: 'keepAwake', icon: 'coffee', label: 'Rechner wach halten', run: () => keepAwake('system') },
     {

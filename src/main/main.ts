@@ -12,6 +12,7 @@ import { shellIntegrationDir } from './shellLaunch';
 import { detectShells } from './shells';
 import { STATE_FILE_NAME, StateStore } from './store';
 import { createProcessProbe } from './processProbe';
+import { BUILD_INFO } from './buildInfo';
 import { createKeepAwake } from './keepAwake';
 import { hostSystem, systemClock } from './system';
 import { DEV_MENU } from './devMenu';
@@ -285,6 +286,9 @@ function registerIpc(ws: Workspace): void {
       },
     });
   });
+
+  // Version und Herkunft für die Versionszeile im Einstellungsdialog (Ticket 30).
+  ipcMain.handle(IPC.appInfo, () => ({ version: app.getVersion(), ...BUILD_INFO, packaged: app.isPackaged }));
 
   // Im Testmodus eine eigene Zwischenablage im Speicher: Prüfungen von „Pfad kopieren“ oder Kopieren im Terminal
   // dürfen die echte Zwischenablage des Nutzers weder lesen noch überschreiben.

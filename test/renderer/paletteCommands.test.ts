@@ -24,11 +24,19 @@ const sent: WorkspaceCommand[] = [];
 let pickedDir: string | null = null;
 const pickDirectory = vi.fn(async (_purpose: DirectoryPurpose) => pickedDir);
 
+/** Was in der Zwischenablage liegt. */
+let clipboardText = '';
+const APP_INFO = { version: '2.0.0', commit: 'e8e865a', dirty: false, packaged: true };
+
 const fakeApi: Partial<THubApi> = {
   send: (command) => void sent.push(command),
   pickDirectory,
   loadRecentDirs: async () => [],
   loadClosedTabs: async () => [],
+  loadAppInfo: async () => APP_INFO,
+  writeClipboard: async (text) => {
+    clipboardText = text;
+  },
 };
 vi.stubGlobal('window', { thub: fakeApi });
 
@@ -38,7 +46,8 @@ const { runShortcut } = await import('../../src/renderer/commands');
 const { resolveShortcut } = await import('../../src/renderer/shortcuts');
 const { newTabMenuEntries } = await import('../../src/renderer/tabs/newTabMenu');
 const { keepAwakeMenuEntries } = await import('../../src/renderer/tabs/keepAwakeMenu');
-const { setKeepAwake } = await import('../../src/renderer/commands');
+const { copyVersion, setKeepAwake } = await import('../../src/renderer/commands');
+const { versionLabel } = await import('../../src/renderer/version');
 const { terminalViews } = await import('../../src/renderer/terminal/terminalViews');
 
 function tab(id: string, name: string, overrides: Partial<TabSnapshot> = {}): TabSnapshot {
@@ -145,6 +154,7 @@ describe('Befehlspalette', () => {
         'Einstellungen',
         'Standardordner ändern',
         'Tastenkürzel anzeigen',
+        'Version kopieren',
         'Rechner wach halten',
         'Rechner und Bildschirm wach halten',
       ]);
@@ -314,6 +324,23 @@ describe('Befehlspalette', () => {
       expect(await commandsOf(() => system.run())).toEqual(onSystem);
       expect(await commandsOf(() => item(groups, 'Rechner und Bildschirm wach halten').run!())).toEqual(onDisplay);
       expect(await commandsOf(() => display.run())).toEqual(onDisplay);
+    });
+
+    it('Version kopieren legt dieselbe Zeile in die Zwischenablage wie der Klick auf die Versionszeile', async () => {
+      const { groups } = palette();
+
+      clipboardText = '';
+      expect(await commandsOf(() => item(groups, 'Version kopieren').run!())).toEqual([]);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const fromPalette = clipboardText;
+
+      // Die Versionszeile in den Einstellungen ruft beim Klick copyVersion auf.
+      clipboardText = '';
+      const copied = await copyVersion();
+
+      expect(fromPalette).toBe('THub 2.0.0 · e8e865a');
+      expect(clipboardText).toBe(fromPalette);
+      expect(copied).toBe(versionLabel(APP_INFO));
     });
 
     it('Wachhalten beenden wie ein Klick auf den eingeschalteten Schalter', async () => {

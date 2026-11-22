@@ -1,10 +1,26 @@
 // Bündelt Main-, Preload- und Renderer-Code mit esbuild nach dist/.
 import { build } from 'esbuild';
+import { execFileSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, rmSync } from 'node:fs';
 
 const dev = process.argv.includes('--dev');
 
 rmSync('dist', { recursive: true, force: true });
+
+/**
+ * Woraus gebaut wird (Ticket 30): kurze Kennung des Commits und ob der Arbeitsstand Änderungen hat, die nicht committet
+ * sind. Der Hauptprozess zeigt beides in der Versionszeile. Ohne Git fehlt der Commit; der Build scheitert nicht.
+ */
+function buildInfo() {
+  const git = (...args) => execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  try {
+    return { commit: git('rev-parse', '--short', 'HEAD'), dirty: git('status', '--porcelain') !== '' };
+  } catch {
+    return { commit: null, dirty: false };
+  }
+}
+const build_info = buildInfo();
+console.log(`Baue aus ${build_info.commit ?? 'unbekanntem Commit'}${build_info.dirty ? ' + Änderungen' : ''}`);
 
 const common = {
   bundle: true,
@@ -27,6 +43,7 @@ await Promise.all([
     // Das spät geladene koffi (`await import('koffi')`) wird zu require: so lädt es wie node-pty über den
     // CommonJS-Lader von Electron, der Module im Paket aus app.asar.unpacked holt.
     supported: { 'dynamic-import': false },
+    define: { __THUB_BUILD__: JSON.stringify(build_info) },
   }),
   build({
     ...common,

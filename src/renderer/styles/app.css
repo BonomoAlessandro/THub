@@ -924,6 +924,23 @@ kbd {
   text-decoration: underline;
 }
 
+/* Versionszeile unten in den Einstellungen (Ticket 30): gedämpft; ein Klick kopiert sie. */
+.set-version {
+  margin: 6px 0 2px;
+}
+.set-version button {
+  padding: 2px 4px;
+  margin-left: -4px;
+  border-radius: var(--r-xs);
+  font-size: 11.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.set-version button:hover {
+  color: var(--text-muted);
+  background: var(--hover);
+}
+
 /* ---------- Übersicht der Tastenkürzel ---------- */
 /* Zeilen wie in den Einstellungen, etwas enger; die Liste scrollt, wenn das Fenster niedrig ist. */
 .keys-list {

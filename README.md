@@ -26,6 +26,8 @@ npm run dist
 
 Danach liegt der Installer unter `release\THub Setup <Version>.exe`. Er ist nicht signiert; Windows zeigt deshalb beim ersten Start eine SmartScreen-Warnung („Weitere Informationen“ → „Trotzdem ausführen“). Für den eigenen Benutzer braucht die Installation keine Administratorrechte.
 
+Welche Version installiert ist, steht unten in den Einstellungen; ein Klick darauf kopiert sie, etwa für eine Fehlermeldung. Was sich je Version geändert hat, steht im [CHANGELOG](CHANGELOG.md).
+
 ## Verwenden
 
 1. **Terminal öffnen:** `+` öffnet ein Terminal im Standardordner. Der Pfeil daneben bietet die anderen Shells und die zuletzt benutzten Ordner an.
