@@ -9,7 +9,8 @@ rmSync('dist', { recursive: true, force: true });
 
 /**
  * Woraus gebaut wird (Ticket 30): kurze Kennung des Commits und ob der Arbeitsstand Änderungen hat, die nicht committet
- * sind. Der Hauptprozess zeigt beides in der Versionszeile. Ohne Git fehlt der Commit; der Build scheitert nicht.
+ * sind. Nur als Meldung beim Bauen: Vor einem Installer für den Nutzer muss sie ohne „+ Änderungen“ sein. Ohne Git fehlt
+ * der Commit; der Build scheitert nicht.
  */
 function buildInfo() {
   const git = (...args) => execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
@@ -43,7 +44,6 @@ await Promise.all([
     // Das spät geladene koffi (`await import('koffi')`) wird zu require: so lädt es wie node-pty über den
     // CommonJS-Lader von Electron, der Module im Paket aus app.asar.unpacked holt.
     supported: { 'dynamic-import': false },
-    define: { __THUB_BUILD__: JSON.stringify(build_info) },
   }),
   build({
     ...common,

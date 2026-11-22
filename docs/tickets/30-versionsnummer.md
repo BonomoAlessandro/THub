@@ -53,3 +53,9 @@ Spezifikation: „Versionsnummer“ (neu), dazu User Stories 92 und 93
 - Geprüft in der App im Testmodus über CDP (7 Prüfungen), einmal aus dem sauberen Commit 15682fe (noch mit 2.0.0: „THub 2.0.0 · 15682fe · Entwicklung“) und nach dem Wechsel auf 0.2.0 mit Änderungen, die noch nicht committet waren („THub 0.2.0 · 15682fe + Änderungen · Entwicklung“): Commit gleich `git rev-parse --short HEAD`, Tooltip, Klick kopiert in die Zwischenablage des Testmodus mit kurzer Rückmeldung, „Version kopieren“ in der Palette kopiert dasselbe. Bildschirmfoto der Zeile im Dialog.
 - Probe-Installer aus dem sauberen Commit 15682fe, noch mit 2.0.0: Name `THub Setup 2.0.0.exe`, `THub.exe` mit Dateiversion 2.0.0 und Produktversion 2.0.0.0 (Windows ergänzt die vierte Stelle). Dieser Probe-Installer wurde gelöscht. Der Installer für den Nutzer entsteht aus dem Merge-Commit mit Tag `v0.2.0` und heisst `THub Setup 0.2.0.exe`.
 - **Version 0.2.0 statt 2.0.0:** Der Nutzer wollte am 2026-11-22 noch eine 0.x-Version, mindestens 0.0.2. 0.0.2 selbst wäre niedriger als die installierte 0.1.0; ein Installer mit niedrigerer Version über einer höheren ist zu vermeiden. Deshalb 0.2.0, die nächste Nebenversion nach 0.1.0.
+
+## Nachtrag 2026-11-22: Versionszeile ohne Commit
+
+- Wunsch des Nutzers nach dem Installer 0.2.0: Die Commit-Nummer in der Versionszeile kann weg. Mit ihr fällt „+ Änderungen“ weg, das nur zum Commit gehörte. Die Zeile heisst jetzt „THub 0.2.0“, unpaketiert „THub 0.2.0 · Entwicklung“.
+- `build.mjs` setzt nichts mehr in die App ein (`__THUB_BUILD__` und `src/main/buildInfo.ts` entfallen); die Meldung „Baue aus <Commit>“ beim Bauen bleibt als Kontrolle vor einem Installer. `AppInfo` hat nur noch `version` und `packaged`.
+- Der Installer 0.2.0 (Tag `v0.2.0`) zeigt den Commit noch. Der nächste Installer bekommt nach dem Ablauf eine neue Version (0.2.1).

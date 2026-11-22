@@ -714,9 +714,9 @@ Umsetzung: Ticket 30.
 
 - **Eine Quelle:** `version` in `package.json`. electron-builder nimmt sie für den Namen des Installers, die Datei- und Produktversion von `THub.exe` und den Eintrag unter „Installierte Apps“.
 - **Schema** `Haupt.Neben.Korrektur` (Semantic Versioning): Der erste Installer mit Versionsnummer ist **0.2.0**; davor hiess jeder Installer 0.1.0, und 0.0.2 wäre niedriger gewesen. Solange THub in Entwicklung ist, bleibt die erste Stelle 0: neue Funktionen erhöhen die zweite Stelle (0.3.0), reine Korrekturen die dritte (0.2.1). 1.0.0 erst, wenn der Nutzer THub für fertig erklärt.
-- **Anzeige:** im Einstellungsdialog unten eine gedämpfte Zeile „THub 0.2.0 · <Commit>“.
-  - Der Commit (kurze Kennung) wird beim Bauen eingesetzt. War der Arbeitsstand nicht sauber, folgt „+ Änderungen“; ohne Git fehlt die Kennung.
+- **Anzeige:** im Einstellungsdialog unten eine gedämpfte Zeile „THub 0.2.0“.
   - Unpaketiert steht zusätzlich „Entwicklung“.
+  - Kein Commit: Die Zeile mit Commit und „+ Änderungen“ (Installer 0.2.0) war dem Nutzer zu viel; seit dem 2026-11-22 steht nur die Version da. Dass ein Installer genau einem Commit entspricht, sichert der Tag `v<Version>`.
   - Ein Klick kopiert die Zeile (Tooltip „Version kopieren“), ebenso der Befehl „Version kopieren“ in der Palette. Im Testmodus geht das in die eigene Zwischenablage.
 - **Änderungen** stehen je Version in `CHANGELOG.md`: Datum, was neu ist und was korrigiert wurde, mit Ticketnummern.
 - **Neuer Installer für den Nutzer:** Version erhöhen (falls sich an der App etwas geändert hat), `CHANGELOG.md` ergänzen, committen, Tag `v<Version>` setzen, dann erst `npm run dist`. So entspricht jeder Installer genau einem Commit mit Tag.

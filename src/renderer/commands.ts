@@ -111,7 +111,7 @@ export function setKeepAwake(on: boolean): void {
 
 /**
  * „Version kopieren“ (Klick auf die Versionszeile in den Einstellungen, Befehlspalette): legt die Zeile, etwa
- * „THub 0.2.0 · e8e865a“, in die Zwischenablage, zum Einfügen in eine Fehlermeldung. Liefert den kopierten Text.
+ * „THub 0.2.0“, in die Zwischenablage, zum Einfügen in eine Fehlermeldung. Liefert den kopierten Text.
  */
 export async function copyVersion(): Promise<string> {
   const label = versionLabel(await api.loadAppInfo());

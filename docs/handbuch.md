@@ -182,7 +182,7 @@ Das Zahnrad rechts in der Titelleiste öffnet die Einstellungen. Jede Änderung 
 
 „Alle Tastenkürzel …“ unten links öffnet die Übersicht der Tastenkürzel; deren „Fertig“ führt zurück in die Einstellungen.
 
-**Version:** Ganz unten in den Einstellungen steht gedämpft die Version, etwa „THub 0.2.0 · e8e865a“: die Versionsnummer und die Kennung des Commits, aus dem THub gebaut ist. „+ Änderungen“ dahinter heisst, dass beim Bauen nicht alles committet war; „Entwicklung“, dass THub unpaketiert läuft (`npm start`). Ein Klick kopiert die Zeile in die Zwischenablage, ebenso der Befehl „Version kopieren“ in der Palette. Füge sie bei einer Fehlermeldung ein. Was sich je Version geändert hat, steht im [CHANGELOG](../CHANGELOG.md).
+**Version:** Ganz unten in den Einstellungen steht gedämpft die Version, etwa „THub 0.2.0“; „Entwicklung“ dahinter heisst, dass THub unpaketiert läuft (`npm start`). Ein Klick kopiert die Zeile in die Zwischenablage, ebenso der Befehl „Version kopieren“ in der Palette. Füge sie bei einer Fehlermeldung ein. Was sich je Version geändert hat, steht im [CHANGELOG](../CHANGELOG.md).
 
 ### Hell und dunkel
 

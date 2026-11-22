@@ -209,7 +209,7 @@ Nach der Installation des neuen Installers. Die Abweichungen unten sind in diese
 
 ## Versionsnummer (Ticket 30)
 
-- [ ] Nach der Installation zeigt der Einstellungsdialog unten „THub 0.2.0“ mit Kennung, ohne „Entwicklung“ und ohne „+ Änderungen“; ein Klick kopiert die Zeile, ebenso „Version kopieren“ in der Palette. (T30)
+- [ ] Nach der Installation zeigt der Einstellungsdialog unten die Version, etwa „THub 0.2.1“, ohne „Entwicklung“ und ohne Commit; ein Klick kopiert die Zeile, ebenso „Version kopieren“ in der Palette. (T30)
 - [ ] Unter „Installierte Apps“ steht THub mit der Version 0.2.0. (T30)
 - [ ] Ein Installer mit höherer Version installiert sich über 0.2.0, ohne dass Tabs, Einstellungen oder Claude-Sessions verloren gehen. (T30)
 

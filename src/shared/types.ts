@@ -309,14 +309,10 @@ export type Unsubscribe = () => void;
 export type DirectoryPurpose = 'newTab' | 'defaultCwd';
 
 /** Die API, die der Preload-Skript dem Renderer unter `window.thub` bereitstellt. */
-/** Version und Herkunft der laufenden App (Ticket 30), für die Versionszeile im Einstellungsdialog. */
+/** Version der laufenden App (Ticket 30), für die Versionszeile im Einstellungsdialog. */
 export interface AppInfo {
   /** Aus `package.json`, z.B. "0.2.0". */
   version: string;
-  /** Kurze Kennung des Commits, aus dem gebaut wurde; `null` ohne Git. */
-  commit: string | null;
-  /** Beim Bauen war nicht alles committet. */
-  dirty: boolean;
   /** Installierte App; `false` bei `npm start` und `npm run dev`. */
   packaged: boolean;
 }
@@ -344,7 +340,7 @@ export interface THubApi {
    */
   openLink(url: string): Promise<void>;
 
-  /** Version und Herkunft der laufenden App (Ticket 30). */
+  /** Version der laufenden App (Ticket 30). */
   loadAppInfo(): Promise<AppInfo>;
 
   /** Das geltende Design; es bestimmt der Hauptprozess. */

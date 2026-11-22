@@ -3,13 +3,7 @@
 
 import type { AppInfo } from '../shared/types';
 
-/**
- * „THub 0.2.0 · e8e865a“: Version und Commit, aus dem gebaut wurde. Dahinter „+ Änderungen“, wenn beim Bauen nicht
- * alles committet war, und „Entwicklung“, wenn THub unpaketiert läuft (`npm start`). Ohne Commit nur die Version.
- */
+/** „THub 0.2.0“; läuft THub unpaketiert (`npm start`), steht „Entwicklung“ dahinter. */
 export function versionLabel(info: AppInfo): string {
-  let label = `THub ${info.version}`;
-  if (info.commit) label += ` · ${info.commit}${info.dirty ? ' + Änderungen' : ''}`;
-  if (!info.packaged) label += ' · Entwicklung';
-  return label;
+  return info.packaged ? `THub ${info.version}` : `THub ${info.version} · Entwicklung`;
 }
