@@ -63,6 +63,7 @@ Rechtsklick auf einen Tab öffnet sein Menü an der Stelle des Klicks, ohne den 
 | Einstellungen | öffnet den Einstellungsdialog |
 | Standardordner ändern | Ordner-Dialog wie „Ändern …“ in den Einstellungen |
 | Tastenkürzel anzeigen | Übersicht aller Tastenkürzel |
+| Version kopieren | die Versionszeile aus den Einstellungen in die Zwischenablage |
 | Rechner wach halten | Stufe „nur Rechner“ wählen und einschalten, wie im Pfeil-Menü am Schalter |
 | Rechner und Bildschirm wach halten | Stufe „Rechner und Bildschirm“ wählen und einschalten |
 | Wachhalten beenden | nur, solange der Rechner wach gehalten wird; wie ein Klick auf den Schalter |
@@ -180,6 +181,8 @@ Das Zahnrad rechts in der Titelleiste öffnet die Einstellungen. Jede Änderung 
 | Hinweise | **Offene Punkte aus Claudes Antworten anzeigen** | an |
 
 „Alle Tastenkürzel …“ unten links öffnet die Übersicht der Tastenkürzel; deren „Fertig“ führt zurück in die Einstellungen.
+
+**Version:** Ganz unten in den Einstellungen steht gedämpft die Version, etwa „THub 0.2.0 · e8e865a“: die Versionsnummer und die Kennung des Commits, aus dem THub gebaut ist. „+ Änderungen“ dahinter heisst, dass beim Bauen nicht alles committet war; „Entwicklung“, dass THub unpaketiert läuft (`npm start`). Ein Klick kopiert die Zeile in die Zwischenablage, ebenso der Befehl „Version kopieren“ in der Palette. Füge sie bei einer Fehlermeldung ein. Was sich je Version geändert hat, steht im [CHANGELOG](../CHANGELOG.md).
 
 ### Hell und dunkel
 

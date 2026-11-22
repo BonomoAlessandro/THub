@@ -713,8 +713,8 @@ Umsetzung: Ticket 29.
 Umsetzung: Ticket 30.
 
 - **Eine Quelle:** `version` in `package.json`. electron-builder nimmt sie für den Namen des Installers, die Datei- und Produktversion von `THub.exe` und den Eintrag unter „Installierte Apps“.
-- **Schema** `Haupt.Neben.Korrektur` (Semantic Versioning): Der erste Installer mit Versionsnummer ist **2.0.0** (THub 2; 0.1.0 war das alte Grundgerüst). Neue Funktionen erhöhen die zweite Stelle, reine Korrekturen die dritte, die erste nur ein grosser Umbau.
-- **Anzeige:** im Einstellungsdialog unten eine gedämpfte Zeile „THub 2.0.0 · <Commit>“.
+- **Schema** `Haupt.Neben.Korrektur` (Semantic Versioning): Der erste Installer mit Versionsnummer ist **0.2.0**; davor hiess jeder Installer 0.1.0, und 0.0.2 wäre niedriger gewesen. Solange THub in Entwicklung ist, bleibt die erste Stelle 0: neue Funktionen erhöhen die zweite Stelle (0.3.0), reine Korrekturen die dritte (0.2.1). 1.0.0 erst, wenn der Nutzer THub für fertig erklärt.
+- **Anzeige:** im Einstellungsdialog unten eine gedämpfte Zeile „THub 0.2.0 · <Commit>“.
   - Der Commit (kurze Kennung) wird beim Bauen eingesetzt. War der Arbeitsstand nicht sauber, folgt „+ Änderungen“; ohne Git fehlt die Kennung.
   - Unpaketiert steht zusätzlich „Entwicklung“.
   - Ein Klick kopiert die Zeile (Tooltip „Version kopieren“), ebenso der Befehl „Version kopieren“ in der Palette. Im Testmodus geht das in die eigene Zwischenablage.

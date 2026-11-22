@@ -5,6 +5,7 @@ import {
   CloseIcon,
   CloseOthersIcon,
   CoffeeIcon,
+  CopyIcon,
   FolderIcon,
   FolderOpenIcon,
   FolderPlusIcon,
@@ -45,6 +46,7 @@ const ICONS: Record<PaletteIcon, ReactNode> = {
   keyboard: <KeyboardIcon />,
   coffee: <CoffeeIcon />,
   monitor: <MonitorIcon />,
+  copy: <CopyIcon />,
 };
 
 /** Überschrift über dem Suchfeld in einer Unterliste. */

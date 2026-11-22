@@ -309,6 +309,18 @@ export type Unsubscribe = () => void;
 export type DirectoryPurpose = 'newTab' | 'defaultCwd';
 
 /** Die API, die der Preload-Skript dem Renderer unter `window.thub` bereitstellt. */
+/** Version und Herkunft der laufenden App (Ticket 30), für die Versionszeile im Einstellungsdialog. */
+export interface AppInfo {
+  /** Aus `package.json`, z.B. "0.2.0". */
+  version: string;
+  /** Kurze Kennung des Commits, aus dem gebaut wurde; `null` ohne Git. */
+  commit: string | null;
+  /** Beim Bauen war nicht alles committet. */
+  dirty: boolean;
+  /** Installierte App; `false` bei `npm start` und `npm run dev`. */
+  packaged: boolean;
+}
+
 export interface THubApi {
   loadSnapshot(): Promise<WorkspaceSnapshot>;
   onEvent(listener: (event: WorkspaceEvent) => void): Unsubscribe;
@@ -332,6 +344,9 @@ export interface THubApi {
    */
   openLink(url: string): Promise<void>;
 
+  /** Version und Herkunft der laufenden App (Ticket 30). */
+  loadAppInfo(): Promise<AppInfo>;
+
   /** Das geltende Design; es bestimmt der Hauptprozess. */
   loadTheme(): Promise<ResolvedTheme>;
   /** Meldet jeden Wechsel des Designs, zum Beispiel wenn Windows von dunkel auf hell wechselt. */
@@ -350,6 +365,7 @@ export const IPC = {
   clipboardRead: 'clipboard:read',
   clipboardWrite: 'clipboard:write',
   linkOpen: 'link:open',
+  appInfo: 'app:info',
   themeCurrent: 'theme:current',
   themeChanged: 'theme:changed',
 } as const;

@@ -4,6 +4,7 @@
 
 import { FONT_SIZE, type KeepAwakeMode } from '../shared/types';
 import type { ShortcutAction } from './shortcuts';
+import { versionLabel } from './version';
 import { focusTerminal, terminalViews } from './terminal/terminalViews';
 
 const api = window.thub;
@@ -106,4 +107,14 @@ export function keepAwake(mode: KeepAwakeMode): void {
 /** Schaltet das Wachhalten ein (mit der gewählten Stufe) oder aus (Klick auf den Schalter, „Wachhalten beenden“). */
 export function setKeepAwake(on: boolean): void {
   api.send({ type: 'updateSettings', patch: { keepAwake: on } });
+}
+
+/**
+ * „Version kopieren“ (Klick auf die Versionszeile in den Einstellungen, Befehlspalette): legt die Zeile, etwa
+ * „THub 0.2.0 · e8e865a“, in die Zwischenablage, zum Einfügen in eine Fehlermeldung. Liefert den kopierten Text.
+ */
+export async function copyVersion(): Promise<string> {
+  const label = versionLabel(await api.loadAppInfo());
+  await api.writeClipboard(label);
+  return label;
 }

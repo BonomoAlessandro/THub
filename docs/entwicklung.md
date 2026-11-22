@@ -177,6 +177,7 @@ npm start            # bauen und App starten
 npm run dev          # wie start, mit Sourcemaps und unminifiziert
 npm run dist         # Installer bauen -> release\THub Setup <version>.exe
 npm run icon         # App-Symbol aus den SVG-Vorlagen neu erzeugen -> resources\icon\icon.ico
+git tag -a v<Version> # vor jedem Installer für den Nutzer, siehe „Version und Installer“
 ```
 
 `build.mjs` bündelt Hauptprozess, Preload und Renderer mit esbuild nach `dist/`; `electron`, `node-pty` und `koffi` bleiben `external`.
@@ -210,6 +211,22 @@ Für automatische Prüfungen der echten App (`npm start`, `electron .` oder die 
 ### Installer
 
 `npm run dist` baut mit esbuild und electron-builder einen NSIS-Installer nach `release\THub Setup <version>.exe`, daneben das ungepackte Paket `release\win-unpacked`. Der Installer ist ein Assistent (kein Ein-Klick-Installer) mit wählbarem Installationsordner und erlaubt die Installation für den eigenen Benutzer ohne Administratorrechte (`perMachine: false`). Die Shell-Integration liegt im Paket als echte Dateien unter `resources\shell` (`extraResources`), node-pty und die Binärdatei von koffi ausserhalb des asar-Archivs (`asarUnpack`); `npmRebuild` bleibt aus. Der Installer ist nicht signiert, und es gibt kein Auto-Update.
+
+### Version und Installer
+
+Ticket 30. Die Version steht nur in `package.json` (`version`), nach dem Schema `Haupt.Neben.Korrektur`. Solange THub in Entwicklung ist, bleibt die erste Stelle 0: neue Funktionen erhöhen die zweite Stelle (0.3.0), reine Korrekturen die dritte (0.2.1). 1.0.0 erst, wenn der Nutzer THub für fertig erklärt. Die erste Version mit Nummer ist 0.2.0 (davor hiess jeder Installer 0.1.0); was je Version neu ist, steht in [`CHANGELOG.md`](../CHANGELOG.md).
+
+- electron-builder nimmt die Version für den Namen des Installers (`THub Setup 0.2.0.exe`), die Datei- und Produktversion von `THub.exe` und den Eintrag unter „Installierte Apps“. Die App-Kennung `ch.custom.thub` bleibt, damit ein neuer Installer die bestehende Installation ersetzt.
+- `build.mjs` setzt beim Bauen die kurze Kennung des Commits und ob der Arbeitsstand Änderungen hat (`git status --porcelain`) in den Hauptprozess ein (`__THUB_BUILD__`, gelesen in [`buildInfo.ts`](../src/main/buildInfo.ts)); ohne Git fehlt die Kennung. Es meldet beim Bauen „Baue aus <Commit>“ bzw. „… + Änderungen“.
+- Der Hauptprozess gibt Version (`app.getVersion()`), Commit, „Änderungen“ und „paketiert“ über `IPC.appInfo` an die Oberfläche; die Zeile baut [`src/renderer/version.ts`](../src/renderer/version.ts). Klick auf die Zeile und „Version kopieren“ in der Palette nehmen beide `copyVersion` aus `commands.ts`.
+
+**Ablauf, wenn ein Agent einen Installer für den Nutzer baut:**
+
+1. Hat sich seit dem letzten Installer etwas an der App geändert, Version nach dem Schema erhöhen und `CHANGELOG.md` ergänzen (Datum, „Neu“ und „Korrigiert“ mit Ticketnummern).
+2. Committen; der Arbeitsstand ist danach sauber.
+3. Tag setzen: `git tag -a v<Version> -m "THub <Version>"` auf diesen Commit (auf `main`).
+4. Erst dann `npm run dist`. „Baue aus <Commit>“ ohne „+ Änderungen“ zeigt, dass der Installer genau diesem Commit entspricht.
+5. Gepusht werden Commit und Tag zusammen (`git push origin main --follow-tags`), wenn der Nutzer pushen lässt.
 
 ### App-Symbol
 
