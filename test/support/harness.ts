@@ -17,6 +17,7 @@ import {
   FakeClock,
   FakeKeepAwake,
   FakeProcessProbe,
+  type KeepAwakeFailRule,
   FakeSystem,
   FakeTerminalBackend,
   MemoryStorage,
@@ -72,6 +73,8 @@ export interface TestWorkspaceOptions extends FakeSystemOptions {
   /** Eigener Speicher, z.B. der echte StateStore in einem Temp-Ordner; ersetzt `state`. */
   storage?: StateStorage;
   shells?: ShellInfo[];
+  /** Ab dem ersten Start scheitert der Port Wachhalten nach dieser Regel (Ticket 31), auch nach jedem Neustart. */
+  keepAwakeFail?: KeepAwakeFailRule;
 }
 
 /**
@@ -122,12 +125,15 @@ export class TestWorkspace {
   readonly system: FakeSystem;
   private shells: ShellInfo[];
   private current: Instance;
+  /** Regel, nach der der Port Wachhalten scheitert; gilt für den laufenden Kern und jeden Neustart. */
+  private keepAwakeFailRule: KeepAwakeFailRule | null;
 
   /** @param api bereits laufende lokale Schnittstelle; ohne sie läuft der Kern wie ohne Server */
   constructor(options: TestWorkspaceOptions = {}, api: RunningApi | null = null) {
     this.storage = options.storage ?? new MemoryStorage(options.state ?? null);
     this.system = new FakeSystem(options);
     this.shells = options.shells ?? TEST_SHELLS;
+    this.keepAwakeFailRule = options.keepAwakeFail ?? null;
     this.current = this.boot(api);
   }
 
@@ -144,6 +150,12 @@ export class TestWorkspace {
   /** Port Wachhalten des laufenden Kerns; nach einem Neustart ein neuer, wie bei einem neuen Prozess. */
   get keepAwake(): FakeKeepAwake {
     return this.current.keepAwake;
+  }
+
+  /** Lässt den Port Wachhalten ab jetzt nach dieser Regel scheitern (`null`: nie), auch nach einem Neustart. */
+  set keepAwakeFail(rule: KeepAwakeFailRule | null) {
+    this.keepAwakeFailRule = rule;
+    this.current.keepAwake.fail = rule;
   }
 
   /** Ereignisse, die der Renderer vom laufenden Kern bekommen hat. */
@@ -244,7 +256,7 @@ export class TestWorkspace {
 
   private boot(api: RunningApi | null): Instance {
     const terminal = new FakeTerminalBackend();
-    const keepAwake = new FakeKeepAwake();
+    const keepAwake = new FakeKeepAwake(this.keepAwakeFailRule);
     const events: WorkspaceEvent[] = [];
     const workspace = createWorkspace(
       { terminal, storage: this.storage, clock: this.clock, processes: this.processes, system: this.system, keepAwake },

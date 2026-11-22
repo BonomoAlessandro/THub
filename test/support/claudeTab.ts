@@ -76,7 +76,7 @@ export class ClaudeTab {
 
   /** Die Hinweise dieses Tabs, in der Reihenfolge ihres Erscheinens. */
   toasts(): ToastSnapshot[] {
-    return this.h.snapshot().toasts.filter((t) => t.tabId === this.id);
+    return this.h.snapshot().toasts.filter((t) => t.kind !== 'keepAwakeError' && t.tabId === this.id);
   }
 
   /** Der Hinweis „wartet“ oder „fertig“ dieses Tabs, falls er einen hat; davon gibt es höchstens einen. */

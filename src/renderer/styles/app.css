@@ -1134,6 +1134,26 @@ kbd {
   pointer-events: none;
   animation: toast-out 180ms var(--ease) forwards;
 }
+/*
+ * Fehler-Hinweis (Ticket 31): als Fehler markiert mit Fehlersymbol und Rand in der Fehlerfarbe (--danger, wie beim
+ * Gefahr-Knopf); sonst wie die übrigen Hinweise. Der Rand bleibt auch beim Überfahren rot.
+ */
+.toast.error,
+.toast.error:hover {
+  border-color: var(--danger);
+}
+.t-err {
+  display: grid;
+  place-items: center;
+  flex: none;
+  margin-top: 1px;
+  color: var(--danger);
+}
+.t-err svg.i {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
 .toast .st {
   margin-top: 2px;
   transform: scale(1.25);

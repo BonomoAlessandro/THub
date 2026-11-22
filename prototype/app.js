@@ -28,6 +28,7 @@ const ICON_PATHS = {
   coffee: '<path d="M10 2v2M14 2v2M6 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/>',
   monitor: '<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
 };
 const icon = (name) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name]}</svg>`;
 
@@ -1176,6 +1177,33 @@ function pushToast(tab, kind) {
   if (kind === 'finished') tickToast(tab.id);
 }
 
+/**
+ * Fehler beim Wachhalten (Ticket 31): als Fehler markiert (Fehlersymbol und Rand in --danger, role="alert"), ohne Tab,
+ * höchstens einer. Ein Klick oder das × schliesst ihn; im Prototyp schaltet er den Schalter aus, wie THub.
+ */
+const KEEPAWAKE_ERROR_ID = 'keepawake-error';
+function pushKeepAwakeError(action = 'on') {
+  removeToast(KEEPAWAKE_ERROR_ID, true);
+  if (action === 'on') setKeepAwake(false);
+  const el = document.createElement('div');
+  el.className = 'toast error';
+  el.setAttribute('role', 'alert');
+  el.title = 'Hinweis schliessen';
+  const title = action === 'on' ? 'Rechner wach halten ausgeschaltet' : 'Wachhalten liess sich nicht beenden';
+  const next =
+    action === 'on'
+      ? 'Zum erneuten Versuch den Schalter wieder einschalten.'
+      : 'Windows hält den Rechner womöglich weiter wach, bis THub beendet wird.';
+  el.innerHTML = `<span class="t-err" aria-hidden="true">${icon('alert')}</span><div class="t-body"><div class="t-title">${title}</div><div class="t-msg">Windows hat die Anforderung abgelehnt (Fehler 5).</div><div class="t-msg">${next}</div></div><button class="t-close" aria-label="Hinweis schliessen">${icon('x')}</button>`;
+  el.addEventListener('click', () => removeToast(KEEPAWAKE_ERROR_ID));
+  $('.t-close', el).addEventListener('click', (e) => {
+    e.stopPropagation();
+    removeToast(KEEPAWAKE_ERROR_ID);
+  });
+  els.toasts.prepend(el);
+  toastMap.set(KEEPAWAKE_ERROR_ID, { el, kind: 'keepAwakeError', left: 0, hover: false, last: 0 });
+}
+
 function tickToast(id) {
   const entry = toastMap.get(id);
   if (!entry) return;
@@ -1314,6 +1342,7 @@ function renderProto() {
       .join('')}</div>
     <h5>Hinweise auslösen (für einen Hintergrund-Tab)</h5>
     <div class="proto-row">${chip('Claude fertig', false, 'toast', 'finished')}${chip('Claude wartet', false, 'toast', 'waiting')}${chip('Zwei Tabs zugleich', false, 'toast2')}</div>
+    <div class="proto-row">${chip('Wachhalten scheitert', false, 'keepawakeError', 'on')}${chip('Beenden scheitert', false, 'keepawakeError', 'off')}</div>
     <h5>Dialoge und Ansichten</h5>
     <div class="proto-row">${chip('Befehlspalette', false, 'palette')}${chip('Einstellungen', false, 'settings')}${chip('Rückfrage', false, 'confirm')}${chip(
       'Rückfrage (mehrere)',
@@ -1372,6 +1401,9 @@ $('#proto-body').addEventListener('click', (e) => {
       fireDemoToast(target, v);
       return;
     }
+    case 'keepawakeError':
+      pushKeepAwakeError(v);
+      return;
     case 'toast2': {
       const a = demoToastTarget();
       if (a) fireDemoToast(a, 'finished');

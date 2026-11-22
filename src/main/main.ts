@@ -88,8 +88,12 @@ async function start(detectedShells: Promise<ShellInfo[]>, executionPolicy: Exec
       clock: systemClock,
       processes,
       system: hostSystem,
-      // Energie-Anforderungen bei Windows (Ticket 28); im Testmodus nur eine Zeile in der Ausgabe.
-      keepAwake: createKeepAwake({ testMode: TEST_HIDDEN }),
+      // Energie-Anforderungen bei Windows (Ticket 28); im Testmodus nur eine Zeile in der Ausgabe, mit
+      // THUB_TEST_KEEPAWAKE_FAIL=1 scheitert dort jedes Einschalten (Fehler-Hinweis prüfen, Ticket 31).
+      keepAwake: createKeepAwake({
+        testMode: TEST_HIDDEN,
+        failInTestMode: process.env.THUB_TEST_KEEPAWAKE_FAIL === '1',
+      }),
     },
     { shells, localApi: api?.info },
   );

@@ -156,6 +156,8 @@ Links neben dem Zahnrad sitzt ein Schalter mit einem Pfeil daneben. Eingeschalte
 - **Befehlspalette:** „Rechner wach halten“, „Rechner und Bildschirm wach halten“ und, solange es läuft, „Wachhalten beenden“. Ein Tastenkürzel gibt es nicht.
 - **Bleibt eingeschaltet:** Nach einem Neustart von THub hält es den Rechner mit derselben Stufe von selbst wieder wach. Ein Neustart des Rechners startet THub nicht; das Wachhalten beginnt mit dem nächsten Start von THub.
 - **Sauber:** THub ändert keine Energieeinstellungen und startet kein Skript. Es stellt bei Windows eine Anforderung, die endet, sobald du ausschaltest oder THub endet, auch nach einem Absturz. In einer Administrator-PowerShell zeigt `powercfg /requests` sie unter `SYSTEM` (in der zweiten Stufe auch unter `DISPLAY`) mit dem Grund „THub hält den Rechner wach“.
+- **Wenn es scheitert:** Lehnt Windows die Anforderung ab (oder lässt sich die Verbindung zu Windows nicht herstellen), schaltet THub das Wachhalten sofort wieder aus, auch beim Start mit gespeichertem „an“, und zeigt unten rechts einen rot markierten Fehler-Hinweis: Fehlersymbol und roter Rand, Titel „Rechner wach halten ausgeschaltet“, darunter der Grund, etwa „Windows hat die Anforderung abgelehnt (Fehler 5).“ Der Schalter steht dann auf „aus“, damit du dich nicht auf ein Wachhalten verlässt, das nicht läuft. Erneut versuchen: den Schalter wieder einschalten. Scheitert umgekehrt das Ausschalten, heisst der Hinweis „Wachhalten liess sich nicht beenden“; Windows hält dann womöglich weiter wach, bis THub beendet wird.
+- Der Fehler-Hinweis gehört zu keinem Tab. Er bleibt stehen, bis du ihn anklickst oder mit `×` schliesst, erscheint auch, wenn „Hinweise im Fenster“ aus ist, und steht höchstens einmal da.
 
 **Grenzen**
 
