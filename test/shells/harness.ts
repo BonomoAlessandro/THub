@@ -879,7 +879,7 @@ export class CoreShell {
         processes,
         system: testSystem(ws.root),
         // Die Shell-Tests halten den Rechner nie wach.
-        keepAwake: { set: () => {} },
+        keepAwake: { set: () => Promise.resolve() },
       },
       { shells: [shell], localApi: api?.info, resumeLaunchGraceMs: extra.resumeLaunchGraceMs },
     );

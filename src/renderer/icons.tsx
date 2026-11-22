@@ -226,3 +226,13 @@ export function CheckIcon() {
     </svg>
   );
 }
+
+/** Fehler: Kreis mit Ausrufezeichen, etwa am Fehler-Hinweis beim Wachhalten (Ticket 31). */
+export function AlertIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 8v4M12 16h.01" />
+    </svg>
+  );
+}

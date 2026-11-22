@@ -4,19 +4,26 @@ import {
   loadPowerRequests,
   POWER_REQUEST_REASON,
   PowerRequestKeepAwake,
+  TEST_MODE_FAIL_LINE,
   TEST_MODE_LINES,
   TestModeKeepAwake,
+  Win32Error,
   type PowerRequestKind,
   type PowerRequests,
 } from '../../src/main/keepAwake';
+import { KeepAwakeError } from '../../src/main/workspace/ports';
 
 // Port Wachhalten im Hauptprozess (Ticket 28): welche Energie-Anforderungen er bei Windows stellt und aufhebt, mit
 // nachgemachten Aufrufen von kernel32; dazu einmal echt gegen Windows und der Testmodus.
 
-/** Nachgemachtes kernel32: zeichnet jeden Aufruf auf; `failNext` lässt den nächsten Aufruf dieser Art scheitern. */
+/**
+ * Nachgemachtes kernel32: zeichnet jeden Aufruf auf; `failNext` lässt den nächsten Aufruf dieser Art scheitern, wie
+ * Windows mit Fehler 5 (Zugriff verweigert), `failKind` nur für diese Art.
+ */
 class FakePowerRequests implements PowerRequests {
   readonly calls: string[] = [];
   failNext: 'create' | 'set' | 'clear' | null = null;
+  failKind: PowerRequestKind | null = null;
 
   create(reason: string): number {
     this.maybeFail('create');
@@ -25,19 +32,19 @@ class FakePowerRequests implements PowerRequests {
   }
 
   set(handle: number, kind: PowerRequestKind): void {
-    this.maybeFail('set');
+    this.maybeFail('set', kind);
     this.calls.push(`set ${handle} ${kind}`);
   }
 
   clear(handle: number, kind: PowerRequestKind): void {
-    this.maybeFail('clear');
+    this.maybeFail('clear', kind);
     this.calls.push(`clear ${handle} ${kind}`);
   }
 
-  private maybeFail(call: 'create' | 'set' | 'clear'): void {
-    if (this.failNext !== call) return;
+  private maybeFail(call: 'create' | 'set' | 'clear', kind?: PowerRequestKind): void {
+    if (this.failNext !== call || (this.failKind !== null && this.failKind !== kind)) return;
     this.failNext = null;
-    throw new Error(`${call} gescheitert`);
+    throw new Win32Error(`Power${call}(${kind ?? ''})`, 5);
   }
 }
 
@@ -126,31 +133,78 @@ describe('Port Wachhalten: Energie-Anforderungen', () => {
     expect(api.calls.slice(1)).toEqual(['set 42 system', 'set 42 display', 'clear 42 system', 'clear 42 display']);
   });
 
-  it('scheitert ein Aufruf, steht der Fehler in der Ausgabe, und der nächste versucht es erneut', async () => {
-    const { api, errors, port } = setup();
+  it('scheitert das Setzen, weist er mit Phase, Grund und Fehlercode zurück, und der nächste Aufruf versucht es erneut', async () => {
+    const { api, port } = setup();
 
     api.failNext = 'set';
-    await port.set('system');
-    expect(errors).toHaveLength(1);
-    expect(api.calls).toEqual([`create ${POWER_REQUEST_REASON}`]);
+    const failed = port.set('system');
+    await expect(failed).rejects.toBeInstanceOf(KeepAwakeError);
+    await expect(failed).rejects.toMatchObject({ phase: 'set', reason: 'windows', code: 5 });
+    expect(port.activeKinds()).toEqual([]);
 
     await port.set('system');
     expect(api.calls).toEqual([`create ${POWER_REQUEST_REASON}`, 'set 42 system']);
+    expect(port.activeKinds()).toEqual(['system']);
   });
 
-  it('lässt sich koffi nicht laden, steht der Fehler in der Ausgabe, und der nächste Aufruf lädt neu', async () => {
+  it('scheitert „Bildschirm“ nach „Rechner“, ist danach nichts mehr gesetzt', async () => {
+    const { api, port } = setup();
+
+    api.failNext = 'set';
+    api.failKind = 'display';
+    await expect(port.set('display')).rejects.toMatchObject({ phase: 'set', reason: 'windows', code: 5 });
+
+    expect(api.calls).toEqual([`create ${POWER_REQUEST_REASON}`, 'set 42 system', 'clear 42 system']);
+    expect(port.activeKinds()).toEqual([]);
+  });
+
+  it('scheitert ein Wechsel der Stufe bei eingeschaltetem Wachhalten, ist danach nichts mehr gesetzt', async () => {
+    const { api, port } = setup();
+    await port.set('system');
+
+    api.failNext = 'set';
+    await expect(port.set('display')).rejects.toMatchObject({ phase: 'set' });
+
+    expect(api.calls.slice(-1)).toEqual(['clear 42 system']);
+    expect(port.activeKinds()).toEqual([]);
+  });
+
+  it('scheitert das Aufheben, weist er mit Phase „clear“ zurück, die Art bleibt gesetzt, und der nächste Versuch hebt auf', async () => {
+    const { api, port } = setup();
+    await port.set('display');
+
+    api.failNext = 'clear';
+    api.failKind = 'display';
+    await expect(port.set('system')).rejects.toMatchObject({ phase: 'clear', reason: 'windows', code: 5 });
+    expect(port.activeKinds()).toEqual(['system', 'display']);
+
+    await port.set('system');
+    expect(port.activeKinds()).toEqual(['system']);
+  });
+
+  it('lässt sich koffi nicht laden, weist er mit Grund „load“ zurück, und der nächste Aufruf lädt neu', async () => {
     const api = new FakePowerRequests();
     const load = vi.fn<() => Promise<PowerRequests>>().mockRejectedValueOnce(new Error('koffi fehlt'));
     load.mockResolvedValue(api);
-    const errors: unknown[] = [];
-    const port = new PowerRequestKeepAwake(load, (_message, err) => errors.push(err));
+    const port = new PowerRequestKeepAwake(load);
 
-    await port.set('system');
-    expect(errors).toEqual([new Error('koffi fehlt')]);
+    await expect(port.set('system')).rejects.toMatchObject({ phase: 'set', reason: 'load' });
 
     await port.set('system');
     expect(load).toHaveBeenCalledTimes(2);
     expect(api.calls).toEqual([`create ${POWER_REQUEST_REASON}`, 'set 42 system']);
+  });
+
+  it('nach einem Fehler laufen die folgenden Aufrufe weiter', async () => {
+    const { api, port } = setup();
+
+    api.failNext = 'create';
+    const first = port.set('system');
+    const second = port.set('display');
+
+    await expect(first).rejects.toMatchObject({ phase: 'set', reason: 'windows' });
+    await second;
+    expect(port.activeKinds()).toEqual(['system', 'display']);
   });
 });
 
@@ -170,6 +224,16 @@ describe('Port Wachhalten: Testmodus', () => {
       'Testmodus: THub würde jetzt den Rechner und den Bildschirm wach halten.',
       'Testmodus: THub würde jetzt nichts mehr wach halten.',
     ]);
+  });
+
+  it('mit THUB_TEST_KEEPAWAKE_FAIL scheitert jedes Einschalten wie eine abgelehnte Anforderung; die Stufe bleibt „aus“', async () => {
+    const lines: string[] = [];
+    const port = new TestModeKeepAwake((line) => lines.push(line), true);
+
+    await expect(port.set('display')).rejects.toMatchObject({ phase: 'set', reason: 'windows', code: 5 });
+    await port.set('off');
+
+    expect(lines).toEqual([TEST_MODE_FAIL_LINE]);
   });
 
   it('createKeepAwake im Testmodus liefert den Testmodus', () => {

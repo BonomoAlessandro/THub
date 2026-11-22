@@ -2,7 +2,7 @@
 // Im Betrieb sind sie echt (node-pty, state.json, Electron), in den Tests nachgemacht.
 // Dieses Modul und der Kern laden nie Electron.
 
-import type { KeepAwakeMode } from '../../shared/types';
+import type { KeepAwakeFailureReason, KeepAwakeMode } from '../../shared/types';
 import type { PersistedState } from './schema';
 
 // ---------- Terminal-Backend ----------
@@ -190,10 +190,28 @@ export type KeepAwakeLevel = 'off' | KeepAwakeMode;
 export interface KeepAwake {
   /**
    * Hält den Rechner ab jetzt auf dieser Stufe wach. Idempotent: Dieselbe Stufe zweimal ergibt eine einzige Anforderung
-   * bei Windows. Wirft nicht; scheitert die Anforderung, steht der Fehler in der Ausgabe, und der nächste Aufruf versucht
-   * es erneut.
+   * bei Windows. Das Versprechen erfüllt sich, sobald die Stufe gilt, und weist mit einem `KeepAwakeError` zurück, wenn
+   * sie sich nicht setzen liess (Ticket 31):
+   * - Scheitert das Setzen (`phase: 'set'`), hebt der Port vorher alles auf, was gesetzt war; danach hält er nichts wach.
+   * - Scheitert nur das Aufheben (`phase: 'clear'`), bleibt gesetzt, was sich nicht aufheben liess.
+   * Ein späterer Aufruf versucht es erneut.
    */
-  set(level: KeepAwakeLevel): void;
+  set(level: KeepAwakeLevel): Promise<void>;
+}
+
+/** Ein gescheitertes Wachhalten: in welcher Phase, warum und mit welchem Fehlercode von Windows. */
+export class KeepAwakeError extends Error {
+  constructor(
+    message: string,
+    /** `set`: Setzen einer Art scheiterte; `clear`: Aufheben scheiterte. */
+    readonly phase: 'set' | 'clear',
+    readonly reason: KeepAwakeFailureReason,
+    /** Fehlercode von Windows, nur bei `windows`. */
+    readonly code?: number,
+  ) {
+    super(message);
+    this.name = 'KeepAwakeError';
+  }
 }
 
 /** Alle Ports zusammen, wie sie der Kern beim Erzeugen bekommt. */

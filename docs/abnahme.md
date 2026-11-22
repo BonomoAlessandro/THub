@@ -207,6 +207,13 @@ Nach der Installation des neuen Installers. Die Abweichungen unten sind in diese
 - [ ] Pfeil-Menü und Befehlspalette schalten wie beschrieben; Tooltips stimmen; das Fenster lässt sich neben dem Schalter weiterhin ziehen. (T28)
 - [ ] Schalter und Pfeil-Menü sehen in hell und dunkel aus wie im Prototyp. (T28)
 
+## Fehler beim Wachhalten (Ticket 31)
+
+Gezielt auslösen lässt sich der Fehler in der App nicht: `THUB_TEST_KEEPAWAKE_FAIL=1` wirkt nur im Testmodus, dessen Fenster ausserhalb des Bildschirms liegt. Ansehen lässt sich der Hinweis im Prototyp (`prototype/index.html`, Steuerleiste „Wachhalten scheitert“ und „Beenden scheitert“), der dasselbe Aussehen hat.
+
+- [ ] Der Fehler-Hinweis ist in hell und dunkel sofort als Fehler zu erkennen (rotes Fehlersymbol, roter Rand) und passt sonst zu den übrigen Hinweisen; `×` und Klick schliessen ihn. (T31)
+- [ ] Im normalen Betrieb ändert sich nichts: Schalter an, `powercfg /requests` zeigt THub wie bisher. (T31)
+
 ## App-Symbol (Ticket 29)
 
 - [x] Du hast einen Entwurf freigegeben: C (gestapelte Terminals) in Graphit. (T29)

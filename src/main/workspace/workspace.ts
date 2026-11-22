@@ -31,7 +31,15 @@ import {
 import { CwdReportScanner } from './cwdReport';
 import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
 import { findOpenPoints, openPointsContext } from './openPoints';
-import type { CancelTimer, KeepAwakeLevel, ProcessInfo, ShellInfo, StartOrder, WorkspacePorts } from './ports';
+import {
+  KeepAwakeError,
+  type CancelTimer,
+  type KeepAwakeLevel,
+  type ProcessInfo,
+  type ShellInfo,
+  type StartOrder,
+  type WorkspacePorts,
+} from './ports';
 import { ProcessTracker, shellProcesses, type ProcessTab, type ShellRoot, type ShellTree } from './processRules';
 import { resumeCommand, sessionToResume } from './resume';
 import { shellLabel, wslDistribution } from './shellIds';
@@ -1161,11 +1169,39 @@ class WorkspaceCore implements Workspace {
     const level: KeepAwakeLevel = keepAwake ? keepAwakeMode : 'off';
     if (level === this.keepAwakeLevel) return;
     this.keepAwakeLevel = level;
+    let done: Promise<void>;
     try {
-      this.ports.keepAwake.set(level);
+      done = this.ports.keepAwake.set(level);
     } catch (err) {
-      console.error('Rechner wach halten:', err);
+      done = Promise.reject(err);
     }
+    done.catch((err: unknown) => this.keepAwakeFailed(level, err));
+  }
+
+  /**
+   * Die Stufe liess sich nicht setzen (Ticket 31). Scheiterte das Setzen, hält der Port nichts mehr wach: Das Wachhalten
+   * wird ausgeschaltet und gespeichert, die Stufe bleibt. Scheiterte nur das Aufheben, bleibt die Einstellung, wie
+   * gewählt. In beiden Fällen erscheint der Fehler-Hinweis, unabhängig von „Hinweise im Fenster“. Ein Fehler für eine
+   * Stufe, die inzwischen nicht mehr gewünscht ist, ändert nichts.
+   */
+  private keepAwakeFailed(level: KeepAwakeLevel, err: unknown): void {
+    console.error(`Rechner wach halten (${level}):`, err);
+    if (this.stopping || level !== this.keepAwakeLevel) return;
+    const known = err instanceof KeepAwakeError ? err : undefined;
+    const phase = known?.phase ?? (level === 'off' ? 'clear' : 'set');
+    if (phase === 'set') {
+      this.keepAwakeLevel = 'off';
+      if (this.state.settings.keepAwake) {
+        this.state.settings = { ...this.state.settings, keepAwake: false };
+        this.save();
+        this.emit({ type: 'settings', settings: structuredClone(this.state.settings), defaultShellId: this.defaultShell().id });
+      }
+    }
+    this.toasts.showKeepAwakeError({
+      action: phase === 'set' ? 'on' : 'off',
+      reason: known?.reason ?? 'other',
+      ...(known?.code !== undefined ? { code: known.code } : {}),
+    });
   }
 
   stepFontSize(step: number): void {
@@ -1204,6 +1240,11 @@ class WorkspaceCore implements Workspace {
     if (this.stopping || typeof toastId !== 'string') return;
     const toast = this.toasts.find(toastId);
     if (!toast) return;
+    // Der Fehler beim Wachhalten gehört zu keinem Tab: Ein Klick schliesst ihn nur (Ticket 31).
+    if (toast.tabId === undefined) {
+      this.dismissToast(toastId);
+      return;
+    }
     // Offene Punkte sind mit dem Klick angeschaut (Ticket 27); das blosse Anzeigen des Tabs lässt sie stehen.
     if (toast.kind === 'openPoints') this.dismissToast(toastId);
     this.activateTab(toast.tabId);
@@ -1212,7 +1253,7 @@ class WorkspaceCore implements Workspace {
   dismissToast(toastId: string): void {
     if (this.stopping || typeof toastId !== 'string') return;
     const dismissed = this.toasts.dismiss(toastId);
-    const tab = dismissed?.kind === 'openPoints' ? this.findTab(dismissed.tabId) : undefined;
+    const tab = dismissed?.kind === 'openPoints' && dismissed.tabId ? this.findTab(dismissed.tabId) : undefined;
     if (tab?.openPoints) {
       delete tab.openPoints;
       this.save();
@@ -1229,7 +1270,7 @@ class WorkspaceCore implements Workspace {
    * oder „fertig“-Hinweis, den der Tab schon hat, verschwindet dafür. Ausgeschaltet in den Einstellungen gibt es keine;
    * die Status-Symbole bleiben.
    */
-  private notify(tabId: string, kind: Exclude<ToastKind, 'openPoints'>): void {
+  private notify(tabId: string, kind: Extract<ToastKind, 'waiting' | 'finished'>): void {
     if (this.state.settings.notifications && !this.isVisible(tabId)) this.toasts.show(tabId, kind);
   }
 

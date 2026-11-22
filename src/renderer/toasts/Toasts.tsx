@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { TabSnapshot, ToastCountdown, ToastSnapshot } from '../../shared/types';
-import { ArrowRightIcon, CloseIcon, ListIcon } from '../icons';
+import { AlertIcon, ArrowRightIcon, CloseIcon, ListIcon } from '../icons';
 import { TabIcon } from '../tabs/TabIcon';
 import { focusTerminal } from '../terminal/terminalViews';
+import { keepAwakeErrorText } from './keepAwakeErrorText';
 
 const api = window.thub;
 
@@ -21,10 +22,11 @@ interface ToastsProps {
 export function Toasts({ toasts, tabs, activeTabId }: ToastsProps) {
   const [shown, forget] = useShownToasts(toasts);
 
-  // Ein geschlossener Tab nimmt seinen Hinweis ohne Animation mit: Ohne Tab gibt es nichts mehr zu zeigen.
+  // Ein geschlossener Tab nimmt seinen Hinweis ohne Animation mit: Ohne Tab gibt es nichts mehr zu zeigen. Der Fehler
+  // beim Wachhalten gehört zu keinem Tab und gleitet immer hinaus.
   useEffect(() => {
     for (const { toast, leaving } of shown) {
-      if (leaving && !tabs.some((t) => t.id === toast.tabId)) forget(toast.id);
+      if (leaving && toast.tabId !== undefined && !tabs.some((t) => t.id === toast.tabId)) forget(toast.id);
     }
   }, [shown, tabs, forget]);
 
@@ -34,6 +36,9 @@ export function Toasts({ toasts, tabs, activeTabId }: ToastsProps) {
         .slice()
         .reverse()
         .map(({ toast, leaving }) => {
+          if (toast.kind === 'keepAwakeError') {
+            return <ErrorToastCard key={toast.id} toast={toast} leaving={leaving} onLeft={forget} />;
+          }
           const tab = tabs.find((t) => t.id === toast.tabId);
           if (!tab) return null;
           return (
@@ -94,8 +99,63 @@ function mergeToasts(shown: ShownToast[], next: ToastSnapshot[]): ShownToast[] {
   return result;
 }
 
+type ErrorToast = Extract<ToastSnapshot, { kind: 'keepAwakeError' }>;
+type TabToast = Exclude<ToastSnapshot, ErrorToast>;
+
+/**
+ * Fehler beim Wachhalten (Ticket 31), als Fehler markiert: Fehlersymbol und Rand in der Fehlerfarbe, für Screenreader
+ * `role="alert"`. Er gehört zu keinem Tab; ein Klick oder das × schliesst ihn.
+ */
+function ErrorToastCard({
+  toast,
+  leaving,
+  onLeft,
+}: {
+  toast: ErrorToast;
+  leaving: boolean;
+  onLeft(toastId: string): void;
+}) {
+  const { title, reason, consequence } = keepAwakeErrorText(toast.failure);
+  const dismiss = () => api.send({ type: 'dismissToast', toastId: toast.id });
+  return (
+    <div
+      className={leaving ? 'toast error out' : 'toast error'}
+      role="alert"
+      title="Hinweis schliessen"
+      data-toast-kind="keepAwakeError"
+      // Nie den Fokus nehmen, wie bei den übrigen Hinweisen.
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={dismiss}
+      onAnimationEnd={(e) => {
+        if (leaving && e.target === e.currentTarget) onLeft(toast.id);
+      }}
+    >
+      <span className="t-err" aria-hidden="true">
+        <AlertIcon />
+      </span>
+      <div className="t-body">
+        <div className="t-title">{title}</div>
+        <div className="t-msg">{reason}</div>
+        <div className="t-msg">{consequence}</div>
+      </div>
+      <button
+        type="button"
+        className="t-close"
+        aria-label="Hinweis schliessen"
+        tabIndex={-1}
+        onClick={(e) => {
+          e.stopPropagation();
+          dismiss();
+        }}
+      >
+        <CloseIcon />
+      </button>
+    </div>
+  );
+}
+
 interface ToastCardProps {
-  toast: ToastSnapshot;
+  toast: TabToast;
   tabName: string;
   /** Der Tab des Hinweises ist der aktive (etwa wenn das Fenster im Hintergrund war). */
   active: boolean;
@@ -169,7 +229,7 @@ const SHOWN_POINTS = 4;
  * Status-Symbol des Tabs und den Wortlaut aus dem Prototyp; offene Punkte ein Aufzählungssymbol, „Offene Punkte (n)“
  * und höchstens vier Punkte, jeder höchstens zwei Zeilen (ganz im Tooltip).
  */
-function toastContent(toast: ToastSnapshot): { icon: ReactNode; message: ReactNode } {
+function toastContent(toast: TabToast): { icon: ReactNode; message: ReactNode } {
   switch (toast.kind) {
     case 'waiting':
       return {

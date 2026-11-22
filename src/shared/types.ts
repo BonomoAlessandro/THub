@@ -16,6 +16,24 @@ export const FONT_SIZE = { min: 8, max: 32, default: 14 } as const;
  */
 export type KeepAwakeMode = 'system' | 'display';
 
+/**
+ * Warum das Wachhalten scheiterte (Ticket 31): Windows lehnte die Anforderung ab, die Verbindung zu Windows (koffi)
+ * liess sich nicht herstellen, das System wird nicht unterstützt, oder etwas Unerwartetes.
+ */
+export type KeepAwakeFailureReason = 'windows' | 'load' | 'unsupported' | 'other';
+
+/** Ein gescheitertes Wachhalten, wie es der Fehler-Hinweis zeigt (Ticket 31). */
+export interface KeepAwakeFailure {
+  /**
+   * `on`: Einschalten oder Wechsel der Stufe scheiterte; THub hat das Wachhalten danach ausgeschaltet.
+   * `off`: Aufheben scheiterte; Windows hält womöglich weiter wach, bis THub endet.
+   */
+  action: 'on' | 'off';
+  reason: KeepAwakeFailureReason;
+  /** Fehlercode von Windows, nur bei `windows`. */
+  code?: number;
+}
+
 export interface Settings {
   /** Standardordner für neue Tabs; leer heisst Benutzerordner. */
   defaultCwd: string;
@@ -125,7 +143,7 @@ export interface ClosedTabInfo {
  *
  * „Wartet“ und „fertig“ teilen sich einen Platz pro Tab, offene Punkte haben einen eigenen und ersetzen dazu „fertig“.
  */
-export type ToastKind = 'waiting' | 'finished' | 'openPoints';
+export type ToastKind = 'waiting' | 'finished' | 'openPoints' | 'keepAwakeError';
 
 /** Countdown eines Hinweises, der von selbst verschwindet. Er läuft nur, solange das Fenster im Vordergrund ist. */
 export interface ToastCountdown {
@@ -151,7 +169,12 @@ interface ToastBase {
 export type ToastSnapshot =
   | (ToastBase & { kind: 'waiting' })
   | (ToastBase & { kind: 'finished'; countdown: ToastCountdown })
-  | (ToastBase & { kind: 'openPoints'; points: string[] });
+  | (ToastBase & { kind: 'openPoints'; points: string[] })
+  /**
+   * Fehler beim Wachhalten (Ticket 31), als Fehler markiert. Er gehört zu keinem Tab, steht, bis `×` oder ein Klick ihn
+   * schliesst, und höchstens einmal da.
+   */
+  | { id: string; kind: 'keepAwakeError'; tabId?: undefined; failure: KeepAwakeFailure };
 
 /** Eine erkannte Shell, wie sie das Pfeil-Menü und die Einstellungen anbieten. */
 export interface ShellOption {

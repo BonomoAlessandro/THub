@@ -1,8 +1,8 @@
 // Hinweise unten rechts im Fenster (Tickets 14 und 22): welche gerade stehen, höchstens einer je Platz und Tab, und der
-// Countdown der Hinweise, die von selbst verschwinden. Wann ein Hinweis kommt und wann er geht, entscheidet der
-// Workspace-Kern.
+// Countdown der Hinweise, die von selbst verschwinden. Dazu der Fehler beim Wachhalten (Ticket 31), der zu keinem Tab
+// gehört. Wann ein Hinweis kommt und wann er geht, entscheidet der Workspace-Kern.
 
-import type { ToastKind, ToastSnapshot } from '../../shared/types';
+import type { KeepAwakeFailure, ToastKind, ToastSnapshot } from '../../shared/types';
 import type { CancelTimer, Clock } from './ports';
 
 /** So lange Vordergrundzeit steht ein „fertig“-Hinweis. */
@@ -22,14 +22,18 @@ const REPLACES: Record<ToastKind, readonly ToastKind[]> = {
   waiting: STATUS_TOASTS,
   finished: STATUS_TOASTS,
   openPoints: ['openPoints', 'finished'],
+  keepAwakeError: ['keepAwakeError'],
 };
 
 interface Toast {
   id: string;
-  tabId: string;
+  /** Der Tab des Hinweises; fehlt beim Fehler des Wachhaltens. */
+  tabId?: string;
   kind: ToastKind;
   /** Nur bei offenen Punkten. */
   points?: string[];
+  /** Nur beim Fehler des Wachhaltens. */
+  failure?: KeepAwakeFailure;
   /** Nur bei Hinweisen, die von selbst verschwinden. */
   countdown?: Countdown;
 }
@@ -79,19 +83,32 @@ export class ToastBoard {
     this.changed();
   }
 
+  /**
+   * Zeigt den Fehler beim Wachhalten (Ticket 31). Er gehört zu keinem Tab, hat keinen Countdown und steht höchstens
+   * einmal da: Ein neuer ersetzt den bisherigen, mit dem letzten Grund.
+   */
+  showKeepAwakeError(failure: KeepAwakeFailure): void {
+    this.drop((t) => t.kind === 'keepAwakeError');
+    this.toasts.push({ id: `toast-${this.nextId++}`, kind: 'keepAwakeError', failure: { ...failure } });
+    this.changed();
+  }
+
   /** Nimmt die Hinweise des Tabs weg; mit `kinds` nur die dieser Arten. */
   dismissTab(tabId: string, kinds?: readonly ToastKind[]): void {
     if (this.drop((t) => t.tabId === tabId && (kinds === undefined || kinds.includes(t.kind)))) this.changed();
   }
 
-  /** Zu welchem Tab der Hinweis mit dieser Kennung gehört und welcher Art er ist; nichts, wenn er nicht (mehr) steht. */
-  find(toastId: string): { tabId: string; kind: ToastKind } | undefined {
+  /**
+   * Zu welchem Tab der Hinweis mit dieser Kennung gehört (keiner beim Fehler des Wachhaltens) und welcher Art er ist;
+   * nichts, wenn er nicht (mehr) steht.
+   */
+  find(toastId: string): { tabId?: string; kind: ToastKind } | undefined {
     const toast = this.toasts.find((t) => t.id === toastId);
     return toast && { tabId: toast.tabId, kind: toast.kind };
   }
 
   /** Nimmt den Hinweis mit dieser Kennung weg (× am Hinweis); liefert, zu welchem Tab er gehörte und welcher Art er war. */
-  dismiss(toastId: string): { tabId: string; kind: ToastKind } | undefined {
+  dismiss(toastId: string): { tabId?: string; kind: ToastKind } | undefined {
     const toast = this.toasts.find((t) => t.id === toastId);
     if (!toast) return undefined;
     this.drop((t) => t === toast);
@@ -124,7 +141,8 @@ export class ToastBoard {
 
   snapshot(): ToastSnapshot[] {
     const now = this.clock.now();
-    return this.toasts.map(({ id, tabId, kind, points, countdown }): ToastSnapshot => {
+    return this.toasts.map(({ id, tabId = '', kind, points, failure, countdown }): ToastSnapshot => {
+      if (kind === 'keepAwakeError') return { id, kind, failure: { ...(failure ?? { action: 'on', reason: 'other' }) } };
       if (kind === 'openPoints') return { id, tabId, kind, points: [...(points ?? [])] };
       if (kind === 'waiting' || !countdown) return { id, tabId, kind: 'waiting' };
       const remaining = countdown.running

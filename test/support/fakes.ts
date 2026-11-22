@@ -336,11 +336,21 @@ function dirKey(dir: string): string {
 
 // ---------- Wachhalten ----------
 
-/** Zeichnet jede Stufe auf, die der Kern dem Port Wachhalten meldet (Ticket 28). */
+/** Wann der nachgemachte Port Wachhalten scheitert: für eine Stufe der Fehler, mit dem er zurückweist, sonst nichts. */
+export type KeepAwakeFailRule = (level: KeepAwakeLevel) => Error | undefined;
+
+/**
+ * Zeichnet jede Stufe auf, die der Kern dem Port Wachhalten meldet (Ticket 28). Mit `fail` weist er für die
+ * gewünschten Stufen mit einem Fehler zurück (Ticket 31); die Antwort kommt wie beim echten Port erst nach dem Aufruf.
+ */
 export class FakeKeepAwake implements KeepAwake {
   readonly levels: KeepAwakeLevel[] = [];
 
-  set(level: KeepAwakeLevel): void {
+  constructor(public fail: KeepAwakeFailRule | null = null) {}
+
+  set(level: KeepAwakeLevel): Promise<void> {
     this.levels.push(level);
+    const err = this.fail?.(level);
+    return err ? Promise.reject(err) : Promise.resolve();
   }
 }
