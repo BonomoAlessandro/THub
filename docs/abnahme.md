@@ -207,6 +207,12 @@ Nach der Installation des neuen Installers. Die Abweichungen unten sind in diese
 - [ ] Pfeil-Menü und Befehlspalette schalten wie beschrieben; Tooltips stimmen; das Fenster lässt sich neben dem Schalter weiterhin ziehen. (T28)
 - [ ] Schalter und Pfeil-Menü sehen in hell und dunkel aus wie im Prototyp. (T28)
 
+## Versionsnummer (Ticket 30)
+
+- [ ] Nach der Installation zeigt der Einstellungsdialog unten „THub 0.2.0“ mit Kennung, ohne „Entwicklung“ und ohne „+ Änderungen“; ein Klick kopiert die Zeile, ebenso „Version kopieren“ in der Palette. (T30)
+- [ ] Unter „Installierte Apps“ steht THub mit der Version 0.2.0. (T30)
+- [ ] Ein Installer mit höherer Version installiert sich über 0.2.0, ohne dass Tabs, Einstellungen oder Claude-Sessions verloren gehen. (T30)
+
 ## Fehler beim Wachhalten (Ticket 31)
 
 Gezielt auslösen lässt sich der Fehler in der App nicht: `THUB_TEST_KEEPAWAKE_FAIL=1` wirkt nur im Testmodus, dessen Fenster ausserhalb des Bildschirms liegt. Ansehen lässt sich der Hinweis im Prototyp (`prototype/index.html`, Steuerleiste „Wachhalten scheitert“ und „Beenden scheitert“), der dasselbe Aussehen hat.

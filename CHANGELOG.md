@@ -2,9 +2,9 @@
 
 Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in Klammern verweisen auf die Tickets in [docs/tickets](docs/tickets/README.md). Wie Versionen vergeben werden, steht in [docs/entwicklung.md](docs/entwicklung.md#version-und-installer). Welche Version installiert ist, zeigt THub unten in den Einstellungen.
 
-## 2.0.0 – 2026-11-22
+## 0.2.0 – 2026-11-22
 
-Erste Version mit Versionsnummer: THub 2, Stand aller Tickets 01 bis 31. Davor hiess jeder Installer „0.1.0“, die Nummer des alten Grundgerüsts „TermHub“.
+Erste Version mit Versionsnummer: THub 2 laut Spezifikation, Stand aller Tickets 01 bis 31. Davor hiess jeder Installer „0.1.0“, die Nummer des alten Grundgerüsts „TermHub“. Bis THub fertig ist, bleibt die erste Stelle 0.
 
 **Neu**
 

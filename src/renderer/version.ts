@@ -4,7 +4,7 @@
 import type { AppInfo } from '../shared/types';
 
 /**
- * „THub 2.0.0 · e8e865a“: Version und Commit, aus dem gebaut wurde. Dahinter „+ Änderungen“, wenn beim Bauen nicht
+ * „THub 0.2.0 · e8e865a“: Version und Commit, aus dem gebaut wurde. Dahinter „+ Änderungen“, wenn beim Bauen nicht
  * alles committet war, und „Entwicklung“, wenn THub unpaketiert läuft (`npm start`). Ohne Commit nur die Version.
  */
 export function versionLabel(info: AppInfo): string {

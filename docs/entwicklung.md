@@ -214,9 +214,9 @@ Für automatische Prüfungen der echten App (`npm start`, `electron .` oder die 
 
 ### Version und Installer
 
-Ticket 30. Die Version steht nur in `package.json` (`version`), nach dem Schema `Haupt.Neben.Korrektur`: neue Funktionen erhöhen die zweite Stelle, reine Korrekturen die dritte, die erste nur ein grosser Umbau wie „THub 2“. Die erste Version mit Nummer ist 2.0.0; was je Version neu ist, steht in [`CHANGELOG.md`](../CHANGELOG.md).
+Ticket 30. Die Version steht nur in `package.json` (`version`), nach dem Schema `Haupt.Neben.Korrektur`. Solange THub in Entwicklung ist, bleibt die erste Stelle 0: neue Funktionen erhöhen die zweite Stelle (0.3.0), reine Korrekturen die dritte (0.2.1). 1.0.0 erst, wenn der Nutzer THub für fertig erklärt. Die erste Version mit Nummer ist 0.2.0 (davor hiess jeder Installer 0.1.0); was je Version neu ist, steht in [`CHANGELOG.md`](../CHANGELOG.md).
 
-- electron-builder nimmt die Version für den Namen des Installers (`THub Setup 2.0.0.exe`), die Datei- und Produktversion von `THub.exe` und den Eintrag unter „Installierte Apps“. Die App-Kennung `ch.custom.thub` bleibt, damit ein neuer Installer die bestehende Installation ersetzt.
+- electron-builder nimmt die Version für den Namen des Installers (`THub Setup 0.2.0.exe`), die Datei- und Produktversion von `THub.exe` und den Eintrag unter „Installierte Apps“. Die App-Kennung `ch.custom.thub` bleibt, damit ein neuer Installer die bestehende Installation ersetzt.
 - `build.mjs` setzt beim Bauen die kurze Kennung des Commits und ob der Arbeitsstand Änderungen hat (`git status --porcelain`) in den Hauptprozess ein (`__THUB_BUILD__`, gelesen in [`buildInfo.ts`](../src/main/buildInfo.ts)); ohne Git fehlt die Kennung. Es meldet beim Bauen „Baue aus <Commit>“ bzw. „… + Änderungen“.
 - Der Hauptprozess gibt Version (`app.getVersion()`), Commit, „Änderungen“ und „paketiert“ über `IPC.appInfo` an die Oberfläche; die Zeile baut [`src/renderer/version.ts`](../src/renderer/version.ts). Klick auf die Zeile und „Version kopieren“ in der Palette nehmen beide `copyVersion` aus `commands.ts`.
 

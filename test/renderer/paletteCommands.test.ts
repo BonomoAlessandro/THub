@@ -26,7 +26,7 @@ const pickDirectory = vi.fn(async (_purpose: DirectoryPurpose) => pickedDir);
 
 /** Was in der Zwischenablage liegt. */
 let clipboardText = '';
-const APP_INFO = { version: '2.0.0', commit: 'e8e865a', dirty: false, packaged: true };
+const APP_INFO = { version: '0.2.0', commit: 'e8e865a', dirty: false, packaged: true };
 
 const fakeApi: Partial<THubApi> = {
   send: (command) => void sent.push(command),
@@ -338,7 +338,7 @@ describe('Befehlspalette', () => {
       clipboardText = '';
       const copied = await copyVersion();
 
-      expect(fromPalette).toBe('THub 2.0.0 · e8e865a');
+      expect(fromPalette).toBe('THub 0.2.0 · e8e865a');
       expect(clipboardText).toBe(fromPalette);
       expect(copied).toBe(versionLabel(APP_INFO));
     });
