@@ -1,6 +1,6 @@
 # 19 – README und Abschluss-Prüfung auf einem frischen Rechner
 
-Status: `wartet auf Abnahme` · Typ: HITL
+Status: `erledigt` (2026-11-22, vom Nutzer abgeschlossen, ohne dass jeder Punkt der Abnahme durchgeklickt wurde; Fehler meldet er als neue Tickets) · Typ: HITL
 Blockiert durch: alle anderen Tickets
 User Stories: 37, 39, sowie alle als Abnahme
 Spezifikation: „Weitere Hinweise“
@@ -22,6 +22,8 @@ Spezifikation: „Weitere Hinweise“
 ## Abnahme von Hand
 
 Alle Punkte dieses Tickets und der übrigen Tickets stehen gesammelt und nach Bereichen geordnet in [docs/abnahme.md](../abnahme.md).
+
+Am 2026-11-22 hat der Nutzer alle Tickets als abgeschlossen markiert. Die offenen Punkte unten und in `docs/abnahme.md` sind nicht abgehakt, weil sie nicht einzeln geprüft wurden; sie bleiben als Prüfliste für später. Fehler, die im Betrieb auftauchen, meldet der Nutzer als neue Tickets.
 
 - [ ] Die Prüflisten „Abnahme von Hand“ aller Tickets 01 bis 18 sind durchgeklickt; Abweichungen sind als neue Tickets erfasst.
 

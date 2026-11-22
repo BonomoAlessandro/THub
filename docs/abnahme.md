@@ -5,6 +5,7 @@ Eine Liste für die gesammelte Abnahme am Schluss ([Ticket 19](tickets/19-readme
 - Ticket 10 hat keine eigenen Punkte; die Prüfung mit echtem Claude steckt in Ticket 11.
 - Ticket 21 ist verworfen (der Verlauf steht nach einem Neustart weiterhin im Scrollback); seine Punkte entfallen.
 - Wie sich THub verhalten soll, steht im [Handbuch](handbuch.md) und in der [Spezifikation](specs/termhub-v2.md).
+- **Stand 2026-11-22:** Der Nutzer hat alle Tickets (01 bis 29) als abgeschlossen markiert, ohne jeden Punkt dieser Liste durchzuklicken. Nicht abgehakte Punkte sind also ungeprüft, nicht fehlgeschlagen. Die Liste bleibt als Prüfliste; Fehler, die im Betrieb auftauchen, werden als neue Tickets erfasst.
 
 **Kennzeichen**
 
