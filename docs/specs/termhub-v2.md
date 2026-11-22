@@ -683,13 +683,17 @@ Umsetzung: Ticket 29.
   - im Installer, im Deinstaller und im Eintrag unter „Installierte Apps“;
   - am Fenster über die Option `icon` von `BrowserWindow`, damit auch `npm start` nicht das Electron-Symbol zeigt.
   - **Nicht** in der Titelleiste von THub selbst; die bleibt wie im Prototyp.
-- **Gestaltung:** wird in Ticket 29 an Entwürfen im Prototyp (`prototype/icon.html`) abgestimmt; Motiv und Farben werden danach hier nachgetragen. Vorgaben:
-  - passt zum Look von THub (Stil wie Warp, Linear oder Raycast);
-  - ab 16 px lesbar, die kleinen Grössen von Hand nachgezogen statt nur verkleinert;
-  - auf heller und dunkler Taskleiste gut erkennbar;
-  - keine fremden Marken, auch nicht der Claude-Stern von den Tabs.
-  - „Keine Akzentfarbe“ gilt für die Oberfläche; ob das Symbol eine eigene Farbe bekommt, entscheidet der Nutzer bei der Wahl des Entwurfs.
-- **Dateien:** SVG-Quelle im Repository, daraus eine `.ico` mit 16, 20, 24, 32, 40, 48, 64 und 256 px (die Grössen, die Windows bei 100 % bis 200 % Skalierung und in grossen Ansichten anfragt). Ein Skript erzeugt die `.ico` aus der Quelle neu; Ablage und Aufruf stehen in `docs/entwicklung.md`.
+- **Gestaltung** (am 2026-11-22 an vier Entwürfen in `prototype/icon.html` gewählt: Entwurf C in Graphit):
+  - **Motiv:** zwei gestapelte Terminals, also mehrere Sessions, die bleiben. Vorne ein helles Terminal mit dem Prompt `>_`, dahinter versetzt nach rechts oben ein zweites, gedämpftes; zwischen beiden eine schmale Lücke.
+  - **Farben (Graphit):** Kachel mit abgerundeten Ecken im Verlauf von `#44444d` (oben links) nach `#17171b` (unten rechts), in den kleinen Grössen flach `#26262c`; eine feine helle Innenkante (Weiss, 18 % Deckkraft), damit sich die Kachel auch auf einer dunklen Taskleiste abhebt. Vorderes Terminal `#f4f4f5`, hinteres dieselbe Farbe mit 42 % Deckkraft, Prompt `#1c1c21`. Damit bleibt das Symbol neutral wie die Oberfläche, ohne Akzentfarbe.
+  - **Von Hand nachgezogen:** 16, 20 und 24 px haben eigene Vorlagen auf ganzen Pixeln. In 16 und 20 px ist das vordere Terminal so gross wie möglich, vom hinteren bleibt oben und rechts ein Rand, und der Prompt besteht aus einzelnen Pixeln. Ab 32 px wird die grosse Vorlage (256 px) verkleinert.
+  - Vorgaben, die dabei galten: passt zum Look von THub (Stil wie Warp, Linear oder Raycast); ab 16 px lesbar; auf heller und dunkler Taskleiste gut erkennbar; keine fremden Marken, auch nicht der Claude-Stern von den Tabs.
+- **Dateien:**
+  - Vorlagen `resources/icon/icon-16.svg`, `icon-20.svg`, `icon-24.svg` und `icon-256.svg`; sie sind die Quelle.
+  - Daraus erzeugt `npm run icon` (`scripts/build-icon.cjs`) die `resources/icon/icon.ico` mit 16, 20, 24, 32, 40, 48, 64 und 256 px, die Grössen, die Windows bei 100 % bis 200 % Skalierung und in grossen Ansichten anfragt. Chromium zeichnet jede Grösse aus ihrer Vorlage (Electron, unsichtbar); `scripts/ico.cjs` schreibt die Datei ohne weitere Abhängigkeiten.
+  - Unter 256 px stehen die Bilder als 32-Bit-Bitmap mit Alphakanal in der `.ico`, so wie jede Windows-Komponente sie liest; 256 px als PNG.
+  - Die `.ico` liegt im Repository, damit `npm run dist` ohne vorheriges `npm run icon` funktioniert. Wer eine Vorlage ändert, erzeugt sie neu und committet beides.
+  - electron-builder nimmt sie für `THub.exe`, Installer und Deinstaller (`build.win.icon`); `build.mjs` legt sie als `dist/icon.ico` für das Fenster ab.
 
 ### App-Verhalten
 

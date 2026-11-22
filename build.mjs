@@ -52,3 +52,5 @@ await Promise.all([
 
 mkdirSync('dist/renderer', { recursive: true });
 copyFileSync('src/renderer/index.html', 'dist/renderer/index.html');
+// App-Symbol für das Fenster (Ticket 29); THub.exe und der Installer bekommen es über electron-builder.
+copyFileSync('resources/icon/icon.ico', 'dist/icon.ico');

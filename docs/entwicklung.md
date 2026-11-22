@@ -174,6 +174,7 @@ npm install          # nie mit --omit=optional (koffi braucht sein optionales Pa
 npm start            # bauen und App starten
 npm run dev          # wie start, mit Sourcemaps und unminifiziert
 npm run dist         # Installer bauen -> release\THub Setup <version>.exe
+npm run icon         # App-Symbol aus den SVG-Vorlagen neu erzeugen -> resources\icon\icon.ico
 ```
 
 `build.mjs` bündelt Hauptprozess, Preload und Renderer mit esbuild nach `dist/`; `electron`, `node-pty` und `koffi` bleiben `external`.
@@ -206,3 +207,19 @@ Für automatische Prüfungen der echten App (`npm start`, `electron .` oder die 
 ### Installer
 
 `npm run dist` baut mit esbuild und electron-builder einen NSIS-Installer nach `release\THub Setup <version>.exe`, daneben das ungepackte Paket `release\win-unpacked`. Der Installer ist ein Assistent (kein Ein-Klick-Installer) mit wählbarem Installationsordner und erlaubt die Installation für den eigenen Benutzer ohne Administratorrechte (`perMachine: false`). Die Shell-Integration liegt im Paket als echte Dateien unter `resources\shell` (`extraResources`), node-pty und die Binärdatei von koffi ausserhalb des asar-Archivs (`asarUnpack`); `npmRebuild` bleibt aus. Der Installer ist nicht signiert, und es gibt kein Auto-Update.
+
+### App-Symbol
+
+Das Symbol (Ticket 29: zwei gestapelte Terminals auf einer Graphit-Kachel) liegt unter [`resources/icon/`](../resources/icon):
+
+| Datei | Inhalt |
+|---|---|
+| `icon-16.svg`, `icon-20.svg`, `icon-24.svg` | von Hand auf ganze Pixel gelegte Vorlagen für die kleinen Grössen |
+| `icon-256.svg` | grosse Vorlage für 32 px und mehr |
+| `icon.ico` | erzeugt: 16, 20, 24, 32, 40, 48, 64 und 256 px; unter 256 als 32-Bit-Bitmap, 256 als PNG |
+
+- **Ändern:** Vorlage bearbeiten, `npm run icon` ausführen und SVG und `.ico` zusammen committen. Das Skript [`scripts/build-icon.cjs`](../scripts/build-icon.cjs) läuft als Electron-Hauptprozess: Chromium zeichnet jede Grösse aus ihrer Vorlage in einen Canvas, in einem unsichtbaren Fenster ohne Bildschirm. [`scripts/ico.cjs`](../scripts/ico.cjs) schreibt die Datei ohne weitere Abhängigkeiten; `test/main/appIcon.test.ts` prüft Grössen und Formate.
+- **Wo es landet:** electron-builder bettet es in `THub.exe`, den Installer und den Deinstaller ein (`build.win.icon` in `package.json`); damit zeigen Taskleiste, `Alt+Tab`, Startmenü, Verknüpfungen und „Installierte Apps“ es. `build.mjs` kopiert es nach `dist/icon.ico`, das Fenster bekommt es über `icon` von `BrowserWindow`, so auch unpaketiert (`npm start`).
+- **Prüfen ohne Installation:** `[System.Drawing.Icon]::ExtractAssociatedIcon('release\win-unpacked\THub.exe')` in PowerShell liefert das eingebettete Symbol, ohne die App zu starten.
+- Nach einer Installation kann Windows noch eine Weile das alte Symbol aus seinem Zwischenspeicher zeigen, vor allem bei einer an die Taskleiste angehefteten Verknüpfung; lösen und neu anheften hilft.
+- Die Entwürfe, aus denen das Symbol gewählt wurde, stehen in [`prototype/icon.html`](../prototype/icon.html).

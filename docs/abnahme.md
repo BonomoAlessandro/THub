@@ -206,6 +206,13 @@ Nach der Installation des neuen Installers. Die Abweichungen unten sind in diese
 - [ ] Pfeil-Menü und Befehlspalette schalten wie beschrieben; Tooltips stimmen; das Fenster lässt sich neben dem Schalter weiterhin ziehen. (T28)
 - [ ] Schalter und Pfeil-Menü sehen in hell und dunkel aus wie im Prototyp. (T28)
 
+## App-Symbol (Ticket 29)
+
+- [x] Du hast einen Entwurf freigegeben: C (gestapelte Terminals) in Graphit. (T29)
+- [ ] Nach der Installation zeigen Installer, Taskleiste, `Alt+Tab`, Startmenü, Desktop-Verknüpfung und „Installierte Apps“ das neue Symbol, auf heller und auf dunkler Taskleiste. (T29)
+- [ ] Ein an die Taskleiste angeheftetes THub zeigt das neue Symbol. Bleibt das alte stehen, THub lösen und neu anheften; das alte Symbol kommt dann aus dem Zwischenspeicher von Windows, nicht aus THub. (T29)
+- [ ] In 16 px (Taskleiste bei 100 % Skalierung, kleine Symbole im Explorer) ist das Motiv noch zu erkennen. (T29)
+
 ## Gefundene Abweichungen
 
 Pro Abweichung einen Eintrag; daraus wird später ein Ticket in [docs/tickets](tickets/README.md).
