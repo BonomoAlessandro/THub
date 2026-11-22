@@ -1,7 +1,7 @@
 # THub 2: Tabs, Claude-Sessions, die einen Neustart überleben, und neuer Look
 
 > Status: `ready-for-agent`
-> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
+> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
 
 > **Name:** Die App heisst **THub** (bis 2026-11-19 „TermHub“). Datenordner `%APPDATA%\THub`, in der Entwicklung `%APPDATA%\THub-dev`. Umsetzung des Namenswechsels: Ticket 20.
 
@@ -159,6 +159,11 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 87. Als Nutzer möchte ich, dass ein eingeschaltetes Wachhalten nach einem Neustart von THub mit derselben Stufe von selbst wieder läuft, damit ich nicht daran denken muss.
 88. Als Nutzer möchte ich, dass das Wachhalten endet, sobald ich es ausschalte oder THub beende, und dass weder ein Prozess noch eine geänderte Energieeinstellung zurückbleibt, damit mein System sauber bleibt.
 89. Als Nutzer möchte ich das Wachhalten auch über die Befehlspalette ein- und ausschalten können, damit ich die Hände an der Tastatur behalte.
+
+### App-Symbol
+
+90. Als Nutzer möchte ich THub in der Taskleiste, bei `Alt+Tab`, im Startmenü und auf dem Desktop an einem eigenen Symbol erkennen statt am Standardsymbol von Electron, damit ich es zwischen anderen Fenstern sofort finde.
+91. Als Nutzer möchte ich, dass das Symbol zum Look von THub passt und auch klein und auf heller wie dunkler Taskleiste gut erkennbar ist, damit es nicht wie ein Platzhalter wirkt.
 
 ## Implementierungsentscheidungen
 
@@ -668,6 +673,24 @@ Umsetzung: Ticket 28.
   - Ein Administrator kann die Anforderungen eines Programms übergehen (`powercfg /requestsoverride`).
   - Der Ruhezustand bei fast leerem Akku greift weiterhin.
 
+### App-Symbol
+
+Umsetzung: Ticket 29.
+
+- **Ausgangslage:** Weder electron-builder noch das Fenster bekommen bisher ein eigenes Symbol. THub zeigt deshalb überall das Standardsymbol von Electron.
+- **Wo das Symbol erscheint:**
+  - als Symbol von `THub.exe` und damit in Taskleiste, `Alt+Tab`, Startmenü, Desktop-Verknüpfung und beim Anheften an die Taskleiste;
+  - im Installer, im Deinstaller und im Eintrag unter „Installierte Apps“;
+  - am Fenster über die Option `icon` von `BrowserWindow`, damit auch `npm start` nicht das Electron-Symbol zeigt.
+  - **Nicht** in der Titelleiste von THub selbst; die bleibt wie im Prototyp.
+- **Gestaltung:** wird in Ticket 29 an Entwürfen im Prototyp (`prototype/icon.html`) abgestimmt; Motiv und Farben werden danach hier nachgetragen. Vorgaben:
+  - passt zum Look von THub (Stil wie Warp, Linear oder Raycast);
+  - ab 16 px lesbar, die kleinen Grössen von Hand nachgezogen statt nur verkleinert;
+  - auf heller und dunkler Taskleiste gut erkennbar;
+  - keine fremden Marken, auch nicht der Claude-Stern von den Tabs.
+  - „Keine Akzentfarbe“ gilt für die Oberfläche; ob das Symbol eine eigene Farbe bekommt, entscheidet der Nutzer bei der Wahl des Entwurfs.
+- **Dateien:** SVG-Quelle im Repository, daraus eine `.ico` mit 16, 20, 24, 32, 40, 48, 64 und 256 px (die Grössen, die Windows bei 100 % bis 200 % Skalierung und in grossen Ansichten anfragt). Ein Skript erzeugt die `.ico` aus der Quelle neu; Ablage und Aufruf stehen in `docs/entwicklung.md`.
+
 ### App-Verhalten
 
 - **Nur eine Instanz:** Ein zweiter Start gibt sofort auf und holt das bestehende Fenster nach vorne, auch aus minimiertem Zustand. Er startet keine Shells und keinen Server, schreibt keine Hook-Datei und keinen Zustand.
@@ -754,6 +777,7 @@ Umsetzung: Ticket 28.
 - Weitere Einstellungen wie Terminal-Schriftart. Eine Akzentfarbe gibt es bewusst nicht.
 - Auto-Update, Autostart und Code-Signing.
 - Beim Wachhalten: simulierte Eingaben (etwa Tastendrücke gegen Sperre oder „Abwesend“-Status), eine Zeitbegrenzung („für 2 Stunden“) und ein automatisches Wachhalten nur, solange Claude arbeitet oder Prozesse laufen.
+- Beim App-Symbol: ein Symbol in der Titelleiste von THub und Status-Overlays am Taskleisten-Symbol.
 - Automatisierte Tests der Oberfläche.
 
 ## Weitere Hinweise
