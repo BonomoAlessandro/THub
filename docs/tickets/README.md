@@ -50,6 +50,8 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 27 | [Offene Punkte nur, wenn es wirklich welche gibt; Klick schliesst den Hinweis](27-offene-punkte-seltener.md) | AFK | – | erledigt |
 | 28 | [Rechner wach halten](28-rechner-wach-halten.md) | AFK | – | erledigt |
 | 29 | [Eigenes App-Symbol](29-app-symbol.md) | HITL | – | erledigt |
+| 30 | [Versionsnummer](30-versionsnummer.md) | AFK | – | offen |
+| 31 | [Wachhalten: Fehler zeigen und ausschalten](31-wachhalten-fehler.md) | AFK | – | offen |
 
 ```mermaid
 flowchart LR

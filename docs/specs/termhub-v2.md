@@ -1,7 +1,7 @@
 # THub 2: Tabs, Claude-Sessions, die einen Neustart überleben, und neuer Look
 
 > Status: `ready-for-agent`
-> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
+> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
 
 > **Name:** Die App heisst **THub** (bis 2026-11-19 „TermHub“). Datenordner `%APPDATA%\THub`, in der Entwicklung `%APPDATA%\THub-dev`. Umsetzung des Namenswechsels: Ticket 20.
 
@@ -159,11 +159,17 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 87. Als Nutzer möchte ich, dass ein eingeschaltetes Wachhalten nach einem Neustart von THub mit derselben Stufe von selbst wieder läuft, damit ich nicht daran denken muss.
 88. Als Nutzer möchte ich, dass das Wachhalten endet, sobald ich es ausschalte oder THub beende, und dass weder ein Prozess noch eine geänderte Energieeinstellung zurückbleibt, damit mein System sauber bleibt.
 89. Als Nutzer möchte ich das Wachhalten auch über die Befehlspalette ein- und ausschalten können, damit ich die Hände an der Tastatur behalte.
+94. Als Nutzer möchte ich einen deutlich als Fehler markierten Hinweis bekommen, wenn THub den Rechner nicht wach halten kann, und dass der Schalter dann auf „aus“ geht, damit ich mich nicht auf ein Wachhalten verlasse, das gar nicht läuft.
 
 ### App-Symbol
 
 90. Als Nutzer möchte ich THub in der Taskleiste, bei `Alt+Tab`, im Startmenü und auf dem Desktop an einem eigenen Symbol erkennen statt am Standardsymbol von Electron, damit ich es zwischen anderen Fenstern sofort finde.
 91. Als Nutzer möchte ich, dass das Symbol zum Look von THub passt und auch klein und auf heller wie dunkler Taskleiste gut erkennbar ist, damit es nicht wie ein Platzhalter wirkt.
+
+### Versionsnummer
+
+92. Als Nutzer möchte ich in THub sehen und mit einem Klick kopieren können, welche Version installiert ist, damit ich bei einem Fehler sagen kann, welcher Stand betroffen ist.
+93. Als Nutzer möchte ich, dass jeder neue Installer eine höhere Versionsnummer trägt und ich nachlesen kann, was sich geändert hat, damit ich weiss, ob eine Korrektur schon drin ist.
 
 ## Implementierungsentscheidungen
 
@@ -665,7 +671,14 @@ Umsetzung: Ticket 28.
   - **Tooltips:** Schalter „Rechner wach halten: aus“, „Rechner wach halten: an“ bzw. „Rechner und Bildschirm wach halten: an“; Pfeil „Stufe wählen“.
   - **Befehlspalette:** „Rechner wach halten“ und „Rechner und Bildschirm wach halten“ (setzen die Stufe und schalten ein, wie das Pfeil-Menü), bei eingeschaltetem Wachhalten zusätzlich „Wachhalten beenden“. Kein Tastenkürzel, kein Eintrag im Einstellungsdialog.
 - **Testmodus:** Mit `THUB_TEST_HIDDEN=1` stellt THub keine echte Anforderung, sondern schreibt „Testmodus: THub würde jetzt den Rechner wach halten.“, „… den Rechner und den Bildschirm wach halten.“ bzw. „… nichts mehr wach halten.“ in die Ausgabe.
-- **Fehler:** Scheitert eine Anforderung (etwa weil koffi nicht lädt), bleibt die Einstellung, wie sie ist, und der Fehler steht in der Ausgabe des Hauptprozesses. THub versucht es bei der nächsten Änderung oder beim nächsten Start erneut.
+- **Fehler** (Ticket 31; bis dahin blieb die Einstellung stehen, und der Fehler stand nur in der Ausgabe des Hauptprozesses):
+  - Der Port meldet dem Kern, wenn eine Stufe nicht gesetzt werden konnte, mit dem Grund (Windows lehnt ab, koffi lädt nicht, anderes System als Windows mit 64 Bit).
+  - Scheitert das Einschalten oder ein Wechsel der Stufe, auch beim Start mit gespeichertem „an“: Der Port hebt auf, was er dabei schon gesetzt hatte; der Kern schaltet das Wachhalten aus und speichert das (die Stufe bleibt), und unten rechts erscheint der Hinweis „Rechner wach halten ausgeschaltet“ mit dem Grund. Erneut versuchen heisst: den Schalter wieder einschalten.
+  - Scheitert das Aufheben, bleibt die Einstellung wie gewählt, und der Hinweis „Wachhalten liess sich nicht beenden“ sagt, dass Windows womöglich weiter wach hält, bis THub endet.
+  - Ein Fehler für eine Stufe, die inzwischen nicht mehr gewünscht ist, ändert nichts und zeigt keinen Hinweis.
+  - Der Hinweis ist **als Fehler markiert:** Fehlersymbol (Kreis mit Ausrufezeichen) und Rand der Karte in der Fehlerfarbe `--danger` (wie beim Gefahr-Knopf), für Screenreader `role="alert"`. Beide Fehlerfälle sehen gleich aus, nur Titel und Grund unterscheiden sich.
+  - Er gehört zu keinem Tab: Er bleibt, bis `×` oder ein Klick ihn schliesst, erscheint auch bei „Hinweise im Fenster: aus“, steht höchstens einmal da (mit dem letzten Grund) und kommt nach einem Neustart nicht wieder.
+  - Der Fehler steht zusätzlich in der Ausgabe des Hauptprozesses. Im Testmodus lässt `THUB_TEST_KEEPAWAKE_FAIL=1` jede Anforderung scheitern.
 - **Grenzen:**
   - Zuklappen des Deckels, der Ein-/Aus-Knopf und „Energie sparen“ im Startmenü versetzen den Rechner trotzdem in den Energiesparmodus; Windows hebt die Anforderungen dabei auf.
   - Im Akkubetrieb beendet Windows auf Rechnern mit Modern Standby die Anforderung, den Rechner wach zu halten, 5 Minuten nach Ablauf der eingestellten Zeit bis zum Energiesparmodus. Über Nacht braucht der Rechner deshalb das Netzteil.
@@ -694,6 +707,21 @@ Umsetzung: Ticket 29.
   - Unter 256 px stehen die Bilder als 32-Bit-Bitmap mit Alphakanal in der `.ico`, so wie jede Windows-Komponente sie liest; 256 px als PNG.
   - Die `.ico` liegt im Repository, damit `npm run dist` ohne vorheriges `npm run icon` funktioniert. Wer eine Vorlage ändert, erzeugt sie neu und committet beides.
   - electron-builder nimmt sie für `THub.exe`, Installer und Deinstaller (`build.win.icon`); `build.mjs` legt sie als `dist/icon.ico` für das Fenster ab.
+
+### Versionsnummer
+
+Umsetzung: Ticket 30.
+
+- **Eine Quelle:** `version` in `package.json`. electron-builder nimmt sie für den Namen des Installers, die Datei- und Produktversion von `THub.exe` und den Eintrag unter „Installierte Apps“.
+- **Schema** `Haupt.Neben.Korrektur` (Semantic Versioning): Der erste Installer mit Versionsnummer ist **2.0.0** (THub 2; 0.1.0 war das alte Grundgerüst). Neue Funktionen erhöhen die zweite Stelle, reine Korrekturen die dritte, die erste nur ein grosser Umbau.
+- **Anzeige:** im Einstellungsdialog unten eine gedämpfte Zeile „THub 2.0.0 · <Commit>“.
+  - Der Commit (kurze Kennung) wird beim Bauen eingesetzt. War der Arbeitsstand nicht sauber, folgt „+ Änderungen“; ohne Git fehlt die Kennung.
+  - Unpaketiert steht zusätzlich „Entwicklung“.
+  - Ein Klick kopiert die Zeile (Tooltip „Version kopieren“), ebenso der Befehl „Version kopieren“ in der Palette. Im Testmodus geht das in die eigene Zwischenablage.
+- **Änderungen** stehen je Version in `CHANGELOG.md`: Datum, was neu ist und was korrigiert wurde, mit Ticketnummern.
+- **Neuer Installer für den Nutzer:** Version erhöhen (falls sich an der App etwas geändert hat), `CHANGELOG.md` ergänzen, committen, Tag `v<Version>` setzen, dann erst `npm run dist`. So entspricht jeder Installer genau einem Commit mit Tag.
+- Die App-Kennung `ch.custom.thub` bleibt, damit ein neuer Installer die bestehende Installation ersetzt.
+- **Nicht dabei:** Auto-Update, Prüfung auf neue Versionen, eine eigene Seite „Über THub“.
 
 ### App-Verhalten
 
