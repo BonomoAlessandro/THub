@@ -5,6 +5,7 @@ import type { TerminalView } from '../../src/renderer/terminal/TerminalView';
 import type {
   ClosedTabInfo,
   DirectoryPurpose,
+  KeepAwakeMode,
   RecentDir,
   TabSnapshot,
   THubApi,
@@ -36,6 +37,8 @@ const { closedGroups, folderGroups, rootGroups } = await import('../../src/rende
 const { runShortcut } = await import('../../src/renderer/commands');
 const { resolveShortcut } = await import('../../src/renderer/shortcuts');
 const { newTabMenuEntries } = await import('../../src/renderer/tabs/newTabMenu');
+const { keepAwakeMenuEntries } = await import('../../src/renderer/tabs/keepAwakeMenu');
+const { setKeepAwake } = await import('../../src/renderer/commands');
 const { terminalViews } = await import('../../src/renderer/terminal/terminalViews');
 
 function tab(id: string, name: string, overrides: Partial<TabSnapshot> = {}): TabSnapshot {
@@ -60,9 +63,13 @@ const TABS = [
 ];
 
 /** Eine Palette über diesen Tabs; die Aufrufe an die Oberfläche (Umbenennen, Dialoge) werden aufgezeichnet. */
-function palette(tabs = TABS, activeTabId: string | null = 'b') {
+function palette(
+  tabs = TABS,
+  activeTabId: string | null = 'b',
+  keepAwake: { on: boolean; mode: KeepAwakeMode } = { on: false, mode: 'system' },
+) {
   const ui = { startRename: vi.fn(), openSettings: vi.fn(), openShortcuts: vi.fn() };
-  const ctx: PaletteContext = { tabs, activeTabId, ...ui };
+  const ctx: PaletteContext = { tabs, activeTabId, ...ui, keepAwake };
   return { ctx, ui, groups: rootGroups(ctx) };
 }
 
@@ -138,7 +145,22 @@ describe('Befehlspalette', () => {
         'Einstellungen',
         'Standardordner ändern',
         'Tastenkürzel anzeigen',
+        'Rechner wach halten',
+        'Rechner und Bildschirm wach halten',
       ]);
+    });
+
+    it('„Wachhalten beenden“ gibt es nur, solange der Rechner wach gehalten wird', () => {
+      const keepAwakeLabels = (on: boolean, mode: KeepAwakeMode) =>
+        commandLabels(palette(TABS, 'b', { on, mode }).groups).filter((l) => /wach/i.test(l));
+      expect(keepAwakeLabels(false, 'display')).toEqual(['Rechner wach halten', 'Rechner und Bildschirm wach halten']);
+      expect(keepAwakeLabels(true, 'system')).toEqual([
+        'Rechner wach halten',
+        'Rechner und Bildschirm wach halten',
+        'Wachhalten beenden',
+      ]);
+      expect(item(palette(TABS, 'b', { on: true, mode: 'display' }).groups, 'Wachhalten beenden').icon).toBe('monitor');
+      expect(item(palette(TABS, 'b', { on: true, mode: 'system' }).groups, 'Wachhalten beenden').icon).toBe('coffee');
     });
 
     it('keine Claude-Befehle, auch wenn Claude-Tabs offen sind', () => {
@@ -279,6 +301,70 @@ describe('Befehlspalette', () => {
       const { groups, ui } = palette();
       item(groups, 'Tastenkürzel anzeigen').run!();
       expect(ui.openShortcuts).toHaveBeenCalledOnce();
+    });
+
+    it('die beiden Stufen wie die Wahl im Pfeil-Menü am Schalter: Stufe setzen und einschalten', async () => {
+      const { groups } = palette();
+      const [system, display] = keepAwakeMenuEntries('system');
+      if (system.kind !== 'item' || display.kind !== 'item') throw new Error('Einträge erwartet');
+      const onSystem = [{ type: 'updateSettings', patch: { keepAwake: true, keepAwakeMode: 'system' } }];
+      const onDisplay = [{ type: 'updateSettings', patch: { keepAwake: true, keepAwakeMode: 'display' } }];
+
+      expect(await commandsOf(() => item(groups, 'Rechner wach halten').run!())).toEqual(onSystem);
+      expect(await commandsOf(() => system.run())).toEqual(onSystem);
+      expect(await commandsOf(() => item(groups, 'Rechner und Bildschirm wach halten').run!())).toEqual(onDisplay);
+      expect(await commandsOf(() => display.run())).toEqual(onDisplay);
+    });
+
+    it('Wachhalten beenden wie ein Klick auf den eingeschalteten Schalter', async () => {
+      const { groups } = palette(TABS, 'b', { on: true, mode: 'display' });
+      const off = [{ type: 'updateSettings', patch: { keepAwake: false } }];
+
+      expect(await commandsOf(() => item(groups, 'Wachhalten beenden').run!())).toEqual(off);
+      expect(await commandsOf(() => setKeepAwake(false))).toEqual(off);
+    });
+  });
+
+  describe('Pfeil-Menü am Schalter „Rechner wach halten“', () => {
+    it('zeigt beide Stufen mit Symbol; die gewählte hat ein Häkchen, auch ausgeschaltet', () => {
+      const shown = (mode: KeepAwakeMode) =>
+        keepAwakeMenuEntries(mode).map((e) => (e.kind === 'item' ? [e.label, e.checked, e.icon !== undefined] : e.kind));
+      expect(shown('system')).toEqual([
+        ['Nur Rechner wach halten', true, true],
+        ['Rechner und Bildschirm wach halten', false, true],
+      ]);
+      expect(shown('display')).toEqual([
+        ['Nur Rechner wach halten', false, true],
+        ['Rechner und Bildschirm wach halten', true, true],
+      ]);
+    });
+  });
+
+  // Zusammen mit dem echten Kern: Was die Palette und der Schalter schicken, bewirkt beim Port Wachhalten das Erwartete.
+  describe('mit dem Kern: Rechner wach halten', () => {
+    function deliver(h: TestWorkspace, commands: WorkspaceCommand[]): void {
+      for (const c of commands) {
+        if (c.type === 'updateSettings') h.workspace.updateSettings(c.patch);
+        else throw new Error(`unerwartet: ${c.type}`);
+      }
+    }
+
+    function paletteFor(h: TestWorkspace) {
+      const { tabs, activeTabId, settings } = h.snapshot();
+      return palette(tabs, activeTabId, { on: settings.keepAwake, mode: settings.keepAwakeMode }).groups;
+    }
+
+    it('Stufe wählen, dieselbe noch einmal, andere Stufe, beenden, Schalter wieder an', async () => {
+      const h = startWorkspace();
+
+      deliver(h, await commandsOf(() => item(paletteFor(h), 'Rechner und Bildschirm wach halten').run!()));
+      deliver(h, await commandsOf(() => item(paletteFor(h), 'Rechner und Bildschirm wach halten').run!()));
+      deliver(h, await commandsOf(() => item(paletteFor(h), 'Rechner wach halten').run!()));
+      deliver(h, await commandsOf(() => item(paletteFor(h), 'Wachhalten beenden').run!()));
+      expect(commandLabels(paletteFor(h))).not.toContain('Wachhalten beenden');
+      deliver(h, await commandsOf(() => setKeepAwake(true)));
+
+      expect(h.keepAwake.levels).toEqual(['off', 'display', 'system', 'off', 'system']);
     });
   });
 

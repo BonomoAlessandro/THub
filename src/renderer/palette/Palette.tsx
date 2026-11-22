@@ -4,11 +4,13 @@ import type { ClosedTabInfo, RecentDir } from '../../shared/types';
 import {
   CloseIcon,
   CloseOthersIcon,
+  CoffeeIcon,
   FolderIcon,
   FolderOpenIcon,
   FolderPlusIcon,
   HistoryIcon,
   KeyboardIcon,
+  MonitorIcon,
   PencilIcon,
   PlusIcon,
   SearchIcon,
@@ -41,6 +43,8 @@ const ICONS: Record<PaletteIcon, ReactNode> = {
   history: <HistoryIcon />,
   sliders: <SlidersIcon />,
   keyboard: <KeyboardIcon />,
+  coffee: <CoffeeIcon />,
+  monitor: <MonitorIcon />,
 };
 
 /** Überschrift über dem Suchfeld in einer Unterliste. */

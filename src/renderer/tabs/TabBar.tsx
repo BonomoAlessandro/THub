@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
-import type { RecentDir, ShellOption, TabSnapshot } from '../../shared/types';
+import type { KeepAwakeMode, RecentDir, ShellOption, TabSnapshot } from '../../shared/types';
+import { setKeepAwake } from '../commands';
 import { ChevronIcon, GearIcon, PlusIcon } from '../icons';
 import { Menu, type MenuPoint } from '../popup/Menu';
 import { focusTerminal } from '../terminal/terminalViews';
+import { keepAwakeMenuEntries, KeepAwakeModeIcon, keepAwakeTooltip } from './keepAwakeMenu';
 import { newTabMenuEntries } from './newTabMenu';
 import { Tab } from './Tab';
 import { STATUS_TEXT } from './TabIcon';
@@ -31,6 +33,9 @@ interface TabBarProps {
   onFinishRename(tabId: string, name: string | null): void;
   /** Das Zahnrad öffnet die Einstellungen. */
   onOpenSettings(): void;
+  /** Rechner wach halten an/aus und die gewählte Stufe (Ticket 28), für den Schalter neben dem Zahnrad. */
+  keepAwake: boolean;
+  keepAwakeMode: KeepAwakeMode;
 }
 
 /** Das offene Pfeil-Menü: die beim Öffnen abgefragten Ordner, und ob es per Tastatur geöffnet wurde. */
@@ -50,7 +55,8 @@ type TooltipState = TooltipContent & { anchor: DOMRect };
 
 /**
  * Titelleiste mit der Tab-Leiste, gestaltet wie im Prototyp: Tabs, `+` mit Pfeil-Menü, freie Fläche zum
- * Verschieben des Fensters, Zahnrad; rechts daneben liegen die nativen Fensterknöpfe. Bei vielen Tabs
+ * Verschieben des Fensters, Schalter „Rechner wach halten“ mit Pfeil-Menü, Zahnrad; rechts daneben liegen die nativen
+ * Fensterknöpfe. Bei vielen Tabs
  * werden die Tabs schmaler und die Leiste scrollbar. Rechtsklick auf einen Tab öffnet sein Menü, Ziehen
  * sortiert die Tabs um. Die Leiste zeigt nur an und schickt Befehle; die Tab-Logik liegt im Kern.
  */
@@ -63,9 +69,14 @@ export function TabBar({
   onStartRename,
   onFinishRename,
   onOpenSettings,
+  keepAwake,
+  keepAwakeMode,
 }: TabBarProps) {
   const stripRef = useRef<HTMLDivElement>(null);
   const chevronRef = useRef<HTMLButtonElement>(null);
+  const keepAwakeChevronRef = useRef<HTMLButtonElement>(null);
+  /** Das offene Pfeil-Menü am Schalter „Rechner wach halten“, und ob es per Tastatur geöffnet wurde. */
+  const [keepAwakeMenu, setKeepAwakeMenu] = useState<{ viaKeyboard: boolean } | null>(null);
   const [fade, setFade] = useState({ left: false, right: false });
   const [menu, setMenu] = useState<NewTabMenuState | null>(null);
   const [tabMenu, setTabMenu] = useState<TabMenuState | null>(null);
@@ -102,6 +113,18 @@ export function TabBar({
 
   const closeTabMenu = () => {
     setTabMenu(null);
+    focusTerminal(activeTabId);
+  };
+
+  // Ein zweiter Klick auf den Pfeil schliesst das Menü wieder.
+  const toggleKeepAwakeMenu = (viaKeyboard: boolean) => {
+    hideTooltip();
+    if (keepAwakeMenu) closeKeepAwakeMenu();
+    else setKeepAwakeMenu({ viaKeyboard });
+  };
+
+  const closeKeepAwakeMenu = () => {
+    setKeepAwakeMenu(null);
     focusTerminal(activeTabId);
   };
 
@@ -234,6 +257,41 @@ export function TabBar({
       {/* Freie Fläche zum Verschieben des Fensters; Doppelklick maximiert. Sie bleibt mindestens
           56 px breit, auch wenn die Tab-Leiste überläuft. */}
       <div className="titlebar-space" />
+      {/* Rechner wach halten (Ticket 28): Symbol und kleiner Schalter sind eine Schaltfläche; der Pfeil wählt die Stufe. */}
+      <div className="keepawake">
+        <button
+          className={keepAwake ? 'icon-btn ka-switch on' : 'icon-btn ka-switch'}
+          role="switch"
+          aria-checked={keepAwake}
+          aria-label="Rechner wach halten"
+          onClick={() => {
+            hideTooltip();
+            setKeepAwake(!keepAwake);
+          }}
+          onMouseEnter={(e) =>
+            tooltip.schedule(e.currentTarget, { kind: 'text', text: keepAwakeTooltip(keepAwake, keepAwakeMode) })
+          }
+          onMouseLeave={hideTooltip}
+          onMouseDown={hideTooltip}
+        >
+          <KeepAwakeModeIcon mode={keepAwakeMode} />
+          <span className="ka-track" aria-hidden="true" />
+        </button>
+        <button
+          ref={keepAwakeChevronRef}
+          className={keepAwakeMenu ? 'icon-btn chevron open' : 'icon-btn chevron'}
+          aria-label="Stufe wählen"
+          aria-haspopup="menu"
+          aria-expanded={keepAwakeMenu !== null}
+          // Per Tastatur ausgelöst (Enter, Leertaste) ist `detail` 0: dann gleich den ersten Eintrag hervorheben.
+          onClick={(e) => toggleKeepAwakeMenu(e.detail === 0)}
+          onMouseEnter={(e) => !keepAwakeMenu && tooltip.schedule(e.currentTarget, { kind: 'text', text: 'Stufe wählen' })}
+          onMouseLeave={hideTooltip}
+          onMouseDown={hideTooltip}
+        >
+          <ChevronIcon />
+        </button>
+      </div>
       <button
         className="icon-btn"
         aria-label="Einstellungen"
@@ -256,6 +314,15 @@ export function TabBar({
           anchor={chevronRef.current}
           highlightFirst={menu.viaKeyboard}
           onClose={closeMenu}
+        />
+      )}
+      {keepAwakeMenu && keepAwakeChevronRef.current && (
+        <Menu
+          label="Stufe wählen"
+          entries={keepAwakeMenuEntries(keepAwakeMode)}
+          anchor={keepAwakeChevronRef.current}
+          highlightFirst={keepAwakeMenu.viaKeyboard}
+          onClose={closeKeepAwakeMenu}
         />
       )}
       {tabMenu && menuTab && (

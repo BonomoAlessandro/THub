@@ -12,6 +12,7 @@ import { shellIntegrationDir } from './shellLaunch';
 import { detectShells } from './shells';
 import { STATE_FILE_NAME, StateStore } from './store';
 import { createProcessProbe } from './processProbe';
+import { createKeepAwake } from './keepAwake';
 import { hostSystem, systemClock } from './system';
 import { DEV_MENU } from './devMenu';
 import type { LocalApiInfo } from './workspace/claude';
@@ -87,6 +88,8 @@ async function start(detectedShells: Promise<ShellInfo[]>, executionPolicy: Exec
       clock: systemClock,
       processes,
       system: hostSystem,
+      // Energie-Anforderungen bei Windows (Ticket 28); im Testmodus nur eine Zeile in der Ausgabe.
+      keepAwake: createKeepAwake({ testMode: TEST_HIDDEN }),
     },
     { shells, localApi: api?.info },
   );

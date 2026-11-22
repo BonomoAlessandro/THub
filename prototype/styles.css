@@ -388,6 +388,44 @@ body.no-mica .menu, body.no-mica .palette, body.no-mica .toast:not(:hover) {
 .newtab .icon-btn.chevron svg.i { width: 13px; height: 13px; }
 .newtab:hover { box-shadow: inset 0 0 0 1px var(--border); }
 
+/* Rechner wach halten (Ticket 28): geteilter Knopf wie + mit Pfeil, links neben dem Zahnrad. Symbol und kleiner
+   Schalter sind eine Schaltfläche; aus ist das Symbol gedämpft, an in voller Textfarbe; neutral ohne Akzentfarbe. */
+.keepawake {
+  display: flex;
+  align-items: center;
+  margin-right: 2px;
+  flex: none;
+  border-radius: var(--r-sm);
+}
+.keepawake .icon-btn { border-radius: var(--r-sm) 0 0 var(--r-sm); }
+.keepawake .ka-switch { display: flex; gap: 6px; width: auto; padding: 0 6px 0 7px; }
+.keepawake .ka-switch.on { color: var(--text); }
+.keepawake .icon-btn.chevron { width: 20px; border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.keepawake .icon-btn.chevron svg.i { width: 13px; height: 13px; }
+.keepawake:hover { box-shadow: inset 0 0 0 1px var(--border); }
+.ka-track {
+  position: relative;
+  width: 22px;
+  height: 12px;
+  border-radius: 99px;
+  background: var(--switch-off);
+  transition: background var(--dur) var(--ease);
+}
+.ka-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform var(--dur) var(--ease);
+}
+.ka-switch.on .ka-track { background: var(--accent); }
+.ka-switch.on .ka-track::after { transform: translateX(10px); background: var(--on-accent); }
+
 .icon-btn {
   display: grid;
   place-items: center;
@@ -595,6 +633,9 @@ body.edge .term { border-radius: 0; border-width: 1px 0 0; }
   white-space: nowrap;
 }
 .mi-kbd { color: var(--text-faint); font-size: 11.5px; white-space: nowrap; }
+/* Häkchen am gewählten Eintrag einer Auswahl (Stufe beim Wachhalten). */
+.mi-check { display: grid; place-items: center; width: 16px; margin-left: 6px; color: var(--text); }
+.mi-check svg.i { width: 14px; height: 14px; }
 .mi-badge {
   font-size: 10.5px;
   padding: 1px 7px;

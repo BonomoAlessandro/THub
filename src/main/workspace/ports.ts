@@ -2,6 +2,7 @@
 // Im Betrieb sind sie echt (node-pty, state.json, Electron), in den Tests nachgemacht.
 // Dieses Modul und der Kern laden nie Electron.
 
+import type { KeepAwakeMode } from '../../shared/types';
 import type { PersistedState } from './schema';
 
 // ---------- Terminal-Backend ----------
@@ -181,6 +182,20 @@ export interface ShellInfo {
   integration?: ShellIntegration;
 }
 
+// ---------- Wachhalten ----------
+
+/** Wie weit Windows den Rechner wach hält (Ticket 28): gar nicht, nur den Rechner, Rechner und Bildschirm. */
+export type KeepAwakeLevel = 'off' | KeepAwakeMode;
+
+export interface KeepAwake {
+  /**
+   * Hält den Rechner ab jetzt auf dieser Stufe wach. Idempotent: Dieselbe Stufe zweimal ergibt eine einzige Anforderung
+   * bei Windows. Wirft nicht; scheitert die Anforderung, steht der Fehler in der Ausgabe, und der nächste Aufruf versucht
+   * es erneut.
+   */
+  set(level: KeepAwakeLevel): void;
+}
+
 /** Alle Ports zusammen, wie sie der Kern beim Erzeugen bekommt. */
 export interface WorkspacePorts {
   terminal: TerminalBackend;
@@ -188,4 +203,5 @@ export interface WorkspacePorts {
   clock: Clock;
   processes: ProcessProbe;
   system: HostSystem;
+  keepAwake: KeepAwake;
 }

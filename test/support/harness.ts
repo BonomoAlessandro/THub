@@ -15,6 +15,7 @@ import type { TabSnapshot, WorkspaceEvent, WorkspaceSnapshot } from '../../src/s
 import { ApiClient } from './apiClient';
 import {
   FakeClock,
+  FakeKeepAwake,
   FakeProcessProbe,
   FakeSystem,
   FakeTerminalBackend,
@@ -108,6 +109,7 @@ export class TestRenderer {
 interface Instance {
   workspace: Workspace;
   terminal: FakeTerminalBackend;
+  keepAwake: FakeKeepAwake;
   renderer: TestRenderer;
   events: WorkspaceEvent[];
   api: RunningApi | null;
@@ -137,6 +139,11 @@ export class TestWorkspace {
   /** Terminal-Backend des laufenden Kerns; nach einem Neustart laufen keine Shells mehr. */
   get terminal(): FakeTerminalBackend {
     return this.current.terminal;
+  }
+
+  /** Port Wachhalten des laufenden Kerns; nach einem Neustart ein neuer, wie bei einem neuen Prozess. */
+  get keepAwake(): FakeKeepAwake {
+    return this.current.keepAwake;
   }
 
   /** Ereignisse, die der Renderer vom laufenden Kern bekommen hat. */
@@ -237,9 +244,10 @@ export class TestWorkspace {
 
   private boot(api: RunningApi | null): Instance {
     const terminal = new FakeTerminalBackend();
+    const keepAwake = new FakeKeepAwake();
     const events: WorkspaceEvent[] = [];
     const workspace = createWorkspace(
-      { terminal, storage: this.storage, clock: this.clock, processes: this.processes, system: this.system },
+      { terminal, storage: this.storage, clock: this.clock, processes: this.processes, system: this.system, keepAwake },
       { shells: this.shells, localApi: api?.info },
     );
     api?.server.connect(workspace);
@@ -248,7 +256,7 @@ export class TestWorkspace {
       events.push(event);
       renderer.handle(event);
     });
-    return { workspace, terminal, renderer, events, api };
+    return { workspace, terminal, keepAwake, renderer, events, api };
   }
 }
 

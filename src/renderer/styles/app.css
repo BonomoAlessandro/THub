@@ -74,6 +74,7 @@ svg.i {
  */
 .tabstrip,
 .newtab,
+.keepawake,
 .titlebar .icon-btn {
   -webkit-app-region: no-drag;
 }
@@ -293,6 +294,69 @@ svg.i {
 }
 .newtab:hover {
   box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/*
+ * Schalter „Rechner wach halten“ mit Pfeil-Menü (Ticket 28), links neben dem Zahnrad: ein geteilter Knopf wie `+` mit
+ * Pfeil. Symbol der Stufe und kleiner Schalter sind eine Schaltfläche; ausgeschaltet ist das Symbol gedämpft, eingeschaltet
+ * in voller Textfarbe. Der Schalter ist neutral wie die im Einstellungsdialog, ohne Akzentfarbe.
+ */
+.keepawake {
+  display: flex;
+  align-items: center;
+  margin-right: 2px;
+  flex: none;
+  border-radius: var(--r-sm);
+}
+.keepawake .icon-btn {
+  border-radius: var(--r-sm) 0 0 var(--r-sm);
+}
+.keepawake .ka-switch {
+  display: flex;
+  gap: 6px;
+  width: auto;
+  padding: 0 6px 0 7px;
+}
+.keepawake .ka-switch.on {
+  color: var(--text);
+}
+.keepawake .icon-btn.chevron {
+  width: 20px;
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+.keepawake .icon-btn.chevron svg.i {
+  width: 13px;
+  height: 13px;
+}
+.keepawake:hover {
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.ka-track {
+  position: relative;
+  width: 22px;
+  height: 12px;
+  border-radius: 99px;
+  background: var(--switch-off);
+  transition: background var(--dur) var(--ease);
+}
+.ka-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform var(--dur) var(--ease);
+}
+.ka-switch.on .ka-track {
+  background: var(--accent);
+}
+.ka-switch.on .ka-track::after {
+  transform: translateX(10px);
+  background: var(--on-accent);
 }
 
 .icon-btn {
@@ -973,6 +1037,18 @@ kbd {
   color: var(--text-faint);
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* Häkchen am gewählten Eintrag einer Auswahl im Menü (Stufe beim Wachhalten); die übrigen halten den Platz frei. */
+.mi-check {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  margin-left: 6px;
+  color: var(--text);
+}
+.mi-check svg.i {
+  width: 14px;
+  height: 14px;
 }
 /* Tastenkürzel eines Befehls bzw. „›“ vor einer Unterliste. */
 .mi-kbd {

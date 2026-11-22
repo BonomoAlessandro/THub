@@ -878,6 +878,8 @@ export class CoreShell {
         clock: realClock,
         processes,
         system: testSystem(ws.root),
+        // Die Shell-Tests halten den Rechner nie wach.
+        keepAwake: { set: () => {} },
       },
       { shells: [shell], localApi: api?.info, resumeLaunchGraceMs: extra.resumeLaunchGraceMs },
     );

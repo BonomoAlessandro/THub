@@ -10,7 +10,7 @@ Wie THub gebaut ist, wie es getestet wird und wie man daran arbeitet. Die Bedien
 | Oberfläche | [React](https://react.dev/) 19 mit TypeScript, normales CSS mit Design-Variablen (hell/dunkel) |
 | Terminal-Darstellung | [xterm.js](https://xtermjs.org/) 6 (`@xterm/xterm`, `addon-fit`, `addon-serialize`) |
 | Shell-Prozesse | [node-pty](https://github.com/microsoft/node-pty) über ConPTY, und zwar die mitgelieferte (`conpty.dll`, `OpenConsole.exe` wie im Windows Terminal) |
-| Prozess-Sonde | [koffi](https://koffi.dev/) 3.3.8 (exakt gepinnt) |
+| Prozess-Sonde, Wachhalten | [koffi](https://koffi.dev/) 3.3.8 (exakt gepinnt) |
 | Build | esbuild (Bündeln), TypeScript (nur Typecheck), electron-builder (NSIS-Installer) |
 | Tests | Vitest |
 
@@ -26,6 +26,7 @@ Nach aussen hängt der Kern nur an schmalen **Ports** ([`ports.ts`](../src/main/
 | Speicher: Zustand und Verlauf pro Tab | [`store.ts`](../src/main/store.ts): `state.json` entprellt und atomar, Verlauf unter `history\` |
 | Uhr, System (Ordner, Benutzer, Bildschirme, 8.3-Kurznamen) | [`system.ts`](../src/main/system.ts) |
 | Prozess-Sonde: alle Prozesse in einer Abfrage, gezieltes Beenden | [`processProbe.ts`](../src/main/processProbe.ts) |
+| Wachhalten: Stufe aus, nur Rechner, Rechner und Bildschirm | [`keepAwake.ts`](../src/main/keepAwake.ts): Energie-Anforderung bei Windows über koffi; im Testmodus nur eine Zeile in der Ausgabe |
 
 **ConPTY:** Das Terminal-Backend startet jede Shell über die mit node-pty gelieferte ConPTY (`useConptyDll`), dieselbe wie im Windows Terminal. Die ConPTY von Windows schickte, was eine Shell neu zeichnet, erst mit ihrem nächsten Bild, rund 16 ms nach der Taste; das machte das Blättern im Befehlsverlauf träge (Ticket 24, Messungen in der Spezifikation unter „Shell-Integration“). Lässt sich die mitgelieferte nicht starten, nimmt das Backend für den Rest der Sitzung die von Windows. Die mitgelieferte fragt beim Start nach den Merkmalen des Terminals (DA1), worauf xterm.js antwortet, und leert den sichtbaren Bereich nicht selbst: Die Oberfläche setzt den Cursor vor jedem Start oben links in einen leeren Bereich (`startArea`), das Bisherige bleibt im Scrollback.
 
@@ -93,6 +94,14 @@ Jede Windows-Shell startet mit der mitgelieferten Integration aus [`resources/sh
 - Wurzel ist die Prozess-ID von node-pty; bei Git Bash genau eine Ebene tiefer das `bash.exe`-Kind des Starters `bin\bash.exe`.
 - koffi ist exakt auf 3.3.8 gepinnt. Die Binärdatei kommt als optionales Paket `@koromix/koffi-win32-x64`: nie mit `--omit=optional` installieren. Im Paket liegt sie ausserhalb des asar-Archivs (`asarUnpack`), esbuild lässt koffi als `external` stehen.
 
+### Wachhalten
+
+[`keepAwake.ts`](../src/main/keepAwake.ts) hält den Rechner über eine Energie-Anforderung wach (Ticket 28). Beim ersten Einschalten erzeugt es mit `PowerCreateRequest` eine Anforderung mit dem Grund „THub hält den Rechner wach“ (`POWER_REQUEST_CONTEXT_SIMPLE_STRING`); sie bleibt bis zum Ende des Prozesses. „Nur Rechner“ setzt `PowerRequestSystemRequired`, „Rechner und Bildschirm“ zusätzlich `PowerRequestDisplayRequired`; `PowerClearRequest` hebt auf, was nicht mehr gilt. Erst wird gesetzt, dann aufgehoben, damit beim Wechsel keine Lücke entsteht.
+
+- Der Kern meldet die wirksame Stufe beim Start (nach dem Laden des Zustands) und bei jeder Änderung, die sie ändert. Der Port ist idempotent und lädt koffi erst beim ersten Einschalten; „aus“ beim Start kostet nichts.
+- Scheitert ein Aufruf, steht der Fehler in der Ausgabe; der nächste Aufruf versucht es erneut. Endet THub, gibt Windows die Anforderung mit dem Prozess frei; beim Beenden meldet der Kern deshalb nichts.
+- **Nicht** `powerSaveBlocker` von Electron: dessen `prevent-app-suspension` stellt nur `PowerRequestExecutionRequired`, und das hält auf Rechnern mit Modern Standby das System nicht sicher wach (Spezifikation, „Rechner wach halten“).
+
 ### Renderer
 
 [`src/renderer/`](../src/renderer) ist die React-Oberfläche: Sie zeigt an und schickt Befehle, die Tab-Logik liegt im Kern.
@@ -102,7 +111,7 @@ Jede Windows-Shell startet mit der mitgelieferten Integration aus [`resources/sh
 | `main.tsx`, `theme.ts` | Einstieg; zuerst das Design übernehmen, dann zeichnen; Terminal-Farbschema aus den Design-Variablen |
 | `App.tsx`, `useWorkspace.ts` | Fenster mit Tab-Leiste, Terminal-Fläche, Hinweisen, Palette und Dialogen; Schnappschuss und Ereignisse des Kerns |
 | `shortcuts.ts`, `commands.ts`, `fontSize.ts` | Tabelle der Tastenkürzel; Befehle, die Tastenkürzel, Maus und Palette gemeinsam auslösen; `Ctrl` + Mausrad in Schritte |
-| `tabs/` | Titelleiste mit Tab-Leiste, Symbol-Platz, Umbenennen, Tooltip, Pfeil-Menü, Rechtsklick-Menü, Rückfrage beim Schliessen, Umsortieren per Ziehen (`useTabDrag.ts`, Rechnungen in `tabDrag.ts`) |
+| `tabs/` | Titelleiste mit Tab-Leiste, Symbol-Platz, Umbenennen, Tooltip, Pfeil-Menü, Rechtsklick-Menü, Rückfrage beim Schliessen, Umsortieren per Ziehen (`useTabDrag.ts`, Rechnungen in `tabDrag.ts`), Schalter „Rechner wach halten“ mit Pfeil-Menü (`keepAwakeMenu.tsx`) |
 | `popup/` | Menü und Dialog wie im Prototyp, Bedienung mit der Tastatur (`menuKeys.ts`) |
 | `palette/` | Befehlspalette: Einträge, unscharfe Suche, gekürzte Pfade |
 | `settings/` | Einstellungsdialog und Übersicht der Tastenkürzel |
@@ -119,7 +128,8 @@ Im Datenordner (siehe [Entwicklung](#entwicklung)) liegen `state.json`, der Ordn
 ```json
 {
   "version": 2,
-  "settings": { "defaultCwd": "", "defaultShellId": "pwsh", "theme": "system", "fontSize": 14, "notifications": true, "openPoints": true },
+  "settings": { "defaultCwd": "", "defaultShellId": "pwsh", "theme": "system", "fontSize": 14, "notifications": true, "openPoints": true,
+                "keepAwake": false, "keepAwakeMode": "system" },
   "tabs": [
     { "id": "…", "name": "Mein Projekt", "nameIsManual": true, "shellId": "gitbash", "startCwd": "C:\\…", "lastCwd": "C:\\…\\src" },
     { "id": "…", "name": "api", "nameIsManual": false, "shellId": "pwsh", "startCwd": "C:\\…\\api",
@@ -145,9 +155,9 @@ npm run typecheck    # TypeScript prüfen
 
 **`npm test`** ([`vitest.config.mts`](../vitest.config.mts)) läuft in Node, ohne Electron und ohne Fenster; lädt getesteter Code doch Electron, schlägt der Test laut fehl.
 
-- `test/workspace/`: der Workspace-Kern mit allen Ports nachgemacht ([`test/support/`](../test/support)): ein Terminal-Backend, das Startaufträge aufzeichnet und Ausgabe und Prozessende einspeisen lässt, Speicher im Arbeitsspeicher, steuerbare Uhr, steuerbare Prozess-Sonde mit Prozessbäumen, nachgemachtes System. Die lokale Schnittstelle läuft echt auf `127.0.0.1`; die Tests schicken echte HTTP-Anfragen mit Meldungen des Starters und dokumentierten Hook-Nutzdaten. Ein Neustart ist ein neuer Kern auf demselben gespeicherten Zustand. Geprüft wird äusseres Verhalten: Tabs, Startaufträge, Ordner-Erkennung, Rückfrage, geschlossene Tabs, Claude-Zuordnung und Status, Einfrieren, Prozess-Regeln, Hinweise, offene Punkte, Wiederherstellen, Übernahme aus Version 1.
+- `test/workspace/`: der Workspace-Kern mit allen Ports nachgemacht ([`test/support/`](../test/support)): ein Terminal-Backend, das Startaufträge aufzeichnet und Ausgabe und Prozessende einspeisen lässt, Speicher im Arbeitsspeicher, steuerbare Uhr, steuerbare Prozess-Sonde mit Prozessbäumen, nachgemachtes System, ein Port Wachhalten, der die gemeldeten Stufen aufzeichnet. Die lokale Schnittstelle läuft echt auf `127.0.0.1`; die Tests schicken echte HTTP-Anfragen mit Meldungen des Starters und dokumentierten Hook-Nutzdaten. Ein Neustart ist ein neuer Kern auf demselben gespeicherten Zustand. Geprüft wird äusseres Verhalten: Tabs, Startaufträge, Ordner-Erkennung, Rückfrage, geschlossene Tabs, Claude-Zuordnung und Status, Einfrieren, Prozess-Regeln, Hinweise, offene Punkte, Wiederherstellen, Übernahme aus Version 1, Rechner wach halten.
 - `test/renderer/`: reine Logik der Oberfläche ohne DOM: Zuordnung der Tastenkürzel (auch Schweizer Tastatur und Ziffernblock), Übersicht aus derselben Tabelle, `Ctrl` + Mausrad, Tasten im Menü, Suche und Wirkung jedes Befehls der Palette (auch mit dem Kern), gekürzte Pfade, Verlauf und Hinweis vor dem Start mit echtem xterm.js in Node (für die Startsequenzen beider ConPTYs), Einfügestelle und Scrollen beim Ziehen; mit echtem xterm.js auch Rechtsklick mit und ohne Mausmeldung, `Ctrl` + Klick auf Links und Links ohne gestrichelte Linie.
-- `test/main/`: Hauptprozess ohne Electron: Design hell/dunkel, Entwicklermenü, Datenordner und Übernahme, Umgebung der Shells, Shell-Erkennung mit nachgemachtem Rechner, Start der Shells mit Integration, Wahl der ConPTY samt Rückfall auf die von Windows (mit nachgemachtem node-pty), Prüfung der Execution Policy, Auswertung der Prozess-Sonde, „Ordner im Explorer öffnen“, Links öffnen mit nachgemachtem `shell.openExternal`.
+- `test/main/`: Hauptprozess ohne Electron: Design hell/dunkel, Entwicklermenü, Datenordner und Übernahme, Umgebung der Shells, Shell-Erkennung mit nachgemachtem Rechner, Start der Shells mit Integration, Wahl der ConPTY samt Rückfall auf die von Windows (mit nachgemachtem node-pty), Prüfung der Execution Policy, Auswertung der Prozess-Sonde, „Ordner im Explorer öffnen“, Links öffnen mit nachgemachtem `shell.openExternal`, der Port Wachhalten mit nachgemachtem kernel32 (Reihenfolge, Idempotenz, erneuter Versuch nach einem Fehler) und einmal echt gegen Windows (nur Rechner, Rechner und Bildschirm, aus: ohne Fehler), sein Testmodus.
 
 **`npm run test:shells`** ([`test/shells/`](../test/shells)) startet über das echte Terminal-Backend die echten Shells mit der echten Integration: PowerShell 7, Windows PowerShell, cmd und Git Bash; nicht installierte Shells werden übersprungen. Im PATH liegt ein nachgemachtes `claude` (als `.exe`, aus `ClaudeStub.cs` mit dem `csc.exe` von .NET Framework gebaut, und als `.cmd`), das Argumente und Umgebung in eine Datei schreibt. Geprüft werden: Gleichheit der Argumente mit einem direkten Aufruf, Ergänzen und Durchreichen, die Meldungen des Starters (auch nach `Ctrl+C` und bei Exit-Code ungleich 0), ohne THub und ohne `claude`, Ordner-Meldungen (auch mit Leerzeichen und Umlauten), Laden des Profils, Startbefehl genau einmal, Ende zu Ende mit dem echten Kern und der echten lokalen Schnittstelle (auch mit nachgemachter Gruppenrichtlinie `AllSigned`), Fortsetzen nach einem Neustart (auch ohne `THUB_STARTER`, mit verkürzter Frist für die Start-Meldung) das Beenden aller Nachfahren beim Schliessen mit der echten Prozess-Sonde, die abgeschaltete Befehlsvorschau von PSReadLine sowie eine Zeitgrenze für die Pfeiltasten: Die Zeile aus dem Verlauf muss im Median nach weniger als 10 ms beim Terminal-Backend sein, und der Konsolen-Host jeder Shell ist `OpenConsole.exe`. Wie xterm.js in der App beantwortet das Testgerüst die Abfrage der Terminal-Merkmale (DA1). Dazu die Einordnung des Starters allein (`classify.test.ts`, mit `THUB_STARTER_DRYRUN`).
 
@@ -191,6 +201,7 @@ Für automatische Prüfungen der echten App (`npm start`, `electron .` oder die 
   - `Ctrl` + Klick auf einen Link öffnet keinen Browser; die Adresse steht nur in der Ausgabe („Testmodus: Der Browser würde … öffnen.“).
   - Kopieren, Einfügen und „Pfad kopieren“ benutzen eine eigene Zwischenablage im Speicher statt der echten des Nutzers.
   - Der Ordner-Dialog von Windows („Ordner wählen …“, „Ändern …“, „Standardordner ändern“) geht nicht auf: Als gewählter Ordner gilt `THUB_TEST_PICK_DIR`, ohne diese Variable ein Abbruch.
+  - „Rechner wach halten“ stellt keine Anforderung bei Windows; jede Änderung der Stufe steht nur in der Ausgabe („Testmodus: THub würde jetzt den Rechner wach halten.“, „… den Rechner und den Bildschirm wach halten.“, „… nichts mehr wach halten.“).
 
 ### Installer
 

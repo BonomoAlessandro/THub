@@ -10,6 +10,12 @@ export type ResolvedTheme = 'light' | 'dark';
 /** Terminal-Schriftgrösse in px: kleinste, grösste und Standardgrösse (`Ctrl+0` setzt darauf zurück). */
 export const FONT_SIZE = { min: 8, max: 32, default: 14 } as const;
 
+/**
+ * Stufe beim Wachhalten (Ticket 28): `system` hält nur den Rechner wach (der Bildschirm schaltet sich aus und sperrt wie
+ * gewohnt), `display` zusätzlich den Bildschirm.
+ */
+export type KeepAwakeMode = 'system' | 'display';
+
 export interface Settings {
   /** Standardordner für neue Tabs; leer heisst Benutzerordner. */
   defaultCwd: string;
@@ -28,6 +34,13 @@ export interface Settings {
    * mehr mit, offene Punkte am Ende der Antwort aufzuzählen.
    */
   openPoints: boolean;
+  /**
+   * Rechner wach halten an/aus (Ticket 28). Bleibt über Beenden, Abmelden und Absturz stehen: Nach einem Neustart hält
+   * THub den Rechner von selbst wieder wach.
+   */
+  keepAwake: boolean;
+  /** Die gewählte Stufe; gilt erst, wenn `keepAwake` an ist. */
+  keepAwakeMode: KeepAwakeMode;
 }
 
 /**

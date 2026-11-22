@@ -1,8 +1,17 @@
 // Einträge der Befehlspalette: Tabs und Befehle, dazu die Unterlisten „Neues Terminal in …“ und „Zuletzt geschlossen“.
 // Ohne DOM, damit sich prüfen lässt, dass jeder Befehl dasselbe bewirkt wie über Maus oder Tastenkürzel.
 
-import type { ClosedTabInfo, RecentDir, TabKind, TabSnapshot, TabStatus } from '../../shared/types';
-import { closeOtherTabs, closeTab, newTab, pickDefaultFolder, pickFolderForNewTab, showTab } from '../commands';
+import type { ClosedTabInfo, KeepAwakeMode, RecentDir, TabKind, TabSnapshot, TabStatus } from '../../shared/types';
+import {
+  closeOtherTabs,
+  closeTab,
+  keepAwake,
+  newTab,
+  pickDefaultFolder,
+  pickFolderForNewTab,
+  setKeepAwake,
+  showTab,
+} from '../commands';
 import { shortcutHint } from '../shortcuts';
 import { focusTerminal } from '../terminal/terminalViews';
 import type { SearchGroup } from './search';
@@ -23,7 +32,9 @@ export type PaletteIcon =
   | 'closeOthers'
   | 'history'
   | 'sliders'
-  | 'keyboard';
+  | 'keyboard'
+  | 'coffee'
+  | 'monitor';
 
 export interface PaletteItem {
   /** Eindeutig in der Palette. */
@@ -53,6 +64,8 @@ export interface PaletteContext {
   startRename(tabId: string): void;
   openSettings(): void;
   openShortcuts(): void;
+  /** Rechner wach halten an/aus und die gewählte Stufe (Ticket 28). */
+  keepAwake: { on: boolean; mode: KeepAwakeMode };
 }
 
 /** Tabs und Befehle, wie im Prototyp. Was einen aktiven Tab bzw. einen zweiten Tab braucht, fehlt ohne ihn. */
@@ -98,6 +111,20 @@ export function rootGroups(ctx: PaletteContext): PaletteGroup[] {
       run: () => void pickDefaultFolder().then(() => focusTerminal(active)),
     },
     { id: 'shortcuts', icon: 'keyboard', label: 'Tastenkürzel anzeigen', run: ctx.openShortcuts },
+    // Wie das Pfeil-Menü am Schalter: Stufe setzen und einschalten. Kein Tastenkürzel.
+    { id: 'keepAwake', icon: 'coffee', label: 'Rechner wach halten', run: () => keepAwake('system') },
+    {
+      id: 'keepAwakeDisplay',
+      icon: 'monitor',
+      label: 'Rechner und Bildschirm wach halten',
+      run: () => keepAwake('display'),
+    },
+    ctx.keepAwake.on && {
+      id: 'keepAwakeOff',
+      icon: ctx.keepAwake.mode === 'display' ? 'monitor' : 'coffee',
+      label: 'Wachhalten beenden',
+      run: () => setKeepAwake(false),
+    },
   ];
   return [
     {

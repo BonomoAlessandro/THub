@@ -5,6 +5,8 @@ import type {
   Clock,
   DisplayInfo,
   HostSystem,
+  KeepAwake,
+  KeepAwakeLevel,
   ProcessInfo,
   ProcessProbe,
   StartOrder,
@@ -330,4 +332,15 @@ export class FakeSystem implements HostSystem {
 
 function dirKey(dir: string): string {
   return dir.replace(/\//g, '\\').replace(/\\+$/, '').toLowerCase();
+}
+
+// ---------- Wachhalten ----------
+
+/** Zeichnet jede Stufe auf, die der Kern dem Port Wachhalten meldet (Ticket 28). */
+export class FakeKeepAwake implements KeepAwake {
+  readonly levels: KeepAwakeLevel[] = [];
+
+  set(level: KeepAwakeLevel): void {
+    this.levels.push(level);
+  }
 }

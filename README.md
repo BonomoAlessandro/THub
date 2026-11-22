@@ -8,6 +8,7 @@ THub ist ein Terminal-Fenster für Windows mit Tabs. Es merkt sich alle Terminal
 - **Alles kommt zurück.** Beim nächsten Start sind alle Tabs wieder da, mit Namen, Shell und dem zuletzt benutzten Ordner. Der frühere Inhalt steht ausgegraut darüber.
 - **Claude Code ohne Einrichtung.** Du tippst wie gewohnt `claude`. THub erkennt die Session, zeigt ihren Status am Tab und setzt sie nach einem Neustart fort. Deine `~/.claude/settings.json` bleibt unberührt.
 - **Hinweise unten rechts.** Wenn Claude in einem anderen Tab auf dich wartet oder fertig ist, und wenn eine Antwort offene Fragen an dich enthält. Ein Klick springt in den Tab.
+- **Rechner wach halten.** Ein Schalter neben dem Zahnrad verhindert den Energiesparmodus, solange THub läuft, wahlweise auch das Ausschalten des Bildschirms. Er bleibt über einen Neustart von THub eingeschaltet.
 - **Schnell bedienbar.** Tabs umbenennen, per Ziehen umsortieren, duplizieren, schliessen und wieder öffnen. Eine Befehlspalette mit Suche über alle Tabs. Ein Standardordner für neue Terminals, helles und dunkles Design.
 
 ## Installieren

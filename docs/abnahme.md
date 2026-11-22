@@ -195,6 +195,17 @@ Nach der Installation des neuen Installers. Die Abweichungen unten sind in diese
 
 - [ ] **[Frisch] [Claude]** Auf einem Testbenutzer: Claude-Tab erfassen, Ausführungsrichtlinie `AllSigned` setzen, THub neu starten → die Session läuft weiter, nach etwa 30 s wird der Tab ein normales Terminal; nach `/exit` und einem weiteren Neustart wird sie nicht wieder fortgesetzt. (T23)
 
+## Rechner wach halten (Ticket 28)
+
+`powercfg /requests` braucht eine PowerShell, die als Administrator läuft.
+
+- [ ] Schalter an, Stufe „nur Rechner“: `powercfg /requests` zeigt THub unter `SYSTEM` mit dem Grund „THub hält den Rechner wach“, unter `DISPLAY` nichts. Nach der eingestellten Zeit ohne Eingabe geht der Bildschirm aus, der Rechner mit Netzteil aber nicht in den Energiesparmodus. (T28)
+- [ ] Stufe „Rechner und Bildschirm“: `powercfg /requests` zeigt THub unter `SYSTEM` und `DISPLAY`; der Bildschirm bleibt an. Dabei notieren, ob die Sperre nach Inaktivität ausbleibt. (T28)
+- [ ] Schalter aus: `powercfg /requests` zeigt THub nicht mehr. (T28)
+- [ ] Schalter an, THub beenden: THub verschwindet aus `powercfg /requests`. THub wieder starten: Der Schalter ist an, mit derselben Stufe, und THub steht wieder in `powercfg /requests`. (T28)
+- [ ] Pfeil-Menü und Befehlspalette schalten wie beschrieben; Tooltips stimmen; das Fenster lässt sich neben dem Schalter weiterhin ziehen. (T28)
+- [ ] Schalter und Pfeil-Menü sehen in hell und dunkel aus wie im Prototyp. (T28)
+
 ## Gefundene Abweichungen
 
 Pro Abweichung einen Eintrag; daraus wird später ein Ticket in [docs/tickets](tickets/README.md).
