@@ -322,6 +322,8 @@ function createWindow(ws: Workspace, theme: ThemeSource): void {
     // Farben der Fensterknöpfe. Kein Mica, keine Transparenz.
     ...windowChrome(theme.current()),
     title: 'THub',
+    // Eigenes Symbol (Ticket 29), auch unpaketiert; sonst zeigte `npm start` das von Electron. build.mjs legt es nach dist.
+    icon: path.join(__dirname, '..', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
       contextIsolation: true,

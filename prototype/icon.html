@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>THub Symbol-Entwürfe</title>
+    <!--
+      Entwürfe für das App-Symbol (Ticket 29). Kein Teil der App: Hier wird das Symbol abgestimmt, bevor es eingebaut wird.
+      Jeder Entwurf hat drei von Hand gezeichnete Vorlagen: 16er-Raster (16 px), 24er-Raster (24 px) und 256er-Raster
+      (alles darüber). Die kleinen sind auf ganze Pixel gelegt und vereinfacht, nicht nur verkleinert.
+    -->
+    <style>
+      :root {
+        color-scheme: light dark;
+        --font: 'Segoe UI Variable Text', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+        --bg: #f4f4f6;
+        --card: #ffffff;
+        --border: rgba(0, 0, 0, 0.1);
+        --text: #1b1b1f;
+        --muted: #5b5b66;
+        --faint: #8a8a95;
+        --sel: #18181b;
+        --on-sel: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #141417;
+          --card: #1d1d22;
+          --border: rgba(255, 255, 255, 0.09);
+          --text: #ececf1;
+          --muted: #a1a1ad;
+          --faint: #71717c;
+          --sel: #f4f4f5;
+          --on-sel: #111114;
+        }
+      }
+      :root[data-theme='dark'] {
+        --bg: #141417;
+        --card: #1d1d22;
+        --border: rgba(255, 255, 255, 0.09);
+        --text: #ececf1;
+        --muted: #a1a1ad;
+        --faint: #71717c;
+        --sel: #f4f4f5;
+        --on-sel: #111114;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 28px 32px 60px;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 var(--font);
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 22px;
+        font-weight: 600;
+      }
+      h2 {
+        margin: 36px 0 12px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      p {
+        margin: 0 0 8px;
+        color: var(--muted);
+        max-width: 860px;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        align-items: center;
+        margin: 18px 0 8px;
+      }
+      .seg {
+        display: inline-flex;
+        padding: 3px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--card);
+      }
+      .seg button {
+        border: 0;
+        background: none;
+        color: var(--muted);
+        font: inherit;
+        padding: 4px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .seg button.on {
+        background: var(--sel);
+        color: var(--on-sel);
+      }
+      .label {
+        color: var(--faint);
+        font-size: 12px;
+        margin-right: 6px;
+      }
+
+      /* ---------- Entwürfe ---------- */
+      .drafts {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+        gap: 16px;
+      }
+      .draft {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px 20px;
+      }
+      .draft h3 {
+        margin: 0 0 2px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .draft .desc {
+        font-size: 13px;
+        margin-bottom: 14px;
+      }
+      .sizes {
+        display: flex;
+        align-items: flex-end;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      .size {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--faint);
+      }
+      .size img {
+        display: block;
+      }
+      .zoom {
+        display: flex;
+        gap: 14px;
+        margin-top: 14px;
+        align-items: flex-end;
+      }
+      .zoom canvas {
+        image-rendering: pixelated;
+        border-radius: 4px;
+        outline: 1px dashed var(--border);
+        outline-offset: 3px;
+      }
+      .big {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        margin-top: 14px;
+      }
+
+      /* ---------- Taskleiste ---------- */
+      .taskbar {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        height: 48px;
+        margin: 22px 0 6px;
+        border-radius: 8px;
+      }
+      .taskbar.light {
+        background: #eef0f4;
+        box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.08);
+      }
+      .taskbar.dark {
+        background: #1c1c1c;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+      .slot {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+      }
+      .slot.active.light-slot {
+        background: rgba(255, 255, 255, 0.7);
+      }
+      .slot.active.dark-slot {
+        background: rgba(255, 255, 255, 0.07);
+      }
+      .slot .pill {
+        position: absolute;
+        bottom: 1px;
+        width: 6px;
+        height: 3px;
+        border-radius: 2px;
+        background: #8a8a8a;
+      }
+      .slot.active .pill {
+        width: 16px;
+      }
+      .slot .tag {
+        position: absolute;
+        top: -16px;
+        font-size: 10px;
+        color: var(--faint);
+      }
+      .sep {
+        width: 1px;
+        height: 24px;
+        margin: 0 8px;
+        background: rgba(128, 128, 128, 0.35);
+      }
+
+      /* ---------- Alt+Tab ---------- */
+      .alttab {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 22px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+      }
+      .alttab.dark {
+        background: rgba(32, 32, 36, 0.96);
+      }
+      .alttab.light {
+        background: rgba(243, 243, 246, 0.98);
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+      }
+      .atcard {
+        width: 210px;
+        padding: 6px;
+        border-radius: 8px;
+      }
+      .atcard.sel {
+        box-shadow: 0 0 0 2px currentColor;
+      }
+      .alttab.dark .atcard {
+        color: #ececf1;
+      }
+      .alttab.light .atcard {
+        color: #1b1b1f;
+      }
+      .athead {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 26px;
+        padding: 0 4px;
+        font-size: 12px;
+      }
+      .thumb {
+        height: 120px;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .alttab.dark .thumb {
+        background: #1d1d22;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      }
+      .alttab.light .thumb {
+        background: #fbfbfc;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+      }
+      .thumb .tabs {
+        display: flex;
+        gap: 3px;
+        padding: 5px 6px;
+      }
+      .thumb .tabs i {
+        width: 40px;
+        height: 9px;
+        border-radius: 3px;
+        background: rgba(128, 128, 128, 0.25);
+      }
+      .thumb .tabs i:first-child {
+        background: rgba(128, 128, 128, 0.5);
+      }
+      .thumb .lines {
+        margin: 4px 8px;
+        padding: 8px;
+        height: 84px;
+        border-radius: 5px;
+        background: rgba(128, 128, 128, 0.1);
+      }
+      .thumb .lines b {
+        display: block;
+        height: 4px;
+        margin-bottom: 6px;
+        border-radius: 2px;
+        background: rgba(128, 128, 128, 0.4);
+      }
+
+      /* ---------- Startmenü und Desktop ---------- */
+      .startmenu {
+        display: inline-block;
+        padding: 18px 22px 22px;
+        border-radius: 10px;
+        margin: 0 12px 12px 0;
+        vertical-align: top;
+      }
+      .startmenu.dark {
+        background: #242428;
+        color: #ececf1;
+      }
+      .startmenu.light {
+        background: #f3f3f6;
+        color: #1b1b1f;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+      }
+      .startmenu .title {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 14px;
+      }
+      .apps {
+        display: grid;
+        grid-template-columns: repeat(4, 84px);
+        row-gap: 14px;
+      }
+      .app {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+      }
+      .desktop {
+        display: flex;
+        gap: 26px;
+        padding: 26px 30px;
+        border-radius: 12px;
+        background: radial-gradient(600px 300px at 20% 20%, #3a5bd9 0%, transparent 70%),
+          radial-gradient(600px 300px at 80% 90%, #8b3fb0 0%, transparent 70%), #101426;
+      }
+      .desktop.light {
+        background: radial-gradient(600px 300px at 20% 20%, #6f9be6 0%, transparent 70%),
+          radial-gradient(600px 300px at 80% 90%, #c58ae0 0%, transparent 70%), #8fa3cf;
+      }
+      .desk-icon {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        width: 76px;
+        color: #fff;
+        font-size: 12px;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .note {
+        font-size: 12px;
+        color: var(--faint);
+      }
+
+      /* ---------- Vergleich der Farben ---------- */
+      .compare {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+        gap: 16px;
+      }
+      .compare .draft h3 {
+        margin-bottom: 12px;
+      }
+      .compare .sizes {
+        gap: 14px;
+      }
+      .mini {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2px;
+        height: 44px;
+        margin-top: 10px;
+        border-radius: 8px;
+      }
+      .mini.light {
+        background: #eef0f4;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+      }
+      .mini.dark {
+        background: #1c1c1c;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+      }
+      .mini .slot {
+        width: 38px;
+        height: 38px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>THub – Entwürfe für das App-Symbol</h1>
+    <p>
+      Vier Motive, jedes in vier Farben. Wähle oben eine Farbe, vergleiche die Entwürfe in den Grössen, in der Taskleiste,
+      bei <code>Alt+Tab</code>, im Startmenü und auf dem Desktop, und sag mir den Buchstaben und die Farbe, zum Beispiel
+      „B in Graphit“. Änderungswünsche gehen genauso: „A, aber der Cursor in Farbe“.
+    </p>
+    <p class="note">
+      16 und 24 px sind eigene, auf ganze Pixel gelegte Zeichnungen; darüber skaliert die grosse Vorlage. Die vergrösserten
+      Pixel zeigen genau, was Windows bei 100 % Skalierung anzeigt. Auf einem Bildschirm mit mehr als 100 % Skalierung
+      wirken die 1:1-Grössen hier schärfer als später in Windows.
+    </p>
+
+    <div class="controls">
+      <span><span class="label">Farbe</span><span class="seg" id="palette"></span></span>
+      <span><span class="label">Seite</span><span class="seg" id="theme"></span></span>
+    </div>
+
+    <h2 id="compare-title">Vergleich der Farben</h2>
+    <div class="compare" id="compare"></div>
+
+    <h2>Entwürfe</h2>
+    <div class="drafts" id="drafts"></div>
+
+    <h2>Taskleiste (24 px, das aktive Programm mit langem Strich)</h2>
+    <div id="taskbars"></div>
+
+    <h2>Alt+Tab (16 px im Kopf der Karte)</h2>
+    <div id="alttab"></div>
+
+    <h2>Startmenü (32 px) und Desktop (48 px)</h2>
+    <div id="start"></div>
+    <div class="row" id="desktop"></div>
+
+    <script>
+      'use strict';
+
+      // ---------- Farben ----------
+      // t1/t2: Verlauf der Kachel (gross), tf: flache Kachel (klein), edge: feine Innenkante, damit die Kachel auf
+      // gleichfarbiger Taskleiste nicht verschwindet, g: Zeichen, g2: gedämpftes Zeichen, ink: Zeichen auf dem Zeichen.
+      const PALETTES = {
+        graphit: {
+          name: 'Graphit',
+          t1: '#44444d',
+          t2: '#17171b',
+          tf: '#26262c',
+          edge: 'rgba(255,255,255,0.18)',
+          g: '#f4f4f5',
+          g2: 'rgba(244,244,245,0.42)',
+          ink: '#1c1c21',
+        },
+        hell: {
+          name: 'Hell',
+          t1: '#ffffff',
+          t2: '#e2e2e8',
+          tf: '#f2f2f5',
+          edge: 'rgba(0,0,0,0.16)',
+          g: '#18181b',
+          g2: 'rgba(24,24,27,0.36)',
+          ink: '#f4f4f5',
+        },
+        indigo: {
+          name: 'Indigo',
+          t1: '#8582ff',
+          t2: '#4338ca',
+          tf: '#5a54e3',
+          edge: 'rgba(255,255,255,0.22)',
+          g: '#ffffff',
+          g2: 'rgba(255,255,255,0.5)',
+          ink: '#4f46d6',
+        },
+        petrol: {
+          name: 'Petrol',
+          t1: '#2fcfba',
+          t2: '#0b6b63',
+          tf: '#12907f',
+          edge: 'rgba(255,255,255,0.22)',
+          g: '#ffffff',
+          g2: 'rgba(255,255,255,0.5)',
+          ink: '#0e7c70',
+        },
+      };
+
+      // ---------- Kachel ----------
+      let uid = 0;
+      const tile = {
+        16: (p) =>
+          `<rect width="16" height="16" rx="3.5" fill="${p.tf}"/>` +
+          `<rect x=".5" y=".5" width="15" height="15" rx="3" fill="none" stroke="${p.edge}"/>`,
+        24: (p) =>
+          `<rect x="1" y="1" width="22" height="22" rx="5" fill="${p.tf}"/>` +
+          `<rect x="1.5" y="1.5" width="21" height="21" rx="4.5" fill="none" stroke="${p.edge}"/>`,
+        256: (p, id) =>
+          `<defs><linearGradient id="g${id}" x1="0" y1="0" x2="1" y2="1">` +
+          `<stop offset="0" stop-color="${p.t1}"/><stop offset="1" stop-color="${p.t2}"/></linearGradient></defs>` +
+          `<rect x="16" y="16" width="224" height="224" rx="52" fill="url(#g${id})"/>` +
+          `<rect x="17.5" y="17.5" width="221" height="221" rx="50.5" fill="none" stroke="${p.edge}" stroke-width="3"/>`,
+      };
+
+      // ---------- Motive ----------
+      const DRAFTS = [
+        {
+          key: 'A',
+          name: 'Eingabezeile',
+          desc: 'Das Bekannteste: Prompt-Pfeil und Cursor. Sofort als Terminal zu erkennen, aber wenig eigen.',
+          16: (p) =>
+            `<path d="M4.5 5 7.5 8l-3 3" fill="none" stroke="${p.g}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>` +
+            `<rect x="9" y="10" width="4" height="2" fill="${p.g}"/>`,
+          24: (p) =>
+            `<path d="M7 8l4 4-4 4" fill="none" stroke="${p.g}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>` +
+            `<rect x="13" y="15" width="5" height="2" rx=".5" fill="${p.g}"/>`,
+          256: (p) =>
+            `<path d="M76 92l44 36-44 36" fill="none" stroke="${p.g}" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>` +
+            `<rect x="136" y="152" width="60" height="20" rx="6" fill="${p.g}"/>`,
+        },
+        {
+          key: 'B',
+          name: 'Tabs als T',
+          desc: 'Drei Tabs, der mittlere aktiv und nach unten verlängert: ein T aus der Tab-Leiste. Eigen und auch klein lesbar.',
+          16: (p) =>
+            `<rect x="2" y="3" width="3" height="3" fill="${p.g2}"/>` +
+            `<rect x="11" y="3" width="3" height="3" fill="${p.g2}"/>` +
+            `<rect x="6" y="3" width="4" height="10" fill="${p.g}"/>`,
+          24: (p) =>
+            `<path d="M5 9V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3z" fill="${p.g2}"/>` +
+            `<path d="M15 9V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3z" fill="${p.g2}"/>` +
+            `<path d="M10 6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z" fill="${p.g}"/>`,
+          256: (p) =>
+            `<path d="M54 102V74a12 12 0 0 1 12-12h20a12 12 0 0 1 12 12v28z" fill="${p.g2}"/>` +
+            `<path d="M158 102V74a12 12 0 0 1 12-12h20a12 12 0 0 1 12 12v28z" fill="${p.g2}"/>` +
+            `<path d="M106 74a12 12 0 0 1 12-12h20a12 12 0 0 1 12 12v112a10 10 0 0 1-10 10h-24a10 10 0 0 1-10-10z" fill="${p.g}"/>`,
+        },
+        {
+          key: 'C',
+          name: 'Gestapelte Terminals',
+          desc: 'Ein Terminal vor einem zweiten: mehrere Sessions, die bleiben. Gewählt am 2026-11-22 in Graphit; 16 und 24 px danach nachgezogen. Die Vorlagen der App liegen in resources/icon.',
+          // 16 px: Das vordere Terminal ist so gross wie möglich, vom hinteren bleibt oben und rechts ein Rand; Prompt aus
+          // einzelnen Pixeln, damit nichts verschwimmt.
+          16: (p) =>
+            `<rect x="5" y="2" width="9" height="8" fill="${p.g2}"/>` +
+            `<rect x="1" y="4" width="12" height="11" fill="${p.tf}"/>` +
+            `<rect x="2" y="5" width="10" height="9" fill="${p.g}"/>` +
+            `<path d="M4 7h1v1H4zM5 8h1v1H5zM6 9h1v1H6zM5 10h1v1H5zM4 11h1v1H4zM8 11h2v1H8z" fill="${p.ink}"/>`,
+          24: (p) =>
+            `<rect x="8" y="4" width="12" height="10" rx="1.5" fill="${p.g2}"/>` +
+            `<rect x="3" y="7" width="15" height="14" rx="2.5" fill="${p.tf}"/>` +
+            `<rect x="4" y="8" width="13" height="12" rx="1.5" fill="${p.g}"/>` +
+            `<path d="M6.5 11.5 9 14l-2.5 2.5" fill="none" stroke="${p.ink}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>` +
+            `<rect x="10.5" y="15.7" width="4" height="1.6" rx=".5" fill="${p.ink}"/>`,
+          256: (p, id) =>
+            `<mask id="m${id}"><rect width="256" height="256" fill="#fff"/><rect x="40" y="80" width="156" height="132" rx="26" fill="#000"/></mask>` +
+            `<rect x="84" y="56" width="120" height="96" rx="16" fill="${p.g2}" mask="url(#m${id})"/>` +
+            `<rect x="52" y="92" width="132" height="108" rx="16" fill="${p.g}"/>` +
+            `<path d="M80 130l24 20-24 20" fill="none" stroke="${p.ink}" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>` +
+            `<rect x="114" y="162" width="36" height="12" rx="4" fill="${p.ink}"/>`,
+        },
+        {
+          key: 'D',
+          name: 'Cursor mit T',
+          desc: 'Ein Block-Cursor, aus dem ein T ausgespart ist. Am ruhigsten und reduziertesten, wirkt eher wie eine Marke.',
+          16: (p) => `<path d="M4 2h8v12H4zM5 4v2h2v6h2V6h2V4z" fill="${p.g}" fill-rule="evenodd"/>`,
+          24: (p) =>
+            `<path d="M8.5 4h7A1.5 1.5 0 0 1 17 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 18.5v-13A1.5 1.5 0 0 1 8.5 4zM9 7v2h2v8h2V9h2V7z" fill="${p.g}" fill-rule="evenodd"/>`,
+          256: (p) =>
+            `<path d="M90 56h76a18 18 0 0 1 18 18v108a18 18 0 0 1-18 18H90a18 18 0 0 1-18-18V74a18 18 0 0 1 18-18zM96 84v20h22v72h20v-72h22V84z" fill="${p.g}" fill-rule="evenodd"/>`,
+        },
+      ];
+
+      /** Die Vorlage für eine Grösse: bis 20 px das 16er-, bis 28 px das 24er-Raster, darüber das 256er. */
+      const masterFor = (px) => (px <= 20 ? 16 : px <= 28 ? 24 : 256);
+
+      function svgText(draft, master, p) {
+        const id = ++uid;
+        return (
+          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${master} ${master}">` +
+          tile[master](p, id) +
+          draft[master](p, id) +
+          `</svg>`
+        );
+      }
+
+      const dataUrl = (svg) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+      /** Das Symbol als Bild in genau dieser Grösse (CSS-Pixel). */
+      function iconImg(draft, px, p) {
+        const img = new Image(px, px);
+        img.src = dataUrl(svgText(draft, masterFor(px), p));
+        img.alt = `Entwurf ${draft.key}, ${px} px`;
+        return img;
+      }
+
+      /** Echte Pixel: in `px` Pixel gezeichnet und `zoom`-fach ohne Glätten vergrössert. */
+      function pixelCanvas(draft, px, zoom, p) {
+        const c = document.createElement('canvas');
+        c.width = px;
+        c.height = px;
+        c.style.width = `${px * zoom}px`;
+        c.style.height = `${px * zoom}px`;
+        const img = new Image();
+        img.onload = () => c.getContext('2d').drawImage(img, 0, 0, px, px);
+        img.src = dataUrl(svgText(draft, masterFor(px), p));
+        return c;
+      }
+
+      // ---------- Andere Programme in der Taskleiste und im Startmenü (allgemeine Formen, keine Marken) ----------
+      const OTHER = {
+        Suchen: (dark) =>
+          `<circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="${dark ? '#e6e6e6' : '#3c3c3c'}" stroke-width="1.8"/><path d="m15.5 15.5 5 5" stroke="${dark ? '#e6e6e6' : '#3c3c3c'}" stroke-width="1.8" stroke-linecap="round"/>`,
+        Dateien: () =>
+          `<path d="M2 6a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" fill="#e8b130"/><path d="M2 9h20v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" fill="#f7d466"/>`,
+        Browser: () =>
+          `<circle cx="12" cy="12" r="10" fill="#2f7be8"/><path d="M2.5 12h19M12 2.2c3.2 3 3.2 16.6 0 19.6M12 2.2c-3.2 3-3.2 16.6 0 19.6" stroke="#fff" stroke-width="1.3" fill="none"/>`,
+        Mail: () =>
+          `<rect x="2" y="5" width="20" height="14" rx="2.5" fill="#1690d8"/><path d="m3.5 7.5 8.5 6 8.5-6" stroke="#fff" stroke-width="1.6" fill="none" stroke-linejoin="round"/>`,
+        Einstellungen: (dark) =>
+          `<circle cx="12" cy="12" r="9" fill="none" stroke="${dark ? '#bdbdbd' : '#6b6b6b'}" stroke-width="2.6" stroke-dasharray="3.4 2.4"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="${dark ? '#bdbdbd' : '#6b6b6b'}" stroke-width="2"/>`,
+        Rechner: () =>
+          `<rect x="4" y="2" width="16" height="20" rx="3" fill="#5c6b7a"/><rect x="7" y="5" width="10" height="4" rx="1" fill="#cfe3f5"/><path d="M8 13h2M14 13h2M8 17h2M14 17h2" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`,
+      };
+      const otherImg = (name, px, dark) => {
+        const img = new Image(px, px);
+        img.src = dataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">${OTHER[name](dark)}</svg>`);
+        img.alt = name;
+        return img;
+      };
+
+      // ---------- Seite aufbauen ----------
+      const el = (tag, cls, text) => {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text) e.textContent = text;
+        return e;
+      };
+      let current = 'graphit';
+
+      /** Der gewählte Entwurf in allen Farben nebeneinander (Standard C, sonst ?entwurf=A …). */
+      const COMPARE = DRAFTS.find((d) => d.key === new URLSearchParams(location.search).get('entwurf')) ?? DRAFTS[2];
+
+      function renderCompare() {
+        document.getElementById('compare-title').textContent =
+          `Vergleich: Entwurf ${COMPARE.key} (${COMPARE.name}) in allen vier Farben`;
+        const box = document.getElementById('compare');
+        box.replaceChildren();
+        for (const p of Object.values(PALETTES)) {
+          const card = el('div', 'draft');
+          card.append(el('h3', '', p.name));
+          const sizes = el('div', 'sizes');
+          for (const px of [16, 24, 32, 48]) {
+            const s = el('div', 'size');
+            s.append(iconImg(COMPARE, px, p), `${px} px`);
+            sizes.append(s);
+          }
+          const zoom = el('div', 'zoom');
+          for (const px of [16, 24]) {
+            const s = el('div', 'size');
+            s.append(pixelCanvas(COMPARE, px, px === 16 ? 5 : 3.5, p), `${px} px vergrössert`);
+            zoom.append(s);
+          }
+          const big = el('div', 'big');
+          big.append(iconImg(COMPARE, 128, p));
+          card.append(sizes, zoom, big);
+          for (const mode of ['light', 'dark']) {
+            const dark = mode === 'dark';
+            const bar = el('div', `mini ${mode}`);
+            const slot = (img, active) => {
+              const s = el('div', `slot ${active ? 'active' : ''} ${mode}-slot`);
+              s.append(img, el('span', 'pill'));
+              return s;
+            };
+            bar.append(
+              slot(otherImg('Dateien', 24, dark), false),
+              slot(otherImg('Browser', 24, dark), false),
+              slot(iconImg(COMPARE, 24, p), true),
+              slot(otherImg('Mail', 24, dark), false),
+            );
+            card.append(bar);
+          }
+          box.append(card);
+        }
+      }
+
+      function render() {
+        const p = PALETTES[current];
+
+        const drafts = document.getElementById('drafts');
+        drafts.replaceChildren();
+        for (const d of DRAFTS) {
+          const card = el('div', 'draft');
+          card.append(el('h3', '', `${d.key} – ${d.name}`), el('p', 'desc', d.desc));
+          const sizes = el('div', 'sizes');
+          for (const px of [16, 24, 32, 48, 64]) {
+            const s = el('div', 'size');
+            s.append(iconImg(d, px, p), `${px} px`);
+            sizes.append(s);
+          }
+          const zoom = el('div', 'zoom');
+          for (const px of [16, 24]) {
+            const s = el('div', 'size');
+            s.append(pixelCanvas(d, px, px === 16 ? 6 : 4, p), `${px} px, Pixel vergrössert`);
+            zoom.append(s);
+          }
+          const big = el('div', 'big');
+          const s = el('div', 'size');
+          s.append(iconImg(d, 256, p), '256 px');
+          big.append(s);
+          card.append(sizes, zoom, big);
+          drafts.append(card);
+        }
+
+        // Taskleiste: links Suche, dann die Entwürfe als laufende Programme zwischen anderen.
+        const bars = document.getElementById('taskbars');
+        bars.replaceChildren();
+        for (const mode of ['light', 'dark']) {
+          const bar = el('div', `taskbar ${mode}`);
+          const dark = mode === 'dark';
+          const slot = (img, active, tag) => {
+            const s = el('div', `slot ${active ? 'active' : ''} ${mode}-slot`);
+            s.append(img);
+            if (active !== null) s.append(el('span', 'pill'));
+            if (tag) s.append(el('span', 'tag', tag));
+            return s;
+          };
+          bar.append(slot(otherImg('Suchen', 24, dark), null), el('span', 'sep'));
+          bar.append(slot(otherImg('Dateien', 24, dark), false), slot(otherImg('Browser', 24, dark), false));
+          DRAFTS.forEach((d, i) => bar.append(slot(iconImg(d, 24, p), i === 1, d.key)));
+          bar.append(slot(otherImg('Mail', 24, dark), null), slot(otherImg('Einstellungen', 24, dark), null));
+          bars.append(bar);
+        }
+
+        // Alt+Tab: je Entwurf eine Fensterkarte mit 16-px-Symbol im Kopf.
+        const at = document.getElementById('alttab');
+        at.replaceChildren();
+        for (const mode of ['dark', 'light']) {
+          const box = el('div', `alttab ${mode}`);
+          DRAFTS.forEach((d, i) => {
+            const card = el('div', `atcard${i === 0 ? ' sel' : ''}`);
+            const head = el('div', 'athead');
+            head.append(iconImg(d, 16, p), `THub ${d.key}`);
+            const thumb = el('div', 'thumb');
+            const tabs = el('div', 'tabs');
+            tabs.append(el('i'), el('i'), el('i'));
+            const lines = el('div', 'lines');
+            for (const w of [70, 45, 85, 30, 60]) {
+              const b = el('b');
+              b.style.width = `${w}%`;
+              lines.append(b);
+            }
+            thumb.append(tabs, lines);
+            card.append(head, thumb);
+            box.append(card);
+          });
+          at.append(box);
+        }
+
+        // Startmenü: angeheftete Programme mit 32 px.
+        const start = document.getElementById('start');
+        start.replaceChildren();
+        for (const mode of ['dark', 'light']) {
+          const menu = el('div', `startmenu ${mode}`);
+          menu.append(el('div', 'title', 'Angeheftet'));
+          const apps = el('div', 'apps');
+          const app = (img, name) => {
+            const a = el('div', 'app');
+            a.append(img, name);
+            return a;
+          };
+          for (const d of DRAFTS) apps.append(app(iconImg(d, 32, p), `THub ${d.key}`));
+          for (const name of ['Dateien', 'Browser', 'Mail', 'Rechner']) apps.append(app(otherImg(name, 32, mode === 'dark'), name));
+          menu.append(apps);
+          start.append(menu);
+        }
+
+        // Desktop: 48 px mit Beschriftung.
+        const desk = document.getElementById('desktop');
+        desk.replaceChildren();
+        for (const mode of ['dark', 'light']) {
+          const d = el('div', `desktop ${mode}`);
+          for (const draft of DRAFTS) {
+            const i = el('div', 'desk-icon');
+            i.append(iconImg(draft, 48, p), `THub ${draft.key}`);
+            d.append(i);
+          }
+          desk.append(d);
+        }
+      }
+
+      renderCompare();
+
+      // ---------- Steuerung ----------
+      const paletteSeg = document.getElementById('palette');
+      for (const [key, pal] of Object.entries(PALETTES)) {
+        const b = el('button', key === current ? 'on' : '', pal.name);
+        b.addEventListener('click', () => {
+          current = key;
+          paletteSeg.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+          render();
+        });
+        paletteSeg.append(b);
+      }
+      const themeSeg = document.getElementById('theme');
+      for (const [key, label] of [
+        ['system', 'System'],
+        ['light', 'Hell'],
+        ['dark', 'Dunkel'],
+      ]) {
+        const b = el('button', key === 'system' ? 'on' : '', label);
+        b.addEventListener('click', () => {
+          if (key === 'system') delete document.documentElement.dataset.theme;
+          else document.documentElement.dataset.theme = key;
+          themeSeg.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+        });
+        themeSeg.append(b);
+      }
+      // ?farbe=indigo wählt die Farbe gleich beim Öffnen (für Bildschirmfotos).
+      const wanted = new URLSearchParams(location.search).get('farbe');
+      if (wanted && PALETTES[wanted]) paletteSeg.querySelectorAll('button')[Object.keys(PALETTES).indexOf(wanted)].click();
+      else render();
+    </script>
+  </body>
+</html>

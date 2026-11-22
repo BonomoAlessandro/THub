@@ -49,7 +49,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 26 | [Tab-Leiste, neue Tabs am Ende, Stern-Farbe und Dropdown im dunklen Design](26-tableiste-und-dropdown.md) | AFK | – | erledigt |
 | 27 | [Offene Punkte nur, wenn es wirklich welche gibt; Klick schliesst den Hinweis](27-offene-punkte-seltener.md) | AFK | – | erledigt |
 | 28 | [Rechner wach halten](28-rechner-wach-halten.md) | AFK | – | erledigt |
-| 29 | [Eigenes App-Symbol](29-app-symbol.md) | HITL | – | offen |
+| 29 | [Eigenes App-Symbol](29-app-symbol.md) | HITL | – | erledigt |
 
 ```mermaid
 flowchart LR

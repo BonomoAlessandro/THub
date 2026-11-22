@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:shells": "vitest run --config test/shells/vitest.config.mts",
-    "dist": "node build.mjs && electron-builder --win"
+    "dist": "node build.mjs && electron-builder --win",
+    "icon": "electron scripts/build-icon.cjs"
   },
   "build": {
     "appId": "ch.custom.thub",
@@ -36,7 +37,8 @@
     ],
     "npmRebuild": false,
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "resources/icon/icon.ico"
     },
     "nsis": {
       "oneClick": false,

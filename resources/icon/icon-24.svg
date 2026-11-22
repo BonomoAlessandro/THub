@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- THub, 24 px (Ticket 29): von Hand auf ganze Pixel gelegt; vorderes Terminal grösser, Prompt kräftiger. -->
+  <rect x="1" y="1" width="22" height="22" rx="5" fill="#26262c"/>
+  <rect x="1.5" y="1.5" width="21" height="21" rx="4.5" fill="none" stroke="#fff" stroke-opacity="0.18"/>
+  <rect x="8" y="4" width="12" height="10" rx="1.5" fill="#f4f4f5" fill-opacity="0.42"/>
+  <rect x="3" y="7" width="15" height="14" rx="2.5" fill="#26262c"/>
+  <rect x="4" y="8" width="13" height="12" rx="1.5" fill="#f4f4f5"/>
+  <path d="M6.5 11.5 9 14l-2.5 2.5" fill="none" stroke="#1c1c21" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="10.5" y="15.7" width="4" height="1.6" rx=".5" fill="#1c1c21"/>
+</svg>
