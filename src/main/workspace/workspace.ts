@@ -31,7 +31,7 @@ import {
 import { CwdReportScanner } from './cwdReport';
 import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
 import { findOpenPoints, openPointsContext } from './openPoints';
-import type { CancelTimer, ProcessInfo, ShellInfo, StartOrder, WorkspacePorts } from './ports';
+import type { CancelTimer, KeepAwakeLevel, ProcessInfo, ShellInfo, StartOrder, WorkspacePorts } from './ports';
 import { ProcessTracker, shellProcesses, type ProcessTab, type ShellRoot, type ShellTree } from './processRules';
 import { resumeCommand, sessionToResume } from './resume';
 import { shellLabel, wslDistribution } from './shellIds';
@@ -392,6 +392,8 @@ class WorkspaceCore implements Workspace {
   private readonly closingShells = new Map<string, ClosingShell>();
   /** Die Hinweise unten rechts im Fenster. */
   private readonly toasts: ToastBoard;
+  /** Die zuletzt an den Port Wachhalten gemeldete Stufe; `null` vor der ersten Meldung beim Start. */
+  private keepAwakeLevel: KeepAwakeLevel | null = null;
 
   constructor(
     private readonly ports: WorkspacePorts,
@@ -408,6 +410,8 @@ class WorkspaceCore implements Workspace {
       defaultShellId: this.automaticShell().id,
     });
     this.state = loaded.state;
+    // Ein eingeschaltetes Wachhalten läuft nach einem Neustart von selbst wieder, mit derselben Stufe.
+    this.reportKeepAwake();
     let restoredChanged = false;
     for (const tab of this.state.tabs) {
       restoredChanged = this.restoreTab(tab, tab.id === this.state.activeTabId) || restoredChanged;
@@ -1144,6 +1148,24 @@ class WorkspaceCore implements Workspace {
     // Ausgeschaltet: Auch die Hinweise, die gerade stehen, verschwinden; jede Einstellung für ihre Arten.
     if (!next.notifications) this.toasts.clear(STATUS_TOASTS);
     if (!next.openPoints) this.toasts.clear(['openPoints']);
+    this.reportKeepAwake();
+  }
+
+  /**
+   * Meldet dem Port Wachhalten die Stufe, die nach den Einstellungen gilt, aber nur, wenn sie sich geändert hat: beim
+   * Start einmal, danach bei jeder Änderung von an/aus oder (eingeschaltet) der Stufe. Beenden und Einfrieren melden
+   * nichts; Windows gibt die Anforderung mit dem Prozess frei, und die Einstellung bleibt für den nächsten Start.
+   */
+  private reportKeepAwake(): void {
+    const { keepAwake, keepAwakeMode } = this.state.settings;
+    const level: KeepAwakeLevel = keepAwake ? keepAwakeMode : 'off';
+    if (level === this.keepAwakeLevel) return;
+    this.keepAwakeLevel = level;
+    try {
+      this.ports.keepAwake.set(level);
+    } catch (err) {
+      console.error('Rechner wach halten:', err);
+    }
   }
 
   stepFontSize(step: number): void {

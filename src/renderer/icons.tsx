@@ -197,3 +197,32 @@ export function SparkIcon() {
     </svg>
   );
 }
+
+/** Kaffeetasse: Rechner wach halten, Stufe „nur Rechner“ (Ticket 28). */
+export function CoffeeIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 2v2M14 2v2M6 2v2" />
+      <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
+    </svg>
+  );
+}
+
+/** Bildschirm: Rechner wach halten, Stufe „Rechner und Bildschirm“ (Ticket 28). */
+export function MonitorIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <rect width="20" height="14" x="2" y="3" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+    </svg>
+  );
+}
+
+/** Häkchen am gewählten Eintrag eines Menüs. */
+export function CheckIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}

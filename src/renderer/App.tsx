@@ -118,9 +118,11 @@ export function App() {
     return () => window.removeEventListener('wheel', onWheel, { capture: true });
   }, [runAppShortcut]);
 
-  // Was die Befehle der Palette brauchen; neu nur, wenn sich die Tabs ändern.
+  // Was die Befehle der Palette brauchen; neu nur, wenn sich die Tabs oder das Wachhalten ändern.
   const tabs = view?.tabs;
   const activeTabId = view?.activeTabId ?? null;
+  const keepAwakeOn = view?.settings.keepAwake ?? false;
+  const keepAwakeMode = view?.settings.keepAwakeMode ?? 'system';
   const paletteContext = useMemo<PaletteContext>(
     () => ({
       tabs: tabs ?? [],
@@ -128,8 +130,9 @@ export function App() {
       startRename: setRenamingId,
       openSettings: () => setSettingsOpen(true),
       openShortcuts: () => setShortcutsFrom('palette'),
+      keepAwake: { on: keepAwakeOn, mode: keepAwakeMode },
     }),
-    [tabs, activeTabId],
+    [tabs, activeTabId, keepAwakeOn, keepAwakeMode],
   );
 
   if (!view) return null;
@@ -148,6 +151,8 @@ export function App() {
         onStartRename={setRenamingId}
         onFinishRename={finishRename}
         onOpenSettings={() => setSettingsOpen(true)}
+        keepAwake={view.settings.keepAwake}
+        keepAwakeMode={view.settings.keepAwakeMode}
       />
       <TerminalArea tabs={view.tabs} activeTabId={view.activeTabId} fontSize={view.settings.fontSize} />
       <Toasts toasts={view.toasts} tabs={view.tabs} activeTabId={view.activeTabId} />

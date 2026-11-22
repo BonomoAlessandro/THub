@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { CheckIcon } from '../icons';
 import { menuKey } from './menuKeys';
 import { usePopupOpen } from './popups';
 
@@ -17,6 +18,11 @@ export type MenuEntry =
       badge?: string;
       /** Tastenkürzel rechts, z.B. „F2“. */
       kbd?: string;
+      /**
+       * Eintrag einer Auswahl (z.B. die Stufe beim Wachhalten): `true` zeigt rechts ein Häkchen. Ohne Angabe ist es ein
+       * gewöhnlicher Eintrag.
+       */
+      checked?: boolean;
       run(): void;
     };
 
@@ -141,7 +147,8 @@ export function Menu({ label, entries, anchor, highlightFirst = false, onClose }
             key={i}
             id={itemId(own)}
             type="button"
-            role="menuitem"
+            role={entry.checked === undefined ? 'menuitem' : 'menuitemradio'}
+            aria-checked={entry.checked}
             tabIndex={-1}
             className={own === highlighted ? 'mi focus' : 'mi'}
             onMouseMove={() => setHighlighted(own)}
@@ -154,6 +161,7 @@ export function Menu({ label, entries, anchor, highlightFirst = false, onClose }
             </span>
             {entry.badge && <span className="mi-badge">{entry.badge}</span>}
             {entry.kbd && <span className="mi-kbd">{entry.kbd}</span>}
+            {entry.checked !== undefined && <span className="mi-check">{entry.checked && <CheckIcon />}</span>}
           </button>
         );
       })}

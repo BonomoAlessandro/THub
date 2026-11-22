@@ -2,7 +2,7 @@
 // Kern, Kopieren und Einfügen ans Terminal; was die Oberfläche selbst zeigt (Umbenennen, Palette), meldet sie über
 // `UiActions`.
 
-import { FONT_SIZE } from '../shared/types';
+import { FONT_SIZE, type KeepAwakeMode } from '../shared/types';
 import type { ShortcutAction } from './shortcuts';
 import { focusTerminal, terminalViews } from './terminal/terminalViews';
 
@@ -93,4 +93,17 @@ export function showTab(tabId: string, activeTabId: string | null): void {
 export async function pickDefaultFolder(): Promise<void> {
   const dir = await api.pickDirectory('defaultCwd');
   if (dir) api.send({ type: 'updateSettings', patch: { defaultCwd: dir } });
+}
+
+/**
+ * Rechner wach halten mit dieser Stufe (Pfeil-Menü am Schalter, Befehlspalette): setzt die Stufe und schaltet ein. Ist
+ * genau diese Stufe schon an, ändert sich nichts.
+ */
+export function keepAwake(mode: KeepAwakeMode): void {
+  api.send({ type: 'updateSettings', patch: { keepAwake: true, keepAwakeMode: mode } });
+}
+
+/** Schaltet das Wachhalten ein (mit der gewählten Stufe) oder aus (Klick auf den Schalter, „Wachhalten beenden“). */
+export function setKeepAwake(on: boolean): void {
+  api.send({ type: 'updateSettings', patch: { keepAwake: on } });
 }

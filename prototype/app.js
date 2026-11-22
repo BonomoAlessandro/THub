@@ -25,6 +25,9 @@ const ICON_PATHS = {
   palette: '<path d="M4 6h16M4 12h10M4 18h7"/>',
   sliders: '<path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
   arrowRight: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
+  coffee: '<path d="M10 2v2M14 2v2M6 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/>',
+  monitor: '<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
 };
 const icon = (name) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name]}</svg>`;
 
@@ -87,6 +90,9 @@ const state = {
   accent: 'mono',
   fontSize: 14,
   toasts: true,
+  // Rechner wach halten (Ticket 28): an/aus und die Stufe 'system' (nur Rechner) oder 'display' (Rechner und Bildschirm).
+  keepAwake: false,
+  keepAwakeMode: 'system',
   defaultFolder: null,
   defaultShell: 'pwsh',
   tabs: [
@@ -608,7 +614,7 @@ function closeMenu() {
   openMenuState = null;
 }
 
-/** Öffnet ein Menü. items: {label, sub, icon, kbd, badge, danger, run} | 'sep' | {header}. */
+/** Öffnet ein Menü. items: {label, sub, icon, kbd, badge, checked, danger, run} | 'sep' | {header}. */
 function openMenu(items, { x, y, anchor, align = 'left' }) {
   closeMenu();
   hideTip();
@@ -627,10 +633,14 @@ function openMenu(items, { x, y, anchor, align = 'left' }) {
     }
     const b = document.createElement('button');
     b.className = 'mi' + (item.danger ? ' danger' : '');
-    b.setAttribute('role', 'menuitem');
+    // Eintrag einer Auswahl (checked gesetzt): Häkchen rechts am gewählten.
+    b.setAttribute('role', item.checked === undefined ? 'menuitem' : 'menuitemradio');
+    if (item.checked !== undefined) b.setAttribute('aria-checked', String(item.checked));
     b.innerHTML = `<span class="mi-ic">${item.icon ? icon(item.icon) : ''}</span><span class="mi-label">${esc(item.label)}${
       item.sub ? `<small>${esc(item.sub)}</small>` : ''
-    }</span>${item.badge ? `<span class="mi-badge">${esc(item.badge)}</span>` : ''}${item.kbd ? `<span class="mi-kbd">${esc(item.kbd)}</span>` : ''}`;
+    }</span>${item.badge ? `<span class="mi-badge">${esc(item.badge)}</span>` : ''}${item.kbd ? `<span class="mi-kbd">${esc(item.kbd)}</span>` : ''}${
+      item.checked !== undefined ? `<span class="mi-check">${item.checked ? icon('check') : ''}</span>` : ''
+    }`;
     b.addEventListener('click', () => {
       closeMenu();
       item.run?.();
@@ -688,6 +698,47 @@ function openNewMenu() {
     ...state.recent.slice(0, 8).map((f) => ({ label: basename(f), sub: f, icon: 'folder', run: () => newTab({ folder: f }) })),
     { label: 'Ordner wählen …', icon: 'folderPlus', run: pickFolderForNewTab },
   ];
+  openMenu(items, { x: r.left, y: r.bottom + 4, anchor: btn });
+}
+
+// ---------- Rechner wach halten (Ticket 28) ----------
+const KEEP_AWAKE_MODES = [
+  { mode: 'system', label: 'Nur Rechner wach halten', icon: 'coffee' },
+  { mode: 'display', label: 'Rechner und Bildschirm wach halten', icon: 'monitor' },
+];
+
+/** Schalter: Symbol der Stufe, gedämpft wenn aus; Tooltip mit Zustand und Stufe. */
+function renderKeepAwake() {
+  const btn = $('#btn-keepawake');
+  btn.innerHTML = `${icon(state.keepAwakeMode === 'display' ? 'monitor' : 'coffee')}<span class="ka-track" aria-hidden="true"></span>`;
+  btn.classList.toggle('on', state.keepAwake);
+  btn.setAttribute('aria-checked', String(state.keepAwake));
+  btn.dataset.tip = !state.keepAwake
+    ? 'Rechner wach halten: aus'
+    : state.keepAwakeMode === 'display'
+      ? 'Rechner und Bildschirm wach halten: an'
+      : 'Rechner wach halten: an';
+}
+
+function setKeepAwake(on, mode = state.keepAwakeMode) {
+  if (on === state.keepAwake && mode === state.keepAwakeMode) return;
+  state.keepAwake = on;
+  state.keepAwakeMode = mode;
+  renderKeepAwake();
+  log(on ? (mode === 'display' ? 'Hält Rechner und Bildschirm wach.' : 'Hält den Rechner wach.') : 'Hält nichts mehr wach.');
+}
+
+/** Pfeil-Menü: beide Stufen, die gewählte mit Häkchen; eine Wahl setzt die Stufe und schaltet ein. */
+function openKeepAwakeMenu() {
+  const btn = $('#btn-keepawake-menu');
+  if (openMenuState?.anchor === btn) return closeMenu();
+  const r = btn.getBoundingClientRect();
+  const items = KEEP_AWAKE_MODES.map((m) => ({
+    label: m.label,
+    icon: m.icon,
+    checked: m.mode === state.keepAwakeMode,
+    run: () => setKeepAwake(true, m.mode),
+  }));
   openMenu(items, { x: r.left, y: r.bottom + 4, anchor: btn });
 }
 
@@ -1156,6 +1207,8 @@ function setupChrome() {
   $('#btn-new').innerHTML = icon('plus');
   $('#btn-newmenu').innerHTML = icon('chevron');
   $('#btn-settings').innerHTML = icon('gear');
+  $('#btn-keepawake-menu').innerHTML = icon('chevron');
+  renderKeepAwake();
   $('#wc-min').innerHTML = WC_ICONS.min;
   $('#wc-close').innerHTML = WC_ICONS.close;
   updateMaxIcon();
@@ -1163,6 +1216,8 @@ function setupChrome() {
   $('#btn-new').addEventListener('click', () => newTab());
   $('#btn-newmenu').addEventListener('click', openNewMenu);
   $('#btn-settings').addEventListener('click', openSettings);
+  $('#btn-keepawake').addEventListener('click', () => setKeepAwake(!state.keepAwake));
+  $('#btn-keepawake-menu').addEventListener('click', openKeepAwakeMenu);
   $('#wc-min').addEventListener('click', () => log('Minimieren (im Prototyp ohne Funktion)'));
   $('#wc-max').addEventListener('click', toggleMax);
   $('#wc-close').addEventListener('click', () => log('Schliessen: TermHub sichert alles und beendet sich ohne Rückfrage.'));

@@ -2,7 +2,7 @@
 // Gelesen wird tolerant: Unbrauchbare Felder fallen auf Standardwerte zurück, statt den Start zu verhindern.
 
 import * as path from 'node:path';
-import { FONT_SIZE, type Settings, type Theme } from '../../shared/types';
+import { FONT_SIZE, type KeepAwakeMode, type Settings, type Theme } from '../../shared/types';
 import { rememberDir, samePath } from './folders';
 import { MAX_OPEN_POINTS } from './openPoints';
 import type { Rect } from './ports';
@@ -67,6 +67,7 @@ export interface PersistedState {
 
 export const MAX_CLOSED_TABS = 10;
 const THEMES: readonly Theme[] = ['system', 'light', 'dark'];
+const KEEP_AWAKE_MODES: readonly KeepAwakeMode[] = ['system', 'display'];
 
 /** Was das Lesen des Zustands von der Umgebung braucht. */
 export interface SchemaContext {
@@ -112,6 +113,11 @@ export function normalizeSettings(raw: unknown): Settings {
       : FONT_SIZE.default,
     notifications: typeof s.notifications === 'boolean' ? s.notifications : true,
     openPoints: typeof s.openPoints === 'boolean' ? s.openPoints : true,
+    // Fehlen die Angaben (Zustand von vor Ticket 28), gilt aus und „nur Rechner“, ohne neue Schema-Version.
+    keepAwake: typeof s.keepAwake === 'boolean' ? s.keepAwake : false,
+    keepAwakeMode: KEEP_AWAKE_MODES.includes(s.keepAwakeMode as KeepAwakeMode)
+      ? (s.keepAwakeMode as KeepAwakeMode)
+      : 'system',
   };
   if (isNonEmptyString(s.defaultShellId)) settings.defaultShellId = s.defaultShellId;
   return settings;

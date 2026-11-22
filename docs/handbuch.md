@@ -63,6 +63,9 @@ Rechtsklick auf einen Tab öffnet sein Menü an der Stelle des Klicks, ohne den 
 | Einstellungen | öffnet den Einstellungsdialog |
 | Standardordner ändern | Ordner-Dialog wie „Ändern …“ in den Einstellungen |
 | Tastenkürzel anzeigen | Übersicht aller Tastenkürzel |
+| Rechner wach halten | Stufe „nur Rechner“ wählen und einschalten, wie im Pfeil-Menü am Schalter |
+| Rechner und Bildschirm wach halten | Stufe „Rechner und Bildschirm“ wählen und einschalten |
+| Wachhalten beenden | nur, solange der Rechner wach gehalten wird; wie ein Klick auf den Schalter |
 
 - Rechts neben einem Befehl steht sein Tastenkürzel. Befehle für Claude gibt es bewusst keine; was einen aktiven Tab braucht, fehlt ohne ihn.
 - **Suche:** unscharf. Die Zeichen müssen in dieser Reihenfolge vorkommen, nicht nebeneinander: „termhb“ findet „termhub“, „neu term“ findet „Neues Terminal“. Zusammenhängende Treffer und Wortanfänge zählen mehr. Vom Ordner eines Tabs zählen nur die letzten zwei Teile, und schwächer als der Name. Die Gruppe mit dem besten Treffer steht oben, bei gleich gutem Treffer Tabs vor Befehlen.
@@ -138,6 +141,28 @@ Braucht Claude für den nächsten Schritt eine Entscheidung, Antwort oder Handlu
 - Nicht geschlossene Hinweise erscheinen nach einem Neustart wieder. Ein geschlossener Tab nimmt seinen Hinweis mit, auch beim Wiederöffnen kommt er nicht zurück. Endet Claude im Tab, bleibt er.
 - Abschaltbar in den Einstellungen („Offene Punkte aus Claudes Antworten anzeigen“), unabhängig von „Hinweise im Fenster“. Ausgeschaltet verschwinden auch die stehenden Hinweise, und THub gibt Claude die Anweisung nicht mehr mit.
 - Wie THub die Punkte findet: [Offene Punkte erkennen](#offene-punkte-erkennen).
+
+### Rechner wach halten
+
+Links neben dem Zahnrad sitzt ein Schalter mit einem Pfeil daneben. Eingeschaltet hält THub den Rechner wach, solange THub läuft: Windows geht nach der eingestellten Zeit ohne Eingabe nicht in den Energiesparmodus, und lange Claude-Sessions, Builds oder Testläufe laufen weiter, während du nicht am Rechner bist.
+
+| Stufe | Symbol | Wirkung |
+|---|---|---|
+| Nur Rechner (Standard) | Kaffeetasse | kein Energiesparmodus; der Bildschirm schaltet sich nach der eingestellten Zeit trotzdem aus und sperrt wie gewohnt |
+| Rechner und Bildschirm | Bildschirm | zusätzlich bleibt der Bildschirm an und wird nicht abgedunkelt |
+
+- **Ein- und ausschalten:** Klick auf den Schalter (Symbol und kleiner Schalter), mit der gewählten Stufe. Per Tastatur mit `Tab` hingehen, dann Leertaste oder Enter. Ausgeschaltet ist das Symbol gedämpft, eingeschaltet in voller Textfarbe. Der Tooltip nennt Zustand und Stufe.
+- **Stufe wählen:** Der Pfeil öffnet ein Menü mit beiden Stufen; die gewählte hat ein Häkchen. Eine Wahl setzt die Stufe und schaltet ein; die schon laufende Stufe noch einmal zu wählen, ändert nichts.
+- **Befehlspalette:** „Rechner wach halten“, „Rechner und Bildschirm wach halten“ und, solange es läuft, „Wachhalten beenden“. Ein Tastenkürzel gibt es nicht.
+- **Bleibt eingeschaltet:** Nach einem Neustart von THub hält es den Rechner mit derselben Stufe von selbst wieder wach. Ein Neustart des Rechners startet THub nicht; das Wachhalten beginnt mit dem nächsten Start von THub.
+- **Sauber:** THub ändert keine Energieeinstellungen und startet kein Skript. Es stellt bei Windows eine Anforderung, die endet, sobald du ausschaltest oder THub endet, auch nach einem Absturz. In einer Administrator-PowerShell zeigt `powercfg /requests` sie unter `SYSTEM` (in der zweiten Stufe auch unter `DISPLAY`) mit dem Grund „THub hält den Rechner wach“.
+
+**Grenzen**
+
+- Deckel zuklappen, der Ein-/Aus-Knopf und „Energie sparen“ im Startmenü schicken den Rechner trotzdem in den Energiesparmodus.
+- Im Akkubetrieb hebt Windows auf Rechnern mit Modern Standby die Anforderung 5 Minuten nach Ablauf der eingestellten Zeit auf. Über Nacht braucht der Rechner deshalb das Netzteil.
+- Eine von der Firma vorgegebene Sperre nach Inaktivität umgeht THub nicht. Ob sie in der Stufe „Rechner und Bildschirm“ ausbleibt, hängt von ihrer Einrichtung ab.
+- Ein Administrator kann die Anforderung übergehen (`powercfg /requestsoverride`). Der Ruhezustand bei fast leerem Akku greift weiterhin.
 
 ### Einstellungen
 
@@ -287,4 +312,5 @@ Ausführlich in der Spezifikation unter [„Shell-Integration“ → „Bekannte
 - Windows-Benachrichtigungen und Blinken in der Taskleiste;
 - weitere Einstellungen wie die Terminal-Schriftart, eine Akzentfarbe;
 - Auto-Update, Autostart und Code-Signing;
+- beim Wachhalten: simulierte Eingaben gegen Sperre oder „Abwesend“-Status, eine Zeitbegrenzung („für 2 Stunden“) und ein automatisches Wachhalten nur, solange Claude arbeitet;
 - automatisierte Tests der Oberfläche.
