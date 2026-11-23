@@ -1,7 +1,7 @@
 # THub 2: Tabs, Claude-Sessions, die einen Neustart überleben, und neuer Look
 
 > Status: `ready-for-agent`
-> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
+> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Am 2026-11-23: Hinweise weichen der Eingabe aus (Ticket 32), der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist (Ticket 33), Kopieren mit `Ctrl+C` und Einfügen mit `Ctrl+V` (Ticket 34). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
 
 > **Name:** Die App heisst **THub** (bis 2026-11-19 „TermHub“). Datenordner `%APPDATA%\THub`, in der Entwicklung `%APPDATA%\THub-dev`. Umsetzung des Namenswechsels: Ticket 20.
 
@@ -102,11 +102,12 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 
 49. Als Nutzer möchte ich unten rechts im THub-Fenster einen Hinweis bekommen, wenn Claude in einem Tab, den ich gerade nicht sehe, auf mich wartet oder fertig wird, damit ich reagieren kann, ohne alle Tabs zu prüfen.
 50. Als Nutzer möchte ich mit einem Klick auf den Hinweis direkt in den betroffenen Tab springen, damit ich sofort weitermachen kann.
-51. Als Nutzer möchte ich, dass „Fertig“-Hinweise nach etwa sechs Sekunden verschwinden, der Countdown aber erst läuft, wenn THub im Vordergrund ist, damit ich nichts verpasse, während ich in einem anderen Programm bin.
+51. Als Nutzer möchte ich, dass „Fertig“-Hinweise nach etwa sechs Sekunden verschwinden, der Countdown aber nur läuft, solange THub sichtbar auf dem Bildschirm ist (auch ohne Fokus), damit ich nichts verpasse, während THub minimiert oder verdeckt ist. (Bis Ticket 33: nur, solange THub im Vordergrund ist.)
 52. Als Nutzer möchte ich, dass „Wartet auf dich“-Hinweise stehen bleiben, bis ich den Tab öffne oder Claude dort wieder arbeitet, damit eine offene Frage nicht untergeht.
 53. Als Nutzer möchte ich, dass sich mehrere Hinweise stapeln, damit ich alle sehe.
 54. Als Nutzer möchte ich die Hinweise in den Einstellungen abschalten können, damit mich THub nicht stört, wenn ich das nicht will.
 55. Als Nutzer möchte ich keine Windows-Benachrichtigungen und kein Blinken in der Taskleiste, damit THub mein System nicht zumüllt.
+95. Als Nutzer möchte ich, dass die Hinweise nie verdecken, was ich gerade tippe, auch wenn mein Text bis nach rechts reicht oder über mehrere Zeilen geht, damit ich ihn lesen kann, während die Hinweise sichtbar bleiben.
 
 ### Wiederherstellen nach einem Neustart
 
@@ -133,7 +134,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 70. Als Nutzer möchte ich mit `Ctrl+Shift+P` eine Befehlspalette öffnen und durch Tippen eines Namens zu einem Tab springen, damit ich auch bei vielen Tabs sofort finde, was ich suche.
 71. Als Nutzer möchte ich in der Befehlspalette Befehle finden (Neues Terminal, Neues Terminal in …, Umbenennen, Schliessen, Zuletzt geschlossen, Einstellungen, Standardordner ändern), damit ich keine Tastenkürzel auswendig lernen muss.
 72. Als Nutzer möchte ich, dass `Ctrl+K` in Claude und in den Shells weiterhin funktioniert, damit THub meine gewohnten Tasten nicht stiehlt.
-73. Als Nutzer möchte ich mit `Ctrl+Shift+C` / `Ctrl+Shift+V` und mit Rechtsklick im Terminal kopieren und einfügen, damit das wie gewohnt funktioniert.
+73. Als Nutzer möchte ich mit `Ctrl+Shift+C` / `Ctrl+Shift+V` und mit Rechtsklick im Terminal kopieren und einfügen, dazu mit `Ctrl+C` kopieren, wenn etwas markiert ist, und mit `Ctrl+V` einfügen, damit das wie gewohnt funktioniert, auch in Claude. (`Ctrl+C` und `Ctrl+V` seit Ticket 34.)
 74. Als Nutzer möchte ich die Terminal-Schriftgrösse mit `Ctrl` + Mausrad oder `Ctrl` `+` / `Ctrl` `-` ändern, damit ich sie schnell anpassen kann.
 83. Als Nutzer möchte ich in THub eine Übersicht aller Tastenkürzel öffnen können (über die Befehlspalette und aus den Einstellungen), damit ich sie nachschlagen kann, ohne das README zu suchen.
 
@@ -184,7 +185,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
   - **Prozess-Sonde**: liefert in **einer** Abfrage alle Prozesse mit Prozess-ID, Eltern-ID, Programmname und Startzeit (und für verwaiste Git-Bash-Prozesse den Konsolen-Host).
   - **System**: ob ein Ordner existiert, Benutzerordner und Benutzername, angeschlossene Bildschirme.
   - **Wachhalten** (Ticket 28): die Stufe, auf der Windows den Rechner wach hält (aus, nur Rechner, Rechner und Bildschirm).
-- **Eingänge** in den Kern: Befehle aus dem Renderer (darunter „Ansicht des Tabs bereit“ mit Spalten und Zeilen, angezeigter Tab, Fenster im Vordergrund ja/nein), Ausgabe und Ende aus dem Terminal-Backend (der Kern erkennt darin die Ordner-Meldungen der Shell), Meldungen des `claude`-Starters, Claude-Hook-Ereignisse und Prozess-Schnappschüsse.
+- **Eingänge** in den Kern: Befehle aus dem Renderer (darunter „Ansicht des Tabs bereit“ mit Spalten und Zeilen, angezeigter Tab, Fenster im Vordergrund ja/nein, Fenster sichtbar ja/nein), Ausgabe und Ende aus dem Terminal-Backend (der Kern erkennt darin die Ordner-Meldungen der Shell), Meldungen des `claude`-Starters, Claude-Hook-Ereignisse und Prozess-Schnappschüsse.
 - **Ausgänge**: der Zustand an den Renderer (vollständiger Schnappschuss beim Laden, danach Änderungsereignisse: Tabs, Status, Hinweise, Einstellungen), Startaufträge an das Terminal-Backend, Verlauf zum Wiederherstellen.
 - **Vertrag zwischen Renderer und Kern:**
   - Der Kern erteilt die Startaufträge, nicht der Renderer.
@@ -436,7 +437,7 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 
 **Hinweise im Fenster:**
 - Der Kern löst einen Hinweis aus, wenn ein nicht sichtbarer Tab in „wartet auf dich“ wechselt oder fertig wird. Pro Tab gibt es höchstens einen solchen Hinweis; ein neuer ersetzt den alten. Offene Punkte (siehe unten) haben einen eigenen Platz. Hinweise verschiedener Tabs stehen gleichzeitig übereinander; wird ein Tab angezeigt (auf welchem Weg auch immer), verschwindet nur dessen Hinweis.
-- „Fertig“ verschwindet nach etwa 6 Sekunden Vordergrundzeit oder beim Anzeigen des Tabs.
+- „Fertig“ verschwindet nach etwa 6 Sekunden, in denen das Fenster sichtbar ist (bis Ticket 33: Vordergrundzeit), oder beim Anzeigen des Tabs.
 - „Wartet“ verschwindet beim Anzeigen des Tabs oder wenn der Tab wieder arbeitet.
 - Hinweise nehmen dem Terminal nie den Fokus.
 - Sind Hinweise in den Einstellungen abgeschaltet, löst der Kern keine aus. Die Status-Symbole bleiben.
@@ -448,6 +449,17 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 - Der Countdown von „fertig“ hält auch an, solange die Maus auf dem Hinweis steht (wie im Prototyp). Wird „fertig“ erneut ausgelöst, beginnt er von vorn.
 - Beim Ausschalten der Einstellung verschwinden auch die Hinweise, die gerade stehen.
 - Die Spalte der Hinweise beginnt unter der Titelleiste und überdeckt deren Zieh-Fläche nie; reicht der Platz nicht, scrollt sie. Die Karten sind deckend (kein Mica), auch beim Überfahren.
+
+**Lage über der Eingabe (Ticket 32, vom Nutzer am 2026-11-23 gewählt):**
+- Der Stapel verdeckt nie die Eingabe im sichtbaren Tab, also die Zeilen von ihrem Anfang bis zur Zeile mit dem Cursor von xterm.js. Er liegt unter der Eingabe, wenn der ganze Stapel dort Platz hat (der bisherige Platz), sonst über der Eingabe, wenn er dort ganz Platz hat, sonst im grösseren der beiden Bänder (scrollbar). Wie weit der Text nach rechts reicht, zählt nicht; so liegt der Stapel in einem Claude-Tab ruhig über dem Eingabefeld und springt beim Tippen nicht.
+- Anfang der Eingabe: die erste nicht umbrochene Zeile (`isWrapped`) ab der Cursorzeile aufwärts; liegt in höchstens halber Terminalhöhe darüber eine Zeile nur aus Rahmenzeichen über mindestens die halbe Breite (Claudes Linie über dem Eingabefeld), gilt die nächste solche Zeile.
+- Steht die Eingabe nicht im Bild (nach oben gescrollt), liegt der Stapel wie bisher. Er bewegt sich erst, wenn die neue Lage kurz unverändert war (kein Zucken beim Neuzeichnen von Claude), gleitet mit 180 ms an den neuen Platz und bleibt stehen, solange die Maus auf einer Karte steht. Gilt für alle Hinweise.
+- Verworfen: erst ausweichen, wenn der Text in den Bereich der Karte reicht (springt beim Tippen); beim Tippen durchsichtig (offene Punkte verschwinden beim Beantworten); Terminal verkleinern (ändert die Grösse der Shell).
+
+**Countdown, solange das Fenster sichtbar ist (Ticket 33, vom Nutzer am 2026-11-23 entschieden):**
+- Der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist und die Maus nicht auf der Karte steht; der Fokus spielt dafür keine Rolle mehr. Nicht sichtbar heisst: minimiert, versteckt, von anderen Fenstern ganz verdeckt oder Bildschirm gesperrt. Bis zur ersten Meldung gilt das Fenster als nicht sichtbar.
+- Ob ein Tab als angeschaut gilt und ob ein Hinweis überhaupt erscheint, hängt weiter am Vordergrund.
+- Bekannte Grenze: Ein nur teilweise verdecktes Fenster gilt als sichtbar, auch wenn gerade die Hinweise verdeckt sind.
 
 ### Offene Punkte aus Claudes Antworten
 
@@ -606,6 +618,8 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 | `Ctrl+1` … `Ctrl+9` | Zum n-ten Tab |
 | `F2` | Aktiven Tab umbenennen |
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Kopieren / Einfügen |
+| `Ctrl+C` | Kopieren, wenn THub etwas markiert hat; sonst Abbrechen im Programm (Ticket 34) |
+| `Ctrl+V` | Einfügen; in PowerShell ohne Bracketed Paste an PSReadLine (Ticket 34) |
 | `Ctrl` + Klick auf einen Link | Im Standardbrowser öffnen (nur `http:`/`https:`; bei eingeschalteter Mausmeldung des Programms mit `Ctrl+Shift`) |
 | `Ctrl` + Mausrad, `Ctrl` `+` / `Ctrl` `-` / `Ctrl` `0` | Schriftgrösse ändern / zurücksetzen |
 
@@ -629,6 +643,12 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Ctrl+Klick:** OSC-8-Links über die Option `linkHandler` von xterm.js (ersetzt dessen Rückfrage per `window.confirm`), URLs im Klartext über `@xterm/addon-web-links` 0.12 (erschienen mit xterm.js 6.0.0). xterm.js meldet das Loslassen jeder Maustaste; geöffnet wird nur bei der linken Taste mit Ctrl. Andere Protokolle als `http:` und `https:` erkennt xterm.js für OSC 8 gar nicht erst (`allowNonHttpProtocols` bleibt aus). Überlappen ein OSC-8-Link und eine erkannte URL, gilt nur der OSC-8-Link; ein Klick öffnet einmal.
 - **Öffnen im Hauptprozess:** neuer IPC-Kanal `link:open` (`window.thub.openLink`). Der Hauptprozess prüft die Adresse selbst mit dem URL-Parser (nur `http:`/`https:`, höchstens 8192 Zeichen) und öffnet die normalisierte Form mit `shell.openExternal`. Im Testmodus öffnet er nichts und schreibt „Testmodus: Der Browser würde … öffnen.“ in die Ausgabe.
 - **Keine gestrichelte Linie:** xterm.js 6 liefert im Getter `underlineStyle` der erweiterten Zellattribute für jede Zelle mit Link-Kennung „gestrichelt“ (5), egal, was das Programm verlangt hat; der DOM-Renderer setzt daraus die Klasse `xterm-underline-5`, dieselbe wie für SGR 4:5. CSS kann die beiden nicht trennen, und eine Option gibt es nicht. THub ersetzt deshalb diesen einen Getter (`linkUnderline.ts`): Für Link-Zellen liefert er den Stil, den das Programm gesetzt hat, meist keinen. Ausdrücklich verlangte Unterstreichungen bleiben, auch SGR 4:5 in einem Link. Hand-Zeiger und durchgezogene Unterstreichung beim Überfahren zeichnet xterm.js selbst. Passt der Aufbau von xterm.js nach einem Update nicht mehr, bleibt alles wie bisher, und die Tests schlagen an.
+
+**Kopieren mit Ctrl+C, Einfügen mit Ctrl+V (Ticket 34, Wunsch des Nutzers am 2026-11-23):**
+- Claude Code hat unter Windows `Ctrl+V` nicht belegt (Bilder: `Alt+V`) und verlässt sich darauf, dass das Terminal `Ctrl+V` abfängt und einfügt, wie Windows Terminal und VS Code. Claude schaltet Bracketed Paste ein. Im Vollbild markiert Claude selbst und kopiert dann auch mit `Ctrl+C`.
+- `Ctrl+C` kopiert wie im Windows Terminal, wenn THub im aktiven Terminal etwas markiert hat, und hebt die Markierung auf; sonst geht es ans Programm. Das gilt auch bei eingeschalteter Mausmeldung (Markierung von THub dann mit `Shift` + Ziehen), anders als beim Rechtsklick.
+- `Ctrl+V` fügt ein wie `Ctrl+Shift+V`. Ausnahme: In einem Tab mit PowerShell oder Windows PowerShell (`pwsh`, `powershell`) geht `Ctrl+V` ans Programm, solange dieses keinen Bracketed Paste verlangt. Dort fügt PSReadLine selbst ein und übernimmt mehrzeiligen Text als Ganzes, statt jede Zeile auszuführen. Die Oberfläche entscheidet beim Tastendruck; im Ausnahmefall fängt sie die Taste nicht ab.
+- In Eingabefeldern der Oberfläche gehört `Ctrl+V` dem Feld.
 
 **Präzisierungen aus der Umsetzung (Ticket 26):**
 - **Klickfläche der Tabs:** Die Karte ist 34 px hoch und steht mittig in der 44 px hohen Titelleiste. Ein unsichtbares Pseudo-Element jedes Tabs (`::before`, in der eigenen Stapelebene des Tabs hinter Name, Symbol und ×) reicht über die ganze Höhe der Titelleiste, also auch 5 px unter die Karte, nicht nur darüber. Klick, Rechtsklick, mittlere Taste, Doppelklick, Ziehen, Überfahren und Tooltip wirken dort wie auf der Karte. Gemessen wird weiter die Karte: Tooltip, Abbild und Einfügemarke beim Ziehen stehen wie bisher. Die 5-px-Lücken zwischen den Tabs bleiben Leiste (kein Ziehen des Fensters, kein Tab).
@@ -761,7 +781,7 @@ Umsetzung: Ticket 30.
   - **Einfrieren:** Beenden bzw. Schliessen, danach Ende der Shell und `SessionEnd` mit Grund `other` → nach dem Neustart bzw. beim Wiederöffnen wird trotzdem fortgesetzt.
   - **Prozess-Regeln** mit konkreten Prozessbäumen (Vorlagen in `spikes/prozess-sonde/ergebnisse/`): Git-Bash-Startkette, verwaiste MSYS-Programme mit Konsolen-Host, kurzlebige Prompt-Helfer, wiederverwendete Prozess-IDs, MCP-Server unter Claude, Dev-Server, der nach der Antwort weiterläuft.
   - **Schnittstelle:** Abweisung ohne gültiges Token; Hook-Antworten sind leer und kommen sofort.
-  - **Hinweise:** nur für nicht sichtbare Tabs, Countdown nur im Vordergrund, höchstens einer pro Tab, abgeschaltet heisst keine Hinweise.
+  - **Hinweise:** nur für nicht sichtbare Tabs, Countdown nur bei sichtbarem Fenster, höchstens einer pro Tab, abgeschaltet heisst keine Hinweise.
   - **Wiederherstellen:** alle Fälle aus dem Abschnitt „Wiederherstellen“.
   - **Übernahme** eines Zustands der Version 1.
   - **Wachhalten:** Mit nachgemachtem Port meldet der Kern die wirksame Stufe beim Start und bei jeder Änderung; Ein- und Ausschalten, Wechsel der Stufe bei eingeschaltetem und ausgeschaltetem Wachhalten, dieselbe Stufe zweimal; nach einem Neustart läuft ein eingeschaltetes Wachhalten mit derselben Stufe von selbst wieder; Beenden und Einfrieren ändern die gespeicherte Einstellung nicht; ein Zustand ohne die Angaben ergibt „aus“ und „nur Rechner“.
