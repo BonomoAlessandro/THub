@@ -126,6 +126,16 @@ export function useWorkspace(): {
     };
   }, []);
 
+  // Der Countdown der „fertig“-Hinweise läuft, solange das Fenster sichtbar ist, auch ohne Fokus (Ticket 33). Chromium
+  // setzt die Seite auf „hidden“, wenn das Fenster minimiert, versteckt oder ganz verdeckt ist und wenn der Bildschirm
+  // gesperrt oder aus ist. Gemeldet beim Laden und bei jedem Wechsel.
+  useEffect(() => {
+    const report = () => api.send({ type: 'windowVisible', visible: document.visibilityState === 'visible' });
+    document.addEventListener('visibilitychange', report);
+    report();
+    return () => document.removeEventListener('visibilitychange', report);
+  }, []);
+
   const renameTab = useCallback((tabId: string, name: string) => {
     const trimmed = name.trim();
     setView((current) => {

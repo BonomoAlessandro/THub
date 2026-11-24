@@ -234,9 +234,16 @@ export interface Workspace extends ClaudeReceiver {
    * Das Fenster ist im Vordergrund bzw. nicht mehr (der Renderer meldet es beim Laden und bei jedem Wechsel).
    * Bis zur ersten Meldung gilt es als im Hintergrund. Nur im Vordergrund gilt der aktive Tab als angeschaut:
    * Kommt das Fenster mit einem fertigen Claude-Tab nach vorne, verschwinden dessen „fertig“ und sein Hinweis.
-   * Die Countdowns der Hinweise laufen nur im Vordergrund.
+   * Auf die Countdowns der Hinweise wirkt der Vordergrund nicht (Ticket 33, siehe `windowVisible`).
    */
   windowForeground(foreground: boolean): void;
+  /**
+   * Das Fenster ist sichtbar bzw. nicht mehr (der Renderer meldet es beim Laden und bei jedem Wechsel). Nicht sichtbar
+   * heisst minimiert, versteckt, von anderen Fenstern ganz verdeckt oder hinter dem Sperrbildschirm. Bis zur ersten
+   * Meldung gilt es als nicht sichtbar. Davon hängt nur der Countdown der „fertig“-Hinweise ab (Ticket 33): Er läuft,
+   * solange das Fenster sichtbar ist, auch ohne Fokus. Was als angeschaut gilt, entscheidet weiter der Vordergrund.
+   */
+  windowVisible(visible: boolean): void;
 
   /**
    * Klick auf einen Hinweis: zeigt seinen Tab an wie `activateTab`. Ein Hinweis mit offenen Punkten verschwindet dabei,
@@ -1231,7 +1238,11 @@ class WorkspaceCore implements Workspace {
     if (this.stopping || typeof foreground !== 'boolean' || foreground === this.foreground) return;
     this.foreground = foreground;
     if (this.markShownTabSeen()) this.emitTabs();
-    this.toasts.setForeground(foreground);
+  }
+
+  windowVisible(visible: boolean): void {
+    if (this.stopping || typeof visible !== 'boolean') return;
+    this.toasts.setWindowVisible(visible);
   }
 
   // ---------- Hinweise ----------
@@ -1530,7 +1541,10 @@ class WorkspaceCore implements Workspace {
 
   // ---------- Status am Tab ----------
 
-  /** Der Tab ist sichtbar: aktiv, und das Fenster ist im Vordergrund. */
+  /**
+   * Der Tab ist sichtbar im Sinne von „angeschaut“: aktiv, und das Fenster ist im Vordergrund. Ob das Fenster auf dem
+   * Bildschirm sichtbar ist, zählt hier nicht; das wirkt nur auf den Countdown der Hinweise (Ticket 33).
+   */
   private isVisible(tabId: string): boolean {
     return this.foreground && this.state.activeTabId === tabId;
   }

@@ -136,8 +136,8 @@ export interface ClosedTabInfo {
  * Art eines Hinweises unten rechts im Fenster:
  * - `waiting`: Claude wartet in einem nicht sichtbaren Tab auf dich; bleibt, bis der Tab angezeigt wird oder wieder
  *   arbeitet (Ticket 14);
- * - `finished`: Claude ist in einem nicht sichtbaren Tab fertig geworden; verschwindet nach etwa 6 Sekunden
- *   Vordergrundzeit oder beim Anzeigen des Tabs (Ticket 14);
+ * - `finished`: Claude ist in einem nicht sichtbaren Tab fertig geworden; verschwindet nach etwa 6 Sekunden, in denen
+ *   das Fenster sichtbar ist (Ticket 33), oder beim Anzeigen des Tabs (Ticket 14);
  * - `openPoints`: Claudes letzte Antwort endet mit offenen Fragen oder Punkten; erscheint auch für den sichtbaren Tab
  *   und bleibt, bis er mit × geschlossen wird, auch über einen Neustart (Ticket 22).
  *
@@ -145,13 +145,16 @@ export interface ClosedTabInfo {
  */
 export type ToastKind = 'waiting' | 'finished' | 'openPoints' | 'keepAwakeError';
 
-/** Countdown eines Hinweises, der von selbst verschwindet. Er läuft nur, solange das Fenster im Vordergrund ist. */
+/**
+ * Countdown eines Hinweises, der von selbst verschwindet. Er läuft nur, solange das Fenster sichtbar ist, auch ohne
+ * Fokus (Ticket 33).
+ */
 export interface ToastCountdown {
   /** Ganze Dauer in ms. */
   totalMs: number;
   /** Was beim Melden noch übrig war, in ms. */
   remainingMs: number;
-  /** Er läuft gerade: Fenster im Vordergrund, und die Maus steht nicht auf dem Hinweis. */
+  /** Er läuft gerade: Fenster sichtbar, und die Maus steht nicht auf dem Hinweis. */
   running: boolean;
 }
 
@@ -287,6 +290,12 @@ export type WorkspaceCommand =
    * Wechsel; der aktive Tab gilt nur im Vordergrund als angeschaut.
    */
   | { type: 'windowForeground'; foreground: boolean }
+  /**
+   * Das Fenster ist sichtbar (`document.visibilityState`) bzw. nicht mehr: nicht minimiert, versteckt, ganz verdeckt
+   * oder hinter dem Sperrbildschirm. Gemeldet beim Laden und bei jedem Wechsel; nur solange laufen die Countdowns der
+   * Hinweise (Ticket 33).
+   */
+  | { type: 'windowVisible'; visible: boolean }
   /**
    * Klick auf einen Hinweis: Der Kern zeigt dessen Tab an; ein Hinweis mit offenen Punkten verschwindet dabei, auch aus
    * dem gespeicherten Zustand.
