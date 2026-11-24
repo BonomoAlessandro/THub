@@ -65,14 +65,15 @@ describe('Hinweise im Fenster', () => {
       expect(a.toast()).toMatchObject({ kind: 'waiting' });
     });
 
-    it('auch der aktive Tab bekommt einen Hinweis, solange das Fenster im Hintergrund ist', async () => {
+    it('auch der aktive Tab bekommt einen Hinweis, solange das Fenster im Hintergrund ist; sichtbar läuft sein Countdown', async () => {
       const { h, a } = await startScene();
       h.workspace.activateTab(a.id);
       h.workspace.windowForeground(false);
 
       await a.answer();
 
-      expect(a.toast()).toMatchObject({ kind: 'finished', countdown: { running: false } });
+      expect(a.toast()).toMatchObject({ kind: 'finished', countdown: { running: true } });
+      expect(a.status()).toBe('finished');
     });
 
     it('ohne Wechsel in „wartet“ kein neuer Hinweis: die verspätete Benachrichtigung zur selben Rückfrage ändert nichts', async () => {
@@ -222,8 +223,10 @@ describe('Hinweise im Fenster', () => {
     });
   });
 
-  describe('„fertig“ verschwindet nach 6 Sekunden Vordergrundzeit', () => {
-    it('nach 6 Sekunden im Vordergrund ist er weg, der grüne Punkt bleibt', async () => {
+  // Ticket 33: Der Countdown hängt an der Sichtbarkeit des Fensters (minimiert, versteckt, ganz verdeckt, gesperrt),
+  // nicht mehr am Fokus. Ob ein Tab als angeschaut gilt, entscheidet weiter der Vordergrund (siehe oben).
+  describe('„fertig“ verschwindet nach 6 Sekunden, in denen das Fenster sichtbar ist', () => {
+    it('nach 6 Sekunden mit sichtbarem Fenster ist er weg, der grüne Punkt bleibt', async () => {
       const { h, a } = await startScene();
       await a.answer();
 
@@ -236,30 +239,116 @@ describe('Hinweise im Fenster', () => {
       expect(a.status()).toBe('finished');
     });
 
-    it('im Hintergrund hält der Countdown an und läuft im Vordergrund weiter', async () => {
+    it('Fenster sichtbar, aber ohne Fokus: der Countdown läuft, nach 6 Sekunden ist er weg', async () => {
       const { h, a } = await startScene();
       h.workspace.windowForeground(false);
+      await a.answer();
+
+      expect(a.toast()).toMatchObject({ countdown: { remainingMs: FINISHED_MS, running: true } });
+      h.clock.advance(FINISHED_MS - 1);
+      expect(a.toast()).toMatchObject({ countdown: { remainingMs: 1, running: true } });
+      h.clock.advance(1);
+
+      expect(a.toast()).toBeUndefined();
+      expect(a.status()).toBe('finished');
+    });
+
+    it('nicht sichtbar hält der Countdown an; wieder sichtbar läuft er mit der übrigen Zeit weiter', async () => {
+      const { h, a } = await startScene();
+      h.workspace.windowForeground(false);
+      h.workspace.windowVisible(false);
       await a.answer();
 
       h.clock.advance(60_000);
       expect(a.toast()).toMatchObject({ countdown: { remainingMs: FINISHED_MS, running: false } });
 
-      h.workspace.windowForeground(true);
+      h.workspace.windowVisible(true);
       expect(h.eventsOfType('toasts').at(-1)?.toasts[0]).toMatchObject({ countdown: { running: true } });
       h.clock.advance(2000);
-      h.workspace.windowForeground(false);
-      expect(a.toast()).toMatchObject({ countdown: { remainingMs: 4000, running: false } });
+      h.workspace.windowVisible(false);
+      expect(h.eventsOfType('toasts').at(-1)?.toasts[0]).toMatchObject({
+        countdown: { remainingMs: 4000, running: false },
+      });
       h.clock.advance(60_000);
+      expect(a.toast()).toMatchObject({ countdown: { remainingMs: 4000, running: false } });
 
-      h.workspace.windowForeground(true);
+      h.workspace.windowVisible(true);
       h.clock.advance(3999);
-      expect(a.toast()).toMatchObject({ countdown: { remainingMs: 1 } });
+      expect(a.toast()).toMatchObject({ countdown: { remainingMs: 1, running: true } });
       h.clock.advance(1);
       expect(a.toast()).toBeUndefined();
     });
 
-    it('solange die Maus auf dem Hinweis steht, hält er an', async () => {
+    it('vor der ersten Meldung zur Sichtbarkeit läuft nichts, auch mit Fokus', async () => {
+      const { h, a } = await startScene({ reportVisibility: false });
+      await a.answer();
+
+      h.clock.advance(60_000);
+      expect(a.toast()).toMatchObject({ countdown: { remainingMs: FINISHED_MS, running: false } });
+
+      h.workspace.windowVisible(true);
+      h.clock.advance(FINISHED_MS);
+      expect(a.toast()).toBeUndefined();
+    });
+
+    it('ein Wechsel des Fokus allein ändert am Countdown nichts', async () => {
       const { h, a } = await startScene();
+      await a.answer();
+      h.clock.advance(1000);
+      const events = h.eventsOfType('toasts').length;
+
+      h.workspace.windowForeground(false);
+      h.clock.advance(1000);
+      h.workspace.windowForeground(true);
+      h.clock.advance(1000);
+
+      expect(h.eventsOfType('toasts')).toHaveLength(events);
+      expect(a.toast()).toMatchObject({ countdown: { remainingMs: 3000, running: true } });
+
+      // Nicht sichtbar startet ihn auch der Fokus nicht.
+      h.workspace.windowVisible(false);
+      h.workspace.windowForeground(false);
+      h.workspace.windowForeground(true);
+      h.clock.advance(60_000);
+      expect(a.toast()).toMatchObject({ countdown: { remainingMs: 3000, running: false } });
+    });
+
+    it('der Schnappschuss meldet `running` nach der Sichtbarkeit, nicht nach dem Fokus', async () => {
+      const { h, a } = await startScene();
+      await a.answer();
+      const running = () => {
+        const toast = h.snapshot().toasts.find((t) => t.tabId === a.id);
+        return toast?.kind === 'finished' ? toast.countdown.running : undefined;
+      };
+
+      const seen: [boolean, boolean, boolean | undefined][] = [];
+      for (const [visible, foreground] of [
+        [true, true],
+        [true, false],
+        [false, false],
+        [false, true],
+        [true, true],
+      ] as const) {
+        h.workspace.windowVisible(visible);
+        h.workspace.windowForeground(foreground);
+        seen.push([visible, foreground, running()]);
+      }
+
+      expect(seen).toEqual([
+        [true, true, true],
+        [true, false, true],
+        [false, false, false],
+        [false, true, false],
+        [true, true, true],
+      ]);
+    });
+
+    it.each([
+      ['im Vordergrund', true],
+      ['ohne Fokus', false],
+    ])('solange die Maus auf dem Hinweis steht, hält er an (%s)', async (_label, foreground) => {
+      const { h, a } = await startScene();
+      h.workspace.windowForeground(foreground);
       await a.answer();
       const { id } = a.toast()!;
       h.clock.advance(1000);
@@ -276,18 +365,18 @@ describe('Hinweise im Fenster', () => {
       expect(a.toast()).toBeUndefined();
     });
 
-    it('Maus auf dem Hinweis und Fenster im Hintergrund: er läuft erst weiter, wenn beides vorbei ist', async () => {
+    it('Maus auf dem Hinweis und Fenster nicht sichtbar: er läuft erst weiter, wenn beides vorbei ist', async () => {
       const { h, a } = await startScene();
       await a.answer();
       const { id } = a.toast()!;
 
       h.workspace.holdToast(id, true);
-      h.workspace.windowForeground(false);
+      h.workspace.windowVisible(false);
       h.workspace.holdToast(id, false);
       h.clock.advance(10_000);
       expect(a.toast()).toMatchObject({ countdown: { remainingMs: FINISHED_MS, running: false } });
 
-      h.workspace.windowForeground(true);
+      h.workspace.windowVisible(true);
       h.clock.advance(FINISHED_MS);
       expect(a.toast()).toBeUndefined();
     });

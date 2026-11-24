@@ -103,20 +103,25 @@ export class ClaudeTab {
 /** Das Fenster: vorne ein normales Terminal, dahinter zwei Claude-Tabs, in der Leiste in dieser Reihenfolge. */
 export interface Scene {
   h: TestWorkspace;
-  /** Das normale Terminal; es ist aktiv, das Fenster im Vordergrund. */
+  /** Das normale Terminal; es ist aktiv, das Fenster im Vordergrund und sichtbar. */
   shownId: string;
   a: ClaudeTab;
   b: ClaudeTab;
 }
 
-export async function startScene(): Promise<Scene> {
+/**
+ * @param reportVisibility ob der Renderer schon gemeldet hat, dass das Fenster sichtbar ist; ohne Meldung gilt es als
+ *   nicht sichtbar (Ticket 33)
+ */
+export async function startScene({ reportVisibility = true } = {}): Promise<Scene> {
   const h = await startWorkspaceWithApi({ homeDir: 'C:\\Users\\anna' });
   const shownId = h.activeTab()!.id;
   const aId = h.workspace.createTab();
   const bId = h.workspace.createTab();
   h.workspace.activateTab(shownId);
   h.showAllViews();
-  // Wie der Renderer beim Laden: Das Fenster hat den Fokus.
+  // Wie der Renderer beim Laden: Das Fenster hat den Fokus und ist sichtbar.
   h.workspace.windowForeground(true);
+  if (reportVisibility) h.workspace.windowVisible(true);
   return { h, shownId, a: await ClaudeTab.launch(h, aId), b: await ClaudeTab.launch(h, bId) };
 }

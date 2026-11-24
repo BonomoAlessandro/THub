@@ -41,7 +41,7 @@ Die reinen Regeln liegen in eigenen Modulen neben dem Kern, alle ohne Electron:
 | [`tabStatus.ts`](../src/main/workspace/tabStatus.ts) | Status-Zeilen des Zustandsautomaten, Eingaben (Esc, Antwort), Vorrang der Anzeige |
 | [`processRules.ts`](../src/main/workspace/processRules.ts) | ob in einem Tab Prozesse laufen; welche Prozesse mit einem Tab enden |
 | [`resume.ts`](../src/main/workspace/resume.ts) | welche Claude-Session fortgesetzt wird, Startbefehl pro Shell |
-| [`toasts.ts`](../src/main/workspace/toasts.ts) | Hinweise: Plätze pro Tab, Countdown nur im Vordergrund |
+| [`toasts.ts`](../src/main/workspace/toasts.ts) | Hinweise: Plätze pro Tab, Countdown nur bei sichtbarem Fenster (gemeldet vom Renderer, unabhängig vom Fokus) |
 | [`openPoints.ts`](../src/main/workspace/openPoints.ts) | Anweisung an Claude und Erkennung offener Punkte |
 | [`windowPlacement.ts`](../src/main/workspace/windowPlacement.ts) | wo das Fenster öffnet |
 | [`shellIds.ts`](../src/main/workspace/shellIds.ts) | Shell-Kennungen (`pwsh`, `powershell`, `cmd`, `gitbash`, `wsl:<Distribution>`) und Anzeigenamen |
@@ -111,7 +111,7 @@ Jede Windows-Shell startet mit der mitgelieferten Integration aus [`resources/sh
 | Datei oder Ordner | Inhalt |
 |---|---|
 | `main.tsx`, `theme.ts` | Einstieg; zuerst das Design übernehmen, dann zeichnen; Terminal-Farbschema aus den Design-Variablen |
-| `App.tsx`, `useWorkspace.ts` | Fenster mit Tab-Leiste, Terminal-Fläche, Hinweisen, Palette und Dialogen; Schnappschuss und Ereignisse des Kerns |
+| `App.tsx`, `useWorkspace.ts` | Fenster mit Tab-Leiste, Terminal-Fläche, Hinweisen, Palette und Dialogen; Schnappschuss und Ereignisse des Kerns; meldet dem Kern, ob das Fenster den Fokus hat (`windowForeground`) und ob es sichtbar ist (`windowVisible`, Ticket 33) |
 | `shortcuts.ts`, `commands.ts`, `fontSize.ts` | Tabelle der Tastenkürzel; Befehle, die Tastenkürzel, Maus und Palette gemeinsam auslösen; `Ctrl` + Mausrad in Schritte |
 | `tabs/` | Titelleiste mit Tab-Leiste, Symbol-Platz, Umbenennen, Tooltip, Pfeil-Menü, Rechtsklick-Menü, Rückfrage beim Schliessen, Umsortieren per Ziehen (`useTabDrag.ts`, Rechnungen in `tabDrag.ts`), Schalter „Rechner wach halten“ mit Pfeil-Menü (`keepAwakeMenu.tsx`) |
 | `popup/` | Menü und Dialog wie im Prototyp, Bedienung mit der Tastatur (`menuKeys.ts`) |
@@ -208,6 +208,7 @@ Für automatische Prüfungen der echten App (`npm start`, `electron .` oder die 
   - „Rechner wach halten“ stellt keine Anforderung bei Windows; jede Änderung der Stufe steht nur in der Ausgabe („Testmodus: THub würde jetzt den Rechner wach halten.“, „… den Rechner und den Bildschirm wach halten.“, „… nichts mehr wach halten.“).
   - Mit zusätzlich **`THUB_TEST_KEEPAWAKE_FAIL=1`** scheitert jedes Einschalten wie eine abgelehnte Anforderung (Windows-Fehler 5): Der Schalter geht wieder aus, der Fehler-Hinweis erscheint, und in der Ausgabe steht „Testmodus: Die Anforderung scheitert (THUB_TEST_KEEPAWAKE_FAIL).“ (Ticket 31).
   - Chromium hält das Fenster ausserhalb des Bildschirms für verdeckt: Die Seite ist `hidden`, `requestAnimationFrame` läuft nicht, Zeitgeber sind auf rund eine Sekunde gedrosselt, Animationen laufen nicht zu Ende, und ein Bildschirmfoto per `PrintWindow` zeigt nur den leeren Hintergrund. Für Bildschirmfotos und Prüfungen, die zeichnen müssen, beim Start die Chromium-Option `--disable-features=CalculateNativeWinOcclusion` mitgeben (nur für diesen Prozess): Das Fenster bleibt ausserhalb des Bildschirms und ohne Fokus, die Seite ist aber `visible` (Ticket 32).
+  - **Sichtbar und nicht sichtbar prüfen** (Countdown von „fertig“, Ticket 33): Der Renderer meldet dem Kern `document.visibilityState`. Ohne die Option gilt das Testfenster als verdeckt, die Seite ist `hidden`, und der Countdown steht still. Mit der Option ist es sichtbar, aber ohne Fokus, und der Countdown läuft. Den Wechsel innerhalb eines Laufs ergibt Minimieren des eigenen Testfensters **ohne Aktivierung**: `ShowWindowAsync(hwnd, SW_SHOWMINNOACTIVE)` (7) und zurück mit `SW_SHOWNOACTIVATE` (4), nur auf das Fenster „THub“ des selbst gestarteten Prozesses; das Vordergrundfenster bleibt dabei dasselbe. Minimierte Fenster legt Windows ausserhalb des Bildschirms ab (`MINIMIZEDMETRICS` mit `ARW_HIDE`), es erscheint also nichts auf dem Desktop. Abgelesen wird über CDP: `document.visibilityState`, `document.hasFocus()`, die Hinweise aus `window.thub.loadSnapshot()` (`countdown.running`, `remainingMs`) und an der Linie `.t-progress` `animationPlayState`. Einen „fertig“-Hinweis ergeben Meldungen an die eigene Schnittstelle der Test-App (Adresse, Token und Tab aus der Umgebung eines cmd-Tabs, etwa mit `echo %THUB_API% %THUB_TOKEN% %THUB_TAB_ID% > <Datei>`): `/claude/launch`, dann die Hooks `SessionStart`, `UserPromptSubmit` und `Stop`. Weil das Testfenster nie den Fokus hat, kommt der Hinweis auch für den aktiven Tab. Verdecken durch andere Fenster, Sperren und ein ausgeschalteter Bildschirm lassen sich so nicht prüfen; sie stehen in der Abnahme von Hand.
 
 ### Installer
 

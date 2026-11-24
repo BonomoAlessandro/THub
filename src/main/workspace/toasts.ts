@@ -1,14 +1,15 @@
 // Hinweise unten rechts im Fenster (Tickets 14 und 22): welche gerade stehen, höchstens einer je Platz und Tab, und der
-// Countdown der Hinweise, die von selbst verschwinden. Dazu der Fehler beim Wachhalten (Ticket 31), der zu keinem Tab
-// gehört. Wann ein Hinweis kommt und wann er geht, entscheidet der Workspace-Kern.
+// Countdown der Hinweise, die von selbst verschwinden; er läuft, solange das Fenster sichtbar ist (Ticket 33). Dazu der
+// Fehler beim Wachhalten (Ticket 31), der zu keinem Tab gehört. Wann ein Hinweis kommt und wann er geht, entscheidet
+// der Workspace-Kern.
 
 import type { KeepAwakeFailure, ToastKind, ToastSnapshot } from '../../shared/types';
 import type { CancelTimer, Clock } from './ports';
 
-/** So lange Vordergrundzeit steht ein „fertig“-Hinweis. */
+/** So lange steht ein „fertig“-Hinweis, gezählt nur, solange das Fenster sichtbar ist. */
 export const FINISHED_TOAST_MS = 6000;
 
-/** Wie lange ein Hinweis dieser Art steht, in Vordergrundzeit; ohne Angabe, bis er weggenommen wird. */
+/** Wie lange ein Hinweis dieser Art steht, in Zeit mit sichtbarem Fenster; ohne Angabe, bis er weggenommen wird. */
 const LIFETIME_MS: Partial<Record<ToastKind, number>> = { finished: FINISHED_TOAST_MS };
 
 /** Die Hinweise zum Claude-Status eines Tabs; sie teilen sich einen Platz pro Tab. */
@@ -55,8 +56,11 @@ interface Countdown {
 export class ToastBoard {
   private toasts: Toast[] = [];
   private nextId = 1;
-  /** Das Fenster ist im Vordergrund; nur dann laufen die Countdowns. Bis zur ersten Meldung nicht. */
-  private foreground = false;
+  /**
+   * Das Fenster ist sichtbar (nicht minimiert, versteckt, ganz verdeckt oder hinter dem Sperrbildschirm); nur dann laufen
+   * die Countdowns. Ob es den Fokus hat, zählt nicht (Ticket 33). Bis zur ersten Meldung gilt es als nicht sichtbar.
+   */
+  private windowVisible = false;
 
   constructor(
     private readonly clock: Clock,
@@ -130,10 +134,10 @@ export class ToastBoard {
     this.update(toast);
   }
 
-  /** Das Fenster ist im Vordergrund bzw. nicht mehr: Die Countdowns laufen weiter bzw. halten an. */
-  setForeground(foreground: boolean): void {
-    if (foreground === this.foreground) return;
-    this.foreground = foreground;
+  /** Das Fenster ist sichtbar bzw. nicht mehr: Die Countdowns laufen weiter bzw. halten an. */
+  setWindowVisible(visible: boolean): void {
+    if (visible === this.windowVisible) return;
+    this.windowVisible = visible;
     let changed = false;
     for (const toast of this.toasts) changed = this.update(toast, false) || changed;
     if (changed) this.changed();
@@ -158,14 +162,14 @@ export class ToastBoard {
   }
 
   /**
-   * Lässt den Countdown des Hinweises laufen oder anhalten, je nach Vordergrund und Maus.
+   * Lässt den Countdown des Hinweises laufen oder anhalten, je nach Sichtbarkeit des Fensters und Maus.
    * @param notify die Änderung gleich melden
    * @returns ob sich etwas geändert hat
    */
   private update(toast: Toast, notify = true): boolean {
     const countdown = toast.countdown;
     if (!countdown) return false;
-    const shouldRun = this.foreground && !countdown.held;
+    const shouldRun = this.windowVisible && !countdown.held;
     if (shouldRun === (countdown.running !== undefined)) return false;
     if (shouldRun) this.resume(toast);
     else this.pause(countdown);
@@ -173,10 +177,10 @@ export class ToastBoard {
     return true;
   }
 
-  /** Startet den Countdown, wenn das Fenster im Vordergrund ist und die Maus nicht auf dem Hinweis steht. */
+  /** Startet den Countdown, wenn das Fenster sichtbar ist und die Maus nicht auf dem Hinweis steht. */
   private resume(toast: Toast): void {
     const countdown = toast.countdown;
-    if (!countdown || countdown.running || !this.foreground || countdown.held) return;
+    if (!countdown || countdown.running || !this.windowVisible || countdown.held) return;
     countdown.running = {
       since: this.clock.now(),
       cancel: this.clock.schedule(countdown.remaining, () => {

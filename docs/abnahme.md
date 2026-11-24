@@ -230,6 +230,16 @@ Einen Hinweis mit offenen Punkten bekommst du, wenn du Claude um eine Antwort mi
 - [ ] Im Verlauf nach oben scrollen: Der Stapel geht nach unten. Zurück ans Ende: Er steht wieder über der Eingabe. (T32)
 - [ ] **[Claude]** Claude im Vollbild-Modus: Der Hinweis steht über dem Eingabefeld. (T32)
 
+## Countdown bei sichtbarem Fenster (Ticket 33)
+
+Einen „fertig“-Hinweis bekommst du, wenn Claude in einem Tab fertig wird, den du gerade nicht anschaust: ein anderer Tab ist aktiv, oder der Fokus liegt in einem anderen Programm. Gib Claude dazu eine Aufgabe, die etwas dauert (etwa „Warte 20 Sekunden mit `sleep` und antworte dann mit OK“).
+
+- [ ] **[Claude]** THub steht sichtbar neben einem anderen Programm oder auf dem zweiten Bildschirm, der Fokus liegt im anderen Programm. Claude wird in einem Tab fertig: Die grüne Linie läuft herunter, und der Hinweis verschwindet nach etwa 6 Sekunden. (T33)
+- [ ] **[Claude]** THub ist minimiert, während Claude fertig wird. Holst du THub wieder hervor, steht der Hinweis mit voller Linie da und läuft erst dann herunter. (T33)
+- [ ] **[Claude]** Dasselbe mit einem THub, das ein anderes Fenster (etwa ein maximierter Browser) ganz verdeckt: Der Hinweis wartet mit voller Linie, bis THub wieder zu sehen ist. (T33)
+- [ ] **[Claude]** Bildschirm sperren (`Win+L`), während ein Hinweis herunterzählt: Nach dem Entsperren steht er noch da und läuft mit der übrigen Zeit weiter. (T33)
+- [ ] **[Claude]** Ein nur teilweise verdecktes THub, bei dem die Ecke mit den Hinweisen verdeckt ist: Der Hinweis läuft trotzdem ab (bekannte Grenze). (T33)
+
 ## App-Symbol (Ticket 29)
 
 - [x] Du hast einen Entwurf freigegeben: C (gestapelte Terminals) in Graphit. (T29)
