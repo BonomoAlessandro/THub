@@ -44,11 +44,16 @@ export function rightClickAction(
   return term.hasSelection() ? 'copy' : 'paste';
 }
 
-/** Kopiert die Auswahl in die Zwischenablage und hebt sie auf. Ohne Auswahl passiert nichts. */
+/**
+ * Kopiert die Auswahl in die Zwischenablage und hebt sie auf. Ohne Auswahl passiert nichts. Die Auswahl ist sofort weg,
+ * nicht erst, wenn die Zwischenablage geschrieben ist: Ein gleich folgendes `Ctrl+C` bricht dann im Programm ab, statt
+ * noch einmal zu kopieren (Ticket 34).
+ */
 export async function copySelection(term: MouseTerminal, clipboard: TerminalClipboard): Promise<void> {
   if (!term.hasSelection()) return;
-  await clipboard.write(term.getSelection());
+  const text = term.getSelection();
   term.clearSelection();
+  await clipboard.write(text);
 }
 
 /** Fügt die Zwischenablage ins Terminal ein, wie getippt (mit Bracketed Paste, wenn das Programm es verlangt). */

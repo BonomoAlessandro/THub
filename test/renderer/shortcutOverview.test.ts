@@ -60,8 +60,8 @@ describe('Übersicht der Tastenkürzel', () => {
         'Tab umbenennen': ['F2'],
       },
       Bearbeiten: {
-        Kopieren: ['Ctrl+Shift+C'],
-        Einfügen: ['Ctrl+Shift+V'],
+        Kopieren: ['Ctrl+Shift+C', 'Ctrl+C (nur mit Markierung)'],
+        Einfügen: ['Ctrl+Shift+V', 'Ctrl+V'],
       },
       Darstellung: {
         'Schrift grösser': ['Ctrl++'],
@@ -172,11 +172,14 @@ describe('Übersicht der Tastenkürzel', () => {
     expect(html).toContain('<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>');
     expect(html).toContain('<kbd>Ctrl</kbd>+<kbd>1</kbd> … <kbd>9</kbd>');
     expect(html).toContain('<kbd>Ctrl</kbd> + Mausrad');
+    expect(html).toContain('<kbd>Ctrl</kbd>+<kbd>C</kbd> (nur mit Markierung)');
+    expect(html).toContain('<kbd>Ctrl</kbd>+<kbd>V</kbd>');
   });
 
-  it('Ctrl+K und Ctrl+C stehen nicht darin; sie gehören dem Terminal', () => {
+  it('Ctrl+K steht nicht darin, es gehört dem Terminal; Ctrl+C nur mit dem Zusatz „nur mit Markierung“', () => {
     const combos = shortcutOverview().flatMap((s) => s.shortcuts.flatMap((row) => row.combos.map(comboText)));
     expect(combos).not.toContain('Ctrl+K');
     expect(combos).not.toContain('Ctrl+C');
+    expect(combos).toContain('Ctrl+C (nur mit Markierung)');
   });
 });

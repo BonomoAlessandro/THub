@@ -14,7 +14,13 @@ Ausführliche Bedienung von THub. Eine Kurzfassung steht im [README](../README.m
 - **Tooltip** beim Überfahren: Name, aktueller Ordner, Shell und Status.
 - **Viele Tabs:** Die Tabs werden schmaler (bis 112 px), die Leiste wird scrollbar, auch mit dem Mausrad; der aktive Tab bleibt sichtbar. Zwischen `+` und dem Zahnrad bleibt immer eine freie Fläche von mindestens 56 px: Sie verschiebt das Fenster, ein Doppelklick maximiert es.
 - **Beendete Shell** (etwa nach `exit`): Im Terminal steht „Prozess beendet mit Code n – beliebige Taste startet die Shell neu“.
-- **Kopieren und Einfügen:** `Ctrl+Shift+C` / `Ctrl+Shift+V` oder Rechtsklick ins Terminal (mit Auswahl kopieren, sonst einfügen). `Ctrl+C` geht an die Shell. Hat das Programm im Terminal die Maus eingeschaltet (etwa Claude im Vollbild), gehört ihm der Rechtsklick: Claude kopiert bzw. fügt dann selbst ein, genau einmal. Mit `Shift` + Rechtsklick kopiert bzw. fügt THub trotzdem ein, wie im Windows Terminal.
+- **Kopieren und Einfügen** wie im Windows Terminal:
+  - **`Ctrl+C`** kopiert, wenn du im Terminal etwas markiert hast, und hebt die Markierung auf; das Programm bekommt die Taste dann nicht. Ohne Markierung geht `Ctrl+C` wie gewohnt an die Shell bzw. das Programm und bricht ab. Eine vergessene Markierung schluckt also das erste `Ctrl+C`, erst das zweite bricht ab.
+  - **`Ctrl+V`** fügt ein, in Claude genau einmal und mehrzeiliger Text in einem Stück, ohne ihn abzuschicken. In PowerShell und Windows PowerShell fügt an der Eingabe PowerShell selbst ein (PSReadLine): So landet mehrzeiliger Text als Ganzes in der Eingabe und läuft erst mit Enter, statt Zeile für Zeile. Läuft dort Claude, fügt THub ein. Bilder fügt Claude weiter mit `Alt+V` ein.
+  - **`Ctrl+Shift+C` / `Ctrl+Shift+V`** kopieren bzw. fügen immer über THub ein, auch in PowerShell; ebenso der **Rechtsklick** ins Terminal (mit Markierung kopieren, sonst einfügen).
+  - **Claude im Vollbild** (das Programm hat die Maus eingeschaltet): Mit der Maus markiert Claude selbst und kopiert dabei; `Ctrl+C` geht dann an Claude, das kopiert bzw. ohne Markierung abbricht. Mit `Shift` + Ziehen markiert THub, und `Ctrl+C` kopiert diese Markierung. Der Rechtsklick gehört Claude: Claude kopiert bzw. fügt dann selbst ein, genau einmal; mit `Shift` + Rechtsklick kopiert bzw. fügt THub trotzdem ein.
+  - In Eingabefeldern (Tab umbenennen, Befehlspalette, Dialoge) wirken `Ctrl+C` und `Ctrl+V` wie gewohnt im Feld.
+  - Programme, die `Ctrl+V` selbst brauchen (Blockauswahl in vim, „nächstes Zeichen wörtlich“ in Git Bash), bekommen die Taste ausserhalb von PowerShell nicht mehr. Umgekehrt bekommt in einem PowerShell-Tab ein Programm ohne Bracketed Paste (etwa ein älteres REPL) `Ctrl+V` statt des Texts; dort helfen `Ctrl+Shift+V` und der Rechtsklick.
 - **Links:** Adressen im Terminal (Links, die Claude ausgibt, und URLs im Klartext wie die eines Dev-Servers) haben keine Linie; beim Überfahren erscheinen eine durchgezogene Unterstreichung und der Hand-Zeiger. `Ctrl` + Klick öffnet sie im Standardbrowser, nur `http:` und `https:`, ohne Rückfrage; ein Klick ohne `Ctrl` öffnet nichts. Hat das Programm die Maus eingeschaltet, geht auch `Ctrl` + Klick an das Programm (Claude öffnet den Link dann selbst); `Ctrl+Shift` + Klick öffnet ihn über THub.
 - **Kein Tab mehr offen:** Die Fläche zeigt „Kein Terminal offen.“ mit dem Knopf „Neues Terminal“. Startet THub ohne gespeicherte Tabs, öffnet es selbst ein Terminal.
 
@@ -204,8 +210,8 @@ Die Tabelle entspricht `SHORTCUTS` in [src/renderer/shortcuts.ts](../src/rendere
 | Tabs | Vorheriger Tab | `Ctrl+Shift+Tab` oder `Ctrl+PageUp` |
 | Tabs | Zum ersten bis neunten Tab | `Ctrl+1` … `9` |
 | Tabs | Tab umbenennen | `F2` |
-| Bearbeiten | Kopieren | `Ctrl+Shift+C` |
-| Bearbeiten | Einfügen | `Ctrl+Shift+V` |
+| Bearbeiten | Kopieren | `Ctrl+Shift+C` oder `Ctrl+C` (nur mit Markierung) |
+| Bearbeiten | Einfügen | `Ctrl+Shift+V` oder `Ctrl+V` |
 | Darstellung | Schrift grösser | `Ctrl` `+` |
 | Darstellung | Schrift kleiner | `Ctrl` `-` |
 | Darstellung | Schriftgrösse zurücksetzen | `Ctrl` `0` |
@@ -215,7 +221,8 @@ Die Tabelle entspricht `SHORTCUTS` in [src/renderer/shortcuts.ts](../src/rendere
 - `+`, `-` und `0` zählen nach dem erzeugten Zeichen, nicht nach der Tastenposition: Die Schweizer Tastatur (`+` auf Shift+1) und der Ziffernblock funktionieren, `Ctrl` `=` zählt wie `Ctrl` `+`.
 - `Z` zählt nach dem erzeugten Buchstaben, also auch auf der Schweizer und der deutschen Tastatur, wo `Z` dort liegt, wo die US-Tastatur `Y` hat. Ohne lateinischen Buchstaben (etwa im russischen Layout) gilt die Position der US-Tastatur.
 - Mit Alt oder AltGr ist nie ein Kürzel gemeint.
-- Alle anderen Tasten gehen ans Terminal, auch `Ctrl+K` und `Ctrl+C`.
+- `Ctrl+C` und `Ctrl+V` gehören weiter dem Programm im Terminal, wenn THub nichts zu kopieren bzw. selbst einzufügen hat: `Ctrl+C` ohne Markierung bricht ab, `Ctrl+V` in PowerShell ohne Claude fügt über PowerShell ein (siehe „Kopieren und Einfügen“).
+- Alle anderen Tasten gehen ans Terminal, auch `Ctrl+K`.
 - Solange ein Menü, ein Dialog oder die Befehlspalette offen ist oder ein Tab umbenannt wird, ruhen die Kürzel.
 - Mit der Maus: Doppelklick auf einen Tab benennt ihn um, die mittlere Maustaste schliesst ihn, Rechtsklick öffnet sein Menü; Rechtsklick ins Terminal kopiert bzw. fügt ein, `Ctrl` + Klick auf einen Link öffnet ihn im Browser. Hat das Programm im Terminal die Maus eingeschaltet (Claude im Vollbild), gehören ihm Rechtsklick und `Ctrl` + Klick; mit zusätzlich `Shift` handelt THub.
 

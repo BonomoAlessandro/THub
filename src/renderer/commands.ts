@@ -2,9 +2,10 @@
 // Kern, Kopieren und Einfügen ans Terminal; was die Oberfläche selbst zeigt (Umbenennen, Palette), meldet sie über
 // `UiActions`.
 
-import { FONT_SIZE, type KeepAwakeMode } from '../shared/types';
+import { FONT_SIZE, type KeepAwakeMode, type WorkspaceSnapshot } from '../shared/types';
 import type { ShortcutAction } from './shortcuts';
 import { versionLabel } from './version';
+import { runningShellId } from './terminal/clipboardKeys';
 import { focusTerminal, terminalViews } from './terminal/terminalViews';
 
 const api = window.thub;
@@ -61,6 +62,24 @@ export function runShortcut(action: ShortcutAction, ui: UiActions): void {
       ui.openPalette();
       return;
   }
+}
+
+/**
+ * Ob THub eine Taste nimmt, die sonst dem Programm im Terminal gehört (`Ctrl+C`, `Ctrl+V`; `shared` in der Tabelle der
+ * Kürzel): nur, wenn es im Terminal des aktiven Tabs kopiert bzw. einfügt (`clipboardKeyAction`, Ticket 34). Sonst, und
+ * ohne Terminal, geht die Taste unverändert ans Programm. Entschieden wird sofort beim Tastendruck, damit eine
+ * durchgelassene Taste ohne Verzögerung und vor den nächsten Tasten ankommt.
+ */
+export function takesSharedKey(
+  action: ShortcutAction,
+  workspace: Pick<WorkspaceSnapshot, 'tabs' | 'activeTabId' | 'shells' | 'defaultShellId'>,
+): boolean {
+  if (action.type !== 'copy' && action.type !== 'paste') return false;
+  const tab = workspace.tabs.find((t) => t.id === workspace.activeTabId);
+  const terminal = tab && terminalViews.get(tab.id);
+  if (!terminal) return false;
+  const shellId = runningShellId(tab, workspace.shells, workspace.defaultShellId);
+  return terminal.clipboardKey(action.type, shellId) !== 'program';
 }
 
 /** Neues Terminal im Standardordner mit der Standard-Shell (`+`, Ctrl+Shift+T). */
