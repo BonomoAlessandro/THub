@@ -2,9 +2,7 @@
 
 Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in Klammern verweisen auf die Tickets in [docs/tickets](docs/tickets/README.md). Wie Versionen vergeben werden, steht in [docs/entwicklung.md](docs/entwicklung.md#version-und-installer). Welche Version installiert ist, zeigt THub unten in den Einstellungen.
 
-## Unveröffentlicht
-
-Kommt mit dem nächsten Installer.
+## 0.3.0 – 2026-11-24
 
 **Neu**
 
