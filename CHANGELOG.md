@@ -6,9 +6,15 @@ Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in
 
 Kommt mit dem nächsten Installer.
 
+**Neu**
+
+- `Ctrl+C` kopiert, wenn im Terminal etwas markiert ist, sonst bricht es ab wie bisher. `Ctrl+V` fügt ein, auch in Claude; in PowerShell fügt bei `Ctrl+V` wie bisher PowerShell selbst ein. (34)
+
 **Geändert**
 
 - Die Versionszeile in den Einstellungen zeigt nur noch die Version, ohne Commit. (30)
+- Die Hinweise unten rechts verdecken nicht mehr, was man tippt: Steht die Eingabe unten, rücken sie darüber. (32)
+- Der Countdown der „fertig“-Hinweise läuft, solange THub sichtbar ist, auch wenn ein anderes Programm den Fokus hat. (33)
 
 ## 0.2.0 – 2026-11-22
 
