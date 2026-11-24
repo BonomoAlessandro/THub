@@ -128,6 +128,7 @@ Wartet Claude in einem Tab, den du gerade nicht siehst, auf dich oder wird dort 
 
 - Ein Klick auf die Karte zeigt den Tab an. Das `×` (beim Überfahren) nimmt nur den Hinweis weg, das Symbol am Tab bleibt. Die Karten nehmen dem Terminal nie den Fokus: Tippen geht weiter ins aktive Terminal, auch nach einem Klick auf das `×`.
 - Pro Tab höchstens ein solcher Hinweis; ein neuer ersetzt den alten. Hinweise mehrerer Tabs stehen übereinander, der neueste oben. Reicht der Platz nicht, scrollt die Spalte; sie beginnt immer unter der Titelleiste.
+- Die Hinweise (auch offene Punkte und der Fehler beim Wachhalten) verdecken nie, was du im sichtbaren Tab tippst: Steht die Eingabe unten, etwa Claudes Eingabefeld oder ein Prompt in der letzten Zeile, rücken sie über die Eingabe samt Claudes Linie darüber und gleiten nach `cls` wieder nach unten; solange die Maus auf einer Karte steht, bleiben sie stehen.
 - Wird ein Tab angezeigt, auf welchem Weg auch immer (Klick auf Hinweis oder Tab, Tastenkürzel, Schliessen des Nachbarn, Fenster kommt mit ihm nach vorne), verschwinden seine Hinweise „wartet“ und „fertig“.
 - **„Fertig“** verschwindet nach 6 Sekunden; die Zeit läuft nur, solange THub im Vordergrund ist und die Maus nicht auf der Karte steht. Die Linie am unteren Rand zeigt die übrige Zeit.
 - **„Wartet“** bleibt, bis der Tab angezeigt wird oder Claude dort nicht mehr wartet.

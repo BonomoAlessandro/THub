@@ -4,6 +4,7 @@ import { AlertIcon, ArrowRightIcon, CloseIcon, ListIcon } from '../icons';
 import { TabIcon } from '../tabs/TabIcon';
 import { focusTerminal } from '../terminal/terminalViews';
 import { keepAwakeErrorText } from './keepAwakeErrorText';
+import { useStackPlacement } from './useStackPlacement';
 
 const api = window.thub;
 
@@ -17,10 +18,12 @@ interface ToastsProps {
 /**
  * Hinweise unten rechts im Fenster, wie im Prototyp gestapelt, der neueste oben. Welche stehen, entscheidet der Kern;
  * hier gleitet ein neuer herein und ein verschwindender hinaus. Ein Hinweis, den ein neuer desselben Tabs ersetzt,
- * verschwindet ohne Animation. Hinweise nehmen dem Terminal nie den Fokus.
+ * verschwindet ohne Animation. Hinweise nehmen dem Terminal nie den Fokus. Der Stapel weicht der Eingabe im sichtbaren
+ * Tab aus und steht dann über ihr (Ticket 32, `useStackPlacement`).
  */
 export function Toasts({ toasts, tabs, activeTabId }: ToastsProps) {
   const [shown, forget] = useShownToasts(toasts);
+  const stack = useStackPlacement(activeTabId);
 
   // Ein geschlossener Tab nimmt seinen Hinweis ohne Animation mit: Ohne Tab gibt es nichts mehr zu zeigen. Der Fehler
   // beim Wachhalten gehört zu keinem Tab und gleitet immer hinaus.
@@ -31,7 +34,13 @@ export function Toasts({ toasts, tabs, activeTabId }: ToastsProps) {
   }, [shown, tabs, forget]);
 
   return (
-    <div className="toasts" aria-live="polite">
+    <div
+      className="toasts"
+      aria-live="polite"
+      ref={stack.ref}
+      onMouseEnter={stack.onMouseEnter}
+      onMouseLeave={stack.onMouseLeave}
+    >
       {shown
         .slice()
         .reverse()

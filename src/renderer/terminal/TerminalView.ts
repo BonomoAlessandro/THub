@@ -4,8 +4,10 @@ import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Terminal } from '@xterm/xterm';
 import { cssVar, terminalTheme } from '../theme';
 import { noticeBeforeStart, restoredHistory, serializeHistory, startArea } from './history';
+import { findInput, type InputRows } from './inputArea';
 import { removeLinkUnderline } from './linkUnderline';
 import { copySelection, linkToOpen, pasteClipboard, rightClick, type TerminalClipboard } from './mouse';
+import { notifyTerminalChange } from './terminalViews';
 
 const api = window.thub;
 
@@ -14,6 +16,15 @@ const clipboard: TerminalClipboard = {
   read: () => api.readClipboard(),
   write: (text) => api.writeClipboard(text),
 };
+
+/** Wo die Eingabe eines Terminals im Fenster steht, in CSS-Pixeln (Ticket 32). */
+export interface TerminalInputGeometry {
+  /** Oberkante der obersten sichtbaren Zeile, vom oberen Fensterrand. */
+  top: number;
+  rowHeight: number;
+  /** Die Zeilen der Eingabe; null, wenn der Cursor nicht im Bild ist (nach oben gescrollt). */
+  input: InputRows | null;
+}
 
 /**
  * Ein xterm.js-Terminal, gekoppelt an die Shell eines Tabs. Die Shell startet der Kern.
@@ -63,7 +74,15 @@ export class TerminalView {
       }
       api.send({ type: 'writeToTab', tabId: this.tabId, data });
     });
-    this.term.onResize(({ cols, rows }) => api.send({ type: 'resizeTab', tabId: this.tabId, cols, rows }));
+    this.term.onResize(({ cols, rows }) => {
+      api.send({ type: 'resizeTab', tabId: this.tabId, cols, rows });
+      this.changed();
+    });
+    // Die Hinweise weichen der Eingabe aus (Ticket 32): Sie werten deren Lage nach verarbeiteter Ausgabe, nach
+    // Bewegungen des Cursors und nach dem Scrollen neu aus.
+    this.term.onWriteParsed(this.changed);
+    this.term.onCursorMove(this.changed);
+    this.term.onScroll(this.changed);
 
     // Rechtsklick wie in der Windows-Konsole: mit Auswahl kopieren, sonst einfügen. Hat das Programm die Mausmeldung
     // eingeschaltet (Claude), gehört er ihm, ausser mit Shift (`rightClickAction`).
@@ -155,6 +174,33 @@ export class TerminalView {
     if (this.term.options.fontSize === size) return;
     this.term.options.fontSize = size;
     this.fit();
+    // Mit der Schrift ändert sich die Zeilenhöhe, auch wenn die Zahl der Zeilen gleich bleibt.
+    this.changed();
+  }
+
+  /**
+   * Wo die Eingabe steht, für die Hinweise (Ticket 32): Cursorzeile im sichtbaren Ausschnitt (Cursor im Puffer abzüglich
+   * der Scroll-Position), Anfang der Eingabe (`findInput`), Lage der obersten Zeile und Zeilenhöhe. Alles über die
+   * öffentliche Schnittstelle von xterm.js; die Zeilenhöhe ist die Höhe des Terminal-Elements geteilt durch die Zahl der
+   * Zeilen. Null, solange das Terminal keine Grösse hat.
+   */
+  inputGeometry(): TerminalInputGeometry | null {
+    const element = this.term.element;
+    const { rows, cols } = this.term;
+    if (!element || rows <= 0) return null;
+    const { top, height } = element.getBoundingClientRect();
+    if (height <= 0) return null;
+    const buffer = this.term.buffer.active;
+    const input = findInput({
+      cursorRow: buffer.baseY + buffer.cursorY - buffer.viewportY,
+      rows,
+      cols,
+      lineAt: (row) => {
+        const line = buffer.getLine(buffer.viewportY + row);
+        return line && { text: line.translateToString(true), isWrapped: line.isWrapped };
+      },
+    });
+    return { top, rowHeight: height / rows, input };
   }
 
   fit(): void {
@@ -178,6 +224,8 @@ export class TerminalView {
     this.host.removeEventListener('contextmenu', this.onContextMenu);
     this.term.dispose();
   }
+
+  private readonly changed = (): void => notifyTerminalChange(this.tabId);
 
   private readonly onContextMenu = (e: MouseEvent): void => {
     e.preventDefault();

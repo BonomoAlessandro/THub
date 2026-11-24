@@ -1,6 +1,6 @@
 # 32 – Hinweise weichen der Eingabe aus
 
-Status: `offen` · Typ: AFK
+Status: `erledigt` (2026-11-24, Abnahme von Hand siehe `docs/abnahme.md`) · Typ: AFK
 Blockiert durch: –
 Herkunft: Wunsch des Nutzers am 2026-11-23. Die Hinweise unten rechts liegen genau über dem Eingabefeld von Claude und über der Prompt-Zeile einer Shell, sobald diese unten angekommen ist. Getippter Text, der bis nach rechts reicht, verschwindet hinter der Karte. Besonders störend ist das beim Hinweis mit offenen Punkten: Er erscheint auch im sichtbaren Tab und bleibt stehen, während der Nutzer die Punkte beantwortet.
 Spezifikation: „Hinweise im Fenster“ (User Story 95, neu) und „Claude-Status“ → „Hinweise im Fenster“ → „Lage über der Eingabe“ (neu)
@@ -43,28 +43,28 @@ Verworfen:
 
 ## Akzeptanzkriterien
 
-- [ ] Tests für den Eingabe-Anfang (reine Funktion):
+- [x] Tests für den Eingabe-Anfang (reine Funktion):
   - lange Shell-Zeile über drei Zeilen (`isWrapped`) → erste der drei;
   - Claude-Eingabe über drei Zeilen unter einer Linie aus `─` → die Linie;
   - alter Rahmen `╭──╮` → dessen obere Zeile;
   - Linie weiter weg als die halbe Terminalhöhe oder schmaler als die halbe Breite → Cursorzeile;
   - eine Linie in Claudes Antwort weiter oben zählt nicht, die nächste über dem Cursor gewinnt;
   - ohne Linie und ohne Umbruch → Cursorzeile.
-- [ ] Tests für die Wahl des Bands (reine Funktion):
+- [x] Tests für die Wahl des Bands (reine Funktion):
   - Prompt in der letzten Zeile → über der Eingabe, Unterkante mit Abstand über ihrem Anfang;
   - Claude-Eingabe mit drei Zeilen Rahmen und Statuszeile darunter → über der Linie;
   - Prompt oben → unten wie heute;
   - Stapel zu hoch für beide Bänder → das grössere;
   - Eingabe nicht im Bild → unten wie heute.
-- [ ] Ein Test mit einer Folge von Cursorständen, wie Claude sie beim Neuzeichnen erzeugt (kurz hoch, dann zurück an die Eingabe): Der Stapel bleibt stehen. Ein Test, dass der Stapel unter der Maus stehen bleibt und danach nachrückt.
-- [ ] In der App im Testmodus über CDP auf der eigenen Seite, in einem cmd-Tab:
+- [x] Ein Test mit einer Folge von Cursorständen, wie Claude sie beim Neuzeichnen erzeugt (kurz hoch, dann zurück an die Eingabe): Der Stapel bleibt stehen. Ein Test, dass der Stapel unter der Maus stehen bleibt und danach nachrückt.
+- [x] In der App im Testmodus über CDP auf der eigenen Seite, in einem cmd-Tab:
   - Ausgabe bis zum unteren Rand erzeugen, sodass der Prompt in der letzten Zeile steht, und einen Hinweis auslösen (etwa mit `THUB_TEST_KEEPAWAKE_FAIL=1` und einem Klick auf den Schalter, oder über Hook-Ereignisse an die eigene Schnittstelle der Test-App) → die Unterkante der Karte liegt über der Oberkante der Cursorzeile;
   - einen langen Befehl tippen, der umbricht → die Karte liegt über seiner ersten Zeile;
   - nach `cls` → der Stapel liegt wieder unten wie heute.
   - Bildschirmfotos hell und dunkel per `PrintWindow`.
-- [ ] Die bisherigen Prüfungen der Hinweise (Tickets 14, 22, 27, 31) laufen weiter.
-- [ ] Handbuch und Spezifikation beschreiben das Verhalten.
-- [ ] Typecheck, `npm test` und der Build sind grün (bekannte Ausnahme: `test/main/shellLaunch.test.ts` unter Node 24.11.1).
+- [x] Die bisherigen Prüfungen der Hinweise (Tickets 14, 22, 27, 31) laufen weiter.
+- [x] Handbuch und Spezifikation beschreiben das Verhalten.
+- [x] Typecheck, `npm test` und der Build sind grün (bekannte Ausnahme: `test/main/shellLaunch.test.ts` unter Node 24.11.1).
 
 ## Abnahme von Hand
 
@@ -78,3 +78,16 @@ Verworfen:
 
 - **Cursor in Claude Code belegen:** Das Changelog von Claude Code nennt Korrekturen, damit der Terminal-Cursor dem getippten Text folgt (etwa „Fixed the terminal cursor jumping from the `/skills` search box to the skill list while typing, which could hide the caret and put IME input in the wrong place“). Das spricht dafür, dass der Cursor auch im Eingabefeld an der Eingabe steht. Belegen, ohne Claude Code mit der Konfiguration des Nutzers zu starten, zum Beispiel durch lesendes Durchsuchen des installierten Claude Code wie in Ticket 25. Lässt es sich nicht belegen, kommt es in die Abnahme von Hand. Die Linie über dem Eingabefeld fängt den Fall ohnehin ab, solange der Cursor irgendwo im Eingabefeld steht.
 - Ausserhalb dieses Tickets: Mehrzeilige Eingaben in einer Shell mit eigenen Fortsetzungszeilen (PowerShell `>>`, Shift+Enter in PSReadLine) zählen nur ab der Cursorzeile und ihren umbrochenen Vorgängern. Prompt-Marken der Shell-Integration (OSC 133) gibt es nicht und kommen nicht dazu.
+
+## Hinweise aus der Umsetzung
+
+- **Cursor von Claude Code belegt** (nur lesend am installierten Claude Code 2.1.330, ohne es zu starten): Der Ink-Renderer hat eine Cursor-Deklaration (`setCursorDeclaration`, `onCursorDeclaration`). Eine Komponente meldet Knoten und Lage (`relativeX`, `relativeY`); nach jedem Bild setzt der Renderer den echten Terminal-Cursor dorthin, im Vollbild-Modus absolut, sonst relativ. Das Eingabefeld des Prompts meldet `caret = { line, column, visible }`, solange es den Fokus hat und den Cursor zeigt; ebenso Suchfelder, Auswahllisten (Rückfragen) und „Enter y/n“. Sichtbar ist der echte Cursor nur mit der Option `nativeCursor`, gesetzt wird er trotzdem. Der Rahmen des Prompts ist `borderStyle: "round"` ohne linken und rechten Rand: oben und unten eine volle Linie aus `─` (U+2500), ohne Ecken. Beides steht jetzt in der Spezifikation.
+- Reine Rechnung: `findInput` und `isRuleLine` in `src/renderer/terminal/inputArea.ts`; `placeStack`, `freePlacement`, `samePlacement` und `SteadyPlacement` in `src/renderer/toasts/stackPlacement.ts`. Passt der Stapel in keines der beiden Bänder, endet die scrollbare Spalte auf der Seite der Eingabe genau an ihr (ohne den Innenabstand für den Schatten), damit gescrollte Karten die Eingabe nicht streifen.
+- Oberfläche: `TerminalView` meldet Ausgabe (`onWriteParsed`), Cursor, Scrollen, Grösse und Schrift über `notifyTerminalChange` (`terminalViews.ts`) und liefert `inputGeometry()` (Oberkante und Höhe des Elements von xterm.js, Zeilenhöhe = Höhe / Zeilen). `useStackPlacement` (`src/renderer/toasts/useStackPlacement.ts`) wertet höchstens einmal pro Bild aus (`requestAnimationFrame`, im versteckten Fenster `setTimeout`), füttert `SteadyPlacement` und setzt `top`, `bottom`, `padding-top`, `padding-bottom` und `data-band` an `.toasts`; den Übergang (180 ms, `--ease`) macht `app.css`. Kommt die erste Karte (oder geht die letzte), wird sofort und ohne Übergang gesetzt. Ohne Karten wird nichts gemessen. Die Maus hält über `mouseenter`/`mouseleave` an `.toasts`; verschwindet die Karte unter der Maus, löst `:hover` das Halten.
+- Tests: `test/renderer/inputArea.test.ts` (15, davon 3 auf dem Puffer eines echten xterm.js in Node) und `test/renderer/stackPlacement.test.ts` (14). Der DOM-Teil ist nicht in Vitest geprüft (keine DOM-Umgebung), sondern in der App.
+- **Geprüft in der App im Testmodus über CDP** auf der eigenen Seite, in einem cmd-Tab, mit `THUB_TEST_KEEPAWAKE_FAIL=1` und einem Hinweis mit offenen Punkten aus dem vorbereiteten `state.json` (zwei Karten). Drei Läufe: Fenster versteckt (Seite `hidden`, Rückfall auf `setTimeout`, 21 von 21), Fenster für Chromium sichtbar (`--disable-features=CalculateNativeWinOcclusion`, `requestAnimationFrame`, 21 von 21) und sichtbar ohne emulierte reduzierte Bewegung (21 von 21, statt der Prüfung „kein Übergang“ die Prüfung, dass der Stapel gleitet). Geprüft: Prompt oben → Stapel unten wie bisher (Unterkante 18 px über dem Fensterrand); Prompt in der letzten Zeile → Unterkante eine halbe Zeile über der Cursorzeile, oben 10 px unter der Titelleiste; langer umbrechender Befehl → über seiner ersten Zeile; `cls` → wieder unten; Maus auf einer Karte (CDP-Mausereignis an die eigene Seite) → der Stapel bleibt trotz neuer Lage stehen, Maus weg → er rückt nach; im Verlauf nach oben gescrollt → unten wie bisher, zurück ans Ende → wieder über der Eingabe; der Stapel gleitet (Zwischenwerte der Unterkante über rund 100 ms bis auf einen halben Pixel); reduzierte Bewegung → kein Übergang. Bildschirmfotos hell und dunkel per `PrintWindow`.
+- **ConPTY reicht in cmd `isWrapped` durch:** Beim Tippen eines langen Befehls sind die Folgezeilen in xterm.js als umbrochen markiert, ebenso bei einem Prompt, der wegen eines langen Pfads selbst über zwei Zeilen geht. Die Eingabe beginnt dann in der ersten Zeile des Prompts; der Stapel steht darüber.
+- Bisherige Prüfungen der Hinweise: Die Kern-Tests der Tickets 14, 22, 27 und 31 laufen in `npm test` grün. In der App weiter geprüft: Fehler-Hinweis mit `role="alert"` und Klasse `error`, Schalter wieder aus (31); Klick schliesst ihn (31); Klick auf den Hinweis mit offenen Punkten nimmt ihn weg (27).
+- Im versteckten Testfenster laufen weder Übergänge noch Animationen zu Ende, und `PrintWindow` zeigt nur den leeren Hintergrund. Für Messungen deshalb Layout-Werte (`offsetTop`, `offsetHeight`) statt `getBoundingClientRect` der Karten nehmen und reduzierte Bewegung emulieren; für Bildschirmfotos Chromium die Verdeckung nicht berechnen lassen (`docs/entwicklung.md`, „Testmodus“).
+- Typecheck, `npm test` (55 Dateien, 1104 Tests) und der Build sind grün, auch `test/main/shellLaunch.test.ts` (Node 24.22.1).
+- Bekannte Grenze: Die Lücke von 10 px zwischen zwei Karten gehört dem Terminal. Fährt die Maus dort durch, während eine neue Lage ansteht, rückt der Stapel nach.
