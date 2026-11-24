@@ -230,6 +230,20 @@ Einen Hinweis mit offenen Punkten bekommst du, wenn du Claude um eine Antwort mi
 - [ ] Im Verlauf nach oben scrollen: Der Stapel geht nach unten. Zurück ans Ende: Er steht wieder über der Eingabe. (T32)
 - [ ] **[Claude]** Claude im Vollbild-Modus: Der Hinweis steht über dem Eingabefeld. (T32)
 
+## Kopieren mit Ctrl+C, Einfügen mit Ctrl+V (Ticket 34)
+
+Für mehrzeiligen Text zwei Zeilen aus einem Editor kopieren, in PowerShell und cmd nur harmlose (etwa `echo eins` und `echo zwei`), falls doch eine Zeile losläuft.
+
+- [ ] **[Claude]** In Claude: Text kopieren, `Ctrl+V` → der Text steht genau einmal im Eingabefeld. Mehrzeiliger Text wird nicht abgeschickt. (T34)
+- [ ] **[Claude]** Dasselbe mit Claude im Vollbild. (T34)
+- [ ] **[Claude]** Claude im Vollbild: Mit der Maus markieren und `Ctrl+C` kopiert wie bisher. Mit `Shift` + Ziehen markieren und `Ctrl+C` kopiert, Claude bricht nichts ab. Ohne Markierung bricht `Ctrl+C` ab wie bisher. (T34)
+- [ ] In PowerShell: Text markieren, `Ctrl+C` → in einem anderen Programm einfügen ergibt den Text, die Markierung ist weg. Ein laufendes `ping -t localhost` bricht `Ctrl+C` ohne Markierung ab. (T34)
+- [ ] In PowerShell an der Eingabe: `Ctrl+V` fügt ein, mehrzeiliger Text läuft nicht Zeile für Zeile los. (T34)
+- [ ] In cmd und Git Bash: `Ctrl+C` mit Markierung kopiert, `Ctrl+V` fügt ein. (T34)
+- [ ] Beim Umbenennen eines Tabs und in der Befehlspalette kopieren und fügen `Ctrl+C` / `Ctrl+V` wie gewohnt. (T34)
+- [ ] **[Claude]** Ein Bildschirmfoto in der Zwischenablage: `Alt+V` in Claude fügt das Bild ein wie bisher. (T34)
+- [ ] Die Übersicht der Tastenkürzel zeigt bei „Kopieren“ `Ctrl+C` mit „(nur mit Markierung)“ und bei „Einfügen“ `Ctrl+V`. (T34)
+
 ## App-Symbol (Ticket 29)
 
 - [x] Du hast einen Entwurf freigegeben: C (gestapelte Terminals) in Graphit. (T29)

@@ -3,6 +3,7 @@ import { SerializeAddon } from '@xterm/addon-serialize';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Terminal } from '@xterm/xterm';
 import { cssVar, terminalTheme } from '../theme';
+import { clipboardKeyAction, type ClipboardKeyAction } from './clipboardKeys';
 import { noticeBeforeStart, restoredHistory, serializeHistory, startArea } from './history';
 import { findInput, type InputRows } from './inputArea';
 import { removeLinkUnderline } from './linkUnderline';
@@ -209,6 +210,15 @@ export class TerminalView {
     } catch {
       // Passiert, wenn der Host (noch) keine Grösse hat.
     }
+  }
+
+  /**
+   * Was `Ctrl+C` (`copy`) bzw. `Ctrl+V` (`paste`) in diesem Terminal tut, beim Tastendruck entschieden (Ticket 34):
+   * kopieren, einfügen oder die Taste dem Programm lassen (`clipboardKeyAction`).
+   * @param shellId Kennung der Shell, mit der der Tab läuft
+   */
+  clipboardKey(key: 'copy' | 'paste', shellId: string | undefined): ClipboardKeyAction {
+    return clipboardKeyAction(key, this.term, shellId);
   }
 
   copySelection(): Promise<void> {

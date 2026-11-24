@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { runShortcut } from './commands';
+import { runShortcut, takesSharedKey } from './commands';
 import { WheelSteps } from './fontSize';
 import { Palette } from './palette/Palette';
 import type { PaletteContext } from './palette/paletteEntries';
@@ -87,11 +87,14 @@ export function App() {
   }, []);
 
   // Tastenkürzel in der Capture-Phase, also bevor xterm.js die Taste sieht. Solange ein Menü oder
-  // Dialog offen ist, gehören die Tasten ihm.
+  // Dialog offen ist, gehören die Tasten ihm, in Eingabefeldern dem Feld (auch Ctrl+C und Ctrl+V).
+  // Ctrl+C und Ctrl+V nimmt THub nur, wenn es kopiert bzw. einfügt; sonst fängt es sie gar nicht erst ab, und xterm.js
+  // schickt `^C` bzw. `^V` ans Programm (Ticket 34).
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || isPopupOpen()) return;
-      const action = viewRef.current ? resolveShortcut(e) : null;
+      const view = viewRef.current;
+      const action = view ? resolveShortcut(e, (shared) => takesSharedKey(shared, view)) : null;
       if (!action) return;
       e.preventDefault();
       e.stopPropagation();

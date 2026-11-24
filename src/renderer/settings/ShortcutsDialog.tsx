@@ -25,7 +25,8 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
     >
       <ShortcutList />
       <p className="hint">
-        Alle anderen Tasten gehen ans Terminal, auch <kbd>Ctrl</kbd>+<kbd>K</kbd> und <kbd>Ctrl</kbd>+<kbd>C</kbd>.
+        Alle anderen Tasten gehen ans Terminal, auch <kbd>Ctrl</kbd>+<kbd>K</kbd> und <kbd>Ctrl</kbd>+<kbd>C</kbd> ohne
+        Markierung.
       </p>
     </Dialog>
   );
@@ -58,7 +59,10 @@ export function ShortcutList() {
   );
 }
 
-/** Eine Tastenkombination: Tasten mit „+“ dazwischen, z.B. Ctrl+Shift+T, Ctrl+1 … 9 oder Ctrl + Mausrad. */
+/**
+ * Eine Tastenkombination: Tasten mit „+“ dazwischen, z.B. Ctrl+Shift+T, Ctrl+1 … 9, Ctrl + Mausrad oder
+ * Ctrl+C (nur mit Markierung).
+ */
 function Combo({ combo }: { combo: KeyCombo }) {
   return (
     <span className="combo">
@@ -75,6 +79,7 @@ function Combo({ combo }: { combo: KeyCombo }) {
         </>
       )}
       {combo.gesture && ` + ${combo.gesture}`}
+      {combo.note && ` (${combo.note})`}
     </span>
   );
 }

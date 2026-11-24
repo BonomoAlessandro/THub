@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveShortcut, resolveWheel, type KeyInput } from '../../src/renderer/shortcuts';
+import { resolveShortcut, resolveWheel, type KeyInput, type ShortcutAction } from '../../src/renderer/shortcuts';
 
 /**
  * Ein Tastendruck wie im Browser, z.B. key('Ctrl+Shift+KeyT'). Mit `produced` das Zeichen, das die
@@ -24,6 +24,8 @@ describe('Tastenkürzel', () => {
     ['Ctrl+Shift+KeyW', { type: 'closeTab' }],
     ['Ctrl+Shift+KeyC', { type: 'copy' }],
     ['Ctrl+Shift+KeyV', { type: 'paste' }],
+    ['Ctrl+KeyC', { type: 'copy' }],
+    ['Ctrl+KeyV', { type: 'paste' }],
     ['Ctrl+Tab', { type: 'nextTab' }],
     ['Ctrl+PageDown', { type: 'nextTab' }],
     ['Ctrl+Shift+Tab', { type: 'previousTab' }],
@@ -38,8 +40,6 @@ describe('Tastenkürzel', () => {
 
   it.each([
     ['Ctrl+K für Claude und die Shells', 'Ctrl+KeyK'],
-    ['Ctrl+C zum Abbrechen', 'Ctrl+KeyC'],
-    ['Ctrl+V', 'Ctrl+KeyV'],
     ['Tab', 'Tab'],
     ['Buchstaben', 'KeyT'],
     ['AltGr-Zeichen (Windows meldet Ctrl+Alt)', 'Ctrl+Alt+Digit2'],
@@ -49,6 +49,54 @@ describe('Tastenkürzel', () => {
     ['F2 mit Ctrl', 'Ctrl+F2'],
   ])('lässt %s ans Terminal durch', (_label, combo) => {
     expect(resolveShortcut(key(combo))).toBeNull();
+  });
+
+  // Ctrl+C und Ctrl+V stehen in der Tabelle, gehören aber weiter dem Programm, wenn THub nichts zu kopieren bzw. einzufügen
+  // hat (Ticket 34). Ob THub sie nimmt, entscheidet beim Tastendruck `takesShared` (in der App `takesSharedKey`).
+  describe('Ctrl+C und Ctrl+V', () => {
+    /** Zeichnet auf, wofür `resolveShortcut` nachfragt, und antwortet mit `answer`. */
+    function asked(answer: boolean): { takesShared: (a: ShortcutAction) => boolean; questions: ShortcutAction[] } {
+      const questions: ShortcutAction[] = [];
+      return { takesShared: (a) => (questions.push(a), answer), questions };
+    }
+
+    it.each([
+      ['Ctrl+C', 'Ctrl+KeyC', { type: 'copy' }],
+      ['Ctrl+V', 'Ctrl+KeyV', { type: 'paste' }],
+    ])('%s: THub nimmt die Taste nur, wenn es kopiert bzw. einfügt', (_label, combo, action) => {
+      const yes = asked(true);
+      expect(resolveShortcut(key(combo), yes.takesShared)).toEqual(action);
+      expect(yes.questions).toEqual([action]);
+
+      const no = asked(false);
+      expect(resolveShortcut(key(combo), no.takesShared)).toBeNull();
+      expect(no.questions).toEqual([action]);
+    });
+
+    it.each([
+      ['Ctrl+Shift+C', 'Ctrl+Shift+KeyC', { type: 'copy' }],
+      ['Ctrl+Shift+V', 'Ctrl+Shift+KeyV', { type: 'paste' }],
+      ['Ctrl+Shift+T', 'Ctrl+Shift+KeyT', { type: 'newTab' }],
+    ])('%s bleibt ein Kürzel und fragt nicht nach', (_label, combo, action) => {
+      const no = asked(false);
+      expect(resolveShortcut(key(combo), no.takesShared)).toEqual(action);
+      expect(no.questions).toEqual([]);
+    });
+
+    it.each([
+      ['AltGr+C (Windows meldet Ctrl+Alt)', 'Ctrl+Alt+KeyC'],
+      ['AltGr+V (Windows meldet Ctrl+Alt)', 'Ctrl+Alt+KeyV'],
+      ['Ctrl+Shift+Alt+C', 'Ctrl+Shift+Alt+KeyC'],
+      ['Ctrl+Shift+Alt+V', 'Ctrl+Shift+Alt+KeyV'],
+      ['Alt+V (Bild einfügen in Claude)', 'Alt+KeyV'],
+      ['Alt+C', 'Alt+KeyC'],
+      ['C ohne Ctrl', 'KeyC'],
+      ['Shift+V ohne Ctrl', 'Shift+KeyV'],
+    ])('lässt %s ans Terminal durch, ohne nachzufragen', (_label, combo) => {
+      const yes = asked(true);
+      expect(resolveShortcut(key(combo), yes.takesShared)).toBeNull();
+      expect(yes.questions).toEqual([]);
+    });
   });
 
   // Erkannt am erzeugten Zeichen, nicht an der Tastenposition.

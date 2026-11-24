@@ -1,6 +1,8 @@
 // Tastenkürzel der App: eine einzige Tabelle, nach der die Tasten verarbeitet werden und aus der die Übersicht
 // „Tastenkürzel“ entsteht, damit beide nie auseinanderlaufen. Reine Zuordnung von Taste zu Aktion, ohne DOM, damit sie
-// sich prüfen lässt. Alles, was hier nicht steht, geht ans Terminal, insbesondere Ctrl+K und Ctrl+C.
+// sich prüfen lässt. Alles, was hier nicht steht, geht ans Terminal, insbesondere Ctrl+K. Ctrl+C und Ctrl+V stehen darin,
+// gehören aber weiter dem Programm, wenn THub nichts zu kopieren bzw. einzufügen hat (`shared`, Ticket 34): ohne
+// Markierung von THub geht Ctrl+C ans Programm (Abbrechen), in PowerShell ohne Bracketed Paste Ctrl+V an PSReadLine.
 
 export type ShortcutAction =
   | { type: 'newTab' }
@@ -44,8 +46,13 @@ export type ShortcutGroup = (typeof SHORTCUT_GROUPS)[number];
 
 /** Wie ein Kürzel erkannt wird. */
 export type Trigger =
-  /** Nach der Tastenposition (`KeyboardEvent.code`), mit genau diesen Zusatztasten, z.B. Ctrl+Shift+T. */
-  | { by: 'code'; code: string; ctrl?: true; shift?: true }
+  /**
+   * Nach der Tastenposition (`KeyboardEvent.code`), mit genau diesen Zusatztasten, z.B. Ctrl+Shift+T.
+   * Mit `shared` gehört die Taste sonst dem Programm im Terminal (Ctrl+C, Ctrl+V): THub nimmt sie nur, wenn es beim
+   * Tastendruck tatsächlich kopiert bzw. einfügt (`resolveShortcut`); sonst geht sie unverändert durch. `note` steht in
+   * der Übersicht hinter der Taste, z.B. „nur mit Markierung“.
+   */
+  | { by: 'code'; code: string; ctrl?: true; shift?: true; shared?: true; note?: string }
   /** Ctrl mit einer Ziffer 1 bis 9 der Zahlenreihe, nach der Tastenposition; die Ziffer zählt als Wert. */
   | { by: 'digit' }
   /**
@@ -137,14 +144,22 @@ export const SHORTCUTS: readonly Shortcut[] = [
     id: 'copy',
     group: 'Bearbeiten',
     label: 'Kopieren',
-    triggers: [{ by: 'code', code: 'KeyC', ctrl: true, shift: true }],
+    // Ctrl+C wie im Windows Terminal: kopiert nur, wenn THub etwas markiert hat; sonst bricht es im Programm ab.
+    triggers: [
+      { by: 'code', code: 'KeyC', ctrl: true, shift: true },
+      { by: 'code', code: 'KeyC', ctrl: true, shared: true, note: 'nur mit Markierung' },
+    ],
     action: () => ({ type: 'copy' }),
   },
   {
     id: 'paste',
     group: 'Bearbeiten',
     label: 'Einfügen',
-    triggers: [{ by: 'code', code: 'KeyV', ctrl: true, shift: true }],
+    // Ctrl+V fügt überall ein; in PowerShell ohne Bracketed Paste fügt PSReadLine selbst ein.
+    triggers: [
+      { by: 'code', code: 'KeyV', ctrl: true, shift: true },
+      { by: 'code', code: 'KeyV', ctrl: true, shared: true },
+    ],
     action: () => ({ type: 'paste' }),
   },
   {
@@ -186,9 +201,10 @@ export const SHORTCUTS: readonly Shortcut[] = [
   },
 ];
 
-/** Ein erkanntes Kürzel: der Eintrag der Tabelle und die Aktion, die er für diese Taste liefert. */
+/** Ein erkanntes Kürzel: der Eintrag der Tabelle, der passende Auslöser und die Aktion, die er für diese Taste liefert. */
 export interface ShortcutMatch {
   shortcut: Shortcut;
+  trigger: Trigger;
   action: ShortcutAction;
 }
 
@@ -203,9 +219,24 @@ export function matchShortcut(e: KeyInput): ShortcutMatch | null {
   return findMatch(e, BY_POSITION) ?? findMatch(e, BY_CHARACTER);
 }
 
-/** Liefert die Aktion zu einem Tastendruck oder `null`, wenn die Taste ans Terminal gehört. */
-export function resolveShortcut(e: KeyInput): ShortcutAction | null {
-  return matchShortcut(e)?.action ?? null;
+/**
+ * Liefert die Aktion zu einem Tastendruck oder `null`, wenn die Taste ans Terminal gehört.
+ * Eine Taste, die sonst dem Programm gehört (`shared`: Ctrl+C, Ctrl+V), nimmt THub nur, wenn `takesShared` es für die
+ * Aktion beim Tastendruck bejaht (`takesSharedKey` in `commands.ts`); ohne die Angabe gilt die Tabelle allein.
+ */
+export function resolveShortcut(
+  e: KeyInput,
+  takesShared: (action: ShortcutAction) => boolean = () => true,
+): ShortcutAction | null {
+  const match = matchShortcut(e);
+  if (!match) return null;
+  if (isShared(match.trigger) && !takesShared(match.action)) return null;
+  return match.action;
+}
+
+/** Ob die Taste sonst dem Programm im Terminal gehört (siehe `Trigger`). */
+function isShared(t: Trigger): boolean {
+  return t.by === 'code' && t.shared === true;
 }
 
 /**
@@ -226,7 +257,7 @@ function findMatch(e: KeyInput, kinds: Set<Trigger['by']>): ShortcutMatch | null
     for (const trigger of shortcut.triggers) {
       if (!kinds.has(trigger.by)) continue;
       const value = triggerValue(trigger, e);
-      if (value !== null) return { shortcut, action: shortcut.action(value) };
+      if (value !== null) return { shortcut, trigger, action: shortcut.action(value) };
     }
   }
   return null;
@@ -261,12 +292,13 @@ function isLetter(e: KeyInput, letter: string): boolean {
 
 /**
  * Eine Tastenkombination zur Anzeige: Tasten mit „+“ dazwischen; `through` setzt eine Reihe fort (Ctrl+1 … 9),
- * `gesture` ist eine Bewegung statt einer Taste (Ctrl + Mausrad).
+ * `gesture` ist eine Bewegung statt einer Taste (Ctrl + Mausrad), `note` ein Zusatz dahinter („nur mit Markierung“).
  */
 export interface KeyCombo {
   keys: string[];
   through?: string;
   gesture?: string;
+  note?: string;
 }
 
 /** Ein Abschnitt der Übersicht mit seinen Kürzeln, in der Reihenfolge der Tabelle. */
@@ -292,19 +324,25 @@ export function shortcutHint(id: string): string | undefined {
   return trigger ? comboText(triggerCombo(trigger)) : undefined;
 }
 
-/** Eine Tastenkombination als Text, z.B. „Ctrl+Shift+T“, „Ctrl+1 … 9“ oder „Ctrl + Mausrad“. */
+/**
+ * Eine Tastenkombination als Text, z.B. „Ctrl+Shift+T“, „Ctrl+1 … 9“, „Ctrl + Mausrad“ oder
+ * „Ctrl+C (nur mit Markierung)“.
+ */
 export function comboText(combo: KeyCombo): string {
   const keys = combo.keys.join('+');
   if (combo.through) return `${keys} … ${combo.through}`;
   if (combo.gesture) return `${keys} + ${combo.gesture}`;
+  if (combo.note) return `${keys} (${combo.note})`;
   return keys;
 }
 
 /** Wie der Auslöser in der Übersicht erscheint. */
 function triggerCombo(t: Trigger): KeyCombo {
   switch (t.by) {
-    case 'code':
-      return { keys: [...(t.ctrl ? ['Ctrl'] : []), ...(t.shift ? ['Shift'] : []), keyName(t.code)] };
+    case 'code': {
+      const keys = [...(t.ctrl ? ['Ctrl'] : []), ...(t.shift ? ['Shift'] : []), keyName(t.code)];
+      return t.note ? { keys, note: t.note } : { keys };
+    }
     case 'digit':
       return { keys: ['Ctrl', '1'], through: '9' };
     case 'letter':
