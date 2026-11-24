@@ -220,6 +220,16 @@ Gezielt auslösen lässt sich der Fehler in der App nicht: `THUB_TEST_KEEPAWAKE_
 - [ ] Der Fehler-Hinweis ist in hell und dunkel sofort als Fehler zu erkennen (rotes Fehlersymbol, roter Rand) und passt sonst zu den übrigen Hinweisen; `×` und Klick schliessen ihn. (T31)
 - [ ] Im normalen Betrieb ändert sich nichts: Schalter an, `powercfg /requests` zeigt THub wie bisher. (T31)
 
+## Hinweise über der Eingabe (Ticket 32)
+
+Einen Hinweis mit offenen Punkten bekommst du, wenn du Claude um eine Antwort mit einem Abschnitt „Offene Punkte“ bittest. Er bleibt stehen, bis du ihn schliesst, und eignet sich damit auch für die Punkte in einer Shell (oder „wartet“ aus einem Claude-Tab im Hintergrund).
+
+- [ ] **[Claude]** In einem Claude-Tab steht ein Hinweis mit offenen Punkten. Ein langer Prompt über mehrere Zeilen bleibt ganz sichtbar, der Hinweis steht über dem Eingabefeld samt Linie, und die Punkte bleiben lesbar. (T32)
+- [ ] **[Claude]** Während Claude arbeitet (Spinner, lange Antwort), zuckt der Stapel nicht. `×` und Klick treffen die Karte. (T32)
+- [ ] In PowerShell mit dem Prompt in der letzten Zeile steht der Hinweis über der Prompt-Zeile, nach `cls` wieder ganz unten; er gleitet dabei weich an den neuen Platz. (T32)
+- [ ] Im Verlauf nach oben scrollen: Der Stapel geht nach unten. Zurück ans Ende: Er steht wieder über der Eingabe. (T32)
+- [ ] **[Claude]** Claude im Vollbild-Modus: Der Hinweis steht über dem Eingabefeld. (T32)
+
 ## App-Symbol (Ticket 29)
 
 - [x] Du hast einen Entwurf freigegeben: C (gestapelte Terminals) in Graphit. (T29)
