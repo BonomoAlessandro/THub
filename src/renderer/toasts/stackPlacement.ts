@@ -1,12 +1,20 @@
 /**
- * Lage des Stapels der Hinweise (Ticket 32): Er bleibt unten rechts, verdeckt aber nie die Eingabe im sichtbaren Tab.
- * Reine Rechnung ohne DOM; die Oberfläche misst Fenster, Terminal und Stapel und setzt das Ergebnis.
+ * Lage des Stapels der Hinweise (Tickets 32 und 35): Er bleibt unten rechts, verdeckt aber nie die Eingabe im sichtbaren
+ * Tab und nicht, was darunter steht. Reine Rechnung ohne DOM; die Oberfläche misst Fenster, Terminal und Stapel und
+ * setzt das Ergebnis.
  */
 import type { InputRows } from '../terminal/inputArea';
 
-/** Abstand der Karten zur Titelleiste und zum unteren Fensterrand, wie bisher (Innenabstand von `.toasts` in app.css). */
+/** Abstand der Karten zur Titelleiste, wie bisher (Innenabstand oben von `.toasts` in app.css). */
 export const EDGE_TOP = 10;
-export const EDGE_BOTTOM = 18;
+
+/**
+ * Wo Claudes Linie über dem Eingabefeld sichtbar beginnt, als Anteil der Zeilenhöhe von der Oberkante ihrer Zeile:
+ * Das Zeichen `─` steht etwa in der Mitte seiner Zeile. In der App gemessen (Ticket 35, DOM-Renderer von xterm.js,
+ * Cascadia Mono, Schriftgrössen 11 bis 24, Skalierung 100, 150 und 200 %): 0,39 bis 0,46; mit 0,43 liegt die Rechnung
+ * höchstens 0,7 px daneben.
+ */
+export const RULE_TOP = 0.43;
 
 /** So lange muss eine neue Lage unverändert sein, bevor der Stapel dorthin gleitet. */
 export const SETTLE_MS = 100;
@@ -15,6 +23,11 @@ export const SETTLE_MS = 100;
 export interface StackMeasures {
   windowHeight: number;
   titlebarHeight: number;
+  /**
+   * Abstand der Karten zum rechten und zum unteren Fensterrand (`--toast-edge`). Derselbe Abstand bleibt zur Eingabe
+   * (Ticket 35).
+   */
+  edge: number;
   /** Oberkante der obersten sichtbaren Terminalzeile. */
   terminalTop: number;
   rowHeight: number;
@@ -25,8 +38,8 @@ export interface StackMeasures {
 }
 
 /**
- * Das Band des Stapels: `free`, wenn keine Eingabe im Bild ist (wie bisher), sonst `below` (zwischen der Cursorzeile
- * und dem unteren Fensterrand) oder `above` (zwischen der Titelleiste und dem Anfang der Eingabe).
+ * Das Band des Stapels: `free`, wenn keine Eingabe im Bild ist (wie bisher), sonst `below` (zwischen der letzten
+ * geschützten Zeile und dem unteren Fensterrand) oder `above` (zwischen der Titelleiste und dem Anfang der Eingabe).
  */
 export type StackBand = 'free' | 'below' | 'above';
 
@@ -41,58 +54,68 @@ export interface StackPlacement {
 }
 
 /** Der bisherige Platz: von der Titelleiste bis zum unteren Fensterrand. */
-export function freePlacement(windowHeight: number, titlebarHeight: number): StackPlacement {
+export function freePlacement(windowHeight: number, titlebarHeight: number, edge: number): StackPlacement {
   return {
     band: 'free',
     areaTop: titlebarHeight + EDGE_TOP,
-    areaBottom: windowHeight - EDGE_BOTTOM,
+    areaBottom: windowHeight - edge,
     padTop: EDGE_TOP,
-    padBottom: EDGE_BOTTOM,
+    padBottom: edge,
   };
 }
 
 /**
- * Wählt das Band, in dem der Stapel die Eingabe nicht verdeckt:
- * 1. unter der Eingabe, wenn der ganze Stapel dort Platz hat (der bisherige Platz, etwa bei einem Prompt weit oben);
+ * Wählt das Band, in dem der Stapel weder die Eingabe noch die Zeilen darunter verdeckt:
+ * 0. das Band, in dem er gerade steht (`standing`), solange er dort ganz Platz hat; so springt er nicht hin und her,
+ *    wenn sich Claudes Statuszeile oder die Zahl der Hinweise ändert (Ticket 35);
+ * 1. sonst unter der Eingabe, wenn der ganze Stapel unter der letzten nicht leeren Zeile Platz hat (der bisherige Platz,
+ *    etwa bei einem Prompt weit oben);
  * 2. sonst über der Eingabe, wenn er dort ganz Platz hat (Claude, Prompt in der letzten Zeile);
  * 3. sonst im grösseren der beiden Bänder; dort scrollt die Spalte.
  *
- * Zur Eingabe bleibt eine halbe Zeile Abstand, zur Titelleiste und zum Fensterrand derselbe wie bisher. Passt der Stapel
- * nicht, endet die Spalte auf der Seite der Eingabe genau an ihr, damit gescrollte Karten sie nicht streifen; sonst
- * bleibt der übliche Innenabstand für den Schatten.
+ * Zur Eingabe bleibt derselbe Abstand wie zum rechten Fensterrand (`edge`), gemessen zu ihrer sichtbaren Oberkante: bei
+ * Claudes Linie zur Linie selbst, sonst zur Oberkante der ersten Eingabezeile. Unter der Eingabe gilt er zur letzten
+ * geschützten Zeile. Zur Titelleiste und zum unteren Fensterrand bleibt es wie bisher. Auf der Seite der Eingabe endet
+ * die Spalte genau an ihr, damit gescrollte Karten sie nicht streifen.
+ *
+ * @param standing Band, in dem der Stapel gerade steht; null, solange keine Karte steht
  */
-export function placeStack(m: StackMeasures): StackPlacement {
-  const free = freePlacement(m.windowHeight, m.titlebarHeight);
+export function placeStack(m: StackMeasures, standing: StackBand | null = null): StackPlacement {
+  const free = freePlacement(m.windowHeight, m.titlebarHeight, m.edge);
   if (!m.input || !(m.rowHeight > 0)) return free;
 
-  const gap = m.rowHeight / 2;
-  const startTop = m.terminalTop + m.input.startRow * m.rowHeight;
-  const cursorBottom = m.terminalTop + (m.input.cursorRow + 1) * m.rowHeight;
+  const gap = m.edge;
+  const rowTop = (row: number) => m.terminalTop + row * m.rowHeight;
+  const inputTop = rowTop(m.input.startRow) + (m.input.startIsRule ? RULE_TOP * m.rowHeight : 0);
+  const protectedBottom = rowTop(m.input.endRow + 1);
 
-  const below = { top: cursorBottom + gap, bottom: free.areaBottom };
-  const above = { top: free.areaTop, bottom: startTop - gap };
+  const below = { top: protectedBottom + gap, bottom: free.areaBottom };
+  const above = { top: free.areaTop, bottom: inputTop - gap };
   const room = (band: { top: number; bottom: number }) => band.bottom - band.top;
 
   const fitsBelow = m.stackHeight <= room(below);
   const fitsAbove = m.stackHeight <= room(above);
-  const useBelow = fitsBelow || (!fitsAbove && room(below) >= room(above));
-  const fits = fitsBelow || fitsAbove;
+  let band: 'below' | 'above';
+  if ((standing === 'below' && fitsBelow) || (standing === 'above' && fitsAbove)) band = standing;
+  else if (fitsBelow) band = 'below';
+  else if (fitsAbove) band = 'above';
+  else band = room(below) >= room(above) ? 'below' : 'above';
 
-  if (useBelow) {
+  if (band === 'below') {
     return {
-      band: 'below',
+      band,
       areaTop: below.top,
       areaBottom: Math.max(below.top, below.bottom),
-      padTop: fits ? EDGE_TOP : gap,
-      padBottom: EDGE_BOTTOM,
+      padTop: gap,
+      padBottom: m.edge,
     };
   }
   return {
-    band: 'above',
+    band,
     areaTop: above.top,
     areaBottom: Math.max(above.top, above.bottom),
     padTop: EDGE_TOP,
-    padBottom: fits ? EDGE_BOTTOM : gap,
+    padBottom: gap,
   };
 }
 

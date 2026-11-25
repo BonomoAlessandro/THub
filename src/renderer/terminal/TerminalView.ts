@@ -23,7 +23,7 @@ export interface TerminalInputGeometry {
   /** Oberkante der obersten sichtbaren Zeile, vom oberen Fensterrand. */
   top: number;
   rowHeight: number;
-  /** Die Zeilen der Eingabe; null, wenn der Cursor nicht im Bild ist (nach oben gescrollt). */
+  /** Die Zeilen der Eingabe und darunter; null, wenn der Cursor nicht im Bild ist (nach oben gescrollt). */
   input: InputRows | null;
 }
 
@@ -181,7 +181,8 @@ export class TerminalView {
 
   /**
    * Wo die Eingabe steht, für die Hinweise (Ticket 32): Cursorzeile im sichtbaren Ausschnitt (Cursor im Puffer abzüglich
-   * der Scroll-Position), Anfang der Eingabe (`findInput`), Lage der obersten Zeile und Zeilenhöhe. Alles über die
+   * der Scroll-Position), Anfang der Eingabe und die geschützten Zeilen darunter (`findInput`, Ticket 35), Lage der
+   * obersten Zeile und Zeilenhöhe. Alles über die
    * öffentliche Schnittstelle von xterm.js; die Zeilenhöhe ist die Höhe des Terminal-Elements geteilt durch die Zahl der
    * Zeilen. Null, solange das Terminal keine Grösse hat.
    */
