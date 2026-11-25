@@ -1,7 +1,7 @@
 {
   "name": "thub",
   "productName": "THub",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Mehrere benannte Terminal-Sessions in einem Fenster, die beim Neustart wiederhergestellt werden.",
   "main": "dist/main/main.js",
   "private": true,
