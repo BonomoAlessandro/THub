@@ -2,6 +2,12 @@
 
 Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in Klammern verweisen auf die Tickets in [docs/tickets](docs/tickets/README.md). Wie Versionen vergeben werden, steht in [docs/entwicklung.md](docs/entwicklung.md#version-und-installer). Welche Version installiert ist, zeigt THub unten in den Einstellungen.
 
+## Unveröffentlicht
+
+**Korrigiert**
+
+- Die Hinweise halten zur Eingabe denselben Abstand wie zum rechten Fensterrand. In Claude-Tabs verdecken sie Statuszeile und Modus unter dem Eingabefeld nicht mehr und springen nicht mehr hin und her, wenn sich die Statuszeile ändert oder ein Hinweis dazukommt. (35)
+
 ## 0.3.0 – 2026-11-24
 
 **Neu**
