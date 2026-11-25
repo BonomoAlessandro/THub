@@ -1,7 +1,7 @@
 # THub 2: Tabs, Claude-Sessions, die einen Neustart überleben, und neuer Look
 
 > Status: `ready-for-agent`
-> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Am 2026-11-23: Hinweise weichen der Eingabe aus (Ticket 32), der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist (Ticket 33), Kopieren mit `Ctrl+C` und Einfügen mit `Ctrl+V` (Ticket 34). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
+> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Am 2026-11-23: Hinweise weichen der Eingabe aus (Ticket 32), der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist (Ticket 33), Kopieren mit `Ctrl+C` und Einfügen mit `Ctrl+V` (Ticket 34). Am 2026-11-25: Abstand der Hinweise zur Eingabe und Lage in Claude-Tabs (Ticket 35). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
 
 > **Name:** Die App heisst **THub** (bis 2026-11-19 „TermHub“). Datenordner `%APPDATA%\THub`, in der Entwicklung `%APPDATA%\THub-dev`. Umsetzung des Namenswechsels: Ticket 20.
 
@@ -466,6 +466,11 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 - **Bewegung:** Die Spalte gleitet mit 180 ms und der Ease aus dem Design; bei reduzierter Bewegung springt sie.
 - **Maus:** Der Stapel steht still, solange die Maus auf einer Karte steht. Die Lücke zwischen zwei Karten gehört dem Terminal; dort darf der Stapel nachrücken. Verschwindet die Karte unter der Maus, hält nichts mehr.
 - **Verstecktes Fenster:** Ist das Fenster nicht sichtbar, ruft der Browser keine Bilder ab; dann wird stattdessen über einen Zeitgeber ausgewertet, damit der Stapel beim Zurückkehren schon richtig steht.
+
+**Abstand und Claude-Tabs (Ticket 35, nach der Rückmeldung des Nutzers am 2026-11-25):**
+- Zwischen der untersten Karte und der Eingabe bleibt derselbe Abstand wie zum rechten Fensterrand (18 px). Gemessen wird zur sichtbaren Oberkante der Eingabe: in einem Claude-Tab zur Linie über dem Eingabefeld, sonst zur Oberkante der ersten Eingabezeile. Steht der Stapel unter der Eingabe, gilt derselbe Abstand nach unten. Das ersetzt die halbe Zeile aus Ticket 32.
+- Nicht leere Zeilen unter der Cursorzeile bleiben bis zur letzten nicht leeren Zeile im Bild frei: Claudes untere Linie, die Statuszeile, der Modus und die Vorschläge beim Tippen. Unter der Eingabe steht der Stapel nur, wenn er unter diesen Zeilen ganz Platz hat.
+- Der Stapel bleibt in seinem Band, solange er dort ganz Platz hat und nichts davon verdeckt.
 
 **Countdown, solange das Fenster sichtbar ist (Ticket 33, vom Nutzer am 2026-11-23 entschieden):**
 - Der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist und die Maus nicht auf der Karte steht; der Fokus spielt dafür keine Rolle mehr. Nicht sichtbar heisst: minimiert, versteckt, von anderen Fenstern ganz verdeckt oder Bildschirm gesperrt. Bis zur ersten Meldung gilt das Fenster als nicht sichtbar.

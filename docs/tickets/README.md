@@ -56,6 +56,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 32 | [Hinweise weichen der Eingabe aus](32-hinweise-ueber-der-eingabe.md) | AFK | – | erledigt |
 | 33 | [Countdown von „fertig“ läuft, solange THub sichtbar ist](33-countdown-wenn-sichtbar.md) | AFK | – | erledigt |
 | 34 | [Kopieren mit Ctrl+C, Einfügen mit Ctrl+V](34-ctrl-c-und-ctrl-v.md) | AFK | – | erledigt |
+| 35 | [Hinweise: Abstand zur Eingabe und Lage in Claude-Tabs](35-abstand-und-claude-tabs.md) | AFK | – | offen |
 
 ```mermaid
 flowchart LR
