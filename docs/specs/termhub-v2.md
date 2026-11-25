@@ -1,7 +1,7 @@
 # THub 2: Tabs, Claude-Sessions, die einen Neustart überleben, und neuer Look
 
 > Status: `ready-for-agent`
-> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Am 2026-11-23: Hinweise weichen der Eingabe aus (Ticket 32), der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist (Ticket 33), Kopieren mit `Ctrl+C` und Einfügen mit `Ctrl+V` (Ticket 34). Am 2026-11-25: Abstand der Hinweise zur Eingabe und Lage in Claude-Tabs (Ticket 35). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
+> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Am 2026-11-23: Hinweise weichen der Eingabe aus (Ticket 32), der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist (Ticket 33), Kopieren mit `Ctrl+C` und Einfügen mit `Ctrl+V` (Ticket 34). Am 2026-11-25: Abstand der Hinweise zur Eingabe und Lage in Claude-Tabs (Ticket 35), Tabs zu Gruppen zusammenfassen (Ticket 36). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
 
 > **Name:** Die App heisst **THub** (bis 2026-11-19 „TermHub“). Datenordner `%APPDATA%\THub`, in der Entwicklung `%APPDATA%\THub-dev`. Umsetzung des Namenswechsels: Ticket 20.
 
@@ -171,6 +171,18 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 
 92. Als Nutzer möchte ich in THub sehen und mit einem Klick kopieren können, welche Version installiert ist, damit ich bei einem Fehler sagen kann, welcher Stand betroffen ist.
 93. Als Nutzer möchte ich, dass jeder neue Installer eine höhere Versionsnummer trägt und ich nachlesen kann, was sich geändert hat, damit ich weiss, ob eine Korrektur schon drin ist.
+
+### Tab-Gruppen
+
+96. Als Nutzer möchte ich mehrere Tabs zu einer Gruppe zusammenfassen, die in der Tab-Leiste nur einen Platz braucht, damit die Leiste auch bei vielen Konsolen übersichtlich bleibt.
+97. Als Nutzer möchte ich am Gruppen-Tab sehen, welcher Tab darin gewählt ist und wie viele es sind, damit ich weiss, was mich erwartet.
+98. Als Nutzer möchte ich über eine Liste am Gruppen-Tab einen Tab der Gruppe wählen, damit ich schnell die richtige Konsole finde.
+99. Als Nutzer möchte ich eine Gruppe über das Rechtsklick-Menü eines Tabs anlegen und Tabs per Menü oder Ziehen hineinschieben und wieder herausnehmen, damit ich selbst bestimme, was zusammengehört.
+100. Als Nutzer möchte ich eine Gruppe umbenennen, auflösen und als Ganzes schliessen, damit ich sie wie einen Tab verwalten kann.
+101. Als Nutzer möchte ich in der Liste einer Gruppe direkt ein neues Terminal im Ordner des gewählten Tabs anlegen, damit eine neue Konsole gleich am richtigen Ort landet.
+102. Als Nutzer möchte ich am Gruppen-Tab den dringendsten Status seiner Tabs sehen, damit ich nichts übersehe, was in einer verborgenen Konsole wartet oder fertig ist.
+103. Als Nutzer möchte ich, dass Gruppen einen Neustart überleben und geschlossene Tabs beim Wiederöffnen in ihre Gruppe zurückkehren, damit meine Ordnung erhalten bleibt.
+104. Als Nutzer möchte ich Tabs in Gruppen auch über die Befehlspalette und die Hinweise erreichen, damit ich nicht erst die Liste öffnen muss.
 
 ## Implementierungsentscheidungen
 
@@ -580,6 +592,8 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - Shell-Kennung, Startordner, zuletzt aktiver Ordner
   - bei Claude-Tabs die Claude-Zuordnung (Session-Kennung, Ordner der Session, bestätigt, hatte Prompt)
   - offene Punkte, deren Hinweis noch nicht geschlossen ist
+  - bei Tabs in einer Gruppe die Kennung der Gruppe; die Tabs einer Gruppe stehen zusammen (Ticket 36)
+- **Gruppen** (Ticket 36, ohne neue Schema-Version; fehlt die Angabe, gibt es keine Gruppen): Kennung, Name, gewählter Tab. Zuletzt geschlossene Tabs merken sich ihre Gruppe (Kennung, Name, Stelle).
 - **Weitere Angaben:**
   - aktiver Tab
   - zuletzt benutzte Ordner: Startordner neu angelegter Tabs und der zuletzt aktive Ordner eines Tabs beim Schliessen; höchstens acht, neueste zuerst, ohne Doppelte
@@ -706,6 +720,13 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Rand zum Grössenziehen:** Den regelt Electron, nicht die Oberfläche. Im nicht maximierten Fenster meldet es die obersten Pixel vor der Seite als `HTTOP` (Rahmen plus Polsterung von Windows, gemessen bei 150 %: 8 CSS-px, also die Fläche über der Karte und deren oberste 3 px); das Fenster lässt sich dort wie bei Chrome in der Höhe ziehen. Im maximierten Fenster gibt es keinen Rand: Ab der obersten Pixelreihe trifft ein Klick über einem Tab den Tab, die freie Fläche bleibt `HTCAPTION`. Der Renderer braucht dafür den Maximiert-Zustand nicht zu kennen.
 - **Neue Tabs am Ende:** `createTab` hängt an, egal welcher Tab aktiv ist; das gilt für `+`, `Ctrl+Shift+T`, das Pfeil-Menü, die Befehlspalette und den Knopf „Neues Terminal“ ohne offene Tabs. Nur Duplizieren (rechts neben der Quelle) und Wiederöffnen (alte Stelle) setzen eine Position.
 - **Aufgeklappte Auswahlliste:** Chromium zeichnet die Liste eines `<select>` als eigenes Fenster. Es übernimmt das Farbschema des Felds (`color-scheme`, vom Design über `data-theme` geerbt, auch bei „System“), seine Hintergrund- und Textfarbe, und legt die Liste auf eine weisse Fläche. Das halbdurchsichtige `--btn-bg` des dunklen Designs ergab so eine weisse Liste mit heller Schrift. Die Hintergrundfarbe des Felds ist deshalb deckend (`--dialog-bg`), `--btn-bg` liegt als Bild-Ebene darüber; geschlossen sieht es aus wie vorher. Die Hervorhebung des gewählten Eintrags kommt von Chromium selbst und lässt sich ohne eigene Liste nicht gestalten: im dunklen Design hellblau mit dunkler Schrift, im hellen dunkelblau mit weisser Schrift. Andere native Bedienelemente: Die Bildlaufleisten folgen über `color-scheme` dem Design; ein weiteres `<select>` gibt es nicht. Native Tooltips (`title`, etwa am Standardordner) sind nicht Teil dieses Tickets.
+
+**Tab-Gruppen (Ticket 36, vom Nutzer am 2026-11-25 gewählt):**
+- **Ordner-Tab mit Liste:** Eine Gruppe ist ein einziger Eintrag in der Tab-Leiste, mit den Massen eines Tabs. Er zeigt ein Ordner-Symbol, „Gruppenname · gewählter Tab“, gedämpft die Zahl der Tabs und einen Pfeil. Der Pfeil öffnet die Liste der Tabs (ein Menü), dort wählt man einen aus. Der gewählte Tab ist der zuletzt angezeigte der Gruppe. Ein Klick auf den Gruppen-Tab zeigt ihn an; ist die Gruppe schon aktiv, öffnet er die Liste.
+- **Von Hand:** Gruppen entstehen über „Neue Gruppe“ im Rechtsklick-Menü eines Tabs (Name zuerst wie der Ordner des Tabs). Tabs kommen über „In Gruppe „…““ oder durch Ziehen auf den Gruppen-Tab hinein und über „Aus Gruppe nehmen“ wieder heraus. Am Gruppen-Tab: umbenennen, neues Terminal in der Gruppe, auflösen, schliessen.
+- **Status:** Der Gruppen-Tab zeigt den dringendsten Status seiner Tabs: wartet, fertig, arbeitet, Prozesse, pausiert; sonst gedämpft das Ordner-Symbol.
+- **Tastatur:** `Ctrl+Tab`, `Ctrl+PageDown`/`PageUp` und `Ctrl+1` … `Ctrl+9` zählen die Einträge der Leiste; eine Gruppe zählt als ihr gewählter Tab. Keine neuen Kürzel. Befehlspalette und Hinweise nennen Tabs in Gruppen als „Gruppenname › Tabname“ und zeigen sie direkt an.
+- **Verworfen:** aufklappbare Gruppe wie im Browser, Seitenleiste mit Ordnern, automatische Gruppen nach Ordner. Einzelheiten in Ticket 36.
 
 ### Rechner wach halten
 
@@ -875,6 +896,7 @@ Umsetzung: Ticket 30.
 - Zusätzliche Claude-Startoptionen oder Claude-Profile.
 - Windows-Benachrichtigungen und Blinken in der Taskleiste.
 - Geteilte Ansicht (mehrere Terminals nebeneinander) und mehrere Fenster.
+- Bei Tab-Gruppen: Gruppen in Gruppen, Farben für Gruppen und automatische Gruppen nach Ordner (Ticket 36).
 - Abgleich von Tabs zwischen Rechnern.
 - Ein globaler Hook in `~/.claude/settings.json`.
 - Weitere Einstellungen wie Terminal-Schriftart. Eine Akzentfarbe gibt es bewusst nicht.
