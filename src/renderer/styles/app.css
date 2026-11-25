@@ -1089,15 +1089,17 @@ kbd {
 
 /* ---------- Hinweise ---------- */
 /*
- * Unten rechts über der Terminal-Fläche, 18 px vom Fensterrand, gestapelt wie im Prototyp, der neueste oben. Die
- * Spalte beginnt erst unter der Titelleiste und überdeckt deren Zieh-Fläche nie; stehen mehr Hinweise, als Platz ist,
- * lässt sie sich mit dem Mausrad scrollen. Ihr Rand lässt Platz für Schatten und Bewegung der Karten, die der
- * Scrollbereich sonst abschnitte. Nur die Karten nehmen die Maus an, daneben geht alles ans Terminal.
+ * Unten rechts über der Terminal-Fläche, `--toast-edge` (18 px) vom rechten und unteren Fensterrand, gestapelt wie im
+ * Prototyp, der neueste oben. Die Spalte beginnt erst unter der Titelleiste und überdeckt deren Zieh-Fläche nie; stehen
+ * mehr Hinweise, als Platz ist, lässt sie sich mit dem Mausrad scrollen. Ihr Rand lässt Platz für Schatten und Bewegung
+ * der Karten, die der Scrollbereich sonst abschnitte. Nur die Karten nehmen die Maus an, daneben geht alles ans
+ * Terminal.
  *
- * Steht die Eingabe des sichtbaren Tabs dort, weicht die Spalte ihr aus (Ticket 32): `useStackPlacement` setzt `top`,
- * `bottom` und den Rand oben und unten als Inline-Stil (und `data-band`), und die Spalte gleitet an den neuen Platz.
- * Die Werte hier sind der bisherige Platz; der Rand oben und unten (10 und 18 px) entspricht `EDGE_TOP` und
- * `EDGE_BOTTOM` in stackPlacement.ts. Bei reduzierter Bewegung springt sie (Regel ganz unten).
+ * Steht die Eingabe des sichtbaren Tabs dort, weicht die Spalte ihr aus (Tickets 32 und 35): `useStackPlacement` setzt
+ * `top`, `bottom` und den Rand oben und unten als Inline-Stil (und `data-band`), und die Spalte gleitet an den neuen
+ * Platz. Die Werte hier sind der bisherige Platz; der Rand oben (10 px) entspricht `EDGE_TOP` in stackPlacement.ts, den
+ * Abstand rechts und unten liest `useStackPlacement` aus `--toast-edge` und hält ihn auch zur Eingabe. Bei reduzierter
+ * Bewegung springt sie (Regel ganz unten).
  */
 .toasts {
   position: fixed;
@@ -1108,9 +1110,9 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: calc(320px + 32px + 18px);
+  width: calc(320px + 32px + var(--toast-edge));
   max-width: 100%;
-  padding: 10px 18px 18px 32px;
+  padding: 10px var(--toast-edge) var(--toast-edge) 32px;
   overflow-y: auto;
   scrollbar-width: none;
   pointer-events: none;

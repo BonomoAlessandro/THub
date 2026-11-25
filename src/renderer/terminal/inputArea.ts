@@ -1,6 +1,7 @@
 /**
  * Wo die Eingabe im sichtbaren Ausschnitt eines Terminals steht (Ticket 32): von ihrem Anfang bis zur Zeile mit dem
- * Cursor. Reine Rechnung ohne DOM und ohne xterm.js; die Ansicht liefert Cursorzeile und Zeilen.
+ * Cursor, dazu, was darunter frei bleiben muss (Ticket 35). Reine Rechnung ohne DOM und ohne xterm.js; die Ansicht
+ * liefert Cursorzeile und Zeilen.
  */
 
 /** Eine Zeile im sichtbaren Ausschnitt, wie xterm.js sie kennt. */
@@ -17,14 +18,28 @@ export interface TerminalScreen {
   cursorRow: number;
   rows: number;
   cols: number;
-  /** Liefert eine sichtbare Zeile; wird nur für die Zeilen über dem Cursor gefragt, die es braucht. */
+  /**
+   * Liefert eine sichtbare Zeile. Gefragt wird nur, was es braucht: höchstens die halbe Höhe über dem Cursor und die
+   * Zeilen darunter, von unten bis zur ersten nicht leeren.
+   */
   lineAt(row: number): TerminalLine | undefined;
 }
 
-/** Die Zeilen der Eingabe im sichtbaren Ausschnitt: vom Anfang bis zur Cursorzeile. */
+/** Die Eingabe im sichtbaren Ausschnitt: vom Anfang bis zur Cursorzeile, und was darunter frei bleiben muss. */
 export interface InputRows {
   startRow: number;
+  /**
+   * Der Anfang ist eine Linie aus Rahmenzeichen (Claudes Linie über dem Eingabefeld). Sichtbar beginnt die Eingabe dann
+   * erst bei der Linie, die etwa in der Mitte ihrer Zeile steht, nicht am oberen Rand der Zeile (Ticket 35).
+   */
+  startIsRule: boolean;
   cursorRow: number;
+  /**
+   * Letzte geschützte Zeile (Ticket 35): die letzte nicht leere Zeile im Bild, mindestens die Cursorzeile. In Claude
+   * sind das die untere Linie, die Statuszeile und der Modus, im Modus ohne Vollbild auch die Vorschläge beim Tippen; in
+   * PowerShell etwa eine Liste der Vorhersagen.
+   */
+  endRow: number;
 }
 
 /**
@@ -47,6 +62,9 @@ const BOX_DRAWING = /^[─-╿]+$/;
  *   Terminalhöhe über der Cursorzeile eine Zeile nur aus Rahmenzeichen über mindestens die halbe Breite, ist die
  *   nächste solche Zeile der Anfang; die Linie bleibt also frei. Das gilt in jedem Tab.
  * - Der höhere der beiden Anfänge gilt; gibt es keinen, ist es die Cursorzeile.
+ *
+ * Ende des geschützten Bereichs (Ticket 35): die letzte Zeile im Bild, die nicht leer ist (nur Leerzeichen zählen als
+ * leer), aber nie über der Cursorzeile.
  */
 export function findInput(screen: TerminalScreen): InputRows | null {
   const { cursorRow, rows, cols, lineAt } = screen;
@@ -55,15 +73,22 @@ export function findInput(screen: TerminalScreen): InputRows | null {
   let startRow = cursorRow;
   while (startRow > 0 && lineAt(startRow)?.isWrapped) startRow--;
 
+  let startIsRule = false;
   const highest = Math.max(0, cursorRow - Math.floor(rows * RULE_REACH));
   for (let row = cursorRow - 1; row >= highest; row--) {
     const line = lineAt(row);
     if (line && isRuleLine(line.text, cols)) {
-      startRow = Math.min(startRow, row);
+      if (row <= startRow) {
+        startRow = row;
+        startIsRule = true;
+      }
       break;
     }
   }
-  return { startRow, cursorRow };
+
+  let endRow = rows - 1;
+  while (endRow > cursorRow && !lineAt(endRow)?.text.trim()) endRow--;
+  return { startRow, startIsRule, cursorRow, endRow };
 }
 
 /**

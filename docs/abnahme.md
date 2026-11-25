@@ -254,6 +254,15 @@ Für mehrzeiligen Text zwei Zeilen aus einem Editor kopieren, in PowerShell und 
 - [ ] **[Claude]** Ein Bildschirmfoto in der Zwischenablage: `Alt+V` in Claude fügt das Bild ein wie bisher. (T34)
 - [ ] Die Übersicht der Tastenkürzel zeigt bei „Kopieren“ `Ctrl+C` mit „(nur mit Markierung)“ und bei „Einfügen“ `Ctrl+V`. (T34)
 
+## Abstand und Claude-Tabs (Ticket 35)
+
+Einen Hinweis bekommst du wie bei Ticket 32 (offene Punkte) oder mit einem zweiten Claude-Tab, der im Hintergrund fertig wird. Für die Prüfung „Statuszeile ändert sich“ genügt eine Statuszeile, deren Zeilenzahl wechselt, wie deine mit vier bis sechs Zeilen.
+
+- [ ] **[Claude]** Claude-Tab mit Statuszeile: Der Hinweis steht über dem Eingabefeld, der Abstand zur Linie ist so gross wie der zum rechten Rand. Die Statuszeile und der Modus darunter bleiben sichtbar. (T35)
+- [ ] **[Claude]** Claude arbeitet, ein zweiter Hinweis kommt dazu, die Statuszeile ändert sich: Der Stapel springt nicht. Rückt das Eingabefeld mit der Statuszeile hoch oder runter, gleitet er ruhig mit. (T35)
+- [ ] **[Claude]** Claude ohne Vollbild (`CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1`), Eingabefeld weit oben, ein Hinweis steht unten: Tippst du `/`, weicht der Hinweis der Vorschlagsliste unter dem Eingabefeld aus. (T35)
+- [ ] PowerShell mit dem Prompt in der letzten Zeile: gleicher Abstand über der Prompt-Zeile wie zum rechten Rand; nach `cls` wieder ganz unten. (T35)
+
 ## App-Symbol (Ticket 29)
 
 - [x] Du hast einen Entwurf freigegeben: C (gestapelte Terminals) in Graphit. (T29)

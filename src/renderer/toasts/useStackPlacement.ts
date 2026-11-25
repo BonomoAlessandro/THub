@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { onTerminalChange, terminalViews } from '../terminal/terminalViews';
-import { SteadyPlacement, freePlacement, placeStack, type StackPlacement } from './stackPlacement';
+import { SteadyPlacement, freePlacement, placeStack, type StackBand, type StackPlacement } from './stackPlacement';
 
 /** Was `.toasts` vom Hook bekommt: die Ref und das Halten unter der Maus. */
 export interface StackProps {
@@ -10,8 +10,8 @@ export interface StackProps {
 }
 
 /**
- * Hält den Stapel der Hinweise aus der Eingabe des sichtbaren Tabs heraus (Ticket 32). Liefert die Props für `.toasts`.
- * Gemessen und gesetzt wird nur, solange eine Karte steht.
+ * Hält den Stapel der Hinweise aus der Eingabe des sichtbaren Tabs und den Zeilen darunter heraus (Tickets 32 und 35).
+ * Liefert die Props für `.toasts`. Gemessen und gesetzt wird nur, solange eine Karte steht.
  */
 export function useStackPlacement(activeTabId: string | null): StackProps {
   const [placer] = useState(() => new StackPlacer());
@@ -24,7 +24,8 @@ export function useStackPlacement(activeTabId: string | null): StackProps {
 
 /**
  * Der DOM-Teil zur reinen Rechnung in `stackPlacement.ts`: misst Fenster, Titelleiste, die Eingabe des aktiven Tabs
- * (`TerminalView.inputGeometry`) und die Höhe des Stapels, wählt das Band (`placeStack`), hält es ruhig
+ * (`TerminalView.inputGeometry`), den Abstand zum Fensterrand (`--toast-edge`) und die Höhe des Stapels, wählt das Band
+ * (`placeStack`, mit dem Band, in dem der Stapel gerade steht), hält es ruhig
  * (`SteadyPlacement`) und setzt es an `.toasts`: `top`, `bottom`, `padding-top`, `padding-bottom` und `data-band`. Den
  * Übergang dorthin macht app.css.
  *
@@ -36,7 +37,7 @@ class StackPlacer {
   private element: HTMLDivElement | null = null;
   private tabId: string | null = null;
   /** Die Lage am Anfang ist die aus app.css: unten rechts wie bisher. */
-  private readonly steady = new SteadyPlacement(freePlacement(window.innerHeight, titlebarHeight()));
+  private readonly steady = new SteadyPlacement(freePlacement(window.innerHeight, titlebarHeight(), toastEdge()));
   /** Bei der letzten Auswertung stand keine Karte. */
   private wasEmpty = true;
   /** Die Maus steht auf einer Karte. */
@@ -130,7 +131,8 @@ class StackPlacer {
     // Verschwindet die Karte unter der Maus, kommt kein `mouseleave`; ohne Karte unter der Maus hält nichts.
     if (this.held && (empty || !element.matches(':hover'))) this.setHeld(false);
 
-    const target = this.measure(element);
+    // Steht schon eine Karte, bleibt der Stapel in seinem Band, solange er dort ganz Platz hat (Ticket 35).
+    const target = this.measure(element, empty || this.wasEmpty ? null : this.steady.shown.band);
     if (empty || this.wasEmpty) {
       // Ohne Karte bewegt sich nichts Sichtbares; die erste Karte erscheint gleich am richtigen Platz.
       this.steady.jump(target);
@@ -146,16 +148,21 @@ class StackPlacer {
     if (due !== null) this.settleTimer = setTimeout(this.schedule, Math.max(0, due - now));
   };
 
-  private measure(element: HTMLElement): StackPlacement {
+  /** @param standing Band, in dem der Stapel gerade steht; null, solange keine Karte stand */
+  private measure(element: HTMLElement, standing: StackBand | null): StackPlacement {
     const geometry = this.tabId ? terminalViews.get(this.tabId)?.inputGeometry() : null;
-    return placeStack({
-      windowHeight: window.innerHeight,
-      titlebarHeight: titlebarHeight(),
-      terminalTop: geometry?.top ?? 0,
-      rowHeight: geometry?.rowHeight ?? 0,
-      input: geometry?.input ?? null,
-      stackHeight: stackHeight(element),
-    });
+    return placeStack(
+      {
+        windowHeight: window.innerHeight,
+        titlebarHeight: titlebarHeight(),
+        edge: toastEdge(),
+        terminalTop: geometry?.top ?? 0,
+        rowHeight: geometry?.rowHeight ?? 0,
+        input: geometry?.input ?? null,
+        stackHeight: stackHeight(element),
+      },
+      standing,
+    );
   }
 
   /** Setzt die Lage an die Spalte; ohne Übergang, wenn `animate` falsch ist. */
@@ -195,5 +202,17 @@ function stackHeight(element: HTMLElement): number {
 
 /** Höhe der Titelleiste (`--titlebar-h`), unter der die Spalte beginnt. */
 function titlebarHeight(): number {
-  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--titlebar-h')) || 0;
+  return cssPixels('--titlebar-h');
+}
+
+/**
+ * Abstand der Karten zum rechten und unteren Fensterrand (`--toast-edge`, tokens.css), derselbe zur Eingabe (Ticket 35).
+ * app.css setzt damit den Innenabstand rechts und unten von `.toasts`; so bleiben die Abstände gleich.
+ */
+function toastEdge(): number {
+  return cssPixels('--toast-edge');
+}
+
+function cssPixels(variable: string): number {
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(variable)) || 0;
 }
