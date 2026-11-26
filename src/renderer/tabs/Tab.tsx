@@ -59,6 +59,7 @@ export function Tab({
       role="tab"
       aria-selected={active}
       data-tab-id={tab.id}
+      data-entry-id={tab.id}
       onPointerDown={renaming ? undefined : onPointerDown}
       onMouseDown={onMouseDown}
       onClick={renaming ? undefined : onActivate}
@@ -96,10 +97,15 @@ export function Tab({
 interface RenameInputProps {
   initial: string;
   onFinish(name: string | null): void;
+  /** Name des Felds für Screenreader. */
+  label?: string;
 }
 
-/** Der Tab selbst wird zum Eingabefeld: Enter übernimmt, Escape bricht ab, Verlassen übernimmt. */
-function RenameInput({ initial, onFinish }: RenameInputProps) {
+/**
+ * Der Tab selbst wird zum Eingabefeld: Enter übernimmt, Escape bricht ab, Verlassen übernimmt. Ebenso am Gruppen-Tab
+ * für den Namen der Gruppe oder eines ihrer Tabs (Ticket 36).
+ */
+export function RenameInput({ initial, onFinish, label = 'Name des Tabs' }: RenameInputProps) {
   const ref = useRef<HTMLInputElement>(null);
   const done = useRef(false);
 
@@ -132,7 +138,7 @@ function RenameInput({ initial, onFinish }: RenameInputProps) {
       className="tab-rename"
       defaultValue={initial}
       spellCheck={false}
-      aria-label="Name des Tabs"
+      aria-label={label}
       onKeyDown={onKeyDown}
       onBlur={(e) => finish(e.currentTarget.value)}
       onDoubleClick={(e) => e.stopPropagation()}

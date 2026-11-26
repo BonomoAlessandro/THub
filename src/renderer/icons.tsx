@@ -236,3 +236,44 @@ export function AlertIcon() {
     </svg>
   );
 }
+
+/** Typ-Symbol einer Gruppe (Ticket 36): ein Ordner im Stil von `>_`, gedämpft, solange keiner ihrer Tabs etwas meldet. */
+export function GroupTypeIcon() {
+  return (
+    <svg className="ty" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 19a2 2 0 0 0 2-2V8.5a2 2 0 0 0-2-2h-7.4a2 2 0 0 1-1.66-.9l-.88-1.3A2 2 0 0 0 8.4 3.5H4a2 2 0 0 0-2 2V17a2 2 0 0 0 2 2Z" />
+    </svg>
+  );
+}
+
+/** Ordner mit Pfeil hinein: „In Gruppe „…““ (Ticket 36). */
+export function FolderInputIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2 9V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1" />
+      <path d="M2 13h10" />
+      <path d="m9 16 3-3-3-3" />
+    </svg>
+  );
+}
+
+/** Ordner mit Pfeil hinaus: „Aus Gruppe nehmen“ (Ticket 36). */
+export function FolderOutputIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2 7.5V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-1.5" />
+      <path d="M2 13h10" />
+      <path d="m5 10-3 3 3 3" />
+    </svg>
+  );
+}
+
+/** Zwei getrennte Flächen: „Gruppe auflösen“ (Ticket 36). */
+export function UngroupIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <rect width="8" height="6" x="5" y="4" rx="1" />
+      <rect width="8" height="6" x="11" y="14" rx="1" />
+    </svg>
+  );
+}

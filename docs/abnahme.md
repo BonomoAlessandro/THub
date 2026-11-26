@@ -263,6 +263,17 @@ Einen Hinweis bekommst du wie bei Ticket 32 (offene Punkte) oder mit einem zweit
 - [ ] **[Claude]** Claude ohne Vollbild (`CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1`), Eingabefeld weit oben, ein Hinweis steht unten: Tippst du `/`, weicht der Hinweis der Vorschlagsliste unter dem Eingabefeld aus. (T35)
 - [ ] PowerShell mit dem Prompt in der letzten Zeile: gleicher Abstand über der Prompt-Zeile wie zum rechten Rand; nach `cls` wieder ganz unten. (T35)
 
+## Tab-Gruppen (Ticket 36)
+
+Eine Gruppe legst du über den Rechtsklick auf einen Tab an („Neue Gruppe“); wie sie sich bedienen lässt, steht im [Handbuch](handbuch.md#gruppen). Für „Gruppe schliessen“ mit laufendem Programm genügt etwa `ping -t localhost` in einem cmd-Tab der Gruppe.
+
+- [ ] Eine Gruppe aus zwei, drei Tabs anlegen, umbenennen, per Liste zwischen ihnen wechseln. Die Leiste bleibt kurz, der Gruppen-Tab zeigt den gewählten Tab. (T36)
+- [ ] Einen Tab auf den Gruppen-Tab ziehen (der Gruppen-Tab ist dabei hervorgehoben); die Gruppe als Ganzes umsortieren. (T36)
+- [ ] **[Claude]** Claude in einem Tab der Gruppe, der gerade nicht gewählt ist: Der Gruppen-Tab zeigt „arbeitet“, dann „wartet“ oder „fertig“. Ein Klick auf den Hinweis („Gruppenname › Tabname“) zeigt genau diesen Tab. (T36)
+- [ ] „Gruppe schliessen“ mit einem laufenden Programm darin: eine Rückfrage. Danach holt `Ctrl+Shift+Z` die Gruppe Tab für Tab zurück, auch schnell hintereinander gedrückt, und jede Shell läuft wieder. (T36)
+- [ ] THub neu starten: Gruppen, Namen und gewählte Tabs sind wieder da. (T36)
+- [ ] Aussehen hell und dunkel, auch die offene Liste. (T36)
+
 ## App-Symbol (Ticket 29)
 
 - [x] Du hast einen Entwurf freigegeben: C (gestapelte Terminals) in Graphit. (T29)

@@ -1,5 +1,5 @@
 import type { TabKind, TabStatus } from '../../shared/types';
-import { PauseIcon, SparkIcon, TerminalTypeIcon } from '../icons';
+import { GroupTypeIcon, PauseIcon, SparkIcon, TerminalTypeIcon } from '../icons';
 
 /** Status als Text, für den Tooltip des Tabs (Wortlaut aus dem Prototyp). */
 export const STATUS_TEXT: Record<TabStatus, string> = {
@@ -26,6 +26,18 @@ export function TabIcon({ kind, status }: TabIconProps) {
   return (
     <span className="st" data-s={status} aria-hidden="true">
       <StatusGlyph kind={kind} status={status} />
+    </span>
+  );
+}
+
+/**
+ * Symbol-Platz am Gruppen-Tab (Ticket 36): der dringendste Status ihrer Tabs (der Kern rechnet ihn aus), mit denselben
+ * Symbolen und Animationen wie am Tab; ruhen alle, gedämpft das Ordner-Symbol.
+ */
+export function GroupIcon({ status }: { status: TabStatus }) {
+  return (
+    <span className="st" data-s={status} aria-hidden="true">
+      {status === 'idle' ? <GroupTypeIcon /> : <StatusGlyph kind="terminal" status={status} />}
     </span>
   );
 }

@@ -196,6 +196,30 @@ function handleCommand(ws: Workspace, command: WorkspaceCommand): void {
     case 'activateTabAt':
       ws.activateTabAt(command.index);
       return;
+    case 'createGroup':
+      ws.createGroup(command.tabId);
+      return;
+    case 'moveTabToGroup':
+      ws.moveTabToGroup(command.tabId, command.groupId);
+      return;
+    case 'removeTabFromGroup':
+      ws.removeTabFromGroup(command.tabId);
+      return;
+    case 'renameGroup':
+      ws.renameGroup(command.groupId, command.name);
+      return;
+    case 'moveGroup':
+      ws.moveGroup(command.groupId, command.index);
+      return;
+    case 'dissolveGroup':
+      ws.dissolveGroup(command.groupId);
+      return;
+    case 'closeGroup':
+      ws.closeGroup(command.groupId);
+      return;
+    case 'newTabInGroup':
+      ws.newTabInGroup(command.groupId);
+      return;
     case 'requestClose':
       ws.requestClose(stringList(command.tabIds));
       return;

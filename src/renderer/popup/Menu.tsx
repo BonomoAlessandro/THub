@@ -24,6 +24,11 @@ export type MenuEntry =
        */
       checked?: boolean;
       run(): void;
+      /**
+       * Rechtsklick auf den Eintrag, etwa auf einen Tab in der Liste einer Gruppe (Ticket 36): Das Menü schliesst sich,
+       * dann läuft dies mit der Stelle des Klicks. Ohne Angabe tut ein Rechtsklick nichts.
+       */
+      context?(at: MenuPoint): void;
     };
 
 type MenuItem = Extract<MenuEntry, { kind: 'item' }>;
@@ -131,6 +136,8 @@ export function Menu({ label, entries, anchor, highlightFirst = false, onClose }
       aria-activedescendant={highlighted >= 0 ? itemId(highlighted) : undefined}
       // Klicks ins Menü lassen den Fokus beim Menü.
       onMouseDown={(e) => e.preventDefault()}
+      // Nie das Kontextmenü von Chromium; Einträge mit eigenem Rechtsklick regeln ihn selbst.
+      onContextMenu={(e) => e.preventDefault()}
     >
       {entries.map((entry, i) => {
         if (entry.kind === 'header') {
@@ -153,6 +160,12 @@ export function Menu({ label, entries, anchor, highlightFirst = false, onClose }
             className={own === highlighted ? 'mi focus' : 'mi'}
             onMouseMove={() => setHighlighted(own)}
             onClick={() => choose(entry)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              if (!entry.context) return;
+              current.current.onClose();
+              entry.context({ x: e.clientX, y: e.clientY });
+            }}
           >
             <span className="mi-ic">{entry.icon}</span>
             <span className="mi-label">

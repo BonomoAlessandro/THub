@@ -103,10 +103,36 @@ export function closeOtherTabs(tabId: string): void {
   api.send({ type: 'closeOtherTabs', tabId });
 }
 
-/** Einen Tab anzeigen (Klick auf den Tab); ist er schon aktiv, bekommt nur sein Terminal den Fokus. */
+/**
+ * Einen Tab anzeigen (Klick auf den Tab, Eintrag in der Liste einer Gruppe, Befehlspalette); ist er schon aktiv, bekommt
+ * nur sein Terminal den Fokus. Ein Tab in einer Gruppe wird dabei ihr gewählter Tab; das regelt der Kern.
+ */
 export function showTab(tabId: string, activeTabId: string | null): void {
   if (tabId === activeTabId) focusTerminal(tabId);
   else api.send({ type: 'activateTab', tabId });
+}
+
+/**
+ * „Neue Gruppe“ (Ticket 36): eine Gruppe mit diesem einzelnen Tab an seiner Stelle. Der Kern meldet sie danach
+ * (`groupCreated`), und der Gruppen-Tab geht ins Umbenennen.
+ */
+export function createGroup(tabId: string): void {
+  api.send({ type: 'createGroup', tabId });
+}
+
+/** „Aus Gruppe nehmen“: Der Tab steht danach einzeln rechts neben seiner Gruppe. */
+export function removeFromGroup(tabId: string): void {
+  api.send({ type: 'removeTabFromGroup', tabId });
+}
+
+/** „Gruppe auflösen“: Die Tabs bleiben offen und stehen einzeln an der Stelle der Gruppe. */
+export function dissolveGroup(groupId: string): void {
+  api.send({ type: 'dissolveGroup', groupId });
+}
+
+/** „Neues Terminal“ in der Gruppe: am Ende der Gruppe, im Ordner ihres gewählten Tabs, mit der Standard-Shell. */
+export function newTabInGroup(groupId: string): void {
+  api.send({ type: 'newTabInGroup', groupId });
 }
 
 /** Öffnet den Ordner-Dialog von Windows; der gewählte Ordner wird der Standardordner („Ändern …“ in den Einstellungen). */

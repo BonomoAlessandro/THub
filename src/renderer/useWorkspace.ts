@@ -1,12 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
-import type { BusyTab, Settings, ShellOption, TabSnapshot, ToastSnapshot } from '../shared/types';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import type { BusyTab, GroupSnapshot, Settings, ShellOption, TabSnapshot, ToastSnapshot } from '../shared/types';
 import { terminalViews } from './terminal/terminalViews';
 
 const api = window.thub;
 
 /** Was die Oberfläche vom Zustand des Kerns anzeigt. */
 export interface WorkspaceView {
+  /** Alle Tabs in der Reihenfolge der Leiste; die Tabs einer Gruppe stehen zusammen. */
   tabs: TabSnapshot[];
+  /** Die Gruppen (Ticket 36), in der Reihenfolge der Leiste. */
+  groups: GroupSnapshot[];
   activeTabId: string | null;
   settings: Settings;
   /** Die erkannten Shells, in der Reihenfolge des Pfeil-Menüs. */
@@ -30,11 +34,14 @@ export interface CloseQuestion {
  * Änderungsereignisse. Ausgabe, Ende, Hinweise und Verlauf gehen direkt an die Terminal-Ansichten;
  * fordert der Kern den Verlauf an, antworten sie mit ihrem serialisierten Inhalt.
  * Liefert `null`, solange der Schnappschuss noch nicht da ist.
+ * @param onGroupCreated über „Neue Gruppe“ ist diese Gruppe entstanden (Ticket 36); sie geht ins Umbenennen
  */
-export function useWorkspace(): {
+export function useWorkspace(onGroupCreated: (groupId: string) => void): {
   view: WorkspaceView | null;
   /** Benennt einen Tab um und zeigt den neuen Namen sofort; der Kern bestätigt mit dem nächsten Ereignis. */
   renameTab(tabId: string, name: string): void;
+  /** Benennt eine Gruppe um und zeigt den neuen Namen sofort; der Kern bestätigt mit dem nächsten Ereignis. */
+  renameGroup(groupId: string, name: string): void;
   /** Die offene Rückfrage vor dem Schliessen; eine neue ersetzt sie. */
   closeQuestion: CloseQuestion | null;
   /** Antwort auf die Rückfrage: Bestätigt schliesst der Kern ihre Tabs, sonst bleiben alle offen. */
@@ -42,18 +49,39 @@ export function useWorkspace(): {
 } {
   const [view, setView] = useState<WorkspaceView | null>(null);
   const [closeQuestion, setCloseQuestion] = useState<CloseQuestion | null>(null);
+  const groupCreated = useRef(onGroupCreated);
+  groupCreated.current = onGroupCreated;
 
   useEffect(() => {
     /** Erst nach dem Schnappschuss werden Ereignisse angewendet; frühere stecken schon darin. */
     let loaded = false;
     let disposed = false;
+    /** Die Tabs des zuletzt angewendeten Stands, um zu erkennen, ob ein Ereignis Tabs wegnimmt. */
+    let shownTabIds = new Set<string>();
 
     // Zuerst abonnieren, dann den Schnappschuss holen: So geht kein Ereignis verloren.
     const unsubscribe = api.onEvent((event) => {
       if (!loaded) return;
       switch (event.type) {
-        case 'tabs':
-          setView((current) => current && { ...current, tabs: event.tabs, activeTabId: event.activeTabId });
+        case 'tabs': {
+          const update = () =>
+            setView(
+              (current) =>
+                current && { ...current, tabs: event.tabs, groups: event.groups, activeTabId: event.activeTabId },
+            );
+          const ids = new Set(event.tabs.map((t) => t.id));
+          const removes = [...shownTabIds].some((id) => !ids.has(id));
+          shownTabIds = ids;
+          // Nimmt das Ereignis Tabs weg, zeichnet die Oberfläche sofort. Sonst kann React es mit dem nächsten Ereignis
+          // zusammen zeichnen: Öffnet `Ctrl+Shift+Z` einen eben geschlossenen Tab gleich wieder (etwa nach „Gruppe
+          // schliessen“ Tab für Tab), bliebe seine alte Ansicht stehen, er bekäme keine neue und meldete nie „Ansicht
+          // bereit“; seine Shell startete nie.
+          if (removes) flushSync(update);
+          else update();
+          return;
+        }
+        case 'groupCreated':
+          groupCreated.current(event.groupId);
           return;
         case 'toasts':
           setView((current) => current && { ...current, toasts: event.toasts });
@@ -93,9 +121,11 @@ export function useWorkspace(): {
     void api.loadSnapshot().then((snapshot) => {
       if (disposed) return;
       loaded = true;
+      shownTabIds = new Set(snapshot.tabs.map((t) => t.id));
       // Die gespeicherten Tabs zeigen; ihre Shells startet der Kern, sobald die Ansichten bereit sind.
       setView({
         tabs: snapshot.tabs,
+        groups: snapshot.groups,
         activeTabId: snapshot.activeTabId,
         settings: snapshot.settings,
         shells: snapshot.shells,
@@ -145,10 +175,19 @@ export function useWorkspace(): {
     if (trimmed) api.send({ type: 'renameTab', tabId, name: trimmed });
   }, []);
 
+  const renameGroup = useCallback((groupId: string, name: string) => {
+    const trimmed = name.trim();
+    setView((current) => {
+      if (!current || !trimmed) return current;
+      return { ...current, groups: current.groups.map((g) => (g.id === groupId ? { ...g, name: trimmed } : g)) };
+    });
+    if (trimmed) api.send({ type: 'renameGroup', groupId, name: trimmed });
+  }, []);
+
   const answerCloseQuestion = useCallback((question: CloseQuestion, confirmed: boolean) => {
     setCloseQuestion((current) => (current === question ? null : current));
     if (confirmed) api.send({ type: 'closeTabs', tabIds: question.tabIds });
   }, []);
 
-  return { view, renameTab, closeQuestion, answerCloseQuestion };
+  return { view, renameTab, renameGroup, closeQuestion, answerCloseQuestion };
 }

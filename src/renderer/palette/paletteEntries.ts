@@ -1,19 +1,31 @@
 // Einträge der Befehlspalette: Tabs und Befehle, dazu die Unterlisten „Neues Terminal in …“ und „Zuletzt geschlossen“.
 // Ohne DOM, damit sich prüfen lässt, dass jeder Befehl dasselbe bewirkt wie über Maus oder Tastenkürzel.
 
-import type { ClosedTabInfo, KeepAwakeMode, RecentDir, TabKind, TabSnapshot, TabStatus } from '../../shared/types';
+import type {
+  ClosedTabInfo,
+  GroupSnapshot,
+  KeepAwakeMode,
+  RecentDir,
+  TabKind,
+  TabSnapshot,
+  TabStatus,
+} from '../../shared/types';
 import {
   closeOtherTabs,
   closeTab,
   copyVersion,
+  createGroup,
+  dissolveGroup,
   keepAwake,
   newTab,
   pickDefaultFolder,
   pickFolderForNewTab,
+  removeFromGroup,
   setKeepAwake,
   showTab,
 } from '../commands';
 import { shortcutHint } from '../shortcuts';
+import { groupedName, tabLabel } from '../tabs/tabLabel';
 import { focusTerminal } from '../terminal/terminalViews';
 import type { SearchGroup } from './search';
 
@@ -36,7 +48,9 @@ export type PaletteIcon =
   | 'keyboard'
   | 'coffee'
   | 'monitor'
-  | 'copy';
+  | 'copy'
+  | 'folderOutput'
+  | 'ungroup';
 
 export interface PaletteItem {
   /** Eindeutig in der Palette. */
@@ -61,18 +75,30 @@ export type PaletteGroup = SearchGroup<PaletteItem>;
 /** Was die Befehle der Palette brauchen. */
 export interface PaletteContext {
   tabs: TabSnapshot[];
+  /** Die Gruppen (Ticket 36): Tabs darin heissen „Gruppenname › Tabname“. */
+  groups: GroupSnapshot[];
   activeTabId: string | null;
   /** Den Namen dieses Tabs bearbeiten (wie `F2`). */
   startRename(tabId: string): void;
+  /** Den Namen dieser Gruppe bearbeiten (wie ein Doppelklick auf den Gruppen-Tab). */
+  startRenameGroup(groupId: string): void;
   openSettings(): void;
   openShortcuts(): void;
   /** Rechner wach halten an/aus und die gewählte Stufe (Ticket 28). */
   keepAwake: { on: boolean; mode: KeepAwakeMode };
 }
 
-/** Tabs und Befehle, wie im Prototyp. Was einen aktiven Tab bzw. einen zweiten Tab braucht, fehlt ohne ihn. */
+/**
+ * Tabs und Befehle, wie im Prototyp. Was einen aktiven Tab bzw. einen zweiten Tab braucht, fehlt ohne ihn. Tabs in einer
+ * Gruppe heissen „Gruppenname › Tabname“, so trifft die Suche auch den Namen der Gruppe; die Befehle zu Gruppen
+ * (Ticket 36) erscheinen nur, wo sie zum aktiven Tab passen.
+ */
 export function rootGroups(ctx: PaletteContext): PaletteGroup[] {
   const active = ctx.activeTabId;
+  const activeTab = ctx.tabs.find((t) => t.id === active);
+  const activeGroup = activeTab?.groupId === undefined ? undefined : ctx.groups.find((g) => g.id === activeTab.groupId);
+  // In einer Gruppe schliesst „Andere Tabs schliessen“ nur die anderen Tabs dieser Gruppe.
+  const others = activeGroup ? activeGroup.tabIds.length - 1 : ctx.tabs.length - 1;
   const commands: (PaletteItem | false)[] = [
     { id: 'newTab', icon: 'plus', label: 'Neues Terminal', hint: shortcutHint('newTab'), run: newTab },
     { id: 'newTabIn', icon: 'folder', label: 'Neues Terminal in …', opens: 'folders' },
@@ -91,12 +117,39 @@ export function rootGroups(ctx: PaletteContext): PaletteGroup[] {
       run: () => closeTab(active),
     },
     active !== null &&
-      ctx.tabs.length > 1 && {
+      others > 0 && {
         id: 'closeOthers',
         icon: 'closeOthers',
         label: 'Andere Tabs schliessen',
         run: () => closeOtherTabs(active),
       },
+    // Wie im Rechtsklick-Menü am Tab bzw. am Gruppen-Tab.
+    activeTab !== undefined &&
+      activeGroup === undefined && {
+        id: 'createGroup',
+        icon: 'folderPlus',
+        label: 'Neue Gruppe',
+        run: () => createGroup(activeTab.id),
+      },
+    activeTab !== undefined &&
+      activeGroup !== undefined && {
+        id: 'removeFromGroup',
+        icon: 'folderOutput',
+        label: 'Aus Gruppe nehmen',
+        run: () => removeFromGroup(activeTab.id),
+      },
+    activeGroup !== undefined && {
+      id: 'renameGroup',
+      icon: 'pencil',
+      label: 'Gruppe umbenennen',
+      run: () => ctx.startRenameGroup(activeGroup.id),
+    },
+    activeGroup !== undefined && {
+      id: 'dissolveGroup',
+      icon: 'ungroup',
+      label: 'Gruppe auflösen',
+      run: () => dissolveGroup(activeGroup.id),
+    },
     {
       id: 'closed',
       icon: 'history',
@@ -135,7 +188,7 @@ export function rootGroups(ctx: PaletteContext): PaletteGroup[] {
       title: 'Tabs',
       items: ctx.tabs.map((tab) => ({
         id: `tab:${tab.id}`,
-        label: tab.name,
+        label: tabLabel(tab, ctx.groups),
         detail: tab.cwd,
         tab: { kind: tab.kind, status: tab.status },
         run: () => showTab(tab.id, active),
@@ -166,7 +219,10 @@ export function folderGroups(recentDirs: RecentDir[]): PaletteGroup[] {
   ];
 }
 
-/** „Zuletzt geschlossen“: die geschlossenen Tabs, neueste zuerst; die Wahl öffnet genau diesen Tab wieder. */
+/**
+ * „Zuletzt geschlossen“: die geschlossenen Tabs, neueste zuerst; die Wahl öffnet genau diesen Tab wieder. Ein Tab, der
+ * in eine Gruppe zurückkehrt, heisst „Gruppenname › Tabname“.
+ */
 export function closedGroups(closed: ClosedTabInfo[]): PaletteGroup[] {
   return [
     {
@@ -174,7 +230,7 @@ export function closedGroups(closed: ClosedTabInfo[]): PaletteGroup[] {
       items: closed.map(
         (entry): PaletteItem => ({
           id: `closed:${entry.id}`,
-          label: entry.name,
+          label: groupedName(entry.groupName, entry.name),
           detail: entry.cwd,
           tab: { kind: entry.kind, status: 'idle' },
           run: () => api.send({ type: 'reopenClosedTab', tabId: entry.id }),

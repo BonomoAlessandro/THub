@@ -101,6 +101,29 @@ export interface TabSnapshot {
    * gibt es keinen Prozess, und der Renderer legt noch keine Ansicht an.
    */
   paused: boolean;
+  /** Die Gruppe, in der der Tab steht (Ticket 36); fehlt bei einem einzelnen Tab. */
+  groupId?: string;
+}
+
+/**
+ * Eine Gruppe (Ticket 36): ein einziger Eintrag in der Tab-Leiste, an der Stelle ihres ersten Tabs. Ihre Tabs stehen in
+ * `TabSnapshot` zusammen, in ihrer Reihenfolge.
+ */
+export interface GroupSnapshot {
+  id: string;
+  name: string;
+  /** Die Tabs der Gruppe in ihrer Reihenfolge; mindestens einer. */
+  tabIds: string[];
+  /**
+   * Der gewählte Tab: der zuletzt angezeigte Tab der Gruppe. Ihn zeigt der Gruppen-Tab, und ihn zeigt ein Klick auf den
+   * Gruppen-Tab an. Ist er der aktive Tab, ist die Gruppe aktiv.
+   */
+  selectedTabId: string;
+  /**
+   * Der dringendste Status ihrer Tabs, in der Reihenfolge wartet, fertig, arbeitet, Prozesse, pausiert; `idle`, wenn
+   * keiner davon zutrifft (der Gruppen-Tab zeigt dann gedämpft das Ordner-Symbol).
+   */
+  status: TabStatus;
 }
 
 /**
@@ -130,6 +153,8 @@ export interface ClosedTabInfo {
   cwd: string;
   /** Wann er geschlossen wurde, in Millisekunden seit 1970. */
   closedAt: number;
+  /** Name der Gruppe, in die er beim Wiederöffnen zurückkehrt (Ticket 36); fehlt, wenn er einzeln stand. */
+  groupName?: string;
 }
 
 /**
@@ -196,7 +221,10 @@ export interface RecentDir {
 
 /** Vollständiger Zustand für den Renderer, beim Laden abgeholt. */
 export interface WorkspaceSnapshot {
+  /** Alle Tabs in der Reihenfolge der Leiste; die Tabs einer Gruppe stehen zusammen. */
   tabs: TabSnapshot[];
+  /** Die Gruppen (Ticket 36), in der Reihenfolge der Leiste. */
+  groups: GroupSnapshot[];
   activeTabId: string | null;
   settings: Settings;
   /** Die erkannten Shells, in der Reihenfolge des Pfeil-Menüs. */
@@ -214,8 +242,16 @@ export interface WorkspaceSnapshot {
 
 /** Änderungsereignisse vom Kern an den Renderer. */
 export type WorkspaceEvent =
-  /** Tabs, Reihenfolge, aktiver Tab, Prozess-Zustand, Art oder Status eines Tabs haben sich geändert. */
-  | { type: 'tabs'; tabs: TabSnapshot[]; activeTabId: string | null }
+  /**
+   * Tabs, Reihenfolge, aktiver Tab, Prozess-Zustand, Art oder Status eines Tabs oder die Gruppen haben sich geändert
+   * (siehe `WorkspaceSnapshot`).
+   */
+  | { type: 'tabs'; tabs: TabSnapshot[]; groups: GroupSnapshot[]; activeTabId: string | null }
+  /**
+   * Über „Neue Gruppe“ ist diese Gruppe entstanden (Ticket 36); kommt nach dem Ereignis `tabs` mit ihr. Der Gruppen-Tab
+   * geht sofort ins Umbenennen.
+   */
+  | { type: 'groupCreated'; groupId: string }
   /** Die Hinweise unten rechts haben sich geändert: alle, die jetzt stehen (siehe `WorkspaceSnapshot`). */
   | { type: 'toasts'; toasts: ToastSnapshot[] }
   /** Die Einstellungen haben sich geändert; dazu die daraus folgende Standard-Shell (siehe `WorkspaceSnapshot`). */
@@ -259,19 +295,40 @@ export type WorkspaceCommand =
    */
   | { type: 'duplicateTab'; tabId: string }
   | { type: 'renameTab'; tabId: string; name: string }
-  /** Den Tab an Position `index` der Leiste verschieben, ab 0 (Ziehen in der Tab-Leiste). */
+  /**
+   * Den einzelnen Tab an Position `index` der Leiste verschieben, ab 0 (Ziehen in der Tab-Leiste). Gezählt werden die
+   * Einträge der Leiste: einzelne Tabs und Gruppen (Ticket 36).
+   */
   | { type: 'moveTab'; tabId: string; index: number }
   | { type: 'activateTab'; tabId: string }
-  /** Zum Tab `offset` Plätze weiter, im Kreis (Ctrl+Tab: 1, Ctrl+Shift+Tab: -1). */
+  /** Zum Eintrag der Leiste `offset` Plätze weiter, im Kreis (Ctrl+Tab: 1, Ctrl+Shift+Tab: -1); eine Gruppe zählt als ihr gewählter Tab. */
   | { type: 'activateRelativeTab'; offset: number }
-  /** Zum Tab an Position `index` der Leiste, ab 0 (Ctrl+1 … Ctrl+9). */
+  /** Zum Eintrag an Position `index` der Leiste, ab 0 (Ctrl+1 … Ctrl+9); eine Gruppe zählt als ihr gewählter Tab. */
   | { type: 'activateTabAt'; index: number }
+  /** „Neue Gruppe“ (Ticket 36): eine Gruppe mit diesem einzelnen Tab an seiner Stelle. */
+  | { type: 'createGroup'; tabId: string }
+  /** „In Gruppe „…““ oder Ziehen auf den Gruppen-Tab: der Tab kommt ans Ende dieser Gruppe. */
+  | { type: 'moveTabToGroup'; tabId: string; groupId: string }
+  /** „Aus Gruppe nehmen“: der Tab steht danach einzeln rechts neben der Gruppe. */
+  | { type: 'removeTabFromGroup'; tabId: string }
+  | { type: 'renameGroup'; groupId: string; name: string }
+  /** Die Gruppe als Ganzes an Position `index` der Leiste verschieben, ab 0, gezählt wie bei `moveTab`. */
+  | { type: 'moveGroup'; groupId: string; index: number }
+  /** „Gruppe auflösen“: die Tabs bleiben offen und stehen in ihrer Reihenfolge einzeln an der Stelle der Gruppe. */
+  | { type: 'dissolveGroup'; groupId: string }
+  /** „Gruppe schliessen“: alle Tabs der Gruppe, mit höchstens einer gemeinsamen Rückfrage wie `requestClose`. */
+  | { type: 'closeGroup'; groupId: string }
+  /** „Neues Terminal“ in der Gruppe: am Ende der Gruppe, im aktuellen Ordner ihres gewählten Tabs, mit der Standard-Shell. */
+  | { type: 'newTabInGroup'; groupId: string }
   /**
    * Der Nutzer will diese Tabs schliessen (×, Ctrl+Shift+W). Ruhen sie, schliesst der Kern sie sofort; läuft in einem
    * etwas, fragt er erst zurück (`askClose`).
    */
   | { type: 'requestClose'; tabIds: string[] }
-  /** „Andere Tabs schliessen“: alle ausser diesem, mit höchstens einer gemeinsamen Rückfrage. */
+  /**
+   * „Andere Tabs schliessen“, mit höchstens einer gemeinsamen Rückfrage: bei einem einzelnen Tab alle anderen Einträge
+   * der Leiste samt Gruppen, bei einem Tab in einer Gruppe die anderen Tabs dieser Gruppe.
+   */
   | { type: 'closeOtherTabs'; tabId: string }
   /** Die Rückfrage ist bestätigt: Diese Tabs schliessen ohne weitere Rückfrage. */
   | { type: 'closeTabs'; tabIds: string[] }

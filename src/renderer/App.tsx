@@ -8,7 +8,7 @@ import { SettingsDialog } from './settings/SettingsDialog';
 import { ShortcutsDialog } from './settings/ShortcutsDialog';
 import { resolveShortcut, resolveWheel, type ShortcutAction } from './shortcuts';
 import { CloseDialog } from './tabs/CloseDialog';
-import { TabBar } from './tabs/TabBar';
+import { TabBar, type RenameTarget } from './tabs/TabBar';
 import { TerminalArea } from './terminal/TerminalArea';
 import { Toasts } from './toasts/Toasts';
 import { focusTerminal } from './terminal/terminalViews';
@@ -19,8 +19,14 @@ import { useWorkspace } from './useWorkspace';
  * Befehlspalette, die Einstellungen, die Übersicht der Tastenkürzel oder die Rückfrage vor dem Schliessen.
  */
 export function App() {
-  const { view, renameTab, closeQuestion, answerCloseQuestion } = useWorkspace();
-  const [renamingId, setRenamingId] = useState<string | null>(null);
+  /** Was gerade umbenannt wird: ein Tab oder eine Gruppe (Ticket 36). */
+  const [renaming, setRenaming] = useState<RenameTarget | null>(null);
+  // Eine über „Neue Gruppe“ entstandene Gruppe geht sofort ins Umbenennen.
+  const { view, renameTab, renameGroup, closeQuestion, answerCloseQuestion } = useWorkspace((groupId) =>
+    setRenaming({ kind: 'group', id: groupId }),
+  );
+  const startRenameTab = useCallback((tabId: string) => setRenaming({ kind: 'tab', id: tabId }), []);
+  const startRenameGroup = useCallback((groupId: string) => setRenaming({ kind: 'group', id: groupId }), []);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   /** Die offene Übersicht der Tastenkürzel und woher sie kam: Aus den Einstellungen geht es danach dorthin zurück. */
@@ -31,13 +37,14 @@ export function App() {
   viewRef.current = view;
 
   const finishRename = useCallback(
-    (tabId: string, name: string | null) => {
-      setRenamingId(null);
-      if (name !== null) renameTab(tabId, name);
+    (target: RenameTarget, name: string | null) => {
+      setRenaming(null);
+      if (name !== null && target.kind === 'tab') renameTab(target.id, name);
+      if (name !== null && target.kind === 'group') renameGroup(target.id, name);
       // Danach geht der Fokus zurück ins Terminal.
       focusTerminal(viewRef.current?.activeTabId ?? null);
     },
-    [renameTab],
+    [renameTab, renameGroup],
   );
 
   const closeSettings = useCallback(() => {
@@ -81,10 +88,11 @@ export function App() {
   const runAppShortcut = useCallback((action: ShortcutAction) => {
     runShortcut(action, {
       activeTabId: viewRef.current?.activeTabId ?? null,
-      startRename: setRenamingId,
+      // F2 benennt den aktiven Tab um, auch in einer Gruppe.
+      startRename: startRenameTab,
       openPalette: () => setPaletteOpen(true),
     });
-  }, []);
+  }, [startRenameTab]);
 
   // Tastenkürzel in der Capture-Phase, also bevor xterm.js die Taste sieht. Solange ein Menü oder
   // Dialog offen ist, gehören die Tasten ihm, in Eingabefeldern dem Feld (auch Ctrl+C und Ctrl+V).
@@ -121,44 +129,54 @@ export function App() {
     return () => window.removeEventListener('wheel', onWheel, { capture: true });
   }, [runAppShortcut]);
 
-  // Was die Befehle der Palette brauchen; neu nur, wenn sich die Tabs oder das Wachhalten ändern.
+  // Was die Befehle der Palette brauchen; neu nur, wenn sich Tabs, Gruppen oder das Wachhalten ändern.
   const tabs = view?.tabs;
+  const groups = view?.groups;
   const activeTabId = view?.activeTabId ?? null;
   const keepAwakeOn = view?.settings.keepAwake ?? false;
   const keepAwakeMode = view?.settings.keepAwakeMode ?? 'system';
   const paletteContext = useMemo<PaletteContext>(
     () => ({
       tabs: tabs ?? [],
+      groups: groups ?? [],
       activeTabId,
-      startRename: setRenamingId,
+      startRename: startRenameTab,
+      startRenameGroup,
       openSettings: () => setSettingsOpen(true),
       openShortcuts: () => setShortcutsFrom('palette'),
       keepAwake: { on: keepAwakeOn, mode: keepAwakeMode },
     }),
-    [tabs, activeTabId, keepAwakeOn, keepAwakeMode],
+    [tabs, groups, activeTabId, keepAwakeOn, keepAwakeMode, startRenameTab, startRenameGroup],
   );
 
   if (!view) return null;
 
-  // Ein inzwischen geschlossener Tab wird nicht mehr umbenannt.
-  const renaming = view.tabs.some((t) => t.id === renamingId) ? renamingId : null;
+  // Ein inzwischen geschlossener Tab, eine verschwundene Gruppe wird nicht mehr umbenannt.
+  const renamingNow =
+    renaming &&
+    (renaming.kind === 'tab'
+      ? view.tabs.some((t) => t.id === renaming.id)
+      : view.groups.some((g) => g.id === renaming.id))
+      ? renaming
+      : null;
 
   return (
     <>
       <TabBar
         tabs={view.tabs}
+        groups={view.groups}
         activeTabId={view.activeTabId}
         shells={view.shells}
         defaultShellId={view.defaultShellId}
-        renamingId={renaming}
-        onStartRename={setRenamingId}
+        renaming={renamingNow}
+        onStartRename={setRenaming}
         onFinishRename={finishRename}
         onOpenSettings={() => setSettingsOpen(true)}
         keepAwake={view.settings.keepAwake}
         keepAwakeMode={view.settings.keepAwakeMode}
       />
       <TerminalArea tabs={view.tabs} activeTabId={view.activeTabId} fontSize={view.settings.fontSize} />
-      <Toasts toasts={view.toasts} tabs={view.tabs} activeTabId={view.activeTabId} />
+      <Toasts toasts={view.toasts} tabs={view.tabs} groups={view.groups} activeTabId={view.activeTabId} />
       {settingsOpen && (
         <SettingsDialog
           settings={view.settings}
