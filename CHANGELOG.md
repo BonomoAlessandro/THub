@@ -2,6 +2,16 @@
 
 Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in Klammern verweisen auf die Tickets in [docs/tickets](docs/tickets/README.md). Wie Versionen vergeben werden, steht in [docs/entwicklung.md](docs/entwicklung.md#version-und-installer). Welche Version installiert ist, zeigt THub unten in den Einstellungen.
 
+## Unveröffentlicht
+
+**Neu**
+
+- Tabs lassen sich zu Gruppen zusammenfassen: Eine Gruppe ist ein einziger Tab in der Leiste mit Namen, gewähltem Tab und Anzahl; über den Pfeil wählt man aus der Liste das gewünschte Terminal. Gruppen legt man über das Rechtsklick-Menü an, Tabs kommen über das Menü oder per Ziehen hinein. Nach einem Neustart sind die Gruppen wieder da. (36)
+
+**Korrigiert**
+
+- Ein Tab, der mit `Ctrl+Shift+Z` sofort nach dem Schliessen wieder geöffnet wird, startet seine Shell zuverlässig. (36)
+
 ## 0.3.1 – 2026-11-25
 
 **Korrigiert**
