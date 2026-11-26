@@ -3,8 +3,10 @@ import {
   AUTO_SCROLL_EDGE_PX,
   AUTO_SCROLL_MAX_STEP_PX,
   autoScrollStep,
+  dropPoint,
   dropSlot,
   dropTarget,
+  INTO_GROUP_EDGE,
   markLeft,
   overStrip,
   startsDrag,
@@ -66,6 +68,37 @@ describe('Umsortieren per Ziehen', () => {
     it('direkt vor oder hinter sich abgelegt bleibt der Tab, wo er ist', () => {
       expect(dropTarget(1, 1)).toBeNull();
       expect(dropTarget(2, 1)).toBeNull();
+    });
+  });
+
+  describe('Ziehen auf einen Gruppen-Tab (Ticket 36)', () => {
+    /** Der mittlere Eintrag ist eine Gruppe; seine Mitte (25 % vom Rand) reicht von 266 bis 366. */
+    const GROUP_IN_MIDDLE = [false, true, false];
+
+    it('ein Tab über der Mitte des Gruppen-Tabs kommt in die Gruppe', () => {
+      expect(dropPoint(266, TABS, GROUP_IN_MIDDLE)).toEqual({ kind: 'group', index: 1 });
+      expect(dropPoint(316, TABS, GROUP_IN_MIDDLE)).toEqual({ kind: 'group', index: 1 });
+      expect(dropPoint(366, TABS, GROUP_IN_MIDDLE)).toEqual({ kind: 'group', index: 1 });
+    });
+
+    it('nahe am Rand des Gruppen-Tabs und zwischen zwei Einträgen wird wie bisher umsortiert', () => {
+      expect(dropPoint(240, TABS, GROUP_IN_MIDDLE)).toEqual({ kind: 'slot', slot: 1 });
+      expect(dropPoint(390, TABS, GROUP_IN_MIDDLE)).toEqual({ kind: 'slot', slot: 2 });
+      expect(dropPoint(213, TABS, GROUP_IN_MIDDLE)).toEqual({ kind: 'slot', slot: 1 });
+    });
+
+    it('über einem einzelnen Tab entsteht keine Gruppe', () => {
+      expect(dropPoint(111, TABS, GROUP_IN_MIDDLE)).toEqual({ kind: 'slot', slot: 1 });
+      expect(dropPoint(521, TABS, GROUP_IN_MIDDLE)).toEqual({ kind: 'slot', slot: 3 });
+    });
+
+    it('eine gezogene Gruppe kommt in keine andere Gruppe, sie wird nur umsortiert', () => {
+      expect(dropPoint(316, TABS, null)).toEqual({ kind: 'slot', slot: 2 });
+      expect(dropPoint(300, TABS, null)).toEqual({ kind: 'slot', slot: 1 });
+    });
+
+    it('die Mitte ist die Hälfte der Breite', () => {
+      expect(INTO_GROUP_EDGE).toBe(0.25);
     });
   });
 

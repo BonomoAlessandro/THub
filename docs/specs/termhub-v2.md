@@ -728,6 +728,23 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Tastatur:** `Ctrl+Tab`, `Ctrl+PageDown`/`PageUp` und `Ctrl+1` … `Ctrl+9` zählen die Einträge der Leiste; eine Gruppe zählt als ihr gewählter Tab. Keine neuen Kürzel. Befehlspalette und Hinweise nennen Tabs in Gruppen als „Gruppenname › Tabname“ und zeigen sie direkt an.
 - **Verworfen:** aufklappbare Gruppe wie im Browser, Seitenleiste mit Ordnern, automatische Gruppen nach Ordner. Einzelheiten in Ticket 36.
 
+**Präzisierungen aus der Umsetzung (Ticket 36):**
+- **Regeln im Kern:** Gruppen anlegen, Tabs hinein- und herausschieben, umbenennen, verschieben, auflösen, schliessen und „Neues Terminal“ in der Gruppe sind Befehle des Kerns (`createGroup`, `moveTabToGroup`, `removeTabFromGroup`, `renameGroup`, `moveGroup`, `dissolveGroup`, `closeGroup`, `newTabInGroup`).
+  - `moveTab`, `activateRelativeTab` und `activateTabAt` zählen die Einträge der Leiste; Kern und Oberfläche leiten sie gleich aus der Liste der Tabs ab (`src/shared/barEntries.ts`).
+  - Ein Tab in einer Gruppe steht nicht selbst in der Leiste; `moveTab` ändert für ihn nichts.
+  - Der Status einer Gruppe ist eine reine Funktion (`groupStatus` in `groups.ts`); der Kern schickt ihn mit jeder Gruppe (`GroupSnapshot.status`).
+- **Gewählter Tab:** Der angezeigte Tab ist immer der gewählte seiner Gruppe; das stellt der Kern vor jedem Speichern sicher, für jeden Weg des Anzeigens. Wird der gewählte Tab geschlossen, aus der Gruppe genommen oder in eine andere geschoben, wählt die Gruppe den nächsten Tab, sonst den vorherigen. Bleibt beim Schliessen des aktiven Tabs in seiner Gruppe keiner, gilt der Nachbar in der Leiste, bei einer Gruppe ihr gewählter Tab.
+- **Neue Gruppe:** nur aus einem einzelnen Tab (keine Gruppen in Gruppen). Name nach dem aktuellen Ordner des Tabs wie im Tooltip, nach den Regeln der Tab-Namen; „ 2“ usw. bei Gleichstand mit einer anderen Gruppe. Danach meldet der Kern `groupCreated`, und der Gruppen-Tab geht ins Umbenennen.
+- **Gruppen-Tab:**
+  - Kein ×; die mittlere Maustaste schliesst nichts.
+  - Der Tooltip nennt zusätzlich den Status der Gruppe.
+  - Wird ein Tab der Gruppe umbenannt (`F2`, Menü eines Tabs aus der Liste), zeigt der Gruppen-Tab gedämpft den Gruppennamen und den Namen dieses Tabs als Eingabefeld, auch für einen Tab, der nicht gewählt ist.
+- **Ziehen:** Die Mitte eines Gruppen-Tabs ist seine mittlere Hälfte (je 25 % Abstand zum Rand). Nur ein einzelner Tab kommt so in eine Gruppe; eine gezogene Gruppe wird umsortiert.
+- **Liste:** Das Menü kann einen Rechtsklick auf einen Eintrag: Die Liste schliesst sich, und das Menü des Tabs geht an der Stelle des Klicks auf.
+- **Wiederöffnen:** An die alte Stelle in der Gruppe. Eine neu entstehende Gruppe und ein einzelner Tab kommen an ihre alte Stelle in der Leiste, aber nie mitten in eine andere Gruppe, sondern dahinter. „Zuletzt geschlossen“ in der Palette nennt die Gruppe („Gruppenname › Tabname“).
+- **Gespeicherter Zustand:** `groups` (Kennung, Name, gewählter Tab) wird immer geschrieben, auch leer; ein Tab in einer Gruppe hat `groupId`; ein geschlossener Tab hat `group` (Kennung, Name, Stelle in der Gruppe). Gelesen wird tolerant wie im Ticket; zusätzlich ist der aktive Tab der gewählte seiner Gruppe, und eine Gruppe ohne Namen heisst „Gruppe“. Ein Test liest den Zustand mit einer eingefrorenen Kopie des Lesers aus THub 0.3.1: alle Tabs einzeln, in ihrer Reihenfolge, mit dem aktiven Tab.
+- **Oberfläche bei schnellen Ereignissen:** Nimmt ein Ereignis `tabs` Tabs weg, zeichnet die Oberfläche sofort (`flushSync`). Sonst konnte React „Tab weg“ und ein gleich folgendes „Tab wieder da“ (`Ctrl+Shift+Z` kurz nach dem Schliessen) zusammen zeichnen. Die alte Ansicht blieb dann stehen, und die Shell des wieder geöffneten Tabs startete nie.
+
 ### Rechner wach halten
 
 Umsetzung: Ticket 28.
@@ -856,6 +873,7 @@ Umsetzung: Ticket 30.
   - **Hinweise:** nur für nicht sichtbare Tabs, Countdown nur bei sichtbarem Fenster, höchstens einer pro Tab, abgeschaltet heisst keine Hinweise.
   - **Wiederherstellen:** alle Fälle aus dem Abschnitt „Wiederherstellen“.
   - **Übernahme** eines Zustands der Version 1.
+  - **Tab-Gruppen** (Ticket 36): anlegen, hinein- und herausschieben, zusammenhalten beim Umsortieren, gewählter Tab, umbenennen, auflösen, schliessen mit gemeinsamer Rückfrage, „Andere Tabs schliessen“, Duplizieren und „Neues Terminal“ in der Gruppe, Wiederöffnen, Zählen der Einträge für `Ctrl+Tab` und `Ctrl+1` … `Ctrl+9`, Speichern und tolerantes Laden, Lesen durch eine ältere THub.
   - **Wachhalten:** Mit nachgemachtem Port meldet der Kern die wirksame Stufe beim Start und bei jeder Änderung; Ein- und Ausschalten, Wechsel der Stufe bei eingeschaltetem und ausgeschaltetem Wachhalten, dieselbe Stufe zweimal; nach einem Neustart läuft ein eingeschaltetes Wachhalten mit derselben Stufe von selbst wieder; Beenden und Einfrieren ändern die gespeicherte Einstellung nicht; ein Zustand ohne die Angaben ergibt „aus“ und „nur Rechner“.
 
 ### Teststelle 2: Shell-Integration mit echten Shells

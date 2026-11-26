@@ -1,5 +1,6 @@
 // Umsortieren per Ziehen in der Tab-Leiste: reine Rechnungen ohne DOM, damit sie sich prüfen lassen. Die Reihenfolge
-// selbst ändert der Kern (`moveTab`).
+// selbst ändert der Kern (`moveTab`, `moveGroup`, `moveTabToGroup`). Gezogen werden die Einträge der Leiste: einzelne
+// Tabs und Gruppen-Tabs (Ticket 36).
 
 /** Ab so vielen Pixeln Bewegung mit gedrückter Taste wird aus einem Klick ein Ziehen. */
 export const DRAG_THRESHOLD_PX = 4;
@@ -53,8 +54,37 @@ export function dropSlot(x: number, tabs: Span[]): number {
 }
 
 /**
- * Die Position, an die der Tab von Position `from` beim Ablegen an der Einfügestelle `slot` kommt, wie sie der Kern
- * erwartet (`moveTab`); `null`, wenn er an seinem Platz bliebe (direkt vor oder hinter sich abgelegt).
+ * Ein Gruppen-Tab nimmt einen gezogenen Tab auf, wenn die Maus über seiner Mitte steht (Ticket 36): mindestens diesen
+ * Anteil seiner Breite von beiden Rändern entfernt. Näher am Rand gilt die Einfügestelle davor bzw. dahinter.
+ */
+export const INTO_GROUP_EDGE = 0.25;
+
+/** Wohin ein gezogener Eintrag fällt: an eine Einfügestelle zwischen zwei Einträgen oder in den Eintrag `index`, eine Gruppe. */
+export type DropPoint = { kind: 'slot'; slot: number } | { kind: 'group'; index: number };
+
+/**
+ * Wohin der gezogene Eintrag beim Loslassen an `x` fällt. Ein einzelner Tab über der Mitte eines Gruppen-Tabs kommt ans
+ * Ende dieser Gruppe; sonst, und für eine gezogene Gruppe immer (Gruppen in Gruppen gibt es nicht), wird umsortiert.
+ * Ein Tab über einem einzelnen Tab bildet keine Gruppe.
+ * @param groups pro Eintrag, ob er eine Gruppe ist; `null`, wenn der gezogene Eintrag in keine Gruppe kommen kann
+ */
+export function dropPoint(x: number, entries: Span[], groups: readonly boolean[] | null): DropPoint {
+  if (groups) {
+    const index = entries.findIndex((entry, i) => groups[i] === true && overMiddle(x, entry));
+    if (index >= 0) return { kind: 'group', index };
+  }
+  return { kind: 'slot', slot: dropSlot(x, entries) };
+}
+
+function overMiddle(x: number, span: Span): boolean {
+  const edge = (span.right - span.left) * INTO_GROUP_EDGE;
+  return x >= span.left + edge && x <= span.right - edge;
+}
+
+/**
+ * Die Position, an die der Eintrag von Position `from` beim Ablegen an der Einfügestelle `slot` kommt, wie sie der Kern
+ * erwartet (`moveTab`, `moveGroup`; gezählt werden die Einträge der Leiste); `null`, wenn er an seinem Platz bliebe
+ * (direkt vor oder hinter sich abgelegt).
  */
 export function dropTarget(slot: number, from: number): number | null {
   const to = slot > from ? slot - 1 : slot;

@@ -3,10 +3,12 @@
 // Startaufträge erteilt nur der Kern, und zwar erst, wenn die Ansicht des Tabs bereit ist.
 
 import { randomUUID } from 'node:crypto';
+import { barEntries, entryTabs, type BarEntry } from '../../shared/barEntries';
 import type {
   BusyReason,
   BusyTab,
   ClosedTabInfo,
+  GroupSnapshot,
   RecentDir,
   Settings,
   TabProcessState,
@@ -30,6 +32,7 @@ import {
 } from './claude';
 import { CwdReportScanner } from './cwdReport';
 import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
+import { entryBoundary, groupStatus } from './groups';
 import { findOpenPoints, openPointsContext } from './openPoints';
 import {
   KeepAwakeError,
@@ -48,7 +51,9 @@ import {
   normalizeSettings,
   normalizeWindow,
   readPersistedState,
+  type ClosedTab,
   type PersistedClaudeLink,
+  type PersistedGroup,
   type PersistedState,
   type PersistedTab,
   type WindowState,
@@ -121,7 +126,7 @@ export interface Workspace extends ClaudeReceiver {
   subscribe(listener: (event: WorkspaceEvent) => void): () => void;
 
   /**
-   * Legt einen Tab am Ende der Leiste an, macht ihn aktiv und liefert seine Kennung
+   * Legt einen einzelnen Tab am Ende der Leiste an, nie in einer Gruppe, macht ihn aktiv und liefert seine Kennung
    * (leer, wenn der Kern beendet wird). Der Tab heisst wie sein Startordner, bei Gleichstand mit „ 2“,
    * „ 3“ usw.; der Name ändert sich danach nicht mehr von selbst. Der Startordner kommt an die Spitze
    * der zuletzt benutzten Ordner. Der Tab behält seine Shell, auch über einen Neustart.
@@ -131,16 +136,17 @@ export interface Workspace extends ClaudeReceiver {
    * Dupliziert einen Tab (Rechtsklick-Menü): ein neuer Tab rechts neben ihm, auch wenn er nicht aktiv ist, im aktuellen
    * Ordner des Tabs (gibt es ihn nicht mehr, wie beim Start der Shell: Startordner → Standardordner → Benutzerordner),
    * mit derselben Shell und einem automatischen Namen nach dem Ordner. Der neue Tab wird aktiv und startet eine eigene
-   * Shell, ohne Verlauf; bei einem Claude-Tab nur das Terminal, ohne Claude-Session. Liefert seine Kennung, leer für
-   * unbekannte Tabs.
+   * Shell, ohne Verlauf; bei einem Claude-Tab nur das Terminal, ohne Claude-Session. Das Duplikat eines Tabs in einer
+   * Gruppe bleibt in der Gruppe, direkt nach dem Original. Liefert seine Kennung, leer für unbekannte Tabs.
    */
   duplicateTab(tabId: string): string;
   /** Leere Namen werden ignoriert. Ein so vergebener Name wird nie automatisch überschrieben. */
   renameTab(tabId: string, name: string): void;
   /**
-   * Verschiebt den Tab an Position `index` der Leiste (ab 0); die anderen behalten ihre Reihenfolge, der aktive Tab
-   * bleibt aktiv. Eine Position ausserhalb der Leiste gilt als das nächste Ende. Die Reihenfolge übersteht einen
-   * Neustart, und Ctrl+1 … Ctrl+9 (`activateTabAt`) folgen ihr.
+   * Verschiebt den einzelnen Tab an Position `index` der Leiste (ab 0); gezählt werden die Einträge der Leiste,
+   * einzelne Tabs und Gruppen. Die anderen behalten ihre Reihenfolge, der aktive Tab bleibt aktiv. Eine Position
+   * ausserhalb der Leiste gilt als das nächste Ende. Die Reihenfolge übersteht einen Neustart, und Ctrl+1 … Ctrl+9
+   * (`activateTabAt`) folgen ihr. Ein Tab in einer Gruppe wandert nur mit ihr (`moveGroup`).
    */
   moveTab(tabId: string, index: number): void;
   /**
@@ -148,12 +154,54 @@ export interface Workspace extends ClaudeReceiver {
    * „Ordner im Explorer öffnen“; `undefined` für unbekannte Tabs.
    */
   tabFolder(tabId: string): string | undefined;
-  /** Zeigt den Tab an; ein pausierter Claude-Tab setzt dabei seine Session fort. */
+  /**
+   * Zeigt den Tab an; ein pausierter Claude-Tab setzt dabei seine Session fort. Ein Tab in einer Gruppe wird dabei ihr
+   * gewählter Tab, wie auf jedem anderen Weg, auf dem er angezeigt wird.
+   */
   activateTab(tabId: string): void;
-  /** Aktiviert den Tab `offset` Plätze weiter, über die Enden hinweg im Kreis. */
+  /**
+   * Aktiviert den Eintrag der Leiste `offset` Plätze weiter, über die Enden hinweg im Kreis. Eine Gruppe zählt als ihr
+   * gewählter Tab; die anderen Tabs einer Gruppe erreicht man über ihre Liste und die Befehlspalette.
+   */
   activateRelativeTab(offset: number): void;
-  /** Aktiviert den Tab an Position `index` (ab 0); gibt es dort keinen, bleibt alles, wie es ist. */
+  /**
+   * Aktiviert den Eintrag an Position `index` der Leiste (ab 0), eine Gruppe als ihren gewählten Tab; gibt es dort
+   * keinen, bleibt alles, wie es ist.
+   */
   activateTabAt(index: number): void;
+
+  /**
+   * „Neue Gruppe“ (Ticket 36): Eine Gruppe mit diesem einzelnen Tab entsteht an seiner Stelle. Sie heisst wie der
+   * aktuelle Ordner des Tabs, nach den Regeln der Tab-Namen, bei Gleichstand mit einer anderen Gruppe mit „ 2“ usw.
+   * Danach meldet der Kern `groupCreated`, damit der Gruppen-Tab ins Umbenennen geht. Liefert die Kennung der Gruppe,
+   * leer für unbekannte Tabs und für Tabs, die schon in einer Gruppe stehen (Gruppen in Gruppen gibt es nicht).
+   */
+  createGroup(tabId: string): string;
+  /**
+   * Der Tab kommt ans Ende der Gruppe („In Gruppe „…““, Ziehen auf den Gruppen-Tab), auch aus einer anderen Gruppe.
+   * Wird er gerade angezeigt, ist er danach der gewählte Tab seiner neuen Gruppe.
+   */
+  moveTabToGroup(tabId: string, groupId: string): void;
+  /**
+   * „Aus Gruppe nehmen“: Der Tab steht danach als einzelner Tab rechts neben der Gruppe. War er ihr letzter Tab,
+   * verschwindet die Gruppe, und er bleibt an ihrer Stelle.
+   */
+  removeTabFromGroup(tabId: string): void;
+  /** Leere Namen werden ignoriert. */
+  renameGroup(groupId: string, name: string): void;
+  /** Verschiebt die Gruppe als Ganzes an Position `index` der Leiste (ab 0), gezählt wie bei `moveTab`. */
+  moveGroup(groupId: string, index: number): void;
+  /** „Gruppe auflösen“: Die Tabs bleiben offen und stehen in ihrer Reihenfolge einzeln an der Stelle der Gruppe. */
+  dissolveGroup(groupId: string): void;
+  /** „Gruppe schliessen“: wie `requestClose` für alle Tabs der Gruppe, mit höchstens einer gemeinsamen Rückfrage. */
+  closeGroup(groupId: string): void;
+  /**
+   * „Neues Terminal“ in der Gruppe: ein Tab am Ende der Gruppe, im aktuellen Ordner ihres gewählten Tabs (wie beim
+   * Duplizieren: gibt es ihn nicht mehr, Startordner → Standardordner → Benutzerordner), mit der Standard-Shell und einem
+   * Namen nach dem Ordner. Er wird angezeigt und damit der gewählte Tab. Liefert seine Kennung, leer für unbekannte
+   * Gruppen.
+   */
+  newTabInGroup(groupId: string): string;
   /**
    * Der Nutzer will diese Tabs schliessen (×, Ctrl+Shift+W, „Andere Tabs schliessen“). Ruhen alle, schliessen sie
    * sofort (`closeTabs`), auch ruhende Claude-Tabs. Wartet Claude in einem davon, arbeitet Claude oder laufen darin
@@ -161,15 +209,23 @@ export interface Workspace extends ClaudeReceiver {
    * sind diese Merkmale, nicht das angezeigte Symbol: Ein grüner Tab mit laufendem Dev-Server fragt nach.
    */
   requestClose(tabIds: string[]): void;
-  /** „Andere Tabs schliessen“: wie `requestClose` für alle Tabs ausser diesem. */
+  /**
+   * „Andere Tabs schliessen“, wie `requestClose`: bei einem einzelnen Tab alle anderen Einträge der Leiste samt Gruppen,
+   * bei einem Tab in einer Gruppe die anderen Tabs dieser Gruppe.
+   */
   closeOtherTabs(tabId: string): void;
   /**
-   * Schliesst die Tabs ohne Rückfrage, in dieser Reihenfolge. Jeder wird eingefroren und kommt mit Name, Shell, Ordnern
-   * und Claude-Zuordnung an die Spitze der zuletzt geschlossenen Tabs (höchstens zehn, sie überstehen einen Neustart);
-   * ein normaler Tab bekommt dazu seinen aktuellen Verlauf (`requestHistory`). Fällt ein Tab aus der Liste, wird sein
-   * Verlauf gelöscht. Die Shell endet samt allen Nachfahren, auch denen mit eigener Konsole. War ein geschlossener Tab
-   * aktiv, wird sein Nachbar aktiv; der zuletzt aktive Ordner jedes Tabs kommt an die Spitze der zuletzt benutzten
+   * Schliesst die Tabs ohne Rückfrage, in dieser Reihenfolge. Jeder wird eingefroren und kommt mit Name, Shell, Ordnern,
+   * Claude-Zuordnung und seiner Gruppe (Kennung, Name, Stelle in der Gruppe) an die Spitze der zuletzt geschlossenen
+   * Tabs (höchstens zehn, sie überstehen einen Neustart); ein normaler Tab bekommt dazu seinen aktuellen Verlauf
+   * (`requestHistory`). Fällt ein Tab aus der Liste, wird sein Verlauf gelöscht. Die Shell endet samt allen Nachfahren,
+   * auch denen mit eigener Konsole. Der zuletzt aktive Ordner jedes Tabs kommt an die Spitze der zuletzt benutzten
    * Ordner.
+   *
+   * Schliesst sich der gewählte Tab einer Gruppe, wird der nächste Tab der Gruppe gewählt (sonst der vorherige); war die
+   * Gruppe aktiv, wird dieser Tab angezeigt. Schliesst sich der letzte Tab einer Gruppe, verschwindet die Gruppe. War
+   * ein geschlossener Tab aktiv und bleibt in seiner Gruppe keiner, wird der Nachbar in der Leiste aktiv (eine Gruppe
+   * mit ihrem gewählten Tab).
    */
   closeTabs(tabIds: string[]): void;
   /** Wie `closeTabs` für einen Tab. */
@@ -178,6 +234,10 @@ export interface Workspace extends ClaudeReceiver {
    * Öffnet den zuletzt geschlossenen Tab wieder, mit `tabId` genau diesen. Er kommt an seiner alten Position zurück und
    * wird aktiv, wie nach einem Neustart: ein normaler Tab mit seinem Verlauf im zuletzt aktiven Ordner, ein
    * fortzusetzender Claude-Tab setzt seine Session sofort fort. Liefert seine Kennung, leer, wenn es keinen gibt.
+   *
+   * Stand er in einer Gruppe, kommt er in sie zurück, an seine alte Stelle in der Gruppe, und wird ihr gewählter Tab.
+   * Gibt es die Gruppe nicht mehr, entsteht sie neu mit Namen und Stelle; weitere wieder geöffnete Tabs derselben
+   * Gruppe kommen dazu. So holt Ctrl+Shift+Z nach „Gruppe schliessen“ die Gruppe Tab für Tab zurück.
    */
   reopenClosedTab(tabId?: string): string;
   /** Die zuletzt geschlossenen Tabs, neueste zuerst, höchstens zehn. */
@@ -447,6 +507,7 @@ class WorkspaceCore implements Workspace {
   snapshot(): WorkspaceSnapshot {
     return {
       tabs: this.tabSnapshots(),
+      groups: this.groupSnapshots(),
       activeTabId: this.state.activeTabId,
       settings: structuredClone(this.state.settings),
       shells: this.shells.map((s) => ({ id: s.id, name: s.name })),
@@ -475,15 +536,18 @@ class WorkspaceCore implements Workspace {
     const source = this.findTab(tabId);
     if (this.stopping || !source) return '';
     // Dieselbe Shell-Kennung, auch wenn die Shell auf diesem Rechner fehlt: Dann startet das Duplikat wie die Quelle
-    // mit der Standard-Shell und kommt mit seiner Shell zurück, sobald es sie wieder gibt.
-    return this.insertNewTab(this.state.tabs.indexOf(source) + 1, this.resolveCwd(source), source.shellId);
+    // mit der Standard-Shell und kommt mit seiner Shell zurück, sobald es sie wieder gibt. Direkt nach der Quelle, in
+    // ihrer Gruppe, falls sie in einer steht.
+    const index = this.state.tabs.indexOf(source) + 1;
+    return this.insertNewTab(index, this.resolveCwd(source), source.shellId, source.groupId);
   }
 
   /**
    * Legt einen neuen Tab an Position `index` an und macht ihn aktiv: automatischer Name nach dem Startordner, keine
    * Claude-Zuordnung, kein Verlauf. Der Startordner kommt an die Spitze der zuletzt benutzten Ordner.
+   * @param groupId die Gruppe, in die der Tab kommt; `index` liegt dann in oder direkt hinter ihren Tabs
    */
-  private insertNewTab(index: number, startCwd: string, shellId: string): string {
+  private insertNewTab(index: number, startCwd: string, shellId: string, groupId?: string): string {
     const tab: PersistedTab = {
       id: randomUUID(),
       name: this.autoTabName(startCwd),
@@ -491,6 +555,7 @@ class WorkspaceCore implements Workspace {
       shellId,
       startCwd,
     };
+    if (groupId !== undefined) tab.groupId = groupId;
     this.state.tabs.splice(index, 0, tab);
     this.runtimes.set(tab.id, newRuntime(false));
     this.state.activeTabId = tab.id;
@@ -509,13 +574,30 @@ class WorkspaceCore implements Workspace {
   }
 
   moveTab(tabId: string, index: number): void {
-    const { tabs } = this.state;
-    const from = tabs.findIndex((t) => t.id === tabId);
-    if (this.stopping || from < 0 || !Number.isInteger(index)) return;
-    const to = Math.max(0, Math.min(index, tabs.length - 1));
+    const tab = this.findTab(tabId);
+    // Ein Tab in einer Gruppe steht nicht selbst in der Leiste; er wandert mit seiner Gruppe (`moveGroup`).
+    if (!tab || tab.groupId !== undefined) return;
+    this.moveEntry((entry) => entry.kind === 'tab' && entry.tab === tab, index);
+  }
+
+  moveGroup(groupId: string, index: number): void {
+    this.moveEntry((entry) => entry.kind === 'group' && entry.groupId === groupId, index);
+  }
+
+  /**
+   * Verschiebt einen Eintrag der Leiste an Position `index` (ab 0, ausserhalb gilt das nächste Ende). Eine Gruppe wandert
+   * als Ganzes; ihre Tabs bleiben zusammen und in ihrer Reihenfolge.
+   */
+  private moveEntry(match: (entry: BarEntry<PersistedTab>) => boolean, index: number): void {
+    if (this.stopping || !Number.isInteger(index)) return;
+    const entries = barEntries(this.state.tabs);
+    const from = entries.findIndex(match);
+    if (from < 0) return;
+    const to = Math.max(0, Math.min(index, entries.length - 1));
     if (to === from) return;
-    const [tab] = tabs.splice(from, 1);
-    tabs.splice(to, 0, tab);
+    const [entry] = entries.splice(from, 1);
+    entries.splice(to, 0, entry);
+    this.state.tabs.splice(0, this.state.tabs.length, ...entries.flatMap(entryTabs));
     this.tabsChanged();
   }
 
@@ -533,16 +615,156 @@ class WorkspaceCore implements Workspace {
   }
 
   activateRelativeTab(offset: number): void {
-    const { tabs } = this.state;
-    if (tabs.length === 0 || !Number.isInteger(offset)) return;
-    const current = tabs.findIndex((t) => t.id === this.state.activeTabId);
-    const next = (((current + offset) % tabs.length) + tabs.length) % tabs.length;
-    this.activateTab(tabs[next].id);
+    const entries = barEntries(this.state.tabs);
+    if (entries.length === 0 || !Number.isInteger(offset)) return;
+    const current = entries.findIndex((entry) => entryTabs(entry).some((t) => t.id === this.state.activeTabId));
+    const next = (((current + offset) % entries.length) + entries.length) % entries.length;
+    this.activateTab(this.entryShownTab(entries[next]).id);
   }
 
   activateTabAt(index: number): void {
-    const tab = Number.isInteger(index) ? this.state.tabs[index] : undefined;
-    if (tab) this.activateTab(tab.id);
+    const entry = Number.isInteger(index) ? barEntries(this.state.tabs)[index] : undefined;
+    if (entry) this.activateTab(this.entryShownTab(entry).id);
+  }
+
+  // ---------- Gruppen ----------
+
+  createGroup(tabId: string): string {
+    const tab = this.findTab(tabId);
+    if (this.stopping || !tab || tab.groupId !== undefined) return '';
+    const group: PersistedGroup = { id: randomUUID(), name: this.autoGroupName(tab), selectedTabId: tab.id };
+    this.state.groups.push(group);
+    tab.groupId = group.id;
+    this.tabsChanged();
+    this.emit({ type: 'groupCreated', groupId: group.id });
+    return group.id;
+  }
+
+  moveTabToGroup(tabId: string, groupId: string): void {
+    const tab = this.findTab(tabId);
+    const group = this.findGroup(groupId);
+    if (this.stopping || !tab || !group || tab.groupId === group.id) return;
+    this.leaveGroup(tab);
+    const { tabs } = this.state;
+    tabs.splice(tabs.indexOf(tab), 1);
+    // Die Zielgruppe hat noch ihre Tabs: Verschwinden kann nur die bisherige Gruppe des Tabs.
+    const last = this.members(group).at(-1);
+    tabs.splice(last ? tabs.indexOf(last) + 1 : tabs.length, 0, tab);
+    tab.groupId = group.id;
+    this.tabsChanged();
+  }
+
+  removeTabFromGroup(tabId: string): void {
+    const tab = this.findTab(tabId);
+    const group = tab && this.groupOf(tab);
+    if (this.stopping || !tab || !group) return;
+    const last = this.members(group)
+      .filter((t) => t !== tab)
+      .at(-1);
+    this.leaveGroup(tab);
+    if (last) {
+      const { tabs } = this.state;
+      tabs.splice(tabs.indexOf(tab), 1);
+      tabs.splice(tabs.indexOf(last) + 1, 0, tab);
+    }
+    this.tabsChanged();
+  }
+
+  renameGroup(groupId: string, name: string): void {
+    const group = this.findGroup(groupId);
+    const trimmed = typeof name === 'string' ? name.trim() : '';
+    if (this.stopping || !group || !trimmed || trimmed === group.name) return;
+    group.name = trimmed;
+    this.tabsChanged();
+  }
+
+  dissolveGroup(groupId: string): void {
+    const group = this.findGroup(groupId);
+    if (this.stopping || !group) return;
+    for (const tab of this.members(group)) delete tab.groupId;
+    this.removeGroup(group);
+    this.tabsChanged();
+  }
+
+  closeGroup(groupId: string): void {
+    const group = this.findGroup(groupId);
+    if (group) this.requestClose(this.members(group).map((t) => t.id));
+  }
+
+  newTabInGroup(groupId: string): string {
+    const group = this.findGroup(groupId);
+    if (this.stopping || !group) return '';
+    const members = this.members(group);
+    const selected = this.findTab(group.selectedTabId) ?? members[0];
+    const index = this.state.tabs.indexOf(members[members.length - 1]) + 1;
+    return this.insertNewTab(index, this.resolveCwd(selected), this.defaultShell().id, group.id);
+  }
+
+  private findGroup(groupId: string): PersistedGroup | undefined {
+    return this.state.groups.find((g) => g.id === groupId);
+  }
+
+  private groupOf(tab: PersistedTab): PersistedGroup | undefined {
+    return tab.groupId === undefined ? undefined : this.findGroup(tab.groupId);
+  }
+
+  /** Die Tabs der Gruppe in ihrer Reihenfolge. */
+  private members(group: PersistedGroup): PersistedTab[] {
+    return this.state.tabs.filter((t) => t.groupId === group.id);
+  }
+
+  private removeGroup(group: PersistedGroup): void {
+    const at = this.state.groups.indexOf(group);
+    if (at >= 0) this.state.groups.splice(at, 1);
+  }
+
+  /**
+   * Nimmt den Tab aus seiner Gruppe; seine Stelle in der Liste bleibt. War er ihr gewählter Tab, wird der nächste Tab der
+   * Gruppe gewählt, sonst der vorherige. War er ihr letzter Tab, verschwindet die Gruppe. Liefert den Tab, den die
+   * Gruppe danach wählt (`undefined`, wenn sie verschwunden ist oder er in keiner stand).
+   */
+  private leaveGroup(tab: PersistedTab): PersistedTab | undefined {
+    const group = this.groupOf(tab);
+    delete tab.groupId;
+    if (!group) return undefined;
+    const members = this.members(group);
+    if (members.length === 0) {
+      this.removeGroup(group);
+      return undefined;
+    }
+    if (group.selectedTabId !== tab.id) return this.findTab(group.selectedTabId);
+    // `members` ohne den Tab: Der nächste steht jetzt an seiner bisherigen Stelle in der Gruppe.
+    const before = this.state.tabs.indexOf(tab);
+    const successor = members.find((t) => this.state.tabs.indexOf(t) > before) ?? members[members.length - 1];
+    group.selectedTabId = successor.id;
+    return successor;
+  }
+
+  /** Der Tab, den ein Eintrag der Leiste zeigt: der einzelne Tab bzw. der gewählte Tab der Gruppe. */
+  private entryShownTab(entry: BarEntry<PersistedTab>): PersistedTab {
+    return this.shownTab(entryTabs(entry)[0]);
+  }
+
+  /** Der Tab, den der Eintrag dieses Tabs zeigt: er selbst, oder der gewählte Tab seiner Gruppe. */
+  private shownTab(tab: PersistedTab): PersistedTab {
+    const group = this.groupOf(tab);
+    return (group && this.findTab(group.selectedTabId)) ?? tab;
+  }
+
+  /** Name einer neuen Gruppe nach dem aktuellen Ordner ihres Tabs, eindeutig unter den Gruppen. */
+  private autoGroupName(tab: PersistedTab): string {
+    const base = folderName(tab.lastCwd ?? tab.startCwd, this.namingContext()) || 'Gruppe';
+    return uniqueName(base, this.state.groups.map((g) => g.name));
+  }
+
+  /**
+   * Der angezeigte Tab ist immer der gewählte Tab seiner Gruppe, auf welchem Weg er auch angezeigt wurde (Klick, Liste,
+   * Hinweis, Befehlspalette, Tastenkürzel, Wiederöffnen, Schliessen des Nachbarn).
+   */
+  private selectShownTab(): void {
+    const active = this.state.activeTabId === null ? undefined : this.findTab(this.state.activeTabId);
+    const group = active && this.groupOf(active);
+    if (active && group) group.selectedTabId = active.id;
   }
 
   // ---------- Schliessen und wieder öffnen ----------
@@ -564,8 +786,12 @@ class WorkspaceCore implements Workspace {
   }
 
   closeOtherTabs(tabId: string): void {
-    if (!this.findTab(tabId)) return;
-    this.requestClose(this.state.tabs.filter((t) => t.id !== tabId).map((t) => t.id));
+    const tab = this.findTab(tabId);
+    if (!tab) return;
+    // In einer Gruppe nur die anderen Tabs dieser Gruppe; ein einzelner Tab räumt die ganze Leiste ab, samt Gruppen.
+    const group = this.groupOf(tab);
+    const scope = group ? this.members(group) : this.state.tabs;
+    this.requestClose(scope.filter((t) => t !== tab).map((t) => t.id));
   }
 
   closeTab(tabId: string): void {
@@ -590,13 +816,20 @@ class WorkspaceCore implements Workspace {
       shells.push({ tabId: tab.id, root: runtime && shellRoot(runtime) });
       // Claude-Tabs haben keinen Verlauf; sonst nur, wenn es seit der letzten Sicherung Neues gibt.
       if (!tab.claude && runtime && runtime.output !== runtime.saved) changed.push(tab.id);
+      // Seine Gruppe merkt sich der geschlossene Tab für das Wiederöffnen; die Gruppe wählt einen anderen Tab.
+      const group = this.groupOf(tab);
+      const place = group && { id: group.id, name: group.name, position: this.members(group).indexOf(tab) };
+      const successor = this.leaveGroup(tab);
       this.state.tabs.splice(index, 1);
       // Ein geschlossener Tab nimmt seine offenen Punkte mit, auch in die Liste der geschlossenen Tabs.
       delete tab.openPoints;
-      this.state.closedTabs.unshift({ tab: structuredClone(tab), index, closedAt: this.ports.clock.now() });
+      const closed: ClosedTab = { tab: structuredClone(tab), index, closedAt: this.ports.clock.now() };
+      if (place) closed.group = place;
+      this.state.closedTabs.unshift(closed);
       this.rememberRecentDir(tab.lastCwd ?? tab.startCwd);
       if (this.state.activeTabId === tab.id) {
-        const neighbour = this.state.tabs[index] ?? this.state.tabs[index - 1];
+        // In der Gruppe der nächste (sonst der vorherige) Tab; ohne ihn der Nachbar in der Leiste.
+        const neighbour = successor ?? this.neighbourAt(index);
         this.state.activeTabId = neighbour?.id ?? null;
       }
     }
@@ -633,7 +866,7 @@ class WorkspaceCore implements Workspace {
       this.save();
       return '';
     }
-    this.state.tabs.splice(Math.min(entry.index, this.state.tabs.length), 0, tab);
+    this.state.tabs.splice(this.reopenIndex(entry), 0, tab);
     // Wie nach einem Neustart, als angezeigter Tab: Verlauf bzw. sofortiges Fortsetzen der Claude-Session.
     this.restoreTab(tab, true);
     this.state.activeTabId = tab.id;
@@ -643,15 +876,42 @@ class WorkspaceCore implements Workspace {
     return tab.id;
   }
 
+  /**
+   * Wohin ein wieder geöffneter Tab kommt, und in welche Gruppe. Stand er in einer Gruppe, die es noch gibt: an seine
+   * alte Stelle in ihr. Gibt es sie nicht mehr, entsteht sie neu mit ihrem Namen an seiner alten Stelle in der Leiste.
+   * Ein einzelner Tab kommt an seine alte Stelle, aber nie mitten in eine Gruppe.
+   */
+  private reopenIndex(entry: ClosedTab): number {
+    const { tab, group: place } = entry;
+    const { tabs } = this.state;
+    const group = place && this.findGroup(place.id);
+    if (group) {
+      const members = this.members(group);
+      tab.groupId = group.id;
+      const after = members[Math.min(place.position, members.length)];
+      return after ? tabs.indexOf(after) : tabs.indexOf(members[members.length - 1]) + 1;
+    }
+    if (place) {
+      this.state.groups.push({ id: place.id, name: place.name, selectedTabId: tab.id });
+      tab.groupId = place.id;
+    }
+    return entryBoundary(tabs, entry.index);
+  }
+
   closedTabs(): ClosedTabInfo[] {
-    return this.state.closedTabs.map(({ tab, closedAt }) => ({
-      id: tab.id,
-      name: tab.name,
-      kind: tab.claude ? 'claude' : 'terminal',
-      shellName: this.shellFor(tab).name,
-      cwd: tab.claude?.cwd || (tab.lastCwd ?? tab.startCwd),
-      closedAt,
-    }));
+    return this.state.closedTabs.map(({ tab, closedAt, group }) => {
+      const info: ClosedTabInfo = {
+        id: tab.id,
+        name: tab.name,
+        kind: tab.claude ? 'claude' : 'terminal',
+        shellName: this.shellFor(tab).name,
+        cwd: tab.claude?.cwd || (tab.lastCwd ?? tab.startCwd),
+        closedAt,
+      };
+      // Der Name, unter dem die Gruppe jetzt steht; gibt es sie nicht mehr, der gemerkte.
+      if (group) info.groupName = this.findGroup(group.id)?.name ?? group.name;
+      return info;
+    });
   }
 
   /** Die offenen Tabs zu diesen Kennungen, in dieser Reihenfolge, ohne Doppelte und Unbekannte. */
@@ -679,6 +939,15 @@ class WorkspaceCore implements Workspace {
 
   private isClosedTab(tabId: string): boolean {
     return this.state.closedTabs.some((entry) => entry.tab.id === tabId);
+  }
+
+  /**
+   * Der Nachbar in der Leiste, nachdem an Position `index` der Liste ein Eintrag verschwunden ist: der nächste Eintrag,
+   * sonst der vorherige; eine Gruppe mit ihrem gewählten Tab.
+   */
+  private neighbourAt(index: number): PersistedTab | undefined {
+    const tab = this.state.tabs[index] ?? this.state.tabs[index - 1];
+    return tab && this.shownTab(tab);
   }
 
   /** Höchstens zehn geschlossene Tabs: Wer aus der Liste fällt, verliert seinen Verlauf. */
@@ -1755,20 +2024,43 @@ class WorkspaceCore implements Workspace {
   }
 
   private tabSnapshots(): TabSnapshot[] {
-    return this.state.tabs.map((tab) => ({
-      id: tab.id,
-      name: tab.name,
-      shellId: tab.shellId,
-      shellName: this.shellFor(tab).name,
-      cwd: tab.lastCwd ?? tab.startCwd,
-      process: this.runtimes.get(tab.id)?.process ?? 'pending',
-      kind: tab.claude ? 'claude' : 'terminal',
-      status: this.tabStatus(tab),
-      paused: this.runtimes.get(tab.id)?.paused ?? false,
-    }));
+    return this.state.tabs.map((tab) => {
+      const snapshot: TabSnapshot = {
+        id: tab.id,
+        name: tab.name,
+        shellId: tab.shellId,
+        shellName: this.shellFor(tab).name,
+        cwd: tab.lastCwd ?? tab.startCwd,
+        process: this.runtimes.get(tab.id)?.process ?? 'pending',
+        kind: tab.claude ? 'claude' : 'terminal',
+        status: this.tabStatus(tab),
+        paused: this.runtimes.get(tab.id)?.paused ?? false,
+      };
+      if (tab.groupId !== undefined) snapshot.groupId = tab.groupId;
+      return snapshot;
+    });
+  }
+
+  /** Die Gruppen in der Reihenfolge der Leiste, mit dem dringendsten Status ihrer Tabs. */
+  private groupSnapshots(): GroupSnapshot[] {
+    const result: GroupSnapshot[] = [];
+    for (const entry of barEntries(this.state.tabs)) {
+      if (entry.kind !== 'group') continue;
+      const group = this.findGroup(entry.groupId);
+      if (!group) continue;
+      result.push({
+        id: group.id,
+        name: group.name,
+        tabIds: entry.tabs.map((t) => t.id),
+        selectedTabId: group.selectedTabId,
+        status: groupStatus(entry.tabs.map((t) => this.tabStatus(t))),
+      });
+    }
+    return result;
   }
 
   private tabsChanged(): void {
+    this.selectShownTab();
     this.save();
     this.emitTabs();
   }
@@ -1786,7 +2078,12 @@ class WorkspaceCore implements Workspace {
   }
 
   private emitTabs(): void {
-    this.emit({ type: 'tabs', tabs: this.tabSnapshots(), activeTabId: this.state.activeTabId });
+    this.emit({
+      type: 'tabs',
+      tabs: this.tabSnapshots(),
+      groups: this.groupSnapshots(),
+      activeTabId: this.state.activeTabId,
+    });
   }
 
   private emit(event: WorkspaceEvent): void {

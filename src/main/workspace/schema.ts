@@ -2,8 +2,10 @@
 // Gelesen wird tolerant: Unbrauchbare Felder fallen auf Standardwerte zurück, statt den Start zu verhindern.
 
 import * as path from 'node:path';
+import { barEntries } from '../../shared/barEntries';
 import { FONT_SIZE, type KeepAwakeMode, type Settings, type Theme } from '../../shared/types';
 import { rememberDir, samePath } from './folders';
+import { gatherGroups } from './groups';
 import { MAX_OPEN_POINTS } from './openPoints';
 import type { Rect } from './ports';
 
@@ -35,14 +37,40 @@ export interface PersistedTab {
    * einem geschlossenen Tab verschwindet er ebenfalls.
    */
   openPoints?: string[];
+  /**
+   * Die Gruppe, in der der Tab steht (Ticket 36); fehlt bei einem einzelnen Tab. Die Tabs einer Gruppe stehen in der
+   * Liste zusammen, die Stelle der Gruppe ist die ihres ersten Tabs. Eine ältere THub kennt das Feld nicht und zeigt
+   * alle Tabs einzeln.
+   */
+  groupId?: string;
+}
+
+/** Eine Gruppe von Tabs (Ticket 36), ohne neue Schema-Version; fehlt die Liste, gibt es keine Gruppen. */
+export interface PersistedGroup {
+  id: string;
+  name: string;
+  /** Der gewählte Tab: der zuletzt angezeigte Tab der Gruppe. */
+  selectedTabId: string;
+}
+
+/** Wohin ein geschlossener Tab beim Wiederöffnen zurückkehrt (Ticket 36). */
+export interface ClosedTabGroup {
+  /** Kennung der Gruppe; gibt es sie noch, kommt der Tab in sie zurück. */
+  id: string;
+  /** Name der Gruppe; gibt es sie nicht mehr, entsteht sie mit diesem Namen neu. */
+  name: string;
+  /** Stelle des Tabs in der Gruppe beim Schliessen, ab 0. */
+  position: number;
 }
 
 /** Ein geschlossener Tab, der sich wieder öffnen lässt (Ticket 15). */
 export interface ClosedTab {
   tab: PersistedTab;
-  /** Position in der Tab-Leiste beim Schliessen. */
+  /** Position in der Liste der Tabs beim Schliessen. */
   index: number;
   closedAt: number;
+  /** Die Gruppe, in der der Tab stand (Ticket 36); fehlt, wenn er einzeln stand. */
+  group?: ClosedTabGroup;
 }
 
 export interface WindowState {
@@ -54,8 +82,10 @@ export interface WindowState {
 export interface PersistedState {
   version: 2;
   settings: Settings;
-  /** Geordnet wie in der Oberfläche. */
+  /** Geordnet wie in der Oberfläche; die Tabs einer Gruppe stehen zusammen. */
   tabs: PersistedTab[];
+  /** Die Gruppen (Ticket 36), jede mit mindestens einem Tab; ihre Stelle ergibt sich aus `tabs`. */
+  groups: PersistedGroup[];
   activeTabId: string | null;
   /** Zuletzt benutzte Ordner, neueste zuerst, ohne Doppelte (Ticket 05). */
   recentDirs: string[];
@@ -87,6 +117,7 @@ export function emptyState(): PersistedState {
     version: 2,
     settings: normalizeSettings(undefined),
     tabs: [],
+    groups: [],
     activeTabId: null,
     recentDirs: [],
     closedTabs: [],
@@ -180,12 +211,15 @@ function normalizeV2(raw: Record<string, unknown>, ctx: SchemaContext): Persiste
     seen.add(tab.id);
     tabs.push(tab);
   }
+  const activeTabId = validActiveTabId(raw.activeTabId, tabs);
+  const grouped = normalizeGroups(raw.groups, tabs, activeTabId);
 
   const state: PersistedState = {
     version: 2,
     settings: normalizeSettings(raw.settings),
-    tabs,
-    activeTabId: validActiveTabId(raw.activeTabId, tabs),
+    tabs: grouped.tabs,
+    groups: grouped.groups,
+    activeTabId,
     // Von hinten eingereiht, damit die Reihenfolge bleibt; Doppelte und alles über acht fallen weg.
     recentDirs: (Array.isArray(raw.recentDirs) ? raw.recentDirs : [])
       .filter(isNonEmptyString)
@@ -211,7 +245,45 @@ function normalizeTab(raw: unknown, ctx: SchemaContext): PersistedTab | null {
   if (claude) tab.claude = claude;
   const openPoints = normalizeOpenPoints(raw.openPoints);
   if (openPoints) tab.openPoints = openPoints;
+  if (isNonEmptyString(raw.groupId)) tab.groupId = raw.groupId;
   return tab;
+}
+
+/**
+ * Die Gruppen (Ticket 36), tolerant gelesen; fehlt die Liste (Zustand einer älteren THub), gibt es keine. Ein Tab mit
+ * unbekannter Gruppe wird ein einzelner Tab. Verstreute Tabs einer Gruppe rücken an die Stelle des ersten. Eine Gruppe
+ * ohne Tabs entfällt. Ein ungültiger gewählter Tab wird der erste der Gruppe; steht der aktive Tab in einer Gruppe, ist
+ * er ihr gewählter Tab. Die Gruppen stehen danach in der Reihenfolge der Leiste.
+ */
+function normalizeGroups(
+  raw: unknown,
+  tabs: PersistedTab[],
+  activeTabId: string | null,
+): { tabs: PersistedTab[]; groups: PersistedGroup[] } {
+  const known = new Map<string, PersistedGroup>();
+  for (const item of Array.isArray(raw) ? raw : []) {
+    if (!isRecord(item) || !isNonEmptyString(item.id) || known.has(item.id)) continue;
+    known.set(item.id, {
+      id: item.id,
+      name: isNonEmptyString(item.name) ? item.name : 'Gruppe',
+      selectedTabId: typeof item.selectedTabId === 'string' ? item.selectedTabId : '',
+    });
+  }
+  for (const tab of tabs) {
+    if (tab.groupId !== undefined && !known.has(tab.groupId)) delete tab.groupId;
+  }
+  const ordered = gatherGroups(tabs);
+  const groups: PersistedGroup[] = [];
+  for (const entry of barEntries(ordered)) {
+    if (entry.kind !== 'group') continue;
+    const group = known.get(entry.groupId);
+    if (!group) continue;
+    const ids = entry.tabs.map((t) => t.id);
+    if (activeTabId !== null && ids.includes(activeTabId)) group.selectedTabId = activeTabId;
+    else if (!ids.includes(group.selectedTabId)) group.selectedTabId = ids[0];
+    groups.push(group);
+  }
+  return { tabs: ordered, groups };
 }
 
 /** Offene Punkte eines Tabs: nur Texte, höchstens so viele, wie die Erkennung liefert; ohne Punkte keine. */
@@ -252,10 +324,25 @@ function normalizeClosedTab(raw: unknown, ctx: SchemaContext): ClosedTab | null 
   if (!isRecord(raw)) return null;
   const tab = normalizeTab(raw.tab, ctx);
   if (!tab) return null;
-  return {
+  // Seine Gruppe merkt sich ein geschlossener Tab in `group`, nicht am Tab.
+  delete tab.groupId;
+  const entry: ClosedTab = {
     tab,
     index: isFiniteNumber(raw.index) ? Math.max(0, Math.round(raw.index)) : 0,
     closedAt: isFiniteNumber(raw.closedAt) ? raw.closedAt : 0,
+  };
+  const group = normalizeClosedTabGroup(raw.group);
+  if (group) entry.group = group;
+  return entry;
+}
+
+/** Die Gruppe eines geschlossenen Tabs (Ticket 36); ohne brauchbare Kennung und Namen keine: Er kommt einzeln zurück. */
+function normalizeClosedTabGroup(raw: unknown): ClosedTabGroup | null {
+  if (!isRecord(raw) || !isNonEmptyString(raw.id) || !isNonEmptyString(raw.name)) return null;
+  return {
+    id: raw.id,
+    name: raw.name,
+    position: isFiniteNumber(raw.position) ? Math.max(0, Math.round(raw.position)) : 0,
   };
 }
 

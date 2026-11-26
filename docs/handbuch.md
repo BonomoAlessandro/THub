@@ -10,7 +10,7 @@ Ausführliche Bedienung von THub. Eine Kurzfassung steht im [README](../README.m
 - **Pfeil neben `+`** („Shell oder Ordner wählen“): zuerst die erkannten Shells, die Standard-Shell mit dem Etikett „Standard“; ein Klick öffnet einen Tab mit dieser Shell im Standardordner. Darunter „Neues Terminal in …“ mit den zuletzt benutzten Ordnern (Name, darunter der Pfad) und „Ordner wählen …“ (Ordner-Dialog von Windows).
 - **Namen:** Ein neuer Tab heisst wie sein Ordner, im Benutzerordner wie der Benutzer, auf einem Laufwerk wie das Laufwerk (`D:`). Bei Gleichstand kommt „ 2“, „ 3“ usw. dazu; Gross- und Kleinschreibung zählen dabei nicht. Der Name bleibt danach, auch nach `cd`.
 - **Umbenennen:** Doppelklick auf den Tab, `F2`, Rechtsklick-Menü oder Befehlspalette. Der Tab wird selbst zum Eingabefeld; Enter oder ein Klick daneben übernimmt, Escape bricht ab. Ein leerer Name zählt nicht; ein von Hand vergebener Name wird nie automatisch überschrieben.
-- **Wechseln:** Klick auf den Tab, `Ctrl+Tab` / `Ctrl+Shift+Tab` und `Ctrl+PageDown` / `Ctrl+PageUp` (im Kreis), `Ctrl+1` … `Ctrl+9` oder die Befehlspalette. Ein Klick auf einen Tab lässt den Fokus im Terminal. Die Klickfläche eines Tabs reicht über die ganze Höhe der Titelleiste: Im maximierten Fenster trifft auch ein Klick ganz oben am Bildschirmrand den Tab; im normalen Fenster bleibt dort der Rand, an dem man die Fenstergrösse zieht.
+- **Wechseln:** Klick auf den Tab, `Ctrl+Tab` / `Ctrl+Shift+Tab` und `Ctrl+PageDown` / `Ctrl+PageUp` (im Kreis), `Ctrl+1` … `Ctrl+9` oder die Befehlspalette. Eine Gruppe zählt dabei als ein Eintrag, ihr gewählter Tab (siehe [Gruppen](#gruppen)). Ein Klick auf einen Tab lässt den Fokus im Terminal. Die Klickfläche eines Tabs reicht über die ganze Höhe der Titelleiste: Im maximierten Fenster trifft auch ein Klick ganz oben am Bildschirmrand den Tab; im normalen Fenster bleibt dort der Rand, an dem man die Fenstergrösse zieht.
 - **Tooltip** beim Überfahren: Name, aktueller Ordner, Shell und Status.
 - **Viele Tabs:** Die Tabs werden schmaler (bis 112 px), die Leiste wird scrollbar, auch mit dem Mausrad; der aktive Tab bleibt sichtbar. Zwischen `+` und dem Zahnrad bleibt immer eine freie Fläche von mindestens 56 px: Sie verschiebt das Fenster, ein Doppelklick maximiert es.
 - **Beendete Shell** (etwa nach `exit`): Im Terminal steht „Prozess beendet mit Code n – beliebige Taste startet die Shell neu“.
@@ -28,23 +28,26 @@ Ausführliche Bedienung von THub. Eine Kurzfassung steht im [README](../README.m
 
 - **Schliessen:** `×` am Tab (sichtbar beim aktiven Tab und beim Überfahren), mittlere Maustaste, `Ctrl+Shift+W`, Rechtsklick-Menü oder Befehlspalette.
 - **Rückfrage nur, wenn noch etwas läuft:** Claude wartet auf dich, Claude arbeitet, oder im Terminal laufen Prozesse. Ein ruhender Tab schliesst sofort, auch ein ruhender Claude-Tab. Massgeblich ist, was wirklich läuft, nicht das Symbol: Ein grüner Tab mit laufendem Dev-Server fragt nach, „fertig“ oder „pausiert“ allein nicht. Die Rückfrage nennt den Grund und `Ctrl+Shift+Z`; den Fokus hat „Abbrechen“, „Schliessen“ ist der Gefahr-Knopf.
-- **Andere Tabs schliessen** (Rechtsklick-Menü, Befehlspalette): höchstens eine gemeinsame Rückfrage, die die Tabs nennt, in denen noch etwas läuft. Bestätigt schliessen alle, „Abbrechen“ lässt alle offen.
+- **Andere Tabs schliessen** (Rechtsklick-Menü, Befehlspalette): höchstens eine gemeinsame Rückfrage, die die Tabs nennt, in denen noch etwas läuft. Bestätigt schliessen alle, „Abbrechen“ lässt alle offen. Bei einem Tab in einer Gruppe schliesst es nur die anderen Tabs dieser Gruppe; ebenso fragt „Gruppe schliessen“ höchstens einmal.
 - **Fenster schliessen oder THub beenden** fragt nie nach, auch nicht, wenn Claude gerade arbeitet: Alles kommt beim nächsten Start zurück.
 - **Mit dem Tab endet alles, was darin läuft:** die Shell und alle ihre Nachfahren, auch Programme mit eigener Konsole (etwa per `Start-Process` gestartet). THub beendet einen Prozess nur, wenn Prozess-ID und Startzeit noch stimmen.
 - **Wieder öffnen:** `Ctrl+Shift+Z` öffnet den zuletzt geschlossenen Tab, „Zuletzt geschlossen …“ in der Befehlspalette jeden der letzten zehn. Der Tab kommt an seiner alten Stelle mit Name, Shell und Ordner zurück und wird aktiv: ein normaler Tab mit seinem Verlauf im zuletzt aktiven Ordner, ein Claude-Tab setzt seine Session sofort fort. Die Liste übersteht einen Neustart. Offene Punkte (siehe unten) kommen nicht mit zurück.
 
 ### Rechtsklick-Menü am Tab
 
-Rechtsklick auf einen Tab öffnet sein Menü an der Stelle des Klicks, ohne den Tab zu aktivieren, nie das Fenstermenü von Windows. Bedienung auch mit Pfeiltasten, Pos1/Ende, Enter und Escape.
+Rechtsklick auf einen Tab öffnet sein Menü an der Stelle des Klicks, ohne den Tab zu aktivieren, nie das Fenstermenü von Windows. Dasselbe Menü öffnet ein Rechtsklick auf einen Tab in der Liste einer Gruppe. Bedienung auch mit Pfeiltasten, Pos1/Ende, Enter und Escape.
 
 | Eintrag | Wirkung |
 |---|---|
 | Umbenennen (`F2`) | wie ein Doppelklick auf diesen Tab |
-| Duplizieren | neuer Tab direkt rechts daneben, im aktuellen Ordner des Tabs (gibt es ihn nicht mehr: Startordner, Standardordner, Benutzerordner), mit derselben Shell und einem Namen nach dem Ordner. Er wird aktiv und startet eine eigene Shell ohne Verlauf. Von einem Claude-Tab nur das Terminal, ohne Claude-Session und ohne offene Punkte. |
+| Duplizieren | neuer Tab direkt rechts daneben, im aktuellen Ordner des Tabs (gibt es ihn nicht mehr: Startordner, Standardordner, Benutzerordner), mit derselben Shell und einem Namen nach dem Ordner. Er wird aktiv und startet eine eigene Shell ohne Verlauf. Von einem Claude-Tab nur das Terminal, ohne Claude-Session und ohne offene Punkte. In einer Gruppe steht das Duplikat direkt nach dem Original in der Gruppe. |
+| Neue Gruppe | nur bei einem einzelnen Tab: eine Gruppe mit diesem Tab an seiner Stelle (siehe [Gruppen](#gruppen)) |
+| In Gruppe „…“ | ein Eintrag pro Gruppe, ohne die eigene: Der Tab kommt ans Ende dieser Gruppe |
+| Aus Gruppe nehmen | nur bei einem Tab in einer Gruppe: Er steht danach einzeln rechts neben der Gruppe |
 | Ordner im Explorer öffnen | der aktuelle Ordner des Tabs wie im Tooltip, also auch nach `cd`; nur, wenn es ihn gibt |
 | Pfad kopieren | derselbe Ordner in die Zwischenablage |
 | Schliessen (`Ctrl+Shift+W`) | wie `×`, mit Rückfrage, wenn noch etwas läuft |
-| Andere Tabs schliessen | alle übrigen Tabs, mit höchstens einer gemeinsamen Rückfrage |
+| Andere Tabs schliessen | bei einem einzelnen Tab alle übrigen Einträge der Leiste samt Gruppen, bei einem Tab in einer Gruppe die anderen Tabs dieser Gruppe; mit höchstens einer gemeinsamen Rückfrage |
 
 ### Umsortieren per Ziehen
 
@@ -53,10 +56,45 @@ Rechtsklick auf einen Tab öffnet sein Menü an der Stelle des Klicks, ohne den 
 - Abgelegt wird nur über der Leiste. Losgelassen über den Fensterknöpfen, der freien Fläche, dem Terminal oder ausserhalb des Fensters, mit Escape oder bei Fokusverlust bricht das Ziehen ab.
 - Ein Klick ohne Bewegung aktiviert den Tab wie gewohnt.
 - Die Reihenfolge übersteht einen Neustart, und `Ctrl+1` … `Ctrl+9` folgen ihr.
+- Gruppen-Tabs zieht man genauso; die Gruppe wandert als Ganzes. Einen Tab auf die Mitte eines Gruppen-Tabs ziehen schiebt ihn in die Gruppe (siehe [Gruppen](#gruppen)).
+
+### Gruppen
+
+Mehrere Tabs lassen sich zu einer Gruppe zusammenfassen, etwa alle Konsolen eines Projekts. Eine Gruppe braucht in der Leiste nur den Platz eines Tabs; aus ihrer Liste wählst du die Konsole, die du sehen willst. Es ist immer genau ein Terminal zu sehen.
+
+```
+[>_ termhub] [▤ Kunde X · api  3 ▾] [>_ notes]  +
+```
+
+- **Gruppen-Tab:** Ordner-Symbol, „Gruppenname · gewählter Tab“ (zu Langes endet mit „…“), gedämpft die Zahl der Tabs und ein Pfeil. Der **gewählte Tab** ist der zuletzt angezeigte Tab der Gruppe. Wird er gerade angezeigt, ist die Gruppe aktiv und sieht aus wie ein aktiver Tab. Der Tooltip nennt Name und Zahl der Tabs, dazu Name, Ordner und Shell des gewählten Tabs und den Status der Gruppe.
+- **Status:** Das Symbol zeigt den dringendsten Status der Tabs der Gruppe, in dieser Reihenfolge: wartet, fertig, arbeitet, Prozesse laufen, pausiert. Ruhen alle, steht dort gedämpft der Ordner. „Fertig“ verschwindet erst, wenn genau dieser Tab angezeigt wird; dass seine Gruppe aktiv ist, genügt nicht.
+- **Klick** auf den Gruppen-Tab zeigt den gewählten Tab an. Ist die Gruppe schon aktiv, öffnet der Klick die Liste; der Pfeil öffnet sie immer.
+- **Liste:** die Tabs der Gruppe in ihrer Reihenfolge, mit Status- bzw. Typ-Symbol wie am Tab und einem Haken beim gewählten. Ein Klick zeigt den Tab an, er wird der gewählte. Ein Rechtsklick öffnet das Menü dieses Tabs. Unter dem Strich legt **Neues Terminal** einen Tab am Ende der Gruppe an und zeigt ihn: mit der Standard-Shell im aktuellen Ordner des gewählten Tabs, mit einem Namen nach dem Ordner. Bedienung auch mit Pfeiltasten, Enter und Escape.
+- **Anlegen:** Rechtsklick auf einen einzelnen Tab → „Neue Gruppe“. Die Gruppe steht an der Stelle des Tabs und heisst wie sein aktueller Ordner (bei Gleichstand mit einer anderen Gruppe mit „ 2“ usw.). Der Name ist gleich zum Ändern markiert: Enter übernimmt, Escape behält den Vorschlag. Gruppen in Gruppen gibt es nicht.
+- **Hineinschieben:** Rechtsklick auf einen Tab → „In Gruppe „…““ (ein Eintrag pro Gruppe), oder den Tab auf die Mitte des Gruppen-Tabs ziehen; der Gruppen-Tab ist dabei hervorgehoben. Der Tab kommt ans Ende der Gruppe. Nahe am Rand des Gruppen-Tabs oder zwischen zwei Tabs abgelegt, wird wie bisher umsortiert. Ein Tab, den du auf einen einzelnen Tab ziehst, bildet keine Gruppe.
+- **Herausnehmen:** Rechtsklick auf den Tab in der Liste → „Aus Gruppe nehmen“. Er steht danach einzeln rechts neben der Gruppe.
+- **Rechtsklick auf den Gruppen-Tab:**
+
+  | Eintrag | Wirkung |
+  |---|---|
+  | Gruppe umbenennen | wie ein Doppelklick auf den Gruppen-Tab: Der Name wird zum Eingabefeld |
+  | Neues Terminal in der Gruppe | wie „Neues Terminal“ in der Liste |
+  | Gruppe auflösen | Die Tabs bleiben offen und stehen in ihrer Reihenfolge einzeln an der Stelle der Gruppe |
+  | Gruppe schliessen | alle Tabs der Gruppe; läuft in einem davon etwas, kommt eine gemeinsame Rückfrage wie bei „Andere Tabs schliessen“ |
+
+- **Umbenennen eines Tabs:** `F2` benennt den aktiven Tab um, auch in einer Gruppe; „Umbenennen“ im Menü eines Tabs aus der Liste ebenso. Der Gruppen-Tab zeigt dann gedämpft den Gruppennamen und den Namen des Tabs als Eingabefeld.
+- **Tastatur:** `Ctrl+Tab` / `Ctrl+Shift+Tab`, `Ctrl+PageDown` / `Ctrl+PageUp` und `Ctrl+1` … `Ctrl+9` zählen die Einträge der Leiste; eine Gruppe zählt als ihr gewählter Tab. Die anderen Tabs einer Gruppe erreichst du über die Liste und die Befehlspalette. Neue Tastenkürzel gibt es nicht.
+- **Befehlspalette:** Tabs in einer Gruppe heissen „Gruppenname › Tabname“, und die Suche trifft auch den Namen der Gruppe. Befehle für den aktiven Tab: „Neue Gruppe“ (einzelner Tab), „Aus Gruppe nehmen“, „Gruppe umbenennen“ und „Gruppe auflösen“ (Tab in einer Gruppe).
+- **Hinweise** nennen einen Tab in einer Gruppe „Gruppenname › Tabname“. Ein Klick zeigt genau diesen Tab an; er wird der gewählte Tab seiner Gruppe.
+- **Schliessen:** Schliesst sich der gewählte Tab, wird der nächste Tab der Gruppe gewählt (sonst der vorherige) und, war die Gruppe aktiv, angezeigt. Mit dem letzten Tab verschwindet die Gruppe. „Andere Tabs schliessen“ schliesst bei einem Tab in einer Gruppe nur die anderen Tabs dieser Gruppe, bei einem einzelnen Tab alle anderen Einträge der Leiste samt Gruppen.
+- **Wieder öffnen:** Ein geschlossener Tab kehrt in seine Gruppe zurück, an seine alte Stelle darin. Gibt es die Gruppe nicht mehr, entsteht sie mit Namen und Stelle neu, und weitere wieder geöffnete Tabs derselben Gruppe kommen dazu. So holt `Ctrl+Shift+Z` nach „Gruppe schliessen“ die Gruppe Tab für Tab zurück. „Zuletzt geschlossen …“ in der Palette nennt die Gruppe.
+- **Neue Tabs** über `+`, `Ctrl+Shift+T` und das Pfeil-Menü kommen wie bisher einzeln ans Ende der Leiste, nie in eine Gruppe. Duplizieren in einer Gruppe legt das Duplikat direkt nach das Original in die Gruppe.
+- **Nach einem Neustart** sind Gruppen, ihre Namen, Reihenfolge, Zugehörigkeit und gewählte Tabs wieder da. Eine ältere THub liest den Zustand weiter, zeigt aber alle Tabs einzeln und speichert die Gruppen nicht mit.
+- **Nicht dabei:** Gruppen in Gruppen, Farben für Gruppen, automatische Gruppen nach Ordner, Tabs in der Liste umsortieren oder aus ihr herausziehen, ein eigenes Tastenkürzel für die Liste.
 
 ### Befehlspalette
 
-`Ctrl+Shift+P` öffnet sie, aus jedem Tab heraus. Oben steht das Suchfeld, darunter die Gruppen „Tabs“ (Name, Ordner, Status-Symbol; Enter zeigt den Tab an) und „Befehle“:
+`Ctrl+Shift+P` öffnet sie, aus jedem Tab heraus. Oben steht das Suchfeld, darunter die Gruppen „Tabs“ (Name, Ordner, Status-Symbol; Enter zeigt den Tab an; ein Tab in einer Gruppe heisst „Gruppenname › Tabname“) und „Befehle“:
 
 | Befehl | Wirkung |
 |---|---|
@@ -64,8 +102,10 @@ Rechtsklick auf einen Tab öffnet sein Menü an der Stelle des Klicks, ohne den 
 | Neues Terminal in … | Unterliste: zuletzt benutzte Ordner und „Ordner wählen …“, wie im Pfeil-Menü |
 | Tab umbenennen | den aktiven Tab |
 | Tab schliessen | den aktiven Tab, mit Rückfrage nach denselben Regeln |
-| Andere Tabs schliessen | nur, wenn mehr als ein Tab offen ist |
-| Zuletzt geschlossen … | Unterliste der letzten zehn geschlossenen Tabs; Enter öffnet den gewählten wieder |
+| Andere Tabs schliessen | nur, wenn es etwas zu schliessen gibt: bei einem einzelnen Tab weitere Tabs, in einer Gruppe weitere Tabs der Gruppe |
+| Neue Gruppe | nur bei einem einzelnen Tab; wie im Rechtsklick-Menü am Tab ([Gruppen](#gruppen)) |
+| Aus Gruppe nehmen, Gruppe umbenennen, Gruppe auflösen | nur bei einem Tab in einer Gruppe; wie in den Rechtsklick-Menüs |
+| Zuletzt geschlossen … | Unterliste der letzten zehn geschlossenen Tabs (mit der Gruppe, in die ein Tab zurückkehrt); Enter öffnet den gewählten wieder |
 | Einstellungen | öffnet den Einstellungsdialog |
 | Standardordner ändern | Ordner-Dialog wie „Ändern …“ in den Einstellungen |
 | Tastenkürzel anzeigen | Übersicht aller Tastenkürzel |
@@ -101,6 +141,7 @@ Rechtsklick auf einen Tab öffnet sein Menü an der Stelle des Klicks, ohne den 
 Beim Beenden sichert THub alles. Beim nächsten Start ist es wieder da:
 
 - **alle Tabs** in ihrer Reihenfolge, mit Namen und Shell; der zuletzt aktive Tab wird angezeigt.
+- **Gruppen** mit ihren Namen, Tabs und gewählten Tabs (siehe [Gruppen](#gruppen)).
 - **Normale Tabs** starten im zuletzt aktiven Ordner. Ihr früherer Inhalt steht ausgegraut im Scrollback über der neuen Eingabezeile, mit der Trennlinie „Wiederhergestellt · <Datum, Uhrzeit der Sicherung>“; eine Bewegung des Mausrads nach oben zeigt ihn. Laufende Programme kommen nicht zurück, nur die Shell.
 - **Claude-Tabs** setzen ihre Session fort, siehe [Claude Code in THub](#claude-code-in-thub).
 - **Das Fenster** mit Grösse, Position und Maximiert-Zustand. Beim allerersten Start öffnet es maximiert. Liegt es ausserhalb aller Bildschirme (etwa nach dem Abziehen eines Monitors), öffnet es zentriert auf dem Hauptbildschirm.

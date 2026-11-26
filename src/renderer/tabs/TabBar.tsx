@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
-import type { KeepAwakeMode, RecentDir, ShellOption, TabSnapshot } from '../../shared/types';
+import { barEntries } from '../../shared/barEntries';
+import type { GroupSnapshot, KeepAwakeMode, RecentDir, ShellOption, TabSnapshot } from '../../shared/types';
 import { setKeepAwake } from '../commands';
 import { ChevronIcon, GearIcon, PlusIcon } from '../icons';
 import { Menu, type MenuPoint } from '../popup/Menu';
 import { focusTerminal } from '../terminal/terminalViews';
+import { groupListEntries, groupMenuEntries } from './groupMenu';
+import { GroupTab, type GroupRenaming } from './GroupTab';
 import { keepAwakeMenuEntries, KeepAwakeModeIcon, keepAwakeTooltip } from './keepAwakeMenu';
 import { newTabMenuEntries } from './newTabMenu';
 import { Tab } from './Tab';
@@ -19,18 +22,24 @@ const TOOLTIP_DELAY_MS = 550;
 /** Breite der weichen Kanten der Leiste bei Überlauf; ein angesteuerter Tab rückt ganz heraus. */
 const FADE_PX = 28;
 
+/** Was gerade umbenannt wird: ein Tab (auch einer in einer Gruppe) oder eine Gruppe (Ticket 36). */
+export type RenameTarget = { kind: 'tab'; id: string } | { kind: 'group'; id: string };
+
 interface TabBarProps {
+  /** Alle Tabs in der Reihenfolge der Leiste; die Tabs einer Gruppe stehen zusammen. */
   tabs: TabSnapshot[];
+  /** Die Gruppen (Ticket 36); eine Gruppe ist ein einziger Eintrag der Leiste. */
+  groups: GroupSnapshot[];
   activeTabId: string | null;
   /** Die erkannten Shells für das Pfeil-Menü. */
   shells: ShellOption[];
   /** Die Standard-Shell; sie trägt im Pfeil-Menü das Etikett „Standard“. */
   defaultShellId: string;
-  /** Tab, dessen Name gerade bearbeitet wird. */
-  renamingId: string | null;
-  onStartRename(tabId: string): void;
+  /** Was gerade umbenannt wird. */
+  renaming: RenameTarget | null;
+  onStartRename(target: RenameTarget): void;
   /** Ende des Umbenennens: der eingegebene Name, oder `null` bei Abbruch. */
-  onFinishRename(tabId: string, name: string | null): void;
+  onFinishRename(target: RenameTarget, name: string | null): void;
   /** Das Zahnrad öffnet die Einstellungen. */
   onOpenSettings(): void;
   /** Rechner wach halten an/aus und die gewählte Stufe (Ticket 28), für den Schalter neben dem Zahnrad. */
@@ -50,7 +59,23 @@ interface TabMenuState {
   at: MenuPoint;
 }
 
-type TooltipContent = { kind: 'tab'; tabId: string } | { kind: 'text'; text: string };
+/** Die offene Liste einer Gruppe (Ticket 36): unter ihrem Gruppen-Tab, und ob per Tastatur geöffnet. */
+interface GroupListState {
+  groupId: string;
+  anchor: HTMLElement;
+  viaKeyboard: boolean;
+}
+
+/** Das offene Rechtsklick-Menü am Gruppen-Tab: für welche Gruppe und wo im Fenster. */
+interface GroupMenuState {
+  groupId: string;
+  at: MenuPoint;
+}
+
+type TooltipContent =
+  | { kind: 'tab'; tabId: string }
+  | { kind: 'group'; groupId: string }
+  | { kind: 'text'; text: string };
 type TooltipState = TooltipContent & { anchor: DOMRect };
 
 /**
@@ -58,14 +83,16 @@ type TooltipState = TooltipContent & { anchor: DOMRect };
  * Verschieben des Fensters, Schalter „Rechner wach halten“ mit Pfeil-Menü, Zahnrad; rechts daneben liegen die nativen
  * Fensterknöpfe. Bei vielen Tabs
  * werden die Tabs schmaler und die Leiste scrollbar. Rechtsklick auf einen Tab öffnet sein Menü, Ziehen
- * sortiert die Tabs um. Die Leiste zeigt nur an und schickt Befehle; die Tab-Logik liegt im Kern.
+ * sortiert die Tabs um. Eine Gruppe ist ein einziger Gruppen-Tab mit einer Liste ihrer Tabs (Ticket 36). Die Leiste
+ * zeigt nur an und schickt Befehle; die Tab-Logik liegt im Kern.
  */
 export function TabBar({
   tabs,
+  groups,
   activeTabId,
   shells,
   defaultShellId,
-  renamingId,
+  renaming,
   onStartRename,
   onFinishRename,
   onOpenSettings,
@@ -80,10 +107,19 @@ export function TabBar({
   const [fade, setFade] = useState({ left: false, right: false });
   const [menu, setMenu] = useState<NewTabMenuState | null>(null);
   const [tabMenu, setTabMenu] = useState<TabMenuState | null>(null);
+  const [groupList, setGroupList] = useState<GroupListState | null>(null);
+  const [groupMenu, setGroupMenu] = useState<GroupMenuState | null>(null);
   const tooltip = useTooltip();
   const hideTooltip = tooltip.hide;
   // Die Reihenfolge ändert der Kern; die Leiste zeigt sie mit dem nächsten Ereignis.
-  const drag = useTabDrag(stripRef, (tabId, index) => api.send({ type: 'moveTab', tabId, index }), hideTooltip);
+  const drag = useTabDrag(stripRef, {
+    onMove: (entry, index) =>
+      entry.kind === 'tab'
+        ? api.send({ type: 'moveTab', tabId: entry.id, index })
+        : api.send({ type: 'moveGroup', groupId: entry.id, index }),
+    onDropIntoGroup: (tabId, groupId) => api.send({ type: 'moveTabToGroup', tabId, groupId }),
+    onStart: hideTooltip,
+  });
   const draggingId = drag.state.draggingId;
 
   // Die Ordner werden bei jedem Öffnen frisch abgefragt: Der Kern bietet nur an, was es noch gibt.
@@ -103,17 +139,58 @@ export function TabBar({
     focusTerminal(activeTabId);
   };
 
-  // Rechtsklick auf einen Tab: sein Menü an der Stelle des Klicks. Der Tab wird dabei nicht aktiv.
+  // Rechtsklick auf einen Tab (auch in der Liste einer Gruppe): sein Menü an der Stelle des Klicks. Der Tab wird dabei
+  // nicht aktiv.
   const openTabMenu = (tabId: string, at: MenuPoint) => {
     if (draggingId) return;
     hideTooltip();
     setMenu(null);
+    setGroupList(null);
+    setGroupMenu(null);
     setTabMenu({ tabId, at });
   };
 
   const closeTabMenu = () => {
     setTabMenu(null);
     focusTerminal(activeTabId);
+  };
+
+  // Die Liste einer Gruppe unter ihrem Gruppen-Tab; ein zweiter Klick schliesst sie wieder.
+  const toggleGroupList = (groupId: string, anchor: HTMLElement, viaKeyboard: boolean) => {
+    hideTooltip();
+    if (groupList?.groupId === groupId) {
+      closeGroupList();
+      return;
+    }
+    setMenu(null);
+    setTabMenu(null);
+    setGroupMenu(null);
+    setGroupList({ groupId, anchor, viaKeyboard });
+  };
+
+  const closeGroupList = () => {
+    setGroupList(null);
+    focusTerminal(activeTabId);
+  };
+
+  // Rechtsklick auf einen Gruppen-Tab: das Menü der Gruppe an der Stelle des Klicks.
+  const openGroupMenu = (groupId: string, at: MenuPoint) => {
+    if (draggingId) return;
+    hideTooltip();
+    setMenu(null);
+    setTabMenu(null);
+    setGroupList(null);
+    setGroupMenu({ groupId, at });
+  };
+
+  const closeGroupMenu = () => {
+    setGroupMenu(null);
+    focusTerminal(activeTabId);
+  };
+
+  const startRenameGroup = (groupId: string) => {
+    setGroupList(null);
+    onStartRename({ kind: 'group', id: groupId });
   };
 
   // Ein zweiter Klick auf den Pfeil schliesst das Menü wieder.
@@ -128,11 +205,19 @@ export function TabBar({
     focusTerminal(activeTabId);
   };
 
-  // Ein inzwischen geschlossener Tab hat kein Menü mehr.
+  // Ein inzwischen geschlossener Tab hat kein Menü mehr, eine verschwundene Gruppe weder Liste noch Menü.
   const menuTab = tabMenu ? tabs.find((t) => t.id === tabMenu.tabId) : undefined;
   useEffect(() => {
     if (tabMenu && !menuTab) setTabMenu(null);
   }, [tabMenu, menuTab]);
+  const listGroup = groupList ? groups.find((g) => g.id === groupList.groupId) : undefined;
+  useEffect(() => {
+    if (groupList && (!listGroup || !groupList.anchor.isConnected)) setGroupList(null);
+  }, [groupList, listGroup]);
+  const menuGroup = groupMenu ? groups.find((g) => g.id === groupMenu.groupId) : undefined;
+  useEffect(() => {
+    if (groupMenu && !menuGroup) setGroupMenu(null);
+  }, [groupMenu, menuGroup]);
 
   const updateFades = useCallback(() => {
     const strip = stripRef.current;
@@ -160,10 +245,14 @@ export function TabBar({
     };
   }, [updateFades]);
 
-  // Der aktive Tab bleibt sichtbar, auch bei überlaufender Leiste (neuer Tab, Wechsel per Tastatur).
+  // Der aktive Tab bleibt sichtbar, auch bei überlaufender Leiste (neuer Tab, Wechsel per Tastatur); in einer Gruppe
+  // ihr Gruppen-Tab.
+  const activeEntryId = tabs.find((t) => t.id === activeTabId)?.groupId ?? activeTabId;
   useLayoutEffect(() => {
     const strip = stripRef.current;
-    const el = activeTabId ? strip?.querySelector<HTMLElement>(`[data-tab-id="${CSS.escape(activeTabId)}"]`) : null;
+    const el = activeEntryId
+      ? strip?.querySelector<HTMLElement>(`[data-entry-id="${CSS.escape(activeEntryId)}"]`)
+      : null;
     if (strip && el) {
       const left = el.offsetLeft - FADE_PX;
       const right = el.offsetLeft + el.offsetWidth + FADE_PX;
@@ -171,12 +260,12 @@ export function TabBar({
       else if (right > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = right - strip.clientWidth;
     }
     updateFades();
-  }, [activeTabId, tabs.length, updateFades]);
+  }, [activeEntryId, tabs.length, groups.length, updateFades]);
 
   // Beim Umbenennen stört der Tooltip.
   useEffect(() => {
-    if (renamingId) hideTooltip();
-  }, [renamingId, hideTooltip]);
+    if (renaming) hideTooltip();
+  }, [renaming, hideTooltip]);
 
   // Klicks in die Leiste lassen den Fokus im Terminal. Nur ein offenes Umbenennen verliert ihn
   // und übernimmt damit den Namen.
@@ -187,6 +276,70 @@ export function TabBar({
   const stripClass = ['tabstrip', fade.left && 'fade-l', fade.right && 'fade-r'].filter(Boolean).join(' ');
   const tip = tooltip.state;
   const tipTab = tip?.kind === 'tab' ? tabs.find((t) => t.id === tip.tabId) : undefined;
+  const tipGroup = tip?.kind === 'group' ? groups.find((g) => g.id === tip.groupId) : undefined;
+  const tipSelected = tipGroup && tabs.find((t) => t.id === tipGroup.selectedTabId);
+  // Solange ein Menü an einem Tab offen ist, erscheint kein Tooltip.
+  const anyTabMenu = tabMenu !== null || groupList !== null || groupMenu !== null;
+
+  const renderTab = (tab: TabSnapshot) => (
+    <Tab
+      key={tab.id}
+      tab={tab}
+      active={tab.id === activeTabId}
+      renaming={renaming?.kind === 'tab' && renaming.id === tab.id}
+      dragging={tab.id === draggingId}
+      onActivate={() =>
+        tab.id === activeTabId ? focusTerminal(tab.id) : api.send({ type: 'activateTab', tabId: tab.id })
+      }
+      onClose={() => api.send({ type: 'requestClose', tabIds: [tab.id] })}
+      onStartRename={() => onStartRename({ kind: 'tab', id: tab.id })}
+      onFinishRename={(name) => onFinishRename({ kind: 'tab', id: tab.id }, name)}
+      onHover={(el) =>
+        el && !renaming && !anyTabMenu && !draggingId
+          ? tooltip.schedule(el, { kind: 'tab', tabId: tab.id })
+          : hideTooltip()
+      }
+      onPointerDown={(e) => drag.startDrag(e, { kind: 'tab', id: tab.id })}
+      onContextMenu={(x, y) => openTabMenu(tab.id, { x, y })}
+    />
+  );
+
+  const renderGroup = (group: GroupSnapshot, members: TabSnapshot[]) => {
+    const selected = members.find((t) => t.id === group.selectedTabId) ?? members[0];
+    // Wird ein Tab der Gruppe umbenannt (F2, Menü des Tabs), zeigt der Gruppen-Tab dessen Namen als Eingabefeld.
+    const renamingTab = renaming?.kind === 'tab' ? members.find((t) => t.id === renaming.id) : undefined;
+    let groupRenaming: GroupRenaming | null = null;
+    if (renaming?.kind === 'group' && renaming.id === group.id) groupRenaming = { kind: 'group' };
+    else if (renamingTab) groupRenaming = { kind: 'tab', tab: renamingTab };
+    const target: RenameTarget = renamingTab ? { kind: 'tab', id: renamingTab.id } : { kind: 'group', id: group.id };
+    const active = group.selectedTabId === activeTabId;
+    return (
+      <GroupTab
+        key={group.id}
+        group={group}
+        selected={selected}
+        active={active}
+        renaming={groupRenaming}
+        dragging={group.id === draggingId}
+        dropTarget={group.id === drag.state.intoGroupId}
+        listOpen={groupList?.groupId === group.id}
+        // Ein Klick zeigt den gewählten Tab an; ist die Gruppe schon aktiv, öffnet er die Liste.
+        onClick={(el) =>
+          active ? toggleGroupList(group.id, el, false) : api.send({ type: 'activateTab', tabId: selected.id })
+        }
+        onToggleList={(el, viaKeyboard) => toggleGroupList(group.id, el, viaKeyboard)}
+        onStartRename={() => startRenameGroup(group.id)}
+        onFinishRename={(name) => onFinishRename(target, name)}
+        onHover={(el) =>
+          el && !renaming && !anyTabMenu && !draggingId
+            ? tooltip.schedule(el, { kind: 'group', groupId: group.id })
+            : hideTooltip()
+        }
+        onPointerDown={(e) => drag.startDrag(e, { kind: 'group', id: group.id })}
+        onContextMenu={(x, y) => openGroupMenu(group.id, { x, y })}
+      />
+    );
+  };
 
   return (
     <header className="titlebar" onMouseDown={keepTerminalFocus}>
@@ -200,29 +353,13 @@ export function TabBar({
           hideTooltip();
         }}
       >
-        {tabs.map((tab) => (
-          <Tab
-            key={tab.id}
-            tab={tab}
-            active={tab.id === activeTabId}
-            renaming={tab.id === renamingId}
-            dragging={tab.id === draggingId}
-            onActivate={() =>
-              tab.id === activeTabId ? focusTerminal(tab.id) : api.send({ type: 'activateTab', tabId: tab.id })
-            }
-            onClose={() => api.send({ type: 'requestClose', tabIds: [tab.id] })}
-            onStartRename={() => onStartRename(tab.id)}
-            onFinishRename={(name) => onFinishRename(tab.id, name)}
-            onHover={(el) =>
-              el && !renamingId && !tabMenu && !draggingId
-                ? tooltip.schedule(el, { kind: 'tab', tabId: tab.id })
-                : hideTooltip()
-            }
-            onPointerDown={(e) => drag.startDrag(e, tab.id)}
-            onContextMenu={(x, y) => openTabMenu(tab.id, { x, y })}
-          />
-        ))}
-        {/* Einfügemarke beim Ziehen: Hier landet der Tab beim Loslassen. */}
+        {barEntries(tabs).map((entry) => {
+          if (entry.kind === 'tab') return renderTab(entry.tab);
+          const group = groups.find((g) => g.id === entry.groupId);
+          // Kommt eine Gruppe nicht mit (sollte nicht vorkommen), stehen ihre Tabs einzeln da.
+          return group ? renderGroup(group, entry.tabs) : entry.tabs.map(renderTab);
+        })}
+        {/* Einfügemarke beim Ziehen: Hier landet der Eintrag beim Loslassen. */}
         {drag.state.markLeft !== null && <div className="drop-mark" style={{ left: drag.state.markLeft }} />}
       </div>
       <div className="newtab">
@@ -328,9 +465,26 @@ export function TabBar({
       {tabMenu && menuTab && (
         <Menu
           label={`Tab „${menuTab.name}“`}
-          entries={tabMenuEntries(menuTab, () => onStartRename(menuTab.id))}
+          entries={tabMenuEntries(menuTab, groups, () => onStartRename({ kind: 'tab', id: menuTab.id }))}
           anchor={tabMenu.at}
           onClose={closeTabMenu}
+        />
+      )}
+      {groupList && listGroup && (
+        <Menu
+          label={`Tabs der Gruppe „${listGroup.name}“`}
+          entries={groupListEntries(listGroup, tabs, activeTabId, openTabMenu)}
+          anchor={groupList.anchor}
+          highlightFirst={groupList.viaKeyboard}
+          onClose={closeGroupList}
+        />
+      )}
+      {groupMenu && menuGroup && (
+        <Menu
+          label={`Gruppe „${menuGroup.name}“`}
+          entries={groupMenuEntries(menuGroup, () => startRenameGroup(menuGroup.id))}
+          anchor={groupMenu.at}
+          onClose={closeGroupMenu}
         />
       )}
 
@@ -345,6 +499,23 @@ export function TabBar({
             <dd>{tipTab.shellName}</dd>
             <dt>Status</dt>
             <dd>{STATUS_TEXT[tipTab.status]}</dd>
+          </dl>
+        </Tooltip>
+      )}
+      {tip && tipGroup && tipSelected && (
+        <Tooltip anchor={tip.anchor}>
+          <b>{tipGroup.name}</b>
+          <dl>
+            <dt>Tabs</dt>
+            <dd>{tipGroup.tabIds.length}</dd>
+            <dt>Gewählt</dt>
+            <dd>{tipSelected.name}</dd>
+            <dt>Ordner</dt>
+            <dd className="mono">{tipSelected.cwd}</dd>
+            <dt>Shell</dt>
+            <dd>{tipSelected.shellName}</dd>
+            <dt>Status</dt>
+            <dd>{STATUS_TEXT[tipGroup.status]}</dd>
           </dl>
         </Tooltip>
       )}

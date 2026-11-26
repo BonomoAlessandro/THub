@@ -77,8 +77,8 @@ function palette(
   activeTabId: string | null = 'b',
   keepAwake: { on: boolean; mode: KeepAwakeMode } = { on: false, mode: 'system' },
 ) {
-  const ui = { startRename: vi.fn(), openSettings: vi.fn(), openShortcuts: vi.fn() };
-  const ctx: PaletteContext = { tabs, activeTabId, ...ui, keepAwake };
+  const ui = { startRename: vi.fn(), startRenameGroup: vi.fn(), openSettings: vi.fn(), openShortcuts: vi.fn() };
+  const ctx: PaletteContext = { tabs, groups: [], activeTabId, ...ui, keepAwake };
   return { ctx, ui, groups: rootGroups(ctx) };
 }
 
@@ -150,6 +150,8 @@ describe('Befehlspalette', () => {
         'Tab umbenennen',
         'Tab schliessen',
         'Andere Tabs schliessen',
+        // Der aktive Tab steht einzeln (Ticket 36).
+        'Neue Gruppe',
         'Zuletzt geschlossen …',
         'Einstellungen',
         'Standardordner ändern',

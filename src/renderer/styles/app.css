@@ -240,6 +240,66 @@ svg.i {
   background: var(--hover-strong);
 }
 
+/* ---------- Gruppen-Tab (Ticket 36) ---------- */
+/*
+ * Ein Tab in den Massen eines Tabs: Status bzw. Ordner-Symbol, „Gruppenname · gewählter Tab“ (gekürzt mit „…“),
+ * gedämpft die Zahl der Tabs und der Pfeil, der die Liste öffnet. Statt × steht dort immer der Pfeil.
+ */
+.tab.group {
+  gap: 6px;
+  padding-right: 4px;
+}
+.grp-sep {
+  color: var(--text-faint);
+}
+.grp-count {
+  flex: none;
+  min-width: 14px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--text-faint);
+}
+.tab.group.active .grp-count,
+.tab.group:hover .grp-count {
+  color: var(--text-muted);
+}
+.grp-list {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: var(--r-xs);
+  color: var(--text-muted);
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast);
+}
+.grp-list svg.i {
+  width: 13px;
+  height: 13px;
+}
+.grp-list:hover,
+.tab.group.open .grp-list {
+  background: var(--hover-strong);
+  color: var(--text);
+}
+/* Umbenennen eines Tabs der Gruppe: Der Gruppenname bleibt gedämpft davor stehen. */
+.grp-prefix {
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+/* Ein gezogener Tab käme beim Loslassen in diese Gruppe: neutral hervorgehoben, ohne Akzentfarbe. */
+.tab.group.drop-into {
+  background: var(--tab-hover);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
 /* ---------- Umsortieren per Ziehen ---------- */
 /* Der gezogene Tab bleibt blass an seinem Platz, ein Abbild folgt der Maus, die Marke zeigt, wo er landet. */
 .tab.dragging {

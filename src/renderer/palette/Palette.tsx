@@ -8,6 +8,7 @@ import {
   CopyIcon,
   FolderIcon,
   FolderOpenIcon,
+  FolderOutputIcon,
   FolderPlusIcon,
   HistoryIcon,
   KeyboardIcon,
@@ -16,6 +17,7 @@ import {
   PlusIcon,
   SearchIcon,
   SlidersIcon,
+  UngroupIcon,
 } from '../icons';
 import { usePopupOpen } from '../popup/popups';
 import { TabIcon } from '../tabs/TabIcon';
@@ -47,6 +49,8 @@ const ICONS: Record<PaletteIcon, ReactNode> = {
   coffee: <CoffeeIcon />,
   monitor: <MonitorIcon />,
   copy: <CopyIcon />,
+  folderOutput: <FolderOutputIcon />,
+  ungroup: <UngroupIcon />,
 };
 
 /** Überschrift über dem Suchfeld in einer Unterliste. */

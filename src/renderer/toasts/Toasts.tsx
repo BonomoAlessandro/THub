@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import type { TabSnapshot, ToastCountdown, ToastSnapshot } from '../../shared/types';
+import type { GroupSnapshot, TabSnapshot, ToastCountdown, ToastSnapshot } from '../../shared/types';
 import { AlertIcon, ArrowRightIcon, CloseIcon, ListIcon } from '../icons';
 import { TabIcon } from '../tabs/TabIcon';
+import { tabLabel } from '../tabs/tabLabel';
 import { focusTerminal } from '../terminal/terminalViews';
 import { keepAwakeErrorText } from './keepAwakeErrorText';
 import { useStackPlacement } from './useStackPlacement';
@@ -12,6 +13,8 @@ interface ToastsProps {
   /** Die Hinweise, wie der Kern sie meldet: in der Reihenfolge ihres Erscheinens, ältester zuerst. */
   toasts: ToastSnapshot[];
   tabs: TabSnapshot[];
+  /** Die Gruppen (Ticket 36): Ein Hinweis nennt einen Tab in einer Gruppe „Gruppenname › Tabname“. */
+  groups: GroupSnapshot[];
   activeTabId: string | null;
 }
 
@@ -19,9 +22,10 @@ interface ToastsProps {
  * Hinweise unten rechts im Fenster, wie im Prototyp gestapelt, der neueste oben. Welche stehen, entscheidet der Kern;
  * hier gleitet ein neuer herein und ein verschwindender hinaus. Ein Hinweis, den ein neuer desselben Tabs ersetzt,
  * verschwindet ohne Animation. Hinweise nehmen dem Terminal nie den Fokus. Der Stapel weicht der Eingabe im sichtbaren
- * Tab aus und steht dann über ihr (Ticket 32, `useStackPlacement`).
+ * Tab aus und steht dann über ihr (Ticket 32, `useStackPlacement`). Ein Klick zeigt den Tab an, auch einen Tab in einer
+ * Gruppe, der dabei ihr gewählter Tab wird (Ticket 36).
  */
-export function Toasts({ toasts, tabs, activeTabId }: ToastsProps) {
+export function Toasts({ toasts, tabs, groups, activeTabId }: ToastsProps) {
   const [shown, forget] = useShownToasts(toasts);
   const stack = useStackPlacement(activeTabId);
 
@@ -54,7 +58,7 @@ export function Toasts({ toasts, tabs, activeTabId }: ToastsProps) {
             <ToastCard
               key={toast.id}
               toast={toast}
-              tabName={tab.name}
+              tabName={tabLabel(tab, groups)}
               active={tab.id === activeTabId}
               leaving={leaving}
               onLeft={forget}
@@ -165,6 +169,7 @@ function ErrorToastCard({
 
 interface ToastCardProps {
   toast: TabToast;
+  /** Name des Tabs, in einer Gruppe „Gruppenname › Tabname“ (Ticket 36). */
   tabName: string;
   /** Der Tab des Hinweises ist der aktive (etwa wenn das Fenster im Hintergrund war). */
   active: boolean;
