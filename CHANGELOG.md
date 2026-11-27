@@ -16,6 +16,7 @@ Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in
 
 **Korrigiert**
 
+- Die Menüs der Tab-Leiste (Shell oder Ordner wählen, Stufe von „Rechner wach halten“, Rechtsklick-Menü am Tab, Liste und Menü einer Gruppe) schliessen auch bei einem Klick auf die freie Fläche der Titelleiste. Der erste Klick dort schliesst nur das Menü, danach lässt sich das Fenster wieder verschieben. (39)
 - Ein Claude-Tab zeigt „arbeitet“, solange darin noch ein Agent im Hintergrund rechnet, auch wenn Claude seine Antwort schon beendet hat. Grün und der Hinweis „fertig“ kommen erst, wenn alles fertig ist. Vorher stand der Tab dabei teils minutenlang auf „ruht“. Eine Claude-Session, die schon lief, erkennt die Agenten erst nach einem Neustart oder Fortsetzen von Claude. (37)
 
 ## 0.4.0 – 2026-11-26
