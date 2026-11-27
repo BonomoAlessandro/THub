@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import type { BusyTab, GroupSnapshot, Settings, ShellOption, TabSnapshot, ToastSnapshot } from '../shared/types';
+import type {
+  BusyTab,
+  GroupSnapshot,
+  Settings,
+  ShellOption,
+  TabSnapshot,
+  ToastSnapshot,
+  UsageSnapshot,
+} from '../shared/types';
 import { terminalViews } from './terminal/terminalViews';
 
 const api = window.thub;
@@ -21,6 +29,8 @@ export interface WorkspaceView {
   homeDir: string;
   /** Die Hinweise unten rechts, ältester zuerst. */
   toasts: ToastSnapshot[];
+  /** Modell, Kosten und Limits für den Verbrauchsbalken (Ticket 38). */
+  usage: UsageSnapshot;
 }
 
 /** Eine offene Rückfrage des Kerns vor dem Schliessen: diese Tabs schliessen, in `busy` läuft noch etwas. */
@@ -86,6 +96,9 @@ export function useWorkspace(onGroupCreated: (groupId: string) => void): {
         case 'toasts':
           setView((current) => current && { ...current, toasts: event.toasts });
           return;
+        case 'usage':
+          setView((current) => current && { ...current, usage: event.usage });
+          return;
         case 'settings':
           setView(
             (current) => current && { ...current, settings: event.settings, defaultShellId: event.defaultShellId },
@@ -132,6 +145,7 @@ export function useWorkspace(onGroupCreated: (groupId: string) => void): {
         defaultShellId: snapshot.defaultShellId,
         homeDir: snapshot.homeDir,
         toasts: snapshot.toasts,
+        usage: snapshot.usage,
       });
     });
 

@@ -1,7 +1,7 @@
 /**
  * Lage des Stapels der Hinweise (Tickets 32 und 35): Er bleibt unten rechts, verdeckt aber nie die Eingabe im sichtbaren
- * Tab und nicht, was darunter steht. Reine Rechnung ohne DOM; die Oberfläche misst Fenster, Terminal und Stapel und
- * setzt das Ergebnis.
+ * Tab und nicht, was darunter steht, und seit Ticket 38 auch nicht den Verbrauchsbalken am unteren Fensterrand. Reine
+ * Rechnung ohne DOM; die Oberfläche misst Fenster, Terminal, Balken und Stapel und setzt das Ergebnis.
  */
 import type { InputRows } from '../terminal/inputArea';
 
@@ -35,6 +35,11 @@ export interface StackMeasures {
   input: InputRows | null;
   /** Höhe aller Karten samt den Abständen dazwischen. */
   stackHeight: number;
+  /**
+   * Höhe des Verbrauchsbalkens am unteren Fensterrand (Ticket 38); 0 ohne Balken. Der Stapel bleibt darüber, mit dem
+   * Abstand `edge` wie sonst zum Fensterrand.
+   */
+  bottomBar?: number;
 }
 
 /**
@@ -53,12 +58,16 @@ export interface StackPlacement {
   padBottom: number;
 }
 
-/** Der bisherige Platz: von der Titelleiste bis zum unteren Fensterrand. */
-export function freePlacement(windowHeight: number, titlebarHeight: number, edge: number): StackPlacement {
+/**
+ * Der bisherige Platz: von der Titelleiste bis zum unteren Fensterrand, mit Verbrauchsbalken (Ticket 38) bis zu dessen
+ * Oberkante.
+ * @param bottomBar Höhe des Verbrauchsbalkens; 0 ohne Balken
+ */
+export function freePlacement(windowHeight: number, titlebarHeight: number, edge: number, bottomBar = 0): StackPlacement {
   return {
     band: 'free',
     areaTop: titlebarHeight + EDGE_TOP,
-    areaBottom: windowHeight - edge,
+    areaBottom: windowHeight - bottomBar - edge,
     padTop: EDGE_TOP,
     padBottom: edge,
   };
@@ -81,7 +90,7 @@ export function freePlacement(windowHeight: number, titlebarHeight: number, edge
  * @param standing Band, in dem der Stapel gerade steht; null, solange keine Karte steht
  */
 export function placeStack(m: StackMeasures, standing: StackBand | null = null): StackPlacement {
-  const free = freePlacement(m.windowHeight, m.titlebarHeight, m.edge);
+  const free = freePlacement(m.windowHeight, m.titlebarHeight, m.edge, m.bottomBar ?? 0);
   if (!m.input || !(m.rowHeight > 0)) return free;
 
   const gap = m.edge;

@@ -3,11 +3,12 @@
 
 import * as path from 'node:path';
 import { barEntries } from '../../shared/barEntries';
-import { FONT_SIZE, type KeepAwakeMode, type Settings, type Theme } from '../../shared/types';
+import { FONT_SIZE, type AccountLimits, type KeepAwakeMode, type Settings, type Theme } from '../../shared/types';
 import { rememberDir, samePath } from './folders';
 import { gatherGroups } from './groups';
 import { MAX_OPEN_POINTS } from './openPoints';
 import type { Rect } from './ports';
+import { normalizeAccountLimits } from './usage';
 
 /** Claude-Zuordnung eines Tabs, soweit sie gespeichert wird (Ticket 10). */
 export interface PersistedClaudeLink {
@@ -93,6 +94,12 @@ export interface PersistedState {
   closedTabs: ClosedTab[];
   /** Fensterangaben (Ticket 09). */
   window?: WindowState;
+  /**
+   * Der letzte Stand der Limits des Claude-Kontos für den Verbrauchsbalken (Ticket 38), ohne neue Schema-Version; fehlt,
+   * solange es keinen gibt. Eine ältere THub kennt das Feld nicht und lässt es weg. Modell und Kosten pro Tab werden
+   * nicht gespeichert.
+   */
+  usageLimits?: AccountLimits;
 }
 
 export const MAX_CLOSED_TABS = 10;
@@ -149,6 +156,8 @@ export function normalizeSettings(raw: unknown): Settings {
     keepAwakeMode: KEEP_AWAKE_MODES.includes(s.keepAwakeMode as KeepAwakeMode)
       ? (s.keepAwakeMode as KeepAwakeMode)
       : 'system',
+    // Fehlt die Angabe (Zustand von vor Ticket 38), ist der Verbrauchsbalken an, ohne neue Schema-Version.
+    usageBar: typeof s.usageBar === 'boolean' ? s.usageBar : true,
   };
   if (isNonEmptyString(s.defaultShellId)) settings.defaultShellId = s.defaultShellId;
   return settings;
@@ -228,6 +237,8 @@ function normalizeV2(raw: Record<string, unknown>, ctx: SchemaContext): Persiste
   };
   const window = normalizeWindow(raw.window);
   if (window) state.window = window;
+  const usageLimits = normalizeAccountLimits(raw.usageLimits);
+  if (usageLimits) state.usageLimits = usageLimits;
   return state;
 }
 

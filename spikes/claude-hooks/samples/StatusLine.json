@@ -1,0 +1,83 @@
+{
+  "szenario": "statuszeile",
+  "pfad": "/statusline",
+  "kopfzeilen": {
+    "X-Spike-Tab": "<tab-id>",
+    "X-Spike-Token": "<token>"
+  },
+  "nutzdaten": {
+    "session_id": "<session-id>",
+    "transcript_path": "<transcript-path>",
+    "cwd": "<cwd>",
+    "scratchpad_dir": "<scratchpad-dir>",
+    "prompt_id": "<prompt-id>",
+    "effort": {
+      "level": "medium"
+    },
+    "session_name": "<session-name>",
+    "model": {
+      "id": "claude-haiku-5-5",
+      "display_name": "Haiku 5.5"
+    },
+    "workspace": {
+      "current_dir": "<cwd>",
+      "project_dir": "<cwd>",
+      "added_dirs": []
+    },
+    "version": "2.1.332",
+    "output_style": {
+      "name": "default"
+    },
+    "cost": {
+      "total_cost_usd": 0.014391390000000002,
+      "total_duration_ms": 81837,
+      "total_api_duration_ms": 2947,
+      "total_lines_added": 0,
+      "total_lines_removed": 0
+    },
+    "context_window": {
+      "total_input_tokens": 54832,
+      "total_output_tokens": 50,
+      "context_window_size": 1000000,
+      "current_usage": {
+        "input_tokens": 2,
+        "output_tokens": 50,
+        "cache_creation_input_tokens": 17931,
+        "cache_read_input_tokens": 36899
+      },
+      "used_percentage": 5,
+      "remaining_percentage": 95
+    },
+    "exceeds_200k_tokens": false,
+    "prompt_cache": {
+      "warm": true,
+      "caching_observed": true,
+      "ttl": "1h",
+      "expires_at": 1795776423,
+      "requests": 1,
+      "misses": 0,
+      "expected_rebuilds": 0,
+      "hit_ratio": 0.6729464546250364,
+      "cache_write_tokens": 17931,
+      "miss_recache_tokens": 0,
+      "last_miss_at": null,
+      "last_miss_cause": null,
+      "miss_causes": {},
+      "recache_tokens_if_cold": 54832
+    },
+    "fast_mode": false,
+    "thinking": {
+      "enabled": true
+    },
+    "rate_limits": {
+      "five_hour": {
+        "used_percentage": 56,
+        "resets_at": 1795780800
+      },
+      "seven_day": {
+        "used_percentage": 26,
+        "resets_at": 1795834800
+      }
+    }
+  }
+}

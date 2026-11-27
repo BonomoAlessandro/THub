@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { IPC, type DirectoryPurpose, type WorkspaceCommand } from '../shared/types';
 import { dataFolders, takeOverLegacyData, type DataFolders } from './dataFolder';
 import { checkExecutionPolicy, type ExecutionPolicyCheck } from './executionPolicy';
-import { HOOK_FILE_NAME, writeHookFile } from './hookFile';
+import { writeHookFiles } from './hookFile';
 import { LocalApiServer } from './localApi';
 import { openTabFolder } from './openFolder';
 import { openWebLink } from './openLink';
@@ -128,12 +128,12 @@ function takeOverOldData(f: DataFolders): void {
  * nicht und startet claude unverändert.
  */
 async function startLocalApi(): Promise<{ server: LocalApiServer; info: LocalApiInfo } | null> {
-  const hookFile = path.join(app.getPath('userData'), HOOK_FILE_NAME);
   let server: LocalApiServer | null = null;
   try {
     server = await LocalApiServer.start();
-    writeHookFile(hookFile, server.url);
-    return { server, info: { url: server.url, token: server.token, hookFile } };
+    // Beide Hook-Dateien, mit und ohne `statusLine` (Ticket 38); welche ein Start bekommt, entscheidet der Kern.
+    const files = writeHookFiles(app.getPath('userData'), server.url);
+    return { server, info: { url: server.url, token: server.token, ...files } };
   } catch (err) {
     console.error('Lokale Schnittstelle konnte nicht gestartet werden, Claude wird nicht erkannt:', err);
     await server?.close();

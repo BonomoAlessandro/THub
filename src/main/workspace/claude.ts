@@ -55,6 +55,11 @@ export interface ClaudeReceiver {
    * die Anweisung als zusätzlichen Kontext. Nie Entscheidungsfelder.
    */
   claudeHookReply(tabId: string, event: string): object | undefined;
+  /**
+   * JSON der Statuszeile von Claude Code (Ticket 38), roh; Modell, Kosten und Limits für den Verbrauchsbalken. Claude
+   * bekommt darauf immer eine leere Antwort und zeigt deshalb keine eigene Statuszeile.
+   */
+  claudeStatusLine(tabId: string, payload: unknown): void;
 }
 
 /** Die laufende lokale Schnittstelle, wie der Kern sie an Terminals und Starter weitergibt. */
@@ -63,8 +68,13 @@ export interface LocalApiInfo {
   url: string;
   /** Pro App-Start zufällig; kommt als THUB_TOKEN in jedes Terminal. */
   token: string;
-  /** Die bei diesem Start geschriebene Hook-Datei. */
+  /**
+   * Die bei diesem Start geschriebene Hook-Datei, mit dem Eintrag `statusLine` für den Verbrauchsbalken (Ticket 38),
+   * sofern es curl.exe gibt.
+   */
   hookFile: string;
+  /** Dieselbe Hook-Datei ohne `statusLine`, für Starts bei ausgeschaltetem Verbrauchsbalken (Ticket 38). */
+  hookFileWithoutStatusLine: string;
 }
 
 /** Was an einem Hook-Ereignis für die Zuordnung zählt. */

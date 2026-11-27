@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import * as fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { findCurl } from '../../src/main/hookFile';
-import { ApiClient, hookEvent, hookPayload, type ApiResponse, type HookSample } from '../support/apiClient';
+import { ApiClient, hookEvent, hookPayload, statusLinePayload, type ApiResponse, type HookSample } from '../support/apiClient';
 import { expectHookReply, SESSION_START_CONTEXT } from '../support/claudeTab';
 import { startWorkspace, startWorkspaceWithApi } from '../support/harness';
 
@@ -55,10 +55,11 @@ describe('Lokale Schnittstelle', () => {
         await client.exit(tabId, SID, 0),
         await client.hook(tabId, 'SessionStart', hookPayload('SessionStart-startup', { session_id: SID })),
         await client.hook(tabId, 'UserPromptSubmit', hookPayload('UserPromptSubmit', { session_id: SID })),
+        await client.statusLine(tabId, statusLinePayload()),
         await client.post('/gibt/es/nicht', {}),
       ];
 
-      expect(responses.map((r) => r.status)).toEqual([403, 403, 403, 403, 403, 403]);
+      expect(responses.map((r) => r.status)).toEqual([403, 403, 403, 403, 403, 403, 403]);
       expect(responses.every((r) => r.body === '')).toBe(true);
       expect(h.storedState()).toEqual(before);
     });
@@ -326,6 +327,94 @@ describe('Lokale Schnittstelle', () => {
       expect(h.storedTab(tabId)?.claude).toMatchObject({ sessionId: SID, confirmed: true });
     });
   });
+});
+
+describe('Statuszeile (Ticket 38): POST /claude/statusline', () => {
+  it('nimmt das JSON an, antwortet sofort leer und gibt Modell, Kosten und Limits an den Kern', async () => {
+    const h = await startWorkspaceWithApi();
+    const tabId = h.activeTab()!.id;
+    await h.api.launch({ tabId, case: 'new', cwd: 'C:\\proj' });
+
+    const res = await h.api.statusLine(tabId, statusLinePayload());
+
+    expectEmptySuccess(res);
+    expect(res.ms).toBeLessThan(IMMEDIATE_MS);
+    expect(h.snapshot().usage.tabs[tabId]).toEqual({ modelId: 'claude-haiku-5-5', modelName: 'Haiku 5.5', costUsd: 0.014391390000000002 });
+    expect(h.snapshot().usage.limits).toMatchObject({ session: { usedPercent: 56 }, week: { usedPercent: 26 }, tabId });
+  });
+
+  it.each([
+    ['unbrauchbarem Inhalt', 'kein JSON', 'eigener'],
+    ['leerem Inhalt', '', 'eigener'],
+    ['unbekanntem Tab', statusLinePayload(), 'unbekannt'],
+    ['fehlender Tab-Kopfzeile', statusLinePayload(), 'keiner'],
+  ] as const)('antwortet auch bei %s leer und ändert nichts', async (_label, body, tab) => {
+    const h = await startWorkspaceWithApi();
+    const tabId = h.activeTab()!.id;
+    const before = h.storedState();
+    const headers: Record<string, string> =
+      tab === 'keiner' ? {} : { 'X-THub-Tab': tab === 'eigener' ? tabId : 'gibt-es-nicht' };
+
+    expectEmptySuccess(await h.api.post('/claude/statusline', body, headers));
+
+    expect(h.snapshot().usage).toEqual({ tabs: {}, limits: null });
+    expect(h.storedState()).toEqual(before);
+  });
+
+  it('prüft das Token: ohne oder mit falschem eine leere Antwort mit 403, die Claude nicht anzeigt', async () => {
+    const h = await startWorkspaceWithApi();
+    const tabId = h.activeTab()!.id;
+
+    for (const token of [null, 'falsch']) {
+      const res = await h.api.withToken(token).statusLine(tabId, statusLinePayload());
+      expect(res).toMatchObject({ status: 403, body: '' });
+    }
+    expect(h.snapshot().usage).toEqual({ tabs: {}, limits: null });
+  });
+});
+
+/** Git Bash an der Stelle, an der Claude Code sie zuerst sucht. */
+const GIT_BASH = 'C:\\Program Files\\Git\\bin\\bash.exe';
+
+describe.skipIf(findCurl() === null)('der Befehl statusLine der Hook-Datei (curl.exe, Ticket 38)', () => {
+  /**
+   * Wie Claude Code unter Windows: die Zeichenkette über Git Bash (`bash -c`), ohne Git Bash über PowerShell, mit dem
+   * JSON auf stdin und der ganzen Umgebung von Claude, darin Tab und Token. (Mit einer fast leeren Umgebung startet
+   * Windows PowerShell den Befehl nicht und endet trotzdem mit 0; Claude gibt ihm aber seine ganze Umgebung mit.)
+   */
+  async function runStatusLine(h: Awaited<ReturnType<typeof startWorkspaceWithApi>>, tabId: string, shell: 'bash' | 'powershell') {
+    const { command } = JSON.parse(fs.readFileSync(h.localApi.hookFile, 'utf8')).statusLine;
+    const inherited = Object.fromEntries(
+      Object.entries(process.env).filter((entry): entry is [string, string] => !/^THUB_/i.test(entry[0]) && entry[1] !== undefined),
+    );
+    const env = { ...inherited, THUB_TAB_ID: tabId, THUB_TOKEN: h.localApi.token };
+    const stdin = JSON.stringify(statusLinePayload({ model: { id: 'claude-opus-5-5', display_name: 'Opus 5.5 «Grüezi»' } }));
+    return shell === 'bash'
+      ? run(GIT_BASH, ['-c', command], stdin, env)
+      : run('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', command], stdin, env);
+  }
+
+  it.skipIf(!fs.existsSync(GIT_BASH))('leitet über Git Bash weiter und gibt nichts aus', async () => {
+    const h = await startWorkspaceWithApi();
+    const tabId = h.activeTab()!.id;
+    await h.api.launch({ tabId, case: 'new', cwd: 'C:\\proj' });
+
+    const result = await runStatusLine(h, tabId, 'bash');
+
+    expect(result).toEqual({ code: 0, stdout: '', stderr: '' });
+    expect(h.snapshot().usage.tabs[tabId]).toMatchObject({ modelName: 'Opus 5.5 «Grüezi»' });
+  });
+
+  it('leitet über Windows PowerShell weiter und gibt nichts aus', async () => {
+    const h = await startWorkspaceWithApi();
+    const tabId = h.activeTab()!.id;
+    await h.api.launch({ tabId, case: 'new', cwd: 'C:\\proj' });
+
+    const result = await runStatusLine(h, tabId, 'powershell');
+
+    expect(result).toEqual({ code: 0, stdout: '', stderr: '' });
+    expect(h.snapshot().usage.tabs[tabId]).toMatchObject({ modelName: 'Opus 5.5 «Grüezi»' });
+  }, 20_000);
 });
 
 function run(

@@ -1,0 +1,747 @@
+{
+  "form-bash": [
+    {
+      "t": 3.09,
+      "ereignis": "SessionStart",
+      "session": "S1",
+      "source": "startup"
+    },
+    {
+      "t": 4.25,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 20.55,
+      "taste": "tippe: /exit"
+    },
+    {
+      "t": 20.95,
+      "taste": "Enter"
+    },
+    {
+      "t": 21.47,
+      "ereignis": "SessionEnd",
+      "session": "S1"
+    },
+    {
+      "t": 22.86,
+      "ende": 0
+    }
+  ],
+  "form-exec": [
+    {
+      "t": 4.94,
+      "taste": "Pfeil runter"
+    },
+    {
+      "t": 5.34,
+      "taste": "Enter (Yes, I trust this folder)"
+    },
+    {
+      "t": 7.24,
+      "ereignis": "SessionStart",
+      "session": "S1",
+      "source": "startup"
+    },
+    {
+      "t": 19.27,
+      "taste": "tippe: /exit"
+    },
+    {
+      "t": 19.66,
+      "taste": "Enter"
+    },
+    {
+      "t": 20.2,
+      "ereignis": "SessionEnd",
+      "session": "S1"
+    },
+    {
+      "t": 21.8,
+      "ende": 0
+    }
+  ],
+  "form-ps": [
+    {
+      "t": 8.62,
+      "ereignis": "SessionStart",
+      "session": "S1",
+      "source": "startup"
+    },
+    {
+      "t": 12.14,
+      "statuszeile": "ps",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": null,
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 21.39,
+      "taste": "tippe: /exit"
+    },
+    {
+      "t": 22.01,
+      "taste": "Enter"
+    },
+    {
+      "t": 29.16,
+      "ereignis": "SessionEnd",
+      "session": "S1"
+    },
+    {
+      "t": 38.81,
+      "ende": 0
+    }
+  ],
+  "fortsetzen-bash": [
+    {
+      "t": 3.53,
+      "ereignis": "SessionStart",
+      "session": "S1",
+      "source": "resume"
+    },
+    {
+      "t": 4.93,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0.010411000000000002,
+      "limits": null,
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 16.7,
+      "taste": "tippe: <Prompt>"
+    },
+    {
+      "t": 17.46,
+      "taste": "Enter"
+    },
+    {
+      "t": 17.74,
+      "ereignis": "UserPromptSubmit",
+      "session": "S1"
+    },
+    {
+      "t": 19.63,
+      "ereignis": "Stop",
+      "session": "S1"
+    },
+    {
+      "t": 20.25,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0.014391390000000002,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 21.1,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0.014391390000000002,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 25.64,
+      "taste": "tippe: /clear"
+    },
+    {
+      "t": 26.05,
+      "taste": "Enter"
+    },
+    {
+      "t": 26.13,
+      "ereignis": "SessionEnd",
+      "session": "S1"
+    },
+    {
+      "t": 26.72,
+      "ereignis": "SessionStart",
+      "session": "S2",
+      "source": "clear"
+    },
+    {
+      "t": 26.93,
+      "statuszeile": "bash",
+      "session": "S2",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 32.73,
+      "taste": "tippe: /exit"
+    },
+    {
+      "t": 33.13,
+      "taste": "Enter"
+    },
+    {
+      "t": 33.51,
+      "ereignis": "SessionEnd",
+      "session": "S2"
+    },
+    {
+      "t": 34.94,
+      "ende": 0
+    }
+  ],
+  "groesse": [
+    {
+      "t": 3.23,
+      "ereignis": "SessionStart",
+      "session": "S1",
+      "source": "startup"
+    },
+    {
+      "t": 4.64,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 18.77,
+      "taste": "Grösse 100x34"
+    },
+    {
+      "t": 19.45,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 23.79,
+      "taste": "Grösse 120x40"
+    },
+    {
+      "t": 24.4,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 28.8,
+      "taste": "tippe: /exit"
+    },
+    {
+      "t": 29.19,
+      "taste": "Enter"
+    },
+    {
+      "t": 29.6,
+      "ereignis": "SessionEnd",
+      "session": "S1"
+    },
+    {
+      "t": 31.04,
+      "ende": 0
+    }
+  ],
+  "haupt-bash": [
+    {
+      "t": 7.91,
+      "ereignis": "SessionStart",
+      "session": "S1",
+      "source": "startup"
+    },
+    {
+      "t": 12.13,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 17,
+      "taste": "tippe: <Prompt>"
+    },
+    {
+      "t": 17.79,
+      "taste": "Enter"
+    },
+    {
+      "t": 18.44,
+      "ereignis": "UserPromptSubmit",
+      "session": "S1"
+    },
+    {
+      "t": 21.12,
+      "ereignis": "Stop",
+      "session": "S1"
+    },
+    {
+      "t": 21.37,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0.0001232,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 22.3,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0.010411000000000002,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 66.15,
+      "taste": "tippe: /exit"
+    },
+    {
+      "t": 66.55,
+      "taste": "Enter"
+    },
+    {
+      "t": 66.97,
+      "ereignis": "SessionEnd",
+      "session": "S1"
+    },
+    {
+      "t": 68.45,
+      "ende": 0
+    }
+  ],
+  "intervall-bash": [
+    {
+      "t": 2.77,
+      "ereignis": "SessionStart",
+      "session": "S1",
+      "source": "startup"
+    },
+    {
+      "t": 4.01,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": null,
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 7.56,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 7.78,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 9.88,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 11.67,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 13.83,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 15.76,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 17.75,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 19.87,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 21.76,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 23.75,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 25.96,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 28.29,
+      "statuszeile": "bash",
+      "session": "S1",
+      "modell": "claude-haiku-5-5",
+      "kosten": 0,
+      "limits": {
+        "five_hour": [
+          "used_percentage",
+          "resets_at"
+        ],
+        "seven_day": [
+          "used_percentage",
+          "resets_at"
+        ]
+      },
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 28.65,
+      "taste": "tippe: /exit"
+    },
+    {
+      "t": 29.05,
+      "taste": "Enter"
+    },
+    {
+      "t": 29.56,
+      "ereignis": "SessionEnd",
+      "session": "S1"
+    },
+    {
+      "t": 30.95,
+      "ende": 0
+    }
+  ],
+  "nutzer": [
+    {
+      "t": 2.68,
+      "ereignis": "SessionStart",
+      "session": "S1",
+      "source": "startup"
+    },
+    {
+      "t": 20.52,
+      "taste": "tippe: /exit"
+    },
+    {
+      "t": 20.92,
+      "taste": "Enter"
+    },
+    {
+      "t": 21.51,
+      "ereignis": "SessionEnd",
+      "session": "S1"
+    },
+    {
+      "t": 23.33,
+      "ende": 0
+    }
+  ],
+  "ohne": [
+    {
+      "t": 3.1,
+      "ereignis": "SessionStart",
+      "session": "S1",
+      "source": "startup"
+    },
+    {
+      "t": 20.73,
+      "taste": "tippe: /exit"
+    },
+    {
+      "t": 21.13,
+      "taste": "Enter"
+    },
+    {
+      "t": 21.63,
+      "ereignis": "SessionEnd",
+      "session": "S1"
+    },
+    {
+      "t": 23.04,
+      "ende": 0
+    }
+  ],
+  "shells": [
+    {
+      "t": 0.9,
+      "statuszeile": "bash",
+      "modell": "claude-x",
+      "kosten": 1.5,
+      "limits": null,
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 5.39,
+      "statuszeile": "powershell",
+      "modell": "claude-x",
+      "kosten": 1.5,
+      "limits": null,
+      "tab_kopfzeile": "ja"
+    },
+    {
+      "t": 12.64,
+      "statuszeile": "pwsh",
+      "modell": "claude-x",
+      "kosten": 1.5,
+      "limits": null,
+      "tab_kopfzeile": "ja"
+    }
+  ]
+}

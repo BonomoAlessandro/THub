@@ -415,3 +415,36 @@ describe('Ruhe beim Neuzeichnen', () => {
     expect(steady.dueAt()).toBeNull();
   });
 });
+
+describe('Über dem Verbrauchsbalken (Ticket 38)', () => {
+  /** Der Balken unten im Fenster; das Terminal endet über ihm. */
+  const BAR = 26;
+  const withBar = (input: StackMeasures['input'], stackHeight = STACK): StackMeasures => ({
+    ...measures(input, stackHeight),
+    bottomBar: BAR,
+  });
+
+  it('ohne Eingabe im Bild: der bisherige Platz, aber über dem Balken', () => {
+    const placement = placeStack(withBar(null));
+
+    expect(placement).toEqual(freePlacement(WINDOW.windowHeight, WINDOW.titlebarHeight, EDGE, BAR));
+    expect(placement.areaBottom).toBe(WINDOW.windowHeight - BAR - EDGE);
+    expect(placement.padBottom).toBe(EDGE);
+  });
+
+  it('unter einer Eingabe weit oben: mit demselben Abstand über dem Balken wie sonst über dem Fensterrand', () => {
+    const placement = placeStack(withBar(rows(5)));
+
+    expect(placement.band).toBe('below');
+    expect(placement.areaBottom).toBe(WINDOW.windowHeight - BAR - EDGE);
+  });
+
+  it('Claude mit der Eingabe unten: über der Eingabe, die Regeln zum Ausweichen gelten weiter', () => {
+    // Ohne Claudes Statuszeile ist der Bereich unter dem Eingabefeld kleiner: Linie, Eingabe, Linie, Modus.
+    const placement = placeStack(withBar(rows(33, 34, { rule: true, end: 37 })));
+
+    expect(placement.band).toBe('above');
+    expect(placement.areaBottom).toBe(ruleTop(33) - EDGE);
+    expect(placement.areaBottom).toBeLessThan(WINDOW.windowHeight - BAR);
+  });
+});

@@ -59,7 +59,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 35 | [Hinweise: Abstand zur Eingabe und Lage in Claude-Tabs](35-abstand-und-claude-tabs.md) | AFK | – | erledigt |
 | 36 | [Tabs zu Gruppen zusammenfassen](36-tab-gruppen.md) | AFK | – | erledigt |
 | 37 | [„Arbeitet“, solange Hintergrund-Agenten rechnen](37-status-hintergrund-agenten.md) | AFK | – | erledigt |
-| 38 | [Balken mit Modell, Verbrauch und Limits](38-verbrauchsbalken.md) | AFK | – | offen |
+| 38 | [Balken mit Modell, Verbrauch und Limits](38-verbrauchsbalken.md) | AFK | – | erledigt |
 | 39 | [Menüs schliessen auch bei einem Klick auf die Titelleiste](39-menue-schliesst-bei-klick-auf-titelleiste.md) | AFK | – | offen |
 | 40 | [Gruppen-Tab zeigt den Status des gewählten Tabs](40-gruppenstatus-gewaehlter-tab.md) | AFK | 37 | erledigt |
 

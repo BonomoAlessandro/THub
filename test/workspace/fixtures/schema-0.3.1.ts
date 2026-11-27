@@ -1,13 +1,26 @@
 // Eingefrorene Kopie von src/main/workspace/schema.ts aus THub 0.3.1 (dort unverändert seit Ticket 28), nur mit
 // angepassten Importpfaden und diesem Kopf. Damit prüft `groups.test.ts`, was eine ältere THub aus einem Zustand mit
 // Gruppen (Ticket 36) liest. Nicht an spätere Änderungen anpassen: Die Datei steht für den Stand, den Nutzer mit einer
-// älteren THub noch haben können.
+// älteren THub noch haben können. Seit Ticket 38 ist auch der Typ `Settings` hier eingefroren (Stand 0.3.1), statt ihn
+// aus src/shared/types.ts zu holen, der inzwischen weitere Einstellungen kennt.
 //
 // Gespeicherter Zustand (Schema Version 2) und die Übernahme aus Version 1.
 // Gelesen wird tolerant: Unbrauchbare Felder fallen auf Standardwerte zurück, statt den Start zu verhindern.
 
 import * as path from 'node:path';
-import { FONT_SIZE, type KeepAwakeMode, type Settings, type Theme } from '../../../src/shared/types';
+import { FONT_SIZE, type KeepAwakeMode, type Theme } from '../../../src/shared/types';
+
+/** Die Einstellungen von THub 0.3.1, eingefroren. */
+interface Settings {
+  defaultCwd: string;
+  defaultShellId?: string;
+  theme: Theme;
+  fontSize: number;
+  notifications: boolean;
+  openPoints: boolean;
+  keepAwake: boolean;
+  keepAwakeMode: KeepAwakeMode;
+}
 import { rememberDir, samePath } from '../../../src/main/workspace/folders';
 import { MAX_OPEN_POINTS } from '../../../src/main/workspace/openPoints';
 import type { Rect } from '../../../src/main/workspace/ports';

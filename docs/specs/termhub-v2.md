@@ -362,15 +362,17 @@ Der Starter arbeitet in diesen Schritten:
 
 | Endpunkt | Von | Inhalt | Antwort |
 |---|---|---|---|
-| `POST /claude/launch` | Starter, vor dem Start | Tab-Kennung, Fall, angegebene Kennung, aktueller Ordner | Tab-Name, neue Session-Kennung (nur Fall „neu“), Pfad zur Hook-Datei |
+| `POST /claude/launch` | Starter, vor dem Start | Tab-Kennung, Fall, angegebene Kennung, aktueller Ordner | Tab-Name, neue Session-Kennung (nur Fall „neu“), Pfad zur Hook-Datei (seit Ticket 38 mit oder ohne `statusLine`, je nach Einstellung „Verbrauchsbalken anzeigen“) |
 | `POST /claude/started` | Starter, direkt nach dem Start | Tab-Kennung, Prozess-ID von Claude | leer |
 | `POST /claude/exit` | Starter, nach dem Ende | Tab-Kennung, Session-Kennung, Exit-Code | leer |
 | `POST /hooks/<Ereignis>` | Claude Code (HTTP-Hooks; `SessionStart` über `curl.exe`, siehe unten) | Hook-Nutzdaten | immer sofort leerer Erfolg mit leerem Inhalt; einzige Ausnahme `SessionStart` mit der Anweisung für offene Punkte (siehe „Offene Punkte aus Claudes Antworten“) |
+| `POST /claude/statusline` | Claude Code, Befehl `statusLine` der Hook-Datei über `curl.exe` (Ticket 38), Tab in `X-THub-Tab` | JSON der Statuszeile | immer sofort leerer Erfolg mit leerem Inhalt, auch bei unbrauchbarem Inhalt oder unbekanntem Tab; Claude zeigt deshalb keine Statuszeile |
 
 - Die **Hook-Datei** erzeugt THub bei jedem Start neu im eigenen Datenordner:
   - Hooks vom Typ `http` auf `/hooks/<Ereignis>`, mit den Kopfzeilen `X-THub-Tab: $THUB_TAB_ID` und `X-THub-Token: $THUB_TOKEN`. Beide Variablen stehen in `allowedEnvVars`. Timeout 2 Sekunden.
   - Registrierte Ereignisse per HTTP: `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `Stop`, `StopFailure`, `Notification`, seit Ticket 37 auch `SubagentStart` und `SubagentStop`.
   - **`SessionStart` unterstützt keine HTTP-Hooks** (Claude überspringt sie still). Dafür gibt es einen Befehls-Hook ohne Shell (Exec-Form), der die Nutzdaten mit dem `curl.exe` von Windows an `/hooks/SessionStart` weiterleitet. curl liest Tab-Kennung und Token selbst aus der Umgebung (`--variable %VAR` mit `--expand-header`), mit `--connect-timeout 1 -m 2` und Hook-Timeout 3 Sekunden. Die Ausgabe dieses Hooks liest Claude (curl gibt die Antwort unverändert aus); deshalb ist die Antwort leer, ausser THub gibt Claude bei eingeschalteter Einstellung die Anweisung für offene Punkte als JSON mit `additionalContext` mit. Fehlt `curl.exe`, entfällt der Eintrag; die Zuordnung läuft dann über die Ersatzregel „neue Kennung in einem anderen Ereignis“ (siehe Zustandsautomat).
+  - **Statuszeile** (Ticket 38): ein Eintrag `statusLine`, der das JSON der Statuszeile mit `curl.exe` an `/claude/statusline` weiterleitet und nichts ausgibt. Claude kennt dafür keine Exec-Form und führt die Zeichenkette mit Git Bash aus, ohne Git Bash mit PowerShell; Einzelheiten unter „Verbrauchsbalken (Ticket 38)“. Ohne `curl.exe` und bei ausgeschaltetem Verbrauchsbalken gibt es keinen Eintrag. Die Hook-Datei gibt es deshalb zweimal, mit und ohne `statusLine`.
   - Eine geprüfte Vorlage liegt in `spikes/claude-hooks/empfohlene-hook-datei.json`.
 - Relevante Felder der Nutzdaten:
   - alle Ereignisse: `session_id`, `cwd` (kann ein 8.3-Kurzpfad sein, wird normalisiert), `transcript_path`;
@@ -633,6 +635,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - Hinweise an/aus
   - offene Punkte aus Claudes Antworten an/aus
   - Rechner wach halten an/aus und die gewählte Stufe (nur Rechner / Rechner und Bildschirm); fehlen die Angaben, gilt aus und „nur Rechner“, ohne neue Schema-Version (Ticket 28)
+  - Verbrauchsbalken an/aus; fehlt die Angabe, ist er an, ohne neue Schema-Version (Ticket 38)
 - **Tabs (geordnet):**
   - Kennung, Name, ob der Name von Hand vergeben wurde
   - Shell-Kennung, Startordner, zuletzt aktiver Ordner
@@ -645,6 +648,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
   - zuletzt benutzte Ordner: Startordner neu angelegter Tabs und der zuletzt aktive Ordner eines Tabs beim Schliessen; höchstens acht, neueste zuerst, ohne Doppelte
   - zuletzt geschlossene Tabs (höchstens zehn)
   - Fenster: Grösse und Position im normalen Zustand, maximiert ja/nein
+  - der letzte Stand der Limits des Claude-Kontos für den Verbrauchsbalken: Session und Woche mit Prozent und Reset, weitere Limits, Zeitpunkt und Tab der Meldung (Ticket 38, ohne neue Schema-Version; fehlt er, gibt es noch keinen Stand). Modell und Kosten pro Tab werden nicht gespeichert.
 - Laufzeit-Status (arbeitet, wartet, Prozess-IDs usw.) wird nicht gespeichert. Der Verlauf liegt pro Tab in separaten Dateien.
 - **Übernahme aus Version 1:**
   - Sessions werden zu normalen Tabs.
@@ -779,6 +783,27 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Daten:** aus dem JSON der Statuszeile von Claude Code. THub setzt dafür in seiner Hook-Datei einen eigenen Eintrag `statusLine`, der das JSON mit `curl.exe` an die lokale Schnittstelle weiterleitet und nichts ausgibt. Modell und Kosten gelten pro Tab. Die Limits gelten für das Konto, der neueste Stand aus allen Tabs gewinnt, und sie werden gespeichert.
 - **Ersetzt Claudes Statuszeile** in Sessions, die THub startet. Ist der Balken in den Einstellungen aus, setzt THub keinen Eintrag `statusLine`.
 - **Verworfen:** die Statuszeile des Nutzers durchreichen, umschaltbar machen, nur Zahlen, Restzeit statt Uhrzeit. Einzelheiten in Ticket 38.
+
+**Präzisierungen aus der Umsetzung (Ticket 38):**
+- **Messung** (Claude Code 2.1.332, `docs/spikes/claude-hooks.md`, Abschnitt „Statuszeile (Ticket 38)“): `statusLine` kennt keine Exec-Form (`args` und `shell` fallen weg); Claude führt die Zeichenkette wie einen Befehls-Hook ohne `args` aus, mit Git Bash, ohne Git Bash mit PowerShell. Der Eintrag aus `--settings` geht der Statuszeile des Nutzers und des Projekts vor; eine leere Ausgabe ergibt keine Zeile. Claude ruft den Befehl beim Start, nach jeder Antwort, nach `/clear` und bei einer neuen Grösse des Terminals auf, nicht im Leerlauf, jeweils mit den Limits aus seiner letzten Antwort. `rate_limits` steht manchmal schon im ersten Aufruf, sonst ab der ersten Antwort; nach `--resume` fehlt es beim Start. Die Kosten beginnen nach `--resume` nicht bei 0, nach `/clear` schon.
+- **Befehl:** `C:/Windows/System32/curl.exe` (Pfad aus `%SystemRoot%`, mit `/`, ohne Anführungszeichen), dahinter dieselben Argumente wie beim curl-Hook für `SessionStart`, jedes mit Sonderzeichen in einfachen Anführungszeichen; Git Bash, Windows PowerShell und PowerShell 7 lesen das gleich (`statusLineCommand` in `hookFile.ts`). Lässt sich der Pfad so nicht schreiben, gibt es keinen Eintrag. Einen eigenen `refreshInterval` setzt THub nicht.
+- **Zwei Hook-Dateien:** `claude-hooks.json` mit und `claude-hooks-ohne-statuszeile.json` ohne `statusLine`. `/claude/launch` liefert die eine oder die andere nach der Einstellung. Claude beobachtet die Datei aus `--settings` nicht; eine laufende Session behält ihre Statuszeile bis zum nächsten Start.
+- **Regeln im Kern** (`usage.ts`, reine Funktionen):
+  - `readStatusLine` liest Modell (`model.id`, `model.display_name`, ersatzweise die Kennung), Kosten (`cost.total_cost_usd`, ab 0) und `rate_limits`: `five_hour` als Session, `seven_day` als Woche, jeder andere Schlüssel als weiteres Limit (etwa `spend_limit` mit `used_usd` und `limit_usd`). Ein Limit braucht einen Anteil: `used_percentage`, sonst `utilization`, als Zahl oder Zeichenkette, auf 0 bis 100 begrenzt; `resets_at` in Sekunden, gespeichert in Millisekunden. `null`, falsche Typen und kaputtes JSON fallen weg, nie ein Fehler.
+  - **Neuerer Stand pro Limit** (`newerLimit`): Weil Claude die Limits aus seiner letzten Antwort mitschickt, auch Stunden später nach einer neuen Grösse des Terminals, gewinnt nicht einfach die zuletzt angekommene Meldung. Ein späterer Reset (mehr als 10 Minuten später) ist ein neues Fenster und gilt; im selben Fenster gilt der höhere oder gleiche Verbrauch; ein früherer Reset gilt nicht. Fehlt einem der beiden der Reset, gilt der gemeldete.
+  - **Ganze Meldung** (`mergeLimits`): Bringt sie bei Session oder Woche den neueren oder gleichen Stand, gilt sie: Zeitpunkt und Tab des Stands sind ihre, ihre weiteren Limits ersetzen die bisherigen, und ein Limit, das ihr fehlt (etwa die Session nach ihrem Reset), bleibt. Sonst ändert sie nichts. Fehlt `rate_limits`, bleibt der bisherige Stand.
+  - Modell und Kosten gelten nur für einen Tab mit Claude-Zuordnung; die Limits aus jedem bekannten Tab. Nach dem Einfrieren beim Beenden zählt keine Meldung.
+  - Ob ein Reset vorbei ist, entscheidet `shownLimit` in `src/shared/usage.ts` (Kern und Oberfläche): danach 0 %, gedämpft.
+- **Vertrag:** `WorkspaceSnapshot.usage` und das Ereignis `usage` (`UsageSnapshot`: Modell und Kosten pro Claude-Tab, Limits oder `null`). Das Ereignis kommt, wenn sich etwas ändert, auch wenn ein Tab seine Claude-Zuordnung verliert oder geschlossen wird.
+- **Oberfläche** (`src/renderer/usage/`):
+  - Der Balken ist ein `footer` unter der Terminal-Fläche, 26 px hoch, Schrift 12 px, Ziffern gleich breit. Die Terminal-Karte rückt bis an ihn (der Rand von 7 px unter ihr entfällt).
+  - Reihenfolge: Stern und Modell, Session, API, Woche, getrennt durch feine senkrechte Linien. Mini-Balken: 8 Segmente zu 5 × 8 px; gefüllt sind gerundet `Anteil × 8`, über 0 % aber mindestens eines und unter 100 % höchstens sieben. Ab 90 % sind Mini-Balken und Prozent in `--st-waiting`. Nach dem Reset steht das Limit mit halber Deckkraft und ohne Reset da.
+  - Reset und „Stand“: am selben Kalendertag „15:40“, bis sechs Tage „Mo 09:00“, ab sieben Tagen „4.12. 09:00“, in der Zeit des Rechners. Kosten: „$4.12“.
+  - Schmales Fenster: Alle vier Stufen (alles, ohne Resets, ohne Mini-Balken, ohne Kosten) stehen unsichtbar im Balken; gezeigt wird die erste, die in seine Breite passt (`fitLevel`). „Zuletzt „API““ heisst: Der ganze Eintrag mit den Kosten entfällt.
+  - Tooltip über dem Balken nach 550 ms: „Modell“ (Kennung), „API“, „Session“ und „Woche“ mit Prozent, Reset und Restzeit („noch 2 h 10 min“, „noch 2 Tage 19 h“), weitere Limits, „Stand 10:45 aus Tab „web““ (der heutige Name des Tabs, sonst der gespeicherte) und der Hinweis, woher die Limits kommen. Ohne Limits: „Ohne Abo meldet Claude keine Limits.“
+  - Die Uhr des Balkens läuft im Minutentakt (kurz nach jedem Minutenwechsel).
+  - **Hinweise:** Der Stapel bleibt über dem Balken, mit dem Abstand `--toast-edge` wie sonst zum Fensterrand (`StackMeasures.bottomBar`); die Regeln zum Ausweichen über der Eingabe gelten weiter.
+- **Einstellung** „Verbrauchsbalken anzeigen“ im Abschnitt „Darstellung“, standardmässig an (`Settings.usageBar`).
 
 **Präzisierungen aus der Umsetzung (Ticket 36):**
 - **Regeln im Kern:** Gruppen anlegen, Tabs hinein- und herausschieben, umbenennen, verschieben, auflösen, schliessen und „Neues Terminal“ in der Gruppe sind Befehle des Kerns (`createGroup`, `moveTabToGroup`, `removeTabFromGroup`, `renameGroup`, `moveGroup`, `dissolveGroup`, `closeGroup`, `newTabInGroup`).
