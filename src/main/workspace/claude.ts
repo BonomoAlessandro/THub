@@ -75,10 +75,27 @@ export interface HookFacts {
   cwd?: string;
   /** Grund bei `SessionEnd`. */
   reason?: string;
+  /** Quelle bei `SessionStart`: `startup`, `resume`, `clear`, `compact`. */
+  source?: string;
   /** Art bei `Notification`, z.B. `permission_prompt` oder `idle_prompt`. */
   notificationType?: string;
   /** Text der fertigen Antwort bei `Stop`, für die offenen Punkte (Ticket 22). */
   lastAssistantMessage?: string;
+  /**
+   * Kennung des Agenten, aus dem das Ereignis kommt (`agent_id`, Ticket 37): bei `SubagentStart` und `SubagentStop` und
+   * bei allen Ereignissen, die ein Agent auslöst (Werkzeuge, Rückfragen). Fehlt bei Ereignissen von Claude selbst.
+   */
+  agentId?: string;
+  /**
+   * Die laufenden Agenten im Hintergrund laut `background_tasks` (Einträge `type: "subagent"`, `status: "running"`), bei
+   * `Stop` und `SubagentStop`. Fehlt, wenn das Ereignis keine Liste mitbringt.
+   */
+  runningAgents?: string[];
+  /**
+   * Bei `UserPromptSubmit` mit einer Meldung über eine Hintergrund-Aufgabe (`<task-notification>`): deren Kennung
+   * (`<task-id>`). Bei einem Agenten ist das seine `agent_id`.
+   */
+  taskNotificationId?: string;
 }
 
 /** `SessionEnd` mit diesen Gründen beendet Claude nicht: Es folgt ein `SessionStart` mit neuer Kennung. */
@@ -86,23 +103,47 @@ const SESSION_END_CONTINUES = new Set(['clear', 'resume']);
 
 export function readHook(event: string, payload: unknown): HookFacts {
   const p = typeof payload === 'object' && payload !== null ? (payload as Record<string, unknown>) : {};
-  return {
+  const facts: HookFacts = {
     event,
     sessionId: nonEmpty(p.session_id),
     cwd: nonEmpty(p.cwd),
     reason: nonEmpty(p.reason),
+    source: nonEmpty(p.source),
     notificationType: nonEmpty(p.notification_type),
     lastAssistantMessage: nonEmpty(p.last_assistant_message),
   };
+  const agentId = nonEmpty(p.agent_id);
+  if (agentId !== undefined) facts.agentId = agentId;
+  if (Array.isArray(p.background_tasks)) facts.runningAgents = runningAgents(p.background_tasks);
+  const taskId = event === 'UserPromptSubmit' ? taskNotificationId(p.prompt) : undefined;
+  if (taskId !== undefined) facts.taskNotificationId = taskId;
+  return facts;
+}
+
+/** Die laufenden Agenten aus `background_tasks`; Befehle im Hintergrund (`type: "shell"`) zählen nicht. */
+function runningAgents(tasks: unknown[]): string[] {
+  const ids: string[] = [];
+  for (const task of tasks) {
+    if (typeof task !== 'object' || task === null) continue;
+    const { id, type, status } = task as Record<string, unknown>;
+    if (type === 'subagent' && status === 'running' && typeof id === 'string' && id !== '') ids.push(id);
+  }
+  return ids;
+}
+
+/** Die Kennung aus einer Meldung `<task-notification>…<task-id>…</task-id>`, die Claude als Prompt bekommt. */
+function taskNotificationId(prompt: unknown): string | undefined {
+  if (typeof prompt !== 'string' || !prompt.startsWith('<task-notification>')) return undefined;
+  return nonEmpty(/<task-id>([^<]*)<\/task-id>/.exec(prompt)?.[1]?.trim());
 }
 
 /**
  * Ob das Ereignis eine Session beginnt: `SessionStart`, oder ein anderes Ereignis (ausser `SessionEnd`) mit einer
  * anderen Kennung als der gespeicherten. Das zweite gilt als Ersatz, falls `SessionStart` nicht ankam (etwa ohne
- * curl.exe), und wird danach normal verarbeitet.
+ * curl.exe), und wird danach normal verarbeitet. Ereignisse aus einem Agenten beginnen nie eine Session (Ticket 37).
  */
 export function startsSession(link: PersistedClaudeLink | undefined, hook: HookFacts): boolean {
-  if (hook.event === 'SessionEnd' || !hook.sessionId) return false;
+  if (hook.event === 'SessionEnd' || !hook.sessionId || hook.agentId !== undefined) return false;
   return hook.event === 'SessionStart' || hook.sessionId !== link?.sessionId;
 }
 
@@ -124,6 +165,8 @@ export function linkAfterHook(
   hook: HookFacts,
   normalizeCwd: (raw: string) => string,
 ): PersistedClaudeLink | undefined {
+  // Ereignisse aus einem Agenten ändern die Zuordnung nie (Ticket 37).
+  if (hook.agentId !== undefined) return link;
   if (hook.event === 'SessionEnd') {
     // Die Ausnahme nach einem von THub gestarteten Fortsetzen ohne SessionStart wendet der Kern an (Ticket 12):
     // Bis Claude sich meldet, gibt er SessionEnd gar nicht hierher weiter.

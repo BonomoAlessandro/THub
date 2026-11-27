@@ -1,0 +1,14 @@
+{
+  "szenario": "agenten-stoppen",
+  "pfad": "/hooks/UserPromptSubmit",
+  "nutzdaten": {
+    "session_id": "41cf6d55-4983-4679-81be-6d389baf18ee",
+    "transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-claude-f7d4677fe64f51e0-b027ab26-ac00-4ec5-8799-39a2bddeef6c-scratchpad-agenten-ws\\41cf6d55-4983-4679-81be-6d389baf18ee.jsonl",
+    "cwd": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\f7d4677fe64f51e0\\b027ab26-ac00-4ec5-8799-39a2bddeef6c\\scratchpad\\agenten\\ws",
+    "scratchpad_dir": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\45be783a411e089c\\41cf6d55-4983-4679-81be-6d389baf18ee\\scratchpad",
+    "prompt_id": "391a877e-0de2-4ee8-a337-4316c41918df",
+    "permission_mode": "auto",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "<task-notification>\n<task-id>a82f957cab4a3d7a7</task-id>\n<tool-use-id>toolu_01PJYD8EpEW3e5GK9Y7tARm4</tool-use-id>\n<output-file>…</output-file>\n<status>killed</status>\n<summary>Agent \"Ping-Wartebefehl ausführen\" was stopped by Claude</summary>\n…(gekuerzt)…\n</task-notification>"
+  }
+}

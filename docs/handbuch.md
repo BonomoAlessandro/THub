@@ -158,9 +158,9 @@ Links vom Tab-Namen zeigt ein Symbol, was im Tab los ist; der Tooltip nennt es a
 | Symbol | Status | Wann |
 |---|---|---|
 | gedämpft `>_` bzw. Stern | Ruht | normales Terminal bzw. Claude-Tab, nichts los |
-| violetter Stern, rotiert und pulsiert | Claude arbeitet | Claude schreibt eine Antwort oder führt dabei Werkzeuge aus |
-| oranger Punkt mit Ping-Ring | Claude wartet auf dich | Claude braucht eine Bestätigung oder stellt eine Rückfrage |
-| grüner Punkt | Claude ist fertig (noch nicht angeschaut) | Claude wurde fertig, während der Tab nicht sichtbar war; verschwindet, sobald er angezeigt wird |
+| violetter Stern, rotiert und pulsiert | Claude arbeitet | Claude schreibt eine Antwort oder führt dabei Werkzeuge aus, oder ein Agent, den Claude gestartet hat, rechnet noch, auch im Hintergrund nach dem Ende der Antwort |
+| oranger Punkt mit Ping-Ring | Claude wartet auf dich | Claude oder einer seiner Agenten braucht eine Bestätigung oder stellt eine Rückfrage |
+| grüner Punkt | Claude ist fertig (noch nicht angeschaut) | Claude wurde fertig, und kein Agent rechnet mehr, während der Tab nicht sichtbar war; verschwindet, sobald er angezeigt wird |
 | blauer, atmender Punkt | Prozesse laufen | im Terminal läuft ein Programm (Build, `npm run dev`); in einem Claude-Tab ein Programm, das Claude in der letzten Antwort gestartet hat |
 | graues Pause-Symbol | Pausiert, wird beim Öffnen fortgesetzt | Claude-Session nach einem Neustart, noch nicht angezeigt |
 
@@ -296,6 +296,17 @@ Die Hooks melden THub, was Claude tut; THub hört nur zu. Daraus folgt der Statu
 - **wartet auf dich:** `PermissionRequest`, sofort, auch bei Rückfragen. Die verspätete `Notification` (`permission_prompt`, `elicitation_dialog`) zählt nur, wenn der Tab noch arbeitet und seit `PreToolUse` weder `PermissionRequest` noch `PostToolUse` kam.
 - **ruht:** `Stop` oder `StopFailure`; war der Tab dabei nicht sichtbar, wird er grün. Esc in einem arbeitenden oder wartenden Tab setzt ihn nach etwa 1,5 Sekunden ohne weiteres Hook-Ereignis auf „ruht“, ohne grün: Nach einer Unterbrechung meldet Claude nichts. Kommt nach einer Antwort etwa 3 Sekunden lang weder ein Hook-Ereignis (ausser `Notification`) noch ein neuer Prozess unter Claude, ruht Claude ebenfalls, ohne grün (so endet eine Ablehnung mit „No“); ein bestätigter langer Befehl bleibt violett, weil sein Prozess läuft.
 - Pfeil- und andere Navigationstasten in einer Rückfrage ändern nichts, ebenso Antworten des Terminals (Fokus-Meldungen, Maus, Cursor-Position, Farben).
+- **Agenten** (auch „Subagenten“; seit Claude Code 2.1.332 laufen sie standardmässig im Hintergrund): Solange ein Agent rechnet, den Claude gestartet hat, zeigt der Tab „arbeitet“, auch wenn Claude seine Antwort schon beendet hat. Grün und der Hinweis „fertig“ kommen erst, wenn alles fertig ist, und nur einmal.
+  - THub führt die laufenden Agenten über `SubagentStart` und `SubagentStop`; `Stop` gleicht mit Claudes Liste der Hintergrund-Arbeit ab (`background_tasks`). Was ein Agent tut (Werkzeuge, Ereignisse mit `agent_id`), ändert nicht, was Claude selbst tut.
+  - Endet ein Agent, bekommt Claude seinen Bericht und arbeitet damit von selbst weiter. Nach Claudes nächstem `Stop` wartet THub noch 3 Sekunden, ob über einen Agenten noch eine Meldung kommt; so erscheint „fertig“ nicht zweimal kurz hintereinander.
+  - Eine Rückfrage aus einem Agenten zeigt „wartet auf dich“, wie eine von Claude selbst, mit Hinweis, wenn der Tab nicht sichtbar ist. Enter oder eine Ziffer beendet das Warten sofort, Esc nach etwa 1,5 Sekunden; rechnet der Agent danach weiter, ist der Tab wieder violett.
+  - Esc betrifft nur Claude selbst: Rechnet danach noch ein Agent, bleibt der Tab violett, bis er fertig ist. Nach einer Unterbrechung kommt am Schluss kein grün, ausser Claude hat den Bericht des Agenten noch verarbeitet.
+  - Ein Agent, den du in der Aufgabenliste (`/tasks`, Taste `x`) oder Claude selbst stoppt, zählt ab der Meldung an Claude nicht mehr.
+  - `/clear` beendet laufende Agenten nicht; sie melden sich danach in der neuen Session, und der Tab bleibt violett, bis sie fertig sind.
+  - Ein Tab, in dem nur noch ein Agent rechnet, fragt vor dem Schliessen nach („arbeitet“).
+  - Befehle, die Claude im Hintergrund startet (Dev-Server), sind keine Agenten: Sie zeigen weiter „Prozesse laufen“.
+  - Eine Claude-Session kennt diese Ereignisse erst, wenn sie mit der Hook-Datei dieser THub-Version gestartet oder fortgesetzt wurde; nach dem Update setzt THub die Sessions beim Neustart ohnehin neu fort.
+  - **Bekannte Grenze:** Ungeprüft ist Esc, während ein Agent im Vordergrund rechnet (mit Haiku liess sich keiner erzeugen). Endete er dabei ohne `SubagentStop`, bliebe der Tab bis zum nächsten `Stop` von Claude violett.
 - **Prozesse laufen:** Etwa alle 1,5 Sekunden fragt THub für alle Tabs zusammen einmal die Prozessliste von Windows ab (siehe [Prozess-Sonde](entwicklung.md#prozess-sonde)). In einem normalen Tab zählt jeder Nachfahre der Shell, sobald er in zwei Abfragen nacheinander vorkommt (kurzlebige Prompt-Helfer wie das `git.exe` von posh-git zählen so nicht); `conhost.exe` und `OpenConsole.exe` nie. Bei Git Bash zählen auch verwaiste MSYS-Programme (`sleep`, `ssh`, `vim`, `less`) mit dem Konsolen-Host des Tabs. In einem Claude-Tab zählen nur Nachfahren von Claude, die nach dem letzten Prompt gestartet sind, und nur, solange Claude ruht: Ein MCP-Server zählt nicht, ein während der Antwort gestarteter Dev-Server schon.
 - Ohne Hooks (siehe unten) gibt es keinen Claude-Status; das Fortsetzen funktioniert trotzdem.
 

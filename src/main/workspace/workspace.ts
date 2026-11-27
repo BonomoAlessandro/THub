@@ -58,7 +58,16 @@ import {
   type PersistedTab,
   type WindowState,
 } from './schema';
-import { classifyInput, displayedStatus, IDLE_CLAUDE, statusAfterHook, type ClaudeStatus } from './tabStatus';
+import {
+  awaitsAgentReports,
+  classifyInput,
+  displayedStatus,
+  IDLE_CLAUDE,
+  shownActivity,
+  statusAfterAgentReportsDue,
+  statusAfterHook,
+  type ClaudeStatus,
+} from './tabStatus';
 import { STATUS_TOASTS, ToastBoard } from './toasts';
 import { placeWindow } from './windowPlacement';
 
@@ -88,6 +97,13 @@ const ESC_QUIET_MS = 1500;
  * nichts meldet; ein bestätigter langer Befehl hält „arbeitet“, weil sein Prozess läuft.
  */
 const ANSWER_QUIET_MS = 3000;
+/**
+ * Frist nach dem Ende der Agenten (Ticket 37): Ruht Claude und steht noch eine Meldung über einen beendeten Agenten im
+ * Hintergrund aus (`<task-notification>`), zeigt der Tab so lange noch „arbeitet“. Kommt die Meldung, arbeitet Claude
+ * weiter, und das nächste `Stop` entscheidet; sonst ruht der Tab danach bzw. wird grün. Gemessen kamen wartende
+ * Meldungen 0,3 bis 0,6 Sekunden nach `Stop` (docs/spikes/claude-hooks.md, „Agenten (Ticket 37)“).
+ */
+const AGENT_REPORT_QUIET_MS = 3000;
 /**
  * So lange wartet der Kern nach einem von THub abgesetzten Fortsetzen auf die Start-Meldung des Starters (Ticket 23).
  * Kommt keine, läuft Claude ohne Erfassung: THUB_STARTER fehlt (Gruppenrichtlinie), `starter.ps1` fehlt oder die lokale
@@ -371,6 +387,8 @@ interface TabRuntime {
   processes: boolean;
   /** Läuft nach Esc: Kommt bis dahin kein Hook-Ereignis, ruht Claude. */
   cancelEsc?: CancelTimer;
+  /** Frist nach dem Ende der Agenten, solange eine Meldung über sie aussteht (`AGENT_REPORT_QUIET_MS`). */
+  cancelAgentReports?: CancelTimer;
   /** Offene Antwort auf eine Rückfrage: Arbeitet Claude danach weiter? Entschieden über Hooks und die Prozess-Sonde. */
   answer?: AnswerCheck;
   /** Der Tab kommt aus dem gespeicherten Zustand: Vor dem ersten Start bekommt die Ansicht seinen Verlauf. */
@@ -932,7 +950,8 @@ class WorkspaceCore implements Workspace {
   private busyReason(tab: PersistedTab): BusyReason | undefined {
     const runtime = this.runtimes.get(tab.id);
     if (!runtime) return undefined;
-    const activity = tab.claude ? runtime.claude.activity : 'idle';
+    // Wie am Tab: Auch ein Agent, der noch rechnet, heisst „arbeitet“.
+    const activity = tab.claude ? shownActivity(runtime.claude) : 'idle';
     if (activity !== 'idle') return activity;
     return runtime.processes ? 'processes' : undefined;
   }
@@ -1554,9 +1573,10 @@ class WorkspaceCore implements Workspace {
     if (this.state.settings.notifications && !this.isVisible(tabId)) this.toasts.show(tabId, kind);
   }
 
-  /** Ein „wartet“-Hinweis gilt nur, solange Claude im Tab auf dich wartet. */
+  /** Ein „wartet“-Hinweis gilt nur, solange Claude (oder einer seiner Agenten) im Tab auf dich wartet. */
   private dropStaleWaitingToast(tab: PersistedTab): void {
-    if (tab.claude && this.runtimes.get(tab.id)?.claude.activity === 'waiting') return;
+    const runtime = this.runtimes.get(tab.id);
+    if (tab.claude && runtime && shownActivity(runtime.claude) === 'waiting') return;
     this.toasts.dismissTab(tab.id, ['waiting']);
   }
 
@@ -1659,21 +1679,55 @@ class WorkspaceCore implements Workspace {
       const link = linkAfterHook(previous, hook, (raw) => this.normalizeDir(raw));
       this.setClaudeLink(tab, link);
       if (!link || !runtime) return;
-      // Jedes Hook-Ereignis zeigt, dass Claude nach Esc weitermacht. Ausgenommen sind Benachrichtigungen: Sie
-      // kommen verzögert (Rückfrage nach etwa 6 s, idle_prompt nach etwa 60 s) und sagen darüber nichts.
-      if (hook.event !== 'Notification') this.cancelClaudeTimers(runtime);
-      const wasWaiting = runtime.claude.activity === 'waiting';
+      // Jedes Hook-Ereignis zeigt, dass Claude nach Esc oder einer Antwort weitermacht. Ausgenommen sind
+      // Benachrichtigungen: Sie kommen verzögert (Rückfrage nach etwa 6 s, idle_prompt nach etwa 60 s) und sagen darüber
+      // nichts. Ereignisse aus Agenten sagen nichts über Claude selbst (Ticket 37); sie zeigen nur, dass Claude läuft.
+      if (hook.event !== 'Notification') {
+        this.cancelLaunchWait(runtime);
+        if (hook.agentId === undefined) this.cancelInputTimers(runtime);
+      }
+      const wasWaiting = shownActivity(runtime.claude) === 'waiting';
       const step = statusAfterHook(runtime.claude, hook, startsSession(previous, hook), this.ports.clock.now());
       runtime.claude = step.status;
+      this.syncAgentReportWait(tab, runtime);
       const unseen = step.stopped && !this.isVisible(tab.id);
       if (unseen) runtime.finished = true;
       // Eine Antwort mit offenen Punkten zeigt sie an, auch im sichtbaren Tab, statt „fertig“; eine ohne lässt den
-      // bisherigen Hinweis mit offenen Punkten stehen.
+      // bisherigen Hinweis mit offenen Punkten stehen. Offene Punkte kommen sofort, auch wenn noch Agenten laufen.
       const points = hook.event === 'Stop' ? this.openPointsIn(hook.lastAssistantMessage) : [];
       if (points.length > 0) this.showOpenPoints(tab, points);
       else if (unseen) this.notify(tab.id, 'finished');
-      else if (!wasWaiting && step.status.activity === 'waiting') this.notify(tab.id, 'waiting');
+      else if (!wasWaiting && shownActivity(step.status) === 'waiting') this.notify(tab.id, 'waiting');
     });
+  }
+
+  /**
+   * Hält die Frist nach dem Ende der Agenten (`AGENT_REPORT_QUIET_MS`) in Gang, solange Claude ruht und nur noch eine
+   * Meldung über einen Agenten aussteht. Läuft sie ab, ruht der Tab; kam vorher `Stop`, wird er wie nach `Stop` fertig.
+   */
+  private syncAgentReportWait(tab: PersistedTab, runtime: TabRuntime): void {
+    if (!awaitsAgentReports(runtime.claude)) {
+      this.cancelAgentReportWait(runtime);
+      return;
+    }
+    if (runtime.cancelAgentReports) return;
+    runtime.cancelAgentReports = this.ports.clock.schedule(AGENT_REPORT_QUIET_MS, () => {
+      runtime.cancelAgentReports = undefined;
+      if (this.frozen || this.runtimes.get(tab.id) !== runtime || !tab.claude) return;
+      const step = statusAfterAgentReportsDue(runtime.claude);
+      this.updateTab(tab, () => {
+        runtime.claude = step.status;
+        if (step.stopped && !this.isVisible(tab.id)) {
+          runtime.finished = true;
+          this.notify(tab.id, 'finished');
+        }
+      });
+    });
+  }
+
+  private cancelAgentReportWait(runtime: TabRuntime): void {
+    runtime.cancelAgentReports?.();
+    runtime.cancelAgentReports = undefined;
   }
 
   claudeHookReply(tabId: string, event: string): object | undefined {
@@ -1694,20 +1748,26 @@ class WorkspaceCore implements Workspace {
    * „arbeitet“, weil nach einer Bestätigung bis `PostToolUse` kein Ereignis kommt; ob Claude wirklich weiterarbeitet,
    * entscheiden danach Hooks und Prozess-Sonde (`startAnswerCheck`). Pfeil- und andere Navigationstasten, Text und
    * Antworten des Terminals (Fokus, Maus usw.) ändern nichts.
+   *
+   * Agenten (Ticket 37): Esc betrifft nur Claude selbst und eine Rückfrage eines Agenten; laufende Agenten halten den Tab
+   * auf „arbeitet“. Die Antwort auf die Rückfrage eines Agenten beendet nur das Warten, ohne Wartezeit: Ob der Agent
+   * weiterrechnet, melden seine eigenen Ereignisse.
    */
   private takeInput(tabId: string, runtime: TabRuntime, data: string): void {
     const tab = this.findTab(tabId);
-    const { activity } = runtime.claude;
-    if (this.frozen || !tab?.claude || activity === 'idle') return;
+    const { activity, askingAgent } = runtime.claude;
+    if (this.frozen || !tab?.claude || (activity === 'idle' && askingAgent === undefined)) return;
     const kind = classifyInput(data);
     if (kind === 'escape') {
       this.cancelEscTimer(runtime);
       runtime.cancelEsc = this.ports.clock.schedule(ESC_QUIET_MS, () => {
         runtime.cancelEsc = undefined;
-        if (this.runtimes.get(tabId) !== runtime || runtime.claude.activity === 'idle') return;
-        // Ohne „fertig“: Der Nutzer hat selbst unterbrochen.
+        const now = runtime.claude;
+        if (this.runtimes.get(tabId) !== runtime || (now.activity === 'idle' && now.askingAgent === undefined)) return;
+        // Ohne „fertig“: Der Nutzer hat selbst unterbrochen, auch wenn danach noch Agenten zu Ende rechnen.
         this.updateTab(tab, () => {
-          runtime.claude = { ...runtime.claude, activity: 'idle', toolUnanswered: false };
+          runtime.claude = { ...now, activity: 'idle', toolUnanswered: false, askingAgent: undefined, finishPending: false };
+          this.syncAgentReportWait(tab, runtime);
         });
       });
     } else if (kind === 'answer' && activity === 'waiting') {
@@ -1715,6 +1775,11 @@ class WorkspaceCore implements Workspace {
         runtime.claude = { ...runtime.claude, activity: 'working' };
       });
       this.startAnswerCheck(tabId, runtime);
+    } else if (kind === 'answer' && askingAgent !== undefined) {
+      this.updateTab(tab, () => {
+        runtime.claude = { ...runtime.claude, askingAgent: undefined };
+        this.syncAgentReportWait(tab, runtime);
+      });
     }
   }
 
@@ -1748,6 +1813,7 @@ class WorkspaceCore implements Workspace {
     if (!check?.seen || !tab?.claude || runtime.claude.activity !== 'working') return;
     this.updateTab(tab, () => {
       runtime.claude = { ...runtime.claude, activity: 'idle', toolUnanswered: false };
+      this.syncAgentReportWait(tab, runtime);
     });
   }
 
@@ -1766,11 +1832,20 @@ class WorkspaceCore implements Workspace {
     runtime.cancelLaunchWait = undefined;
   }
 
-  /** Beendet die Wartezeiten nach Esc und nach einer Antwort und die Frist für die Start-Meldung (Ticket 23). */
-  private cancelClaudeTimers(runtime: TabRuntime): void {
+  /** Beendet die Wartezeiten nach Esc und nach einer Antwort. */
+  private cancelInputTimers(runtime: TabRuntime): void {
     this.cancelEscTimer(runtime);
     this.cancelAnswerCheck(runtime);
+  }
+
+  /**
+   * Beendet alle Zeitgeber zu Claude: die Wartezeiten nach Esc und nach einer Antwort, die Frist für die Start-Meldung
+   * (Ticket 23) und die Frist nach dem Ende der Agenten (Ticket 37).
+   */
+  private cancelClaudeTimers(runtime: TabRuntime): void {
+    this.cancelInputTimers(runtime);
     this.cancelLaunchWait(runtime);
+    this.cancelAgentReportWait(runtime);
   }
 
   /** Der Tab, für den eine Meldung von Starter oder Claude gilt; keiner, wenn unbekannt oder eingefroren. */
@@ -1840,7 +1915,8 @@ class WorkspaceCore implements Workspace {
     return displayedStatus({
       // Pausiert: Claude-Tab nach einem Neustart, noch nicht angezeigt; er hat keinen Prozess.
       paused: runtime.paused,
-      activity: tab.claude ? runtime.claude.activity : 'idle',
+      // Mit den Agenten, die noch rechnen oder fragen (Ticket 37).
+      activity: tab.claude ? shownActivity(runtime.claude) : 'idle',
       finished: runtime.finished,
       processes: runtime.processes,
     });

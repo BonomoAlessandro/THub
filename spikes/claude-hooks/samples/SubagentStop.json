@@ -1,0 +1,37 @@
+{
+  "szenario": "agenten-hintergrund",
+  "pfad": "/hooks/SubagentStop",
+  "nutzdaten": {
+    "session_id": "2a93b28c-a732-40fc-a28c-3da1588c9549",
+    "transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-claude-f7d4677fe64f51e0-b027ab26-ac00-4ec5-8799-39a2bddeef6c-scratchpad-agenten-ws\\2a93b28c-a732-40fc-a28c-3da1588c9549.jsonl",
+    "cwd": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\f7d4677fe64f51e0\\b027ab26-ac00-4ec5-8799-39a2bddeef6c\\scratchpad\\agenten\\ws",
+    "scratchpad_dir": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\45be783a411e089c\\2a93b28c-a732-40fc-a28c-3da1588c9549\\scratchpad",
+    "prompt_id": "8db1491e-36ad-49fa-a918-b7db4960ba51",
+    "permission_mode": "auto",
+    "agent_id": "a56a3830eb09f52f0",
+    "agent_type": "general-purpose",
+    "effort": {
+      "level": "medium"
+    },
+    "hook_event_name": "SubagentStop",
+    "stop_hook_active": false,
+    "agent_transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-claude-f7d4677fe64f51e0-b027ab26-ac00-4ec5-8799-39a2bddeef6c-scratchpad-agenten-ws\\2a93b28c-a732-40fc-a28c-3da1588c9549\\subagents\\… [+29 Zeichen]",
+    "background_tasks": [
+      {
+        "id": "a56a3830eb09f52f0",
+        "type": "subagent",
+        "status": "running",
+        "description": "Sleep 30 seconds",
+        "agent_type": "general-purpose"
+      },
+      {
+        "id": "bkqejq9th",
+        "type": "shell",
+        "status": "running",
+        "description": "Sleep for 30 seconds in background",
+        "command": "sleep 30"
+      }
+    ],
+    "session_crons": []
+  }
+}

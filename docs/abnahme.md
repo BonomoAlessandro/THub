@@ -274,6 +274,21 @@ Eine Gruppe legst du über den Rechtsklick auf einen Tab an („Neue Gruppe“);
 - [ ] THub neu starten: Gruppen, Namen und gewählte Tabs sind wieder da. (T36)
 - [ ] Aussehen hell und dunkel, auch die offene Liste. (T36)
 
+## Hintergrund-Agenten (Ticket 37)
+
+Mit echtem Claude Code, das nach dem Update in THub neu gestartet oder fortgesetzt wurde (sonst kennt es `SubagentStart` und `SubagentStop` noch nicht). Einen Agenten, der eine Weile braucht, bekommst du etwa mit „Starte einen Agenten, der `ping -n 60 127.0.0.1` ausführt und dann FERTIG meldet“. Agenten laufen in Claude Code 2.1.332 von selbst im Hintergrund. Wie THub sie erkennt, steht im [Handbuch](handbuch.md#status-erkennen).
+
+- [ ] **[Claude]** Claude startet einen Agenten im Hintergrund und beendet seine Antwort. Der Tab bleibt violett, bis der Agent fertig ist und Claude seinen Bericht verarbeitet hat; erst dann ruht der Tab bzw. wird grün, rund 3 Sekunden nach Claudes letzter Antwort. (T37)
+- [ ] **[Claude]** Dasselbe in einem Tab, der nicht sichtbar ist: genau ein Hinweis „fertig“, erst am Schluss. (T37)
+- [ ] **[Claude]** Zwei Agenten, die nacheinander fertig werden: violett bis zum zweiten, dann ein einziges „fertig“. (T37)
+- [ ] **[Claude]** Ein Agent im Vordergrund (Claude wartet auf sein Ergebnis): wie bisher violett bis zum Ende der Antwort, danach sofort grün bzw. ruhig. (T37)
+- [ ] **[Claude]** Ein Dev-Server, den Claude im Hintergrund startet: nach dem Ende der Antwort weiterhin blau. (T37)
+- [ ] **[Claude]** Esc, während Claude arbeitet und ein Hintergrund-Agent läuft: Der Tab bleibt violett, solange der Agent rechnet. Esc, wenn nur noch der Agent rechnet: keine Änderung. (T37)
+- [ ] **[Claude]** Einen laufenden Agenten in der Aufgabenliste stoppen (`/tasks`, Taste `x`, Liste schliessen): Der Tab ruht danach bzw. wird grün und bleibt nicht violett hängen. (T37)
+- [ ] **[Claude]** `/clear`, während ein Agent läuft: Der Tab bleibt violett, bis der Agent fertig ist; nach einem Neustart von THub kommt die neue Session zurück. (T37)
+- [ ] **[Claude]** Im Modus mit Rückfragen fragt ein Agent nach einer Berechtigung: orange, im nicht sichtbaren Tab mit Hinweis „wartet“; nach der Antwort wieder violett. (T37)
+- [ ] **[Claude]** Tab schliessen, während nur noch ein Agent rechnet: Rückfrage „arbeitet“. Ein Tab in einer Gruppe, in dem nur ein Agent rechnet: Der Gruppen-Tab zeigt „arbeitet“. (T37)
+
 ## App-Symbol (Ticket 29)
 
 - [x] Du hast einen Entwurf freigegeben: C (gestapelte Terminals) in Graphit. (T29)

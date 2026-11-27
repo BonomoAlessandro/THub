@@ -156,7 +156,19 @@ export type HookSample =
   | 'Stop'
   | 'Stop-mit-background_tasks'
   | 'Notification-idle_prompt'
-  | 'Notification-permission_prompt';
+  | 'Notification-permission_prompt'
+  // Agenten (Ticket 37, Claude Code 2.1.332):
+  | 'SubagentStart'
+  | 'SubagentStop'
+  | 'SubagentStop-helfer'
+  | 'Stop-mit-agent'
+  | 'UserPromptSubmit-agent-message'
+  | 'UserPromptSubmit-task-notification-agent'
+  | 'PreToolUse-Agent'
+  | 'PostToolUse-Agent'
+  | 'PreToolUse-Bash-aus-agent'
+  | 'PostToolUse-Bash-aus-agent'
+  | 'PermissionRequest-aus-agent';
 
 const SAMPLES_DIR = new URL('../../spikes/claude-hooks/samples/', import.meta.url);
 
