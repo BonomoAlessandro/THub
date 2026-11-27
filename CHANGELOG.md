@@ -4,7 +4,13 @@ Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in
 
 ## Unveröffentlicht
 
+**Neu**
+
+- Verbrauchsbalken: In jedem Claude-Tab zeigt eine Zeile ganz unten das Modell, den Verbrauch der Session (5-Stunden-Fenster) und der Woche mit Mini-Balken und Reset sowie was die Session zum Listenpreis der API gekostet hätte. Der Tooltip nennt die Restzeiten und den Stand. Abschaltbar in den Einstellungen („Verbrauchsbalken anzeigen“). (38)
+
 **Geändert**
+
+- Claude zeigt in THub-Tabs keine eigene Statuszeile mehr; ihre Angaben stehen im Verbrauchsbalken. Ausserhalb von THub und bei ausgeschaltetem Balken zeigt Claude seine Statuszeile wie bisher. Eine laufende Claude-Session übernimmt das erst nach einem neuen Start von Claude. (38)
 
 - Der Gruppen-Tab zeigt den Status des gewählten Tabs, nicht mehr den dringendsten aller Tabs der Gruppe. Wartet ein anderer Tab der Gruppe auf dich oder ist er fertig, trägt der Pfeil einen kleinen orangen bzw. grünen Punkt; der Tooltip nennt die Tabs. (40)
 
