@@ -79,6 +79,16 @@ svg.i {
   -webkit-app-region: no-drag;
 }
 
+/*
+ * Solange ein Menü offen ist (Ticket 39, Merkmal aus `menuOpenMark.ts`), ist die ganze Titelleiste keine Zieh-Fläche.
+ * Einen Klick auf die Zieh-Fläche behandelt Windows selbst, die Seite bekäme kein mousedown, und das Menü bliebe offen.
+ * So schliesst der erste Klick auf die freie Fläche das Menü, wie bei den Menüs von Windows; erst danach verschiebt sie
+ * wieder das Fenster. Den Rand zum Grössenziehen oben und die Fensterknöpfe regelt Electron vor der Seite, sie bleiben.
+ */
+:root[data-menu-open] .titlebar {
+  -webkit-app-region: no-drag;
+}
+
 .tabstrip {
   position: relative;
   display: flex;
