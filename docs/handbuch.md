@@ -194,6 +194,26 @@ Braucht Claude für den nächsten Schritt eine Entscheidung, Antwort oder Handlu
 - Abschaltbar in den Einstellungen („Offene Punkte aus Claudes Antworten anzeigen“), unabhängig von „Hinweise im Fenster“. Ausgeschaltet verschwinden auch die stehenden Hinweise, und THub gibt Claude die Anweisung nicht mehr mit.
 - Wie THub die Punkte findet: [Offene Punkte erkennen](#offene-punkte-erkennen).
 
+### Verbrauchsbalken
+
+Zeigt das Fenster einen Claude-Tab, steht ganz unten eine Zeile mit dem Modell, dem Verbrauch deines Abos und den Kosten der Session:
+
+```
+✱ Opus 5.5 │ Session ▰▰▰▱▱▱▱▱ 38 %  Reset 15:40 │ API $4.12 │ Woche ▰▰▱▱▱▱▱▱ 21 %  Reset Mo 09:00
+```
+
+- **Modell:** der Anzeigename des Modells, das im angezeigten Tab läuft.
+- **Session:** wie viel deines 5-Stunden-Fensters verbraucht ist, mit Mini-Balken aus 8 Segmenten, und wann es zurückgesetzt wird.
+- **API:** was die Session zum Listenpreis der API gekostet hätte, so wie Claude Code es berechnet. Nach einem Fortsetzen zählt Claude die früheren Kosten der Session mit; nach `/clear` beginnt eine neue Session bei $0.00.
+- **Woche:** dein Wochenlimit, ebenso mit Mini-Balken und Reset.
+- Ein Reset am selben Tag steht als Uhrzeit da („Reset 15:40“), an einem anderen Tag mit Wochentag („Reset Mo 09:00“), ab einer Woche mit Datum. Ab 90 % ist ein Limit orange hervorgehoben. Ist ein Reset vorbei, zeigt der Balken das Limit gedämpft mit 0 %, bis Claude einen neuen Stand meldet.
+- **Tooltip** (Maus auf dem Balken): die Kennung des Modells, die Restzeit bis zu jedem Reset, weitere Limits, falls Claude welche meldet, und „Stand 10:45 aus Tab „web““. Die Limits gelten für dein ganzes Konto; Claude kennt sie aus seiner letzten Antwort, THub nimmt den neuesten Stand aus allen Claude-Tabs. Verbrauch an einem anderen Ort (ein anderes Terminal, claude.ai) zeigt der Balken deshalb erst nach der nächsten Antwort in THub.
+- **Ohne Angaben:** Gedämpft „Noch keine Angaben von Claude“, bis Claude sich meldet (kurz nach dem Start). Ein Claude-Tab, der noch nichts gemeldet hat (frisch gestartet oder pausiert nach einem Neustart), zeigt die Limits, aber weder Modell noch Kosten. Ohne Abo (mit API-Schlüssel) meldet Claude keine Limits; dann stehen nur Modell und Kosten da. Der letzte Stand der Limits übersteht einen Neustart von THub.
+- **Schmales Fenster:** Zuerst entfallen die Resets, dann die Mini-Balken, zuletzt die Kosten. Modell und Prozente bleiben, die Zeile bricht nie um.
+- **Nur in Claude-Tabs,** auch in pausierten und in Gruppen. In normalen Terminals gibt es keinen Balken, das Terminal reicht bis unten. Wechselst du zwischen einem Claude-Tab und einem Terminal, passt das Terminal seine Grösse an. Hinweise unten rechts stehen über dem Balken.
+- **Abschaltbar** in den Einstellungen („Verbrauchsbalken anzeigen“). Neu gestartete Claude-Sessions zeigen dann wieder ihre eigene Statuszeile; eine laufende Session behält, womit sie gestartet ist, bis zum nächsten Start von Claude.
+- Woher die Angaben kommen und warum Claude in THub keine eigene Statuszeile zeigt: [Verbrauch und Statuszeile](#verbrauch-und-statuszeile).
+
 ### Rechner wach halten
 
 Links neben dem Zahnrad sitzt ein Schalter mit einem Pfeil daneben. Eingeschaltet hält THub den Rechner wach, solange THub läuft: Windows geht nach der eingestellten Zeit ohne Eingabe nicht in den Energiesparmodus, und lange Claude-Sessions, Builds oder Testläufe laufen weiter, während du nicht am Rechner bist.
@@ -228,6 +248,7 @@ Das Zahnrad rechts in der Titelleiste öffnet die Einstellungen. Jede Änderung 
 | Allgemein | **Standard-Shell** für `+` und `Ctrl+Shift+T`, unter den erkannten Shells; offene Tabs behalten ihre Shell | PowerShell 7, sonst Windows PowerShell |
 | Darstellung | **Design:** System, Hell oder Dunkel | System |
 | Darstellung | **Schriftgrösse im Terminal:** 8 bis 32, auch mit `Ctrl` + Mausrad | 14 |
+| Darstellung | **Verbrauchsbalken anzeigen:** in Claude-Tabs unten Modell, Verbrauch und Limits; dafür entfällt Claudes eigene Statuszeile, ab dem nächsten Start von Claude | an |
 | Hinweise | **Hinweise im Fenster** | an |
 | Hinweise | **Offene Punkte aus Claudes Antworten anzeigen** | an |
 
@@ -289,6 +310,8 @@ Ist THub nicht erreichbar, startet `claude` unverändert. In cmd fragt `Ctrl+C` 
 
 **`~/.claude/settings.json` bleibt unberührt.** Die Hooks stehen in einer eigenen Datei `claude-hooks.json` im Datenordner von THub, die THub bei jedem Start neu schreibt und die der Starter mit `--settings` mitgibt. Claude führt sie zusätzlich zu deinen eigenen Hooks aus, und nur in Sessions, die in einem THub-Tab gestartet wurden. Sessions ausserhalb von THub merken davon nichts.
 
+**Claude zeigt in THub keine eigene Statuszeile.** Die Hook-Datei setzt dafür eine eigene Statuszeile, die ihre Angaben an THub weitergibt und nichts anzeigt; THub zeigt Modell, Verbrauch und Kosten stattdessen im [Verbrauchsbalken](#verbrauchsbalken) unter dem Terminal. So steht nichts doppelt, und das Terminal hat die Zeilen deiner Statuszeile mehr. Ausserhalb von THub zeigt Claude deine Statuszeile wie bisher. Ist der Balken in den Einstellungen aus, setzt THub keine Statuszeile, und Claude zeigt nach dem nächsten Start wieder deine (siehe [Verbrauch und Statuszeile](#verbrauch-und-statuszeile)).
+
 Hilfen zur Fehlersuche: `THUB_STARTER_DEBUG=1` zeigt die gebaute Befehlszeile, `THUB_STARTER_DRYRUN=1` nur die Einordnung des Aufrufs, ohne etwas zu starten.
 
 ### Status erkennen
@@ -329,6 +352,13 @@ Die Hooks melden THub, was Claude tut; THub hört nur zu. Daraus folgt der Statu
 
 - **Anweisung an Claude:** Auf `SessionStart` antwortet THub bei eingeschalteter Einstellung mit `hookSpecificOutput.additionalContext`: Nur wenn Claude für den nächsten Schritt eine Entscheidung, Antwort oder Handlung von dir braucht, die es nicht selbst treffen oder erledigen kann, schreibt es sie am Ende der Antwort unter der Überschrift „Offene Punkte“ als kurze Aufzählung. Sonst lässt es den Abschnitt weg, und es füllt ihn nicht mit Angeboten, Vorschlägen oder einer Zusammenfassung. `SessionStart` kommt auch beim Fortsetzen, nach `/clear` und beim Kompaktieren, die Anweisung gilt also in jeder Session. Die Antwort ist JSON nur aus ASCII-Zeichen, damit sie über `curl.exe` unverändert ankommt.
 - **Erkennung** am Ende einer Antwort (`Stop`, Feld `last_assistant_message`): eine Überschrift „Offene Punkte“, „Offene Fragen“, „Noch offen“ (auch „Noch offene Punkte/Fragen“), „Fragen an dich“, „Zu klären“, „Open points“ oder „Open questions“, als Markdown-Überschrift, fette Zeile oder Zeile mit Doppelpunkt; die Aufzählungspunkte darunter sind die offenen Punkte, Unterpunkte gehören zu ihrem Punkt. Nur dieser Abschnitt zählt: Eine Überschrift ohne Aufzählung darunter oder eine Frage am Ende der Antwort ergibt keinen Hinweis. Inhalt von Code-Blöcken zählt nie. Höchstens 20 Punkte zu je höchstens 300 Zeichen.
+
+### Verbrauch und Statuszeile
+
+- **Woher die Angaben kommen:** Claude Code gibt dem Befehl einer Statuszeile ein JSON mit Modell, Kosten der Session und, bei einem Abo, den Limits des Kontos mit. Die Hook-Datei setzt als Statuszeile einen Befehl, der dieses JSON mit dem `curl.exe` von Windows an die lokale Schnittstelle von THub schickt. THub antwortet leer, deshalb zeigt Claude keine Statuszeile. Claude ruft den Befehl beim Start, nach jeder Antwort, nach `/clear` und bei einer neuen Grösse des Terminals auf, nicht im Leerlauf.
+- **Vorrang:** Die Statuszeile aus der Hook-Datei geht deiner eigenen (`~/.claude/settings.json`) und der eines Projekts vor, nur in Sessions, die THub startet. Setzt du dort `padding` oder `refreshInterval`, gilt das auch für THubs Statuszeile, weil Claude die Einstellungen zusammenführt.
+- **Ohne `curl.exe`** (vor Windows 10 1803) setzt THub keine Statuszeile: Deine eigene bleibt, und der Balken zeigt „Noch keine Angaben von Claude“. Ebenso, wenn du Claude mit einem eigenen `--settings` startest, wenn `"disableAllHooks": true` gesetzt ist oder wenn von Administratoren verwaltete Einstellungen eine Statuszeile vorgeben.
+- Die Limits fragt THub nie selbst bei Anthropic ab und liest keine Zugangsdaten.
 
 ### Ohne Claude Code
 

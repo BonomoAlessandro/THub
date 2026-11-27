@@ -298,6 +298,19 @@ Eine Gruppe aus zwei Claude-Tabs legst du an wie bei Ticket 36. Wie Symbol und P
 - [ ] **[Claude]** Tooltip am Gruppen-Tab mit Punkt: Die Zeile „Status“ nennt den gewählten Tab, darunter „Andere“ mit dem wartenden bzw. fertigen Tab, etwa „web wartet auf dich“. (T40)
 - [ ] Aussehen hell und dunkel, Gruppe aktiv und nicht aktiv: Der Punkt ist gut zu sehen, aber ruhig; der Pfeil bleibt an seiner Stelle, und der Gruppen-Tab wird nicht breiter. (T40)
 
+## Verbrauchsbalken (Ticket 38)
+
+Mit echtem Claude Code: Claude im Tab neu starten (`/exit`, dann `claude`), damit es die neue Hook-Datei bekommt. Wie der Balken aussehen soll, steht im [Handbuch](handbuch.md#verbrauchsbalken).
+
+- [ ] **[Claude]** Der Balken zeigt das Modell, den Verbrauch der Session mit Reset, die Kosten und die Woche mit Reset. Die Werte stimmen mit `/usage` in Claude überein. (T38)
+- [ ] **[Claude]** Claude zeigt in THub keine eigene Statuszeile mehr. Ausserhalb von THub (etwa im Windows Terminal) zeigt Claude deine Statuszeile wie bisher. (T38)
+- [ ] **[Claude]** Wechsel zwischen zwei Claude-Tabs mit verschiedenen Modellen (etwa `claude --model haiku` und `claude --model opus`): Modell und Kosten wechseln mit, die Limits bleiben. (T38)
+- [ ] In einem normalen Terminal gibt es keinen Balken, das Terminal reicht bis unten. Beim Wechsel zwischen Claude-Tab und Terminal springt nichts unschön. (T38)
+- [ ] Ein schmales Fenster: Der Balken bricht nicht um; zuerst entfallen die Resets, dann die Mini-Balken. (T38)
+- [ ] Aussehen hell und dunkel; ein Hinweis unten rechts verdeckt den Balken nicht. Tooltip auf dem Balken: Modell-Kennung, Restzeiten, „Stand … aus Tab …“. (T38)
+- [ ] **[Claude]** Der Schalter „Verbrauchsbalken anzeigen“ in den Einstellungen blendet den Balken aus. Nach einem neuen Start von Claude zeigt Claude wieder die eigene Statuszeile; wieder eingeschaltet und Claude neu gestartet, verschwindet sie wieder. (T38)
+- [ ] **[Claude]** Nach einem Neustart von THub zeigt ein pausierter Claude-Tab beim Anzeigen sofort die Limits; Modell und Kosten kommen, sobald Claude sich meldet. (T38)
+
 ## App-Symbol (Ticket 29)
 
 - [x] Du hast einen Entwurf freigegeben: C (gestapelte Terminals) in Graphit. (T29)

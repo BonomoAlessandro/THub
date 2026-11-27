@@ -2,7 +2,9 @@
 
 Stand: 2026-11-19 · Claude Code 2.1.328 · Windows 11 · Spike-Code unter `spikes/claude-hooks/`
 
-Nachtrag 2026-11-27 (Ticket 37): Hook-Ereignisse zu Agenten, gemessen mit Claude Code 2.1.332, im Abschnitt [Agenten (Ticket 37)](#agenten-ticket-37) am Ende.
+Nachtrag 2026-11-27 (Ticket 37): Hook-Ereignisse zu Agenten, gemessen mit Claude Code 2.1.332, im Abschnitt [Agenten (Ticket 37)](#agenten-ticket-37).
+
+Nachtrag 2026-11-27 (Ticket 38): die Statuszeile (`statusLine`) für den Verbrauchsbalken, gemessen mit Claude Code 2.1.332, im Abschnitt [Statuszeile (Ticket 38)](#statuszeile-ticket-38) am Ende.
 
 Dieser Spike prüft mit dem installierten Claude Code, ob die Annahmen der Spezifikation (`docs/specs/termhub-v2.md`, Abschnitte „Shell-Integration“ Punkt 2, „Hook-Empfänger und lokale Schnittstelle“, „Claude-Status: Zustandsautomat pro Tab“ und „Weitere Hinweise“) stimmen. Am Ende stehen konkrete Korrekturen für die Spezifikation.
 
@@ -506,3 +508,93 @@ Rückfrage aus einem Agenten, ohne Übergabe (`vordergrund`):
 - „Move to background and exit“ im Dialog von `/exit` ist ungeprüft.
 - Agenten-Teams (eigene Sessions pro Mitglied) sind ausserhalb von Ticket 37 und nicht gemessen; die Variablen dafür wurden für die Messung entfernt.
 - Beim Start räumt Claude Code verwaiste Ordner unter `~/.claude/teams` auf (Debug-Log „cleanupSessionTeams“); das tut jeder Start, auch ausserhalb der Messung.
+
+## Statuszeile (Ticket 38)
+
+Stand: 2026-11-27 · Claude Code 2.1.332 · Windows 11 · Skript `spikes/claude-hooks/statuszeile.mjs`, Zeitachsen aller Läufe in `spikes/claude-hooks/befunde-statuszeile.json`, redigiertes Beispiel in `spikes/claude-hooks/samples/StatusLine.json`.
+
+Fragen aus Ticket 38: Wie führt Claude Code unter Windows den Befehl einer Statuszeile aus, und klappt darin die Weiterleitung mit `curl.exe`? Welche Felder kommen wann an? Was kostet eine Session nach dem Fortsetzen? Ersetzt der Eintrag aus `--settings` die Statuszeile des Nutzers wirklich?
+
+### Kurzfassung
+
+1. **Keine Exec-Form.** Der Eintrag `statusLine` kennt in 2.1.332 nur `type: "command"`, `command`, `padding`, `refreshInterval` (Sekunden, mindestens 1) und `hideVimModeIndicator` (Schema im installierten Programm). `args` und `shell` fallen beim Lesen weg. Ein Eintrag wie der curl-Hook für `SessionStart` (`command` plus `args`) lief deshalb als blosse Zeichenkette `C:\Windows\System32\curl.exe` durch Git Bash, die die `\` schluckte: „/usr/bin/bash: line 1: C:WindowsSystem32curl.exe: command not found“, Status 127 (Debug-Log, Lauf `form-exec`).
+2. **Ausführung wie ein Befehls-Hook ohne `args`** (im installierten Programm nachgesehen): unter Windows mit Git Bash, falls Claude sie findet (`CLAUDE_CODE_GIT_BASH_PATH`, sonst `C:\Program Files\Git\bin\bash.exe`, `C:\Program Files (x86)\Git\bin\bash.exe`, sonst neben `git` im PATH), sonst mit PowerShell (`pwsh` bzw. `powershell` mit `-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command`). Das JSON kommt auf stdin, dazu die ganze Umgebung von Claude. Die Ausgabe (stdout) zeigt Claude als Statuszeile, leere Zeilen fallen weg.
+3. **Die Weiterleitung mit `curl.exe` klappt als Zeichenkette**, die beide Shells gleich lesen: Pfad mit `/` und ohne Anführungszeichen (`C:/Windows/System32/curl.exe`), jedes Argument mit Sonderzeichen in einfachen Anführungszeichen, `--variable %THUB_TAB_ID=` und `--expand-header` wie beim curl-Hook (siehe „Folgen für THub“). In Claude (Git Bash) kam das JSON bei jedem Aufruf an, mit Tab und Token in den Kopfzeilen. Ohne Claude (Lauf `shells`) dieselbe Zeichenkette in Git Bash (`bash -c`), Windows PowerShell 5.1 und PowerShell 7: JSON byte-genau angekommen, auch Umlaute und «», Ausgabe leer. Mit einer fast leeren Umgebung (nur `SystemRoot`, `PATH`, Tab und Token) startete Windows PowerShell den Befehl nicht und endete trotzdem mit 0; Claude gibt aber seine ganze Umgebung mit.
+4. **`--settings` geht vor.** Mit dem Eintrag aus `--settings` lief nur dieser Befehl: weder die Statuszeile des Projekts (`.claude/settings.local.json` im Arbeitsordner, Ausgabe „PROJEKT-STATUSZEILE“) noch die des Nutzers (in `~/.claude/settings.json` ein Python-Skript mit zwei Zeilen) erschien. Ohne den Eintrag erschien die des Projekts (Lauf `ohne`), ohne Projekteinstellungen die des Nutzers (Lauf `nutzer`). Hat der Nutzer keine eigene Statuszeile, ist der Eintrag aus `--settings` der einzige; geprüft in der Test-App mit echtem Claude und einer Konfiguration ohne Statuszeile (siehe Ticket 38, „Hinweise aus der Umsetzung“). Die Einstellungen werden zusammengeführt: Setzt der Nutzer in seiner Statuszeile `padding` oder `refreshInterval`, gilt das auch für den Eintrag aus `--settings` (beim Nutzer nur `padding: 0`).
+5. **Leere Ausgabe heisst keine Zeile.** Mit der Statuszeile des Projekts stand zwischen der unteren Linie des Eingabefelds und der Zeile mit dem Modus eine Zeile, mit der des Nutzers zwei. Mit leerer Ausgabe folgt der Modus direkt auf die Linie; der Bereich unter dem Eingabefeld wird um diese Zeilen kleiner.
+6. **Felder:** `model.id` (`claude-haiku-5-5`), `model.display_name` (`Haiku 5.5`), `cost.total_cost_usd` (dazu Dauer und geänderte Zeilen), `rate_limits.five_hour` und `rate_limits.seven_day` mit `used_percentage` und `resets_at` (Sekunden seit 1970, volle Stunde), daneben `context_window`, `prompt_cache`, `effort`, `thinking`, `session_name`, `scratchpad_dir` usw. (Beispiel unten).
+   - `used_percentage` rechnet Claude aus dem Anteil, den die API meldet (`utilization`, 0 bis 1), auf eine Nachkommastelle gerundet und auf 100 begrenzt. `utilization` selbst kommt in 2.1.332 nicht vor.
+   - Weitere Schlüssel in `rate_limits` kennt 2.1.332 nur hinter einem Gateway (`spend_limit` mit `used_usd`, `limit_usd`, `period`). Wochenlimits pro Modell oder `extra_usage` stehen nicht im JSON der Statuszeile.
+   - Ein Fenster, dessen `resets_at` vorbei ist, lässt Claude weg, bis die API es wieder meldet (laut Beschreibung im Programm).
+7. **Ab wann es `rate_limits` gibt:** Bei 3 von 6 frischen Starts stand es schon im ersten Aufruf, vor jedem Prompt; Claude kennt die Limits offenbar aus einer Anfrage beim Start. Sonst kam es erst später (im Lauf `intervall` 3,6 s nach dem ersten Aufruf, im Lauf `form-ps` gar nicht, weil Claude ohne Anlass nicht neu aufrief) bzw. mit der ersten Antwort. Nach `--resume` fehlte es beim Start. Ohne Abo, mit API-Schlüssel: geprüft nur in der Test-App ohne Verbindung zur API; kein `rate_limits`, Modell und Kosten (0) kamen an.
+8. **Takt:** Claude ruft den Befehl auf beim Start (1,2 bis 4,2 s nach `SessionStart`), nach jeder Antwort zweimal (0,3 bis 0,6 s und 1,2 bis 1,5 s nach `Stop`; beim zweiten Mal mit höheren Kosten, vermutlich durch Hilfsanfragen nach der Antwort), nach `/clear` (0,2 s nach dem neuen `SessionStart`) und nach einer neuen Grösse des Terminals (0,6 s), jeweils mit den Limits aus seiner letzten Antwort. Im Leerlauf ruft er ihn nicht auf (40 s nach einer Antwort, 20 s nach dem Start: keiner). Laut Programm ausserdem bei jeder Änderung von Modell, Berechtigungsmodus, Vim-Modus, Aufwand, Denken, Ordner oder Session-Name, bei neuer Token-Nutzung während einer Antwort (alles um 300 ms entprellt), zum frühesten `resets_at` plus 1 s und wenn der Prompt-Cache abläuft.
+9. **`refreshInterval`:** Mit 2 ruft Claude den Befehl auch im Leerlauf alle 2 s auf (8 Aufrufe in 15 s).
+10. **Kosten nach dem Fortsetzen:** `--resume` beginnt nicht bei 0. Die fortgesetzte Session meldete beim Start $0.0104, den letzten Stand vor dem Beenden, nach einem Prompt $0.0144. `/clear` beginnt eine neue Session (neue Kennung) mit $0.
+11. **Vertrauen und `disableAllHooks`:** Vor dem Vertrauensdialog läuft keine Statuszeile; mit `disableAllHooks` ebenfalls nicht (Warnung „Status line is configured but disableAllHooks is true“ im Programm; nicht gemessen).
+12. **Die Datei aus `--settings` beobachtet Claude nicht** (Debug-Log „Watching for changes in setting files …“ nennt nur die Dateien des Nutzers und des Projekts). Eine laufende Session übernimmt eine geänderte Hook-Datei also nicht.
+
+### Aufbau
+
+- Wie bei den Messungen zu den Tickets 10 bis 13 und 37: eigener Empfänger auf `127.0.0.1` (antwortet leer), eigene Datei per `--settings` (curl-Hook für `SessionStart`, HTTP-Hooks für `SessionEnd`, `UserPromptSubmit`, `Stop`, dazu je nach Lauf `statusLine`), das installierte `claude.exe` in node-pty in einem Arbeitsordner im Temp-Ordner, ohne die geerbten `CLAUDE*`- und `THUB_*`-Variablen, `--model haiku`, mit der Konfiguration des Nutzers. Kopfzeilen und Variablen heissen `X-Spike-Tab` bzw. `SPIKE_TAB_ID`.
+- Die Statuszeile des Projekts stand in `.claude/settings.local.json` des Arbeitsordners (`echo PROJEKT-STATUSZEILE`); die Einstellungen des Nutzers blieben unverändert.
+- Jeder Lauf hatte eine harte Zeitgrenze von 180 s (danach `taskkill /T` auf die eigene Prozess-ID), von aussen zusätzlich `timeout 240`.
+- **Kosten:** 2 Prompts (`haupt`, `fortsetzen`), alle anderen Läufe ohne Prompt.
+
+| Lauf | Prompts | Was er prüft |
+|---|---|---|
+| `form exec` | 0 | Eintrag in Exec-Form (`command` plus `args`), Statuszeile des Projekts daneben |
+| `form bash` | 0 | dieselbe Weiterleitung als Zeichenkette |
+| `form ps` | 0 | dieselbe Zeichenkette mit `"shell": "powershell"` (fällt weg, lief wie `bash`) |
+| `shells` | 0 | ohne Claude: die Zeichenkette in Git Bash, Windows PowerShell und PowerShell 7 |
+| `haupt bash` | 1 | Felder vor und nach der ersten Antwort, Takt beim Start, nach der Antwort und 40 s im Leerlauf |
+| `fortsetzen bash` | 1 | `--resume` der Session aus `haupt`: Kosten beim Start, nach einem Prompt und nach `/clear` |
+| `intervall bash` | 0 | `refreshInterval: 2` im Leerlauf |
+| `groesse` | 0 | neue Grösse des Terminals |
+| `ohne` | 0 | ohne Eintrag `statusLine`: die Statuszeile des Projekts erscheint |
+| `nutzer` | 0 | ohne Eintrag und ohne Projekteinstellungen: die Statuszeile des Nutzers erscheint |
+
+Reproduzieren: `npm ci` im Wurzelordner, dann in `spikes/claude-hooks/` zum Beispiel `node statuszeile.mjs form bash` und danach `node statuszeile.mjs samples`.
+
+### Beispiel (redigiert)
+
+Nach einer Antwort in einer fortgesetzten Session (`fortsetzen bash`), gekürzt; vollständig in `samples/StatusLine.json`:
+
+```json
+{
+  "session_id": "<session-id>",
+  "model": { "id": "claude-haiku-5-5", "display_name": "Haiku 5.5" },
+  "version": "2.1.332",
+  "cost": { "total_cost_usd": 0.014391390000000002, "total_duration_ms": 81837, "total_api_duration_ms": 2947,
+            "total_lines_added": 0, "total_lines_removed": 0 },
+  "context_window": { "total_input_tokens": 54832, "context_window_size": 1000000, "used_percentage": 5, "…": "…" },
+  "prompt_cache": { "warm": true, "ttl": "1h", "expires_at": 1795776423, "…": "…" },
+  "rate_limits": {
+    "five_hour": { "used_percentage": 56, "resets_at": 1795780800 },
+    "seven_day": { "used_percentage": 26, "resets_at": 1795834800 }
+  }
+}
+```
+
+### Folgen für THub
+
+- Die Hook-Datei bekommt einen Eintrag `statusLine` mit einer Zeichenkette statt der Exec-Form:
+
+  ```
+  C:/Windows/System32/curl.exe -s -S --connect-timeout 1 -m 2 --noproxy '*' --variable %THUB_TAB_ID=
+    --variable %THUB_TOKEN= --expand-header 'X-THub-Tab: {{THUB_TAB_ID}}' --expand-header 'X-THub-Token: {{THUB_TOKEN}}'
+    -H 'Content-Type: application/json' --data-binary '@-' http://127.0.0.1:<PORT>/claude/statusline
+  ```
+
+  (eine Zeile; vollständig in `empfohlene-hook-datei.json`). Lässt sich der Pfad zu `curl.exe` so nicht schreiben (etwa mit Leerzeichen), entfällt der Eintrag wie ohne `curl.exe`.
+- Der Endpunkt antwortet immer leer; Claude zeigt dann keine Statuszeile.
+- Weil Claude die Limits aus seiner letzten Antwort bei jedem Aufruf mitschickt, auch Stunden später nach einer neuen Grösse des Terminals, gewinnt nicht einfach die zuletzt angekommene Meldung. Pro Limit gilt der spätere Reset (ein neues Fenster), im selben Fenster der höhere Verbrauch.
+- Fehlt `rate_limits` (beim Start, nach dem Fortsetzen, ohne Abo) oder fehlt darin ein Fenster (nach seinem Reset), bleibt der bisherige Stand.
+- Die Kosten zeigt THub, wie Claude sie meldet: nach dem Fortsetzen samt der früheren Kosten der Session, nach `/clear` ab 0.
+- Einen eigenen `refreshInterval` setzt THub nicht: Claude meldet nach jeder Antwort, und die Uhrzeiten und das Gedämpfte nach einem Reset richtet die Oberfläche selbst nach der Uhr.
+- Ob der Balken an ist, entscheidet der Kern beim Start von Claude: Es gibt die Hook-Datei mit und ohne `statusLine`. Eine laufende Session behält ihre Statuszeile bis zum nächsten Start (Claude beobachtet die Datei nicht).
+
+### Grenzen
+
+- Ohne Git Bash führt Claude den Befehl mit PowerShell aus. Das liess sich am Rechner der Messung nicht in Claude selbst prüfen (Git Bash ist installiert, und `shell` fällt weg); geprüft ist die Zeichenkette in Windows PowerShell und PowerShell 7, aufgerufen wie Claude es tut.
+- Ein Konto mit API-Schlüssel statt Abo ist nur ohne Verbindung zur API geprüft. Ein Gateway mit Ausgabenlimit (`spend_limit`) ist nicht geprüft.
+- `disableAllHooks`, verwaltete Einstellungen mit eigener Statuszeile (`policySettings` gehen vor `--settings`) und `subagentStatusLine` sind nicht gemessen.

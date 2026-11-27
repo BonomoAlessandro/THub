@@ -24,7 +24,8 @@ export function useStackPlacement(activeTabId: string | null): StackProps {
 
 /**
  * Der DOM-Teil zur reinen Rechnung in `stackPlacement.ts`: misst Fenster, Titelleiste, die Eingabe des aktiven Tabs
- * (`TerminalView.inputGeometry`), den Abstand zum Fensterrand (`--toast-edge`) und die Höhe des Stapels, wählt das Band
+ * (`TerminalView.inputGeometry`), den Abstand zum Fensterrand (`--toast-edge`), den Verbrauchsbalken (Ticket 38) und
+ * die Höhe des Stapels, wählt das Band
  * (`placeStack`, mit dem Band, in dem der Stapel gerade steht), hält es ruhig
  * (`SteadyPlacement`) und setzt es an `.toasts`: `top`, `bottom`, `padding-top`, `padding-bottom` und `data-band`. Den
  * Übergang dorthin macht app.css.
@@ -160,6 +161,7 @@ class StackPlacer {
         rowHeight: geometry?.rowHeight ?? 0,
         input: geometry?.input ?? null,
         stackHeight: stackHeight(element),
+        bottomBar: usageBarHeight(),
       },
       standing,
     );
@@ -198,6 +200,11 @@ function stackHeight(element: HTMLElement): number {
   const last = element.lastElementChild;
   if (!(first instanceof HTMLElement) || !(last instanceof HTMLElement)) return 0;
   return last.offsetTop + last.offsetHeight - first.offsetTop;
+}
+
+/** Höhe des Verbrauchsbalkens am unteren Fensterrand (Ticket 38); 0, wenn er nicht da ist. */
+function usageBarHeight(): number {
+  return document.querySelector<HTMLElement>('.usage-bar')?.offsetHeight ?? 0;
 }
 
 /** Höhe der Titelleiste (`--titlebar-h`), unter der die Spalte beginnt. */

@@ -14,7 +14,9 @@ import type {
   TabProcessState,
   TabSnapshot,
   TabStatus,
+  TabUsage,
   ToastKind,
+  UsageSnapshot,
   WorkspaceEvent,
   WorkspaceSnapshot,
 } from '../../shared/types';
@@ -69,6 +71,7 @@ import {
   type ClaudeStatus,
 } from './tabStatus';
 import { STATUS_TOASTS, ToastBoard } from './toasts';
+import { mergeLimits, nextTabUsage, readStatusLine } from './usage';
 import { placeWindow } from './windowPlacement';
 
 /** So lange wartet das Beenden höchstens auf die Shells. */
@@ -421,6 +424,11 @@ interface TabRuntime {
   requested: number;
   /** Stand von `output`, den der gesicherte Verlauf enthält. */
   saved: number;
+  /**
+   * Modell und Kosten aus der letzten Statuszeile von Claude (Ticket 38); nur bei Claude-Tabs, fällt mit der
+   * Claude-Zuordnung weg und wird nicht gespeichert.
+   */
+  usage?: TabUsage;
 }
 
 /** Die Shell eines geschlossenen Tabs, solange sie noch auf die Prozess-Sonde wartet (siehe `endShells`). */
@@ -532,6 +540,7 @@ class WorkspaceCore implements Workspace {
       defaultShellId: this.defaultShell().id,
       homeDir: this.ports.system.homeDir(),
       toasts: this.toasts.snapshot(),
+      usage: this.usageSnapshot(),
     };
   }
 
@@ -823,12 +832,14 @@ class WorkspaceCore implements Workspace {
     const shells: { tabId: string; root?: ShellRoot }[] = [];
     const changed: string[] = [];
     const activeBefore = this.state.activeTabId;
+    let usageDropped = false;
     for (const tab of tabs) {
       const index = this.state.tabs.indexOf(tab);
       // Zuerst austragen und so einfrieren: Das Ende der Shell und Meldungen von Starter und Claude gehören dann zu
       // keinem Tab mehr, ein später eintreffender Verlauf ebenfalls nicht.
       const runtime = this.runtimes.get(tab.id);
       if (runtime) this.cancelClaudeTimers(runtime);
+      if (runtime?.usage) usageDropped = true;
       this.runtimes.delete(tab.id);
       this.toasts.dismissTab(tab.id);
       shells.push({ tabId: tab.id, root: runtime && shellRoot(runtime) });
@@ -864,6 +875,7 @@ class WorkspaceCore implements Workspace {
       this.markShownTabSeen();
     }
     this.tabsChanged();
+    if (usageDropped) this.emitUsage();
   }
 
   reopenClosedTab(tabId?: string): string {
@@ -1639,7 +1651,9 @@ class WorkspaceCore implements Workspace {
       }
     });
 
-    const { hookFile } = this.localApi;
+    // Mit dem Verbrauchsbalken die Hook-Datei mit `statusLine`, sonst die ohne: Claude zeigt dann seine eigene
+    // Statuszeile (Ticket 38). Eine laufende Session behält, womit sie gestartet ist.
+    const hookFile = this.state.settings.usageBar ? this.localApi.hookFile : this.localApi.hookFileWithoutStatusLine;
     return newId ? { tabName: tab.name, sessionId: newId, hookFile } : { tabName: tab.name, hookFile };
   }
 
@@ -1735,6 +1749,50 @@ class WorkspaceCore implements Workspace {
     // eingefroren beim Beenden: Sie ändert nur, wie Claude schreibt, nicht den Zustand von THub.
     if (event !== 'SessionStart' || !this.state.settings.openPoints || !this.findTab(tabId)) return undefined;
     return openPointsContext();
+  }
+
+  /**
+   * JSON der Statuszeile von Claude (Ticket 38). Modell und Kosten gelten für den Tab, solange er ein Claude-Tab ist. Die
+   * Limits gelten für das Konto, egal aus welchem Tab; pro Limit bleibt der neuere Stand (`mergeLimits`), und er wird
+   * gespeichert. Unbrauchbares ändert nichts. Eingefroren beim Beenden zählt nichts mehr.
+   */
+  claudeStatusLine(tabId: string, payload: unknown): void {
+    const tab = this.claudeTab(tabId);
+    if (!tab) return;
+    const report = readStatusLine(payload);
+    let changed = false;
+    const runtime = this.runtimes.get(tabId);
+    if (tab.claude && runtime) {
+      const usage = nextTabUsage(runtime.usage, report);
+      if (usage !== runtime.usage) {
+        runtime.usage = usage;
+        changed = true;
+      }
+    }
+    if (report.limits) {
+      const source = { at: this.ports.clock.now(), tabId: tab.id, tabName: tab.name };
+      const limits = mergeLimits(this.state.usageLimits, report.limits, source);
+      if (limits && JSON.stringify(limits) !== JSON.stringify(this.state.usageLimits)) {
+        this.state.usageLimits = limits;
+        this.save();
+        changed = true;
+      }
+    }
+    if (changed) this.emitUsage();
+  }
+
+  /** Die Angaben für den Verbrauchsbalken: Modell und Kosten der Claude-Tabs, die schon gemeldet haben, und die Limits. */
+  private usageSnapshot(): UsageSnapshot {
+    const tabs: Record<string, TabUsage> = {};
+    for (const tab of this.state.tabs) {
+      const usage = this.runtimes.get(tab.id)?.usage;
+      if (tab.claude && usage) tabs[tab.id] = { ...usage };
+    }
+    return { tabs, limits: this.state.usageLimits ? structuredClone(this.state.usageLimits) : null };
+  }
+
+  private emitUsage(): void {
+    this.emit({ type: 'usage', usage: this.usageSnapshot() });
   }
 
   /** Die offenen Punkte einer fertigen Antwort; bei ausgeschalteter Einstellung keine. */
@@ -1866,15 +1924,19 @@ class WorkspaceCore implements Workspace {
       tab.claude = link;
     } else {
       delete tab.claude;
+      const hadUsage = runtime?.usage !== undefined;
       if (runtime) {
         runtime.claudePid = undefined;
         runtime.resuming = undefined;
         runtime.claude = IDLE_CLAUDE;
         runtime.finished = false;
+        // Modell und Kosten gehören zur Claude-Zuordnung (Ticket 38).
+        runtime.usage = undefined;
         this.cancelClaudeTimers(runtime);
       }
       // Mit Claude endet auch das Warten.
       this.dropStaleWaitingToast(tab);
+      if (hadUsage) this.emitUsage();
     }
     this.save();
   }

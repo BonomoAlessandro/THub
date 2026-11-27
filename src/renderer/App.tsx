@@ -11,12 +11,14 @@ import { CloseDialog } from './tabs/CloseDialog';
 import { TabBar, type RenameTarget } from './tabs/TabBar';
 import { TerminalArea } from './terminal/TerminalArea';
 import { Toasts } from './toasts/Toasts';
+import { UsageBar } from './usage/UsageBar';
 import { focusTerminal } from './terminal/terminalViews';
 import { useWorkspace } from './useWorkspace';
 
 /**
- * Das Fenster: Tab-Leiste oben, darunter die Terminal-Fläche, unten rechts die Hinweise; darüber bei Bedarf die
- * Befehlspalette, die Einstellungen, die Übersicht der Tastenkürzel oder die Rückfrage vor dem Schliessen.
+ * Das Fenster: Tab-Leiste oben, darunter die Terminal-Fläche, in Claude-Tabs ganz unten der Verbrauchsbalken, unten
+ * rechts die Hinweise; darüber bei Bedarf die Befehlspalette, die Einstellungen, die Übersicht der Tastenkürzel oder die
+ * Rückfrage vor dem Schliessen.
  */
 export function App() {
   /** Was gerade umbenannt wird: ein Tab oder eine Gruppe (Ticket 36). */
@@ -160,6 +162,11 @@ export function App() {
       ? renaming
       : null;
 
+  // Der Verbrauchsbalken (Ticket 38) steht nur unter einem Claude-Tab, auch einem pausierten; in normalen Terminals
+  // reicht das Terminal bis unten. Kommt oder geht er, passt das Terminal seine Grösse an (TerminalArea).
+  const activeTab = view.tabs.find((t) => t.id === view.activeTabId);
+  const usageBarTab = view.settings.usageBar && activeTab?.kind === 'claude' ? activeTab : undefined;
+
   return (
     <>
       <TabBar
@@ -176,6 +183,7 @@ export function App() {
         keepAwakeMode={view.settings.keepAwakeMode}
       />
       <TerminalArea tabs={view.tabs} activeTabId={view.activeTabId} fontSize={view.settings.fontSize} />
+      {usageBarTab && <UsageBar usage={view.usage} tab={usageBarTab} tabs={view.tabs} />}
       <Toasts toasts={view.toasts} tabs={view.tabs} groups={view.groups} activeTabId={view.activeTabId} />
       {settingsOpen && (
         <SettingsDialog

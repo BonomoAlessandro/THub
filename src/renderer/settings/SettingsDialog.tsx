@@ -27,15 +27,15 @@ interface SettingsDialogProps {
 }
 
 /**
- * Einstellungen, geöffnet über das Zahnrad: Standardordner, Standard-Shell, Design, Schriftgrösse, Hinweise im Fenster
- * und offene Punkte aus Claudes Antworten; weitere Felder kommen mit späteren Tickets dazu, je als eigene Zeile in ihrem
- * Abschnitt.
+ * Einstellungen, geöffnet über das Zahnrad: Standardordner, Standard-Shell, Design, Schriftgrösse, Verbrauchsbalken
+ * (Ticket 38), Hinweise im Fenster und offene Punkte aus Claudes Antworten; weitere Felder kommen mit späteren Tickets
+ * dazu, je als eigene Zeile in ihrem Abschnitt.
  * Jede Änderung geht sofort an den Kern und wirkt ohne „Fertig“; der Dialog zeigt, was der Kern meldet.
  */
 export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onClose, onShowShortcuts }: SettingsDialogProps) {
   const changeRef = useRef<HTMLButtonElement>(null);
   const folder = settings.defaultCwd;
-  const { theme, fontSize, notifications, openPoints } = settings;
+  const { theme, fontSize, notifications, openPoints, usageBar } = settings;
 
   const update = (patch: Partial<Settings>) => api.send({ type: 'updateSettings', patch });
 
@@ -172,6 +172,25 @@ export function SettingsDialog({ settings, homeDir, shells, defaultShellId, onCl
                 +
               </button>
             </div>
+          </div>
+        </div>
+        <div className="set-row">
+          <div>
+            <div className="set-label">Verbrauchsbalken anzeigen</div>
+            <div className="set-desc">
+              Zeigt in Claude-Tabs unten Modell, Verbrauch und Limits. Claudes eigene Statuszeile entfällt dafür; das gilt
+              ab dem nächsten Start von Claude.
+            </div>
+          </div>
+          <div className="set-ctl">
+            <button
+              type="button"
+              role="switch"
+              className={usageBar ? 'switch on' : 'switch'}
+              aria-checked={usageBar}
+              aria-label="Verbrauchsbalken anzeigen"
+              onClick={() => update({ usageBar: !usageBar })}
+            />
           </div>
         </div>
       </section>

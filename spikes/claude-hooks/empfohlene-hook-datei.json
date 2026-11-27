@@ -243,5 +243,9 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "C:/Windows/System32/curl.exe -s -S --connect-timeout 1 -m 2 --noproxy '*' --variable %THUB_TAB_ID= --variable %THUB_TOKEN= --expand-header 'X-THub-Tab: {{THUB_TAB_ID}}' --expand-header 'X-THub-Token: {{THUB_TOKEN}}' -H 'Content-Type: application/json' --data-binary '@-' http://127.0.0.1:<PORT>/claude/statusline"
   }
 }

@@ -59,6 +59,68 @@ export interface Settings {
   keepAwake: boolean;
   /** Die gewählte Stufe; gilt erst, wenn `keepAwake` an ist. */
   keepAwakeMode: KeepAwakeMode;
+  /**
+   * Verbrauchsbalken anzeigen (Ticket 38): In Claude-Tabs steht unten im Fenster eine Zeile mit Modell, Verbrauch und
+   * Limits. Dafür ersetzt THub in neu gestarteten Claude-Sessions Claudes eigene Statuszeile. Ausgeschaltet gibt es
+   * keinen Balken, und neu gestartete Sessions zeigen wieder ihre eigene Statuszeile.
+   */
+  usageBar: boolean;
+}
+
+/**
+ * Ein Limit des Claude-Kontos (Ticket 38), wie es Claude Code seiner Statuszeile mitgibt (`rate_limits`): verbrauchter
+ * Anteil und wann das Limit zurückgesetzt wird.
+ */
+export interface UsageLimit {
+  /** Verbraucht, in Prozent, 0 bis 100. */
+  usedPercent: number;
+  /** Wann das Limit zurückgesetzt wird, in Millisekunden seit 1970; fehlt, wenn Claude es nicht meldet. */
+  resetsAt?: number;
+}
+
+/** Ein weiteres Limit des Kontos, nur für den Tooltip, etwa ein Ausgabenlimit hinter einem Gateway. */
+export interface UsageExtraLimit extends UsageLimit {
+  /** Schlüssel, unter dem Claude es meldet, z.B. `spend_limit`. */
+  key: string;
+  /** Bisher ausgegeben bzw. das Limit, in US-Dollar; nur bei einem Ausgabenlimit. */
+  usedUsd?: number;
+  limitUsd?: number;
+}
+
+/**
+ * Der letzte Stand der Limits des Kontos (Ticket 38). Sie gelten für das ganze Konto; Claude kennt sie aus der letzten
+ * Antwort der API. Gespeichert, damit der Balken auch nach einem Neustart einen Stand zeigt.
+ */
+export interface AccountLimits {
+  /** Das Limit der Session (5-Stunden-Fenster, `five_hour`). */
+  session?: UsageLimit;
+  /** Das Wochenlimit (`seven_day`). */
+  week?: UsageLimit;
+  /** Weitere Limits aus derselben Meldung, für den Tooltip. */
+  extra: UsageExtraLimit[];
+  /** Wann der Stand gemeldet wurde, in Millisekunden seit 1970. */
+  reportedAt: number;
+  /** Aus welchem Tab: Kennung und Name zu diesem Zeitpunkt. */
+  tabId: string;
+  tabName: string;
+}
+
+/** Was ein Claude-Tab zuletzt über sich gemeldet hat (Ticket 38); fällt mit der Claude-Zuordnung weg. */
+export interface TabUsage {
+  /** Kennung des Modells, z.B. `claude-opus-5-5`. */
+  modelId?: string;
+  /** Anzeigename des Modells, z.B. `Opus 5.5`. */
+  modelName?: string;
+  /** Kosten der Session zum Listenpreis der API, in US-Dollar, wie Claude Code sie berechnet. */
+  costUsd?: number;
+}
+
+/** Die Angaben für den Verbrauchsbalken (Ticket 38). */
+export interface UsageSnapshot {
+  /** Modell und Kosten pro Claude-Tab, nach Tab-Kennung; nur Tabs, die schon etwas gemeldet haben. */
+  tabs: Record<string, TabUsage>;
+  /** Die Limits des Kontos; `null`, solange es keinen Stand gibt (etwa ohne Abo). */
+  limits: AccountLimits | null;
 }
 
 /**
@@ -248,6 +310,8 @@ export interface WorkspaceSnapshot {
   homeDir: string;
   /** Die Hinweise unten rechts, in der Reihenfolge ihres Erscheinens (ältester zuerst). */
   toasts: ToastSnapshot[];
+  /** Modell, Kosten und Limits für den Verbrauchsbalken (Ticket 38). */
+  usage: UsageSnapshot;
 }
 
 /** Änderungsereignisse vom Kern an den Renderer. */
@@ -264,6 +328,8 @@ export type WorkspaceEvent =
   | { type: 'groupCreated'; groupId: string }
   /** Die Hinweise unten rechts haben sich geändert: alle, die jetzt stehen (siehe `WorkspaceSnapshot`). */
   | { type: 'toasts'; toasts: ToastSnapshot[] }
+  /** Modell, Kosten oder Limits für den Verbrauchsbalken haben sich geändert (Ticket 38): der ganze neue Stand. */
+  | { type: 'usage'; usage: UsageSnapshot }
   /** Die Einstellungen haben sich geändert; dazu die daraus folgende Standard-Shell (siehe `WorkspaceSnapshot`). */
   | { type: 'settings'; settings: Settings; defaultShellId: string }
   /** Rohe Ausgabe der Shell eines Tabs. */

@@ -20,7 +20,7 @@ import http from 'node:http';
 import type { AddressInfo, Socket } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
-import { HOOK_FILE_NAME, writeHookFile } from '../../src/main/hookFile';
+import { writeHookFiles } from '../../src/main/hookFile';
 import { LocalApiServer } from '../../src/main/localApi';
 import { createProcessProbe } from '../../src/main/processProbe';
 import { PtyManager } from '../../src/main/ptyManager';
@@ -800,9 +800,8 @@ export class CoreShell {
   ): Promise<CoreShell> {
     const server = await LocalApiServer.start();
     try {
-      const hookFile = path.join(ws.root, 'Daten äöü', HOOK_FILE_NAME);
-      writeHookFile(hookFile, server.url);
-      return CoreShell.start(def, ws, storage, extra, { server, info: { url: server.url, token: server.token, hookFile } });
+      const files = writeHookFiles(path.join(ws.root, 'Daten äöü'), server.url);
+      return CoreShell.start(def, ws, storage, extra, { server, info: { url: server.url, token: server.token, ...files } });
     } catch (err) {
       await server.close();
       throw err;

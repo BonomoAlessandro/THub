@@ -63,6 +63,11 @@ export class ApiClient {
     return this.post(`/hooks/${event}`, payload, { 'X-THub-Tab': tabId });
   }
 
+  /** JSON der Statuszeile, wie es der Befehl `statusLine` der Hook-Datei weiterleitet (Ticket 38). */
+  statusLine(tabId: string, payload: unknown): Promise<ApiResponse> {
+    return this.post('/claude/statusline', payload, { 'X-THub-Tab': tabId });
+  }
+
   /**
    * Ein Hook-Ereignis, dessen Kopfzeilen sofort und dessen Inhalt erst mit `finish` ankommt.
    * `arrived` erfüllt sich, sobald der Server die Anfrage angenommen hat (das erste Stück ist bei ihm).
@@ -181,6 +186,19 @@ export function hookPayload(sample: HookSample, overrides: Record<string, unknow
     nutzdaten: Record<string, unknown>;
   };
   return { ...recorded.nutzdaten, ...overrides };
+}
+
+/**
+ * JSON der Statuszeile aus dem Spike zu Ticket 38 (Claude Code 2.1.332, nach einer Antwort, mit Limits), mit eigenen
+ * Werten; `rate_limits: undefined` lässt die Limits weg.
+ */
+export function statusLinePayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  const recorded = JSON.parse(fs.readFileSync(new URL('StatusLine.json', SAMPLES_DIR), 'utf8')) as {
+    nutzdaten: Record<string, unknown>;
+  };
+  const payload: Record<string, unknown> = { ...recorded.nutzdaten, ...overrides };
+  for (const key of Object.keys(payload)) if (payload[key] === undefined) delete payload[key];
+  return payload;
 }
 
 /** Das Ereignis einer Beispieldatei, z.B. `SessionEnd` für `SessionEnd-clear`. */

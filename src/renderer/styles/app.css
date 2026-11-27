@@ -597,6 +597,105 @@ svg.i {
   visibility: visible;
 }
 
+/* ---------- Verbrauchsbalken (Ticket 38) ----------
+ * Eine Zeile ganz unten im Fenster, nur unter Claude-Tabs: Schrift der Oberfläche, Farben aus den Design-Variablen,
+ * keine eigene Akzentfarbe. Die Terminal-Karte rückt dafür bis an den Balken; der Balken nimmt den Rand unter ihr auf.
+ * Die Zeile bricht nie um: Was nicht passt, lässt UsageBar.tsx stufenweise weg, der Rest wird abgeschnitten. Die
+ * unsichtbaren Zeilen in `.usage-measure` misst UsageBar.tsx, um die passende Stufe zu wählen. */
+.terminal-area:has(+ .usage-bar) {
+  padding-bottom: 0;
+}
+.usage-bar {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 16px 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.usage-row {
+  display: flex;
+  align-items: center;
+  width: max-content;
+}
+.usage-measure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+.usage-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.usage-sep {
+  flex: none;
+  width: 1px;
+  height: 12px;
+  margin: 0 12px;
+  background: var(--border-strong);
+}
+.usage-star {
+  display: grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  color: var(--text-faint);
+}
+.usage-star svg.spark {
+  width: 11px;
+  height: 11px;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  fill: none;
+  stroke-linecap: round;
+}
+.usage-value {
+  color: var(--text);
+}
+.usage-reset,
+.usage-note {
+  color: var(--text-faint);
+}
+.usage-mini {
+  display: inline-flex;
+  gap: 2px;
+}
+.usage-mini > span {
+  width: 5px;
+  height: 8px;
+  border-radius: 1.5px;
+  background: var(--border-strong);
+}
+.usage-mini > span.on {
+  background: var(--text-muted);
+}
+/* Ab 90 %: Mini-Balken und Prozent in der Farbe für „wartet“, der bestehenden Warnfarbe. */
+.usage-item[data-warn] .usage-mini > span.on {
+  background: var(--st-waiting);
+}
+.usage-item[data-warn] .usage-pct {
+  color: var(--st-waiting);
+}
+/* Nach dem Reset: 0 %, gedämpft, bis Claude einen neuen Stand meldet. */
+.usage-item[data-expired] {
+  opacity: 0.5;
+}
+/* Der Tooltip steht im Balken, bricht aber um wie jeder andere. */
+.usage-bar .tip {
+  white-space: normal;
+}
+
 .empty-state {
   position: absolute;
   inset: 0;
@@ -1435,6 +1534,11 @@ kbd {
 }
 .tip dd.mono {
   font: 11.5px var(--font-mono);
+}
+/* Hinweis unter den Zeilen, etwa woher die Limits des Verbrauchsbalkens kommen (Ticket 38). */
+.tip .tip-note {
+  margin: 6px 0 0;
+  color: var(--text-faint);
 }
 
 /* ---------- Animationen ---------- */

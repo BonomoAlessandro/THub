@@ -10,10 +10,14 @@
 // - /hooks/<Ereignis> Hook-Nutzdaten, Tab in `X-THub-Tab` → immer sofort 200, nie Entscheidungsfelder; leer, ausser
 //   SessionStart bei eingeschalteter Einstellung „Offene Punkte“: dann die Anweisung als zusätzlicher Kontext für
 //   Claude (Ticket 22). curl gibt sie unverändert an Claude weiter.
+// - /claude/statusline JSON der Statuszeile, Tab in `X-THub-Tab` → immer sofort 200 leer (Ticket 38): Claude zeigt
+//   die Ausgabe des Befehls als Statuszeile, eine leere Antwort also keine. Auch ein unbrauchbarer Inhalt oder ein
+//   unbekannter Tab bekommen dieselbe Antwort; was zählt, entscheidet der Kern.
 
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import * as http from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { STATUS_LINE_PATH } from './hookFile';
 import { LAUNCH_CASES, type ClaudeReceiver, type LaunchCase } from './workspace/claude';
 
 const HOST = '127.0.0.1';
@@ -84,6 +88,7 @@ export class LocalApiServer {
     const pathname = (req.url ?? '').split('?')[0];
     const hook = /^\/hooks\/([A-Za-z]+)$/.exec(pathname);
     if (hook) return this.onHook(req, res, hook[1]);
+    if (pathname === STATUS_LINE_PATH) return this.onStatusLine(req, res);
     if (!STARTER_PATHS.has(pathname)) return reply(res, { status: 404 });
     void readBody(req).then((text) => {
       if (text === null) return;
@@ -113,6 +118,28 @@ export class LocalApiServer {
           this.receiver.claudeHook(tabId, event, parseJson(text));
         } catch (err) {
           console.error(`Lokale Schnittstelle: Hook ${event} konnte nicht verarbeitet werden:`, err);
+        }
+      });
+  }
+
+  /**
+   * JSON der Statuszeile (Ticket 38): sofort eine leere Antwort, damit Claude keine Statuszeile zeigt; erst danach an den
+   * Kern, in der Reihenfolge der Hook-Ereignisse. Fehler sieht Claude nie.
+   */
+  private onStatusLine(req: http.IncomingMessage, res: http.ServerResponse): void {
+    const tabId = headerValue(req, TAB_HEADER);
+    const body = readBody(req);
+    void body.then((text) => {
+      if (text !== null) reply(res, { status: 200 });
+    });
+    this.hooksForwarded = this.hooksForwarded
+      .then(() => body)
+      .then((text) => {
+        if (text === null || !tabId || !this.receiver) return;
+        try {
+          this.receiver.claudeStatusLine(tabId, parseJson(text));
+        } catch (err) {
+          console.error('Lokale Schnittstelle: Statuszeile konnte nicht verarbeitet werden:', err);
         }
       });
   }

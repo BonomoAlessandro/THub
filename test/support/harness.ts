@@ -5,7 +5,7 @@
 
 import * as path from 'node:path';
 import { afterEach } from 'vitest';
-import { HOOK_FILE_NAME, writeHookFile } from '../../src/main/hookFile';
+import { writeHookFiles } from '../../src/main/hookFile';
 import { LocalApiServer } from '../../src/main/localApi';
 import type { LocalApiInfo } from '../../src/main/workspace/claude';
 import type { ProcessInfo, ShellInfo, StateStorage, TabHistory } from '../../src/main/workspace/ports';
@@ -44,9 +44,8 @@ export interface RunningApi {
 async function startApi(dataDir: string): Promise<RunningApi> {
   const server = await LocalApiServer.start();
   openApis.add(server);
-  const hookFile = path.join(dataDir, HOOK_FILE_NAME);
-  writeHookFile(hookFile, server.url);
-  return { server, info: { url: server.url, token: server.token, hookFile } };
+  const files = writeHookFiles(dataDir, server.url);
+  return { server, info: { url: server.url, token: server.token, ...files } };
 }
 
 async function stopApi(api: RunningApi): Promise<void> {
