@@ -311,6 +311,18 @@ Mit echtem Claude Code: Claude im Tab neu starten (`/exit`, dann `claude`), dami
 - [ ] **[Claude]** Der Schalter „Verbrauchsbalken anzeigen“ in den Einstellungen blendet den Balken aus. Nach einem neuen Start von Claude zeigt Claude wieder die eigene Statuszeile; wieder eingeschaltet und Claude neu gestartet, verschwindet sie wieder. (T38)
 - [ ] **[Claude]** Nach einem Neustart von THub zeigt ein pausierter Claude-Tab beim Anzeigen sofort die Limits; Modell und Kosten kommen, sobald Claude sich meldet. (T38)
 
+## Menüs und Titelleiste (Ticket 39)
+
+Im normalen, nicht maximierten Fenster; die freie Fläche ist der leere Teil der Titelleiste zwischen `+` und dem Schalter „Rechner wach halten“. Für die Liste und das Menü einer Gruppe brauchst du eine Gruppe (siehe Ticket 36).
+
+- [ ] Das Menü am Pfeil neben `+` öffnen und auf die freie Fläche klicken: Das Menü geht zu, das Fenster bewegt sich nicht. Gleich danach lässt sich das Fenster dort wieder verschieben. (T39)
+- [ ] Dasselbe mit dem Rechtsklick-Menü eines Tabs, der Liste einer Gruppe, dem Rechtsklick-Menü am Gruppen-Tab und der Stufe von „Rechner wach halten“. (T39)
+- [ ] Bei offenem Menü ein Doppelklick auf die freie Fläche: Das Menü geht zu, das Fenster wird nicht maximiert. (T39)
+- [ ] Bei offenem Menü ein Rechtsklick auf die freie Fläche: Das Menü geht zu, das Fenstermenü von Windows erscheint nicht. Ohne offenes Menü erscheint es dort wie bisher. (T39)
+- [ ] Bei offenem Menü einen anderen Tab anklicken: Das Menü geht zu, und der Tab wird angezeigt. (T39)
+- [ ] Ohne offenes Menü lässt sich das Fenster an der freien Fläche verschieben und per Doppelklick maximieren. Oben am Fensterrand lässt sich die Grösse ziehen, mit und ohne offenes Menü. (T39)
+- [ ] Bei offenem Menü die Knöpfe oben rechts: Minimieren und Maximieren wirken und schliessen das Menü. (T39)
+
 ## App-Symbol (Ticket 29)
 
 - [x] Du hast einen Entwurf freigegeben: C (gestapelte Terminals) in Graphit. (T29)

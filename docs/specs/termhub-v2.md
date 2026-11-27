@@ -679,6 +679,7 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Fenster und Titelleiste:**
   - Ohne Windows-Rahmen, mit verdeckter Titelleiste und den nativen Fensterknöpfen als Overlay, damit die Andock-Layouts von Windows 11 erhalten bleiben. Die Symbolfarbe der Knöpfe wird bei jedem Wechsel des Designs nachgezogen.
   - Die Tabs sind von der Zieh-Fläche ausgenommen, damit Klick, Rechtsklick und Ziehen funktionieren. Neben den Tabs bleibt immer eine feste Mindestfläche zum Verschieben des Fensters, auch bei überlaufender Leiste.
+  - Solange ein Menü offen ist, ist die ganze Titelleiste keine Zieh-Fläche: Der erste Klick auf die freie Fläche schliesst das Menü, erst danach verschiebt sie das Fenster wieder (Ticket 39).
   - Der Fensterhintergrund ist deckend und einfarbig. Kein Mica, keine Transparenz.
   - Schrift: Segoe UI Variable für die Oberfläche, Cascadia Mono für das Terminal.
 - **Design:** folgt standardmässig Windows und reagiert live auf einen Wechsel. Die Terminalfläche hat je ein abgestimmtes helles und dunkles Farbschema.
@@ -770,6 +771,22 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Rand zum Grössenziehen:** Den regelt Electron, nicht die Oberfläche. Im nicht maximierten Fenster meldet es die obersten Pixel vor der Seite als `HTTOP` (Rahmen plus Polsterung von Windows, gemessen bei 150 %: 8 CSS-px, also die Fläche über der Karte und deren oberste 3 px); das Fenster lässt sich dort wie bei Chrome in der Höhe ziehen. Im maximierten Fenster gibt es keinen Rand: Ab der obersten Pixelreihe trifft ein Klick über einem Tab den Tab, die freie Fläche bleibt `HTCAPTION`. Der Renderer braucht dafür den Maximiert-Zustand nicht zu kennen.
 - **Neue Tabs am Ende:** `createTab` hängt an, egal welcher Tab aktiv ist; das gilt für `+`, `Ctrl+Shift+T`, das Pfeil-Menü, die Befehlspalette und den Knopf „Neues Terminal“ ohne offene Tabs. Nur Duplizieren (rechts neben der Quelle) und Wiederöffnen (alte Stelle) setzen eine Position.
 - **Aufgeklappte Auswahlliste:** Chromium zeichnet die Liste eines `<select>` als eigenes Fenster. Es übernimmt das Farbschema des Felds (`color-scheme`, vom Design über `data-theme` geerbt, auch bei „System“), seine Hintergrund- und Textfarbe, und legt die Liste auf eine weisse Fläche. Das halbdurchsichtige `--btn-bg` des dunklen Designs ergab so eine weisse Liste mit heller Schrift. Die Hintergrundfarbe des Felds ist deshalb deckend (`--dialog-bg`), `--btn-bg` liegt als Bild-Ebene darüber; geschlossen sieht es aus wie vorher. Die Hervorhebung des gewählten Eintrags kommt von Chromium selbst und lässt sich ohne eigene Liste nicht gestalten: im dunklen Design hellblau mit dunkler Schrift, im hellen dunkelblau mit weisser Schrift. Andere native Bedienelemente: Die Bildlaufleisten folgen über `color-scheme` dem Design; ein weiteres `<select>` gibt es nicht. Native Tooltips (`title`, etwa am Standardordner) sind nicht Teil dieses Tickets.
+
+**Präzisierungen aus der Umsetzung (Ticket 39):**
+- **Ein Klick daneben schliesst jedes Menü,** auch auf die freie Fläche der Titelleiste. Das gilt für alle Menüs (`popup/Menu.tsx`): Shell oder Ordner wählen (Pfeil neben `+`), Stufe von „Rechner wach halten“, Rechtsklick-Menü am Tab, Liste einer Gruppe, Menü am Gruppen-Tab. Dialoge und die Befehlspalette liegen ohnehin über einer Fläche, die das ganze Fenster deckt.
+- **Ursache:** Einen Klick auf die Zieh-Fläche (`-webkit-app-region: drag`) behandelt Windows selbst, als Klick auf den Rahmen des Fensters. Die Seite bekam kein `mousedown`, und weil das Fenster den Fokus schon hatte, auch kein `blur`.
+- **Merkmal am Wurzel-Element:** Solange mindestens ein Menü offen ist, trägt `<html>` das Merkmal `data-menu-open`, und `:root[data-menu-open] .titlebar` ist `no-drag`. Die offenen Menüs werden gezählt (`popup/menuOpenMark.ts`, jedes Menü meldet sich in einem Layout-Effekt an und ab). Ersetzt ein Menü direkt ein anderes, etwa das Menü eines Tabs die Liste seiner Gruppe, bleibt das Merkmal.
+- **Wirkung:**
+  - Der erste Klick auf die freie Fläche landet bei der Seite und schliesst das Menü wie jeder Klick daneben, ohne das Fenster zu verschieben; erst danach ist sie wieder Zieh-Fläche. So machen es auch die Menüs von Windows.
+  - Ein Rechtsklick dort schliesst das Menü, ohne das Fenstermenü von Windows.
+  - Ein Klick auf einen anderen Tab schliesst das Menü und wählt den Tab, wie bisher.
+  - Esc, Fokusverlust und eine Grössenänderung schliessen es weiter.
+  - Den Rand zum Grössenziehen oben und die Fensterknöpfe prüft Electron vor der Seite; sie bleiben, wie sie sind.
+- **Gemessen** in der Test-App (Electron 45, 150 %, `WM_NCHITTEST` auf die Mitte der freien Fläche): ohne Menü `HTCAPTION`, mit Menü `HTCLIENT`, nach dem Schliessen wieder `HTCAPTION`. Die oberste Pixelreihe bleibt in allen drei Fällen `HTTOP`. Chromium führt die Zieh-Fläche zuverlässig und schnell nach: `HTCLIENT` 18 bis 50 ms nach dem Klick, der das Menü am Pfeil öffnet (samt Abfrage der Ordner), und wieder `HTCAPTION`, sobald der schliessende Klick verarbeitet ist.
+- **Grenzen:** Ein Klick ohne Ziehen auf den Rand zum Grössenziehen oder auf die Fensterknöpfe schliesst das Menü nicht; den behandelt Windows selbst. Minimieren und Maximieren schliessen es über Fokusverlust bzw. Grössenänderung.
+- **Nicht gewählt:**
+  - Eine durchsichtige Fläche über dem ganzen Fenster, wie bei den Dialogen: Sie schluckte den Klick auf einen anderen Tab.
+  - Klicks auf den Rahmen im Hauptprozess abfangen (`hookWindowMessage` mit `WM_NCLBUTTONDOWN`): nicht nötig, weil das Merkmal trägt.
 
 **Tab-Gruppen (Ticket 36, vom Nutzer am 2026-11-25 gewählt):**
 - **Ordner-Tab mit Liste:** Eine Gruppe ist ein einziger Eintrag in der Tab-Leiste, mit den Massen eines Tabs. Er zeigt ein Ordner-Symbol, „Gruppenname · gewählter Tab“, gedämpft die Zahl der Tabs und einen Pfeil. Der Pfeil öffnet die Liste der Tabs (ein Menü), dort wählt man einen aus. Der gewählte Tab ist der zuletzt angezeigte der Gruppe. Ein Klick auf den Gruppen-Tab zeigt ihn an; ist die Gruppe schon aktiv, öffnet er die Liste.

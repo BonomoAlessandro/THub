@@ -2,6 +2,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } f
 import { createPortal } from 'react-dom';
 import { CheckIcon } from '../icons';
 import { menuKey } from './menuKeys';
+import { useMenuOpenMark } from './menuOpenMark';
 import { usePopupOpen } from './popups';
 
 /** Ein Eintrag im Menü: Überschrift eines Abschnitts, Trennlinie oder wählbarer Eintrag. */
@@ -54,7 +55,10 @@ interface MenuProps {
   anchor: HTMLElement | MenuPoint;
   /** Den ersten Eintrag gleich hervorheben, etwa wenn das Menü per Tastatur geöffnet wurde. */
   highlightFirst?: boolean;
-  /** Das Menü schliesst sich (Escape, Klick daneben, Fenster verliert den Fokus, Eintrag gewählt). */
+  /**
+   * Das Menü schliesst sich (Escape, Klick daneben, auch auf die freie Fläche der Titelleiste, Fenster verliert den
+   * Fokus, Grössenänderung, Eintrag gewählt).
+   */
   onClose(): void;
 }
 
@@ -63,9 +67,12 @@ interface MenuProps {
  * Escape.
  * Das Menü hält den Fokus, solange es offen ist; danach gibt `onClose` ihn zurück. Ein gewählter Eintrag
  * läuft erst, nachdem sich das Menü geschlossen hat.
+ * Solange es offen ist, ist die Titelleiste keine Zieh-Fläche (Ticket 39, `menuOpenMark.ts`): Auch ein Klick auf ihre
+ * freie Fläche erreicht die Seite und schliesst das Menü.
  */
 export function Menu({ label, entries, anchor, highlightFirst = false, onClose }: MenuProps) {
   usePopupOpen();
+  useMenuOpenMark();
   const ref = useRef<HTMLDivElement>(null);
   const id = useId();
   const items = entries.filter((e): e is MenuItem => e.kind === 'item');
@@ -92,7 +99,8 @@ export function Menu({ label, entries, anchor, highlightFirst = false, onClose }
     el.focus({ preventScroll: true });
   }, [anchor]);
 
-  // Tasten in der Capture-Phase, vor xterm.js; Klick daneben, Fokusverlust und Grössenänderung schliessen.
+  // Tasten in der Capture-Phase, vor xterm.js; Klick daneben, Fokusverlust und Grössenänderung schliessen. Ein Klick auf
+  // die freie Fläche der Titelleiste kommt als mousedown an, weil sie bei offenem Menü keine Zieh-Fläche ist.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const { highlighted: h, items: list } = current.current;
