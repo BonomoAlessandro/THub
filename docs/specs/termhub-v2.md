@@ -1,7 +1,7 @@
 # THub 2: Tabs, Claude-Sessions, die einen Neustart überleben, und neuer Look
 
 > Status: `ready-for-agent`
-> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Am 2026-11-23: Hinweise weichen der Eingabe aus (Ticket 32), der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist (Ticket 33), Kopieren mit `Ctrl+C` und Einfügen mit `Ctrl+V` (Ticket 34). Am 2026-11-25: Abstand der Hinweise zur Eingabe und Lage in Claude-Tabs (Ticket 35), Tabs zu Gruppen zusammenfassen (Ticket 36). Am 2026-11-26: „arbeitet“, solange Hintergrund-Agenten rechnen (Ticket 37). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
+> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Am 2026-11-23: Hinweise weichen der Eingabe aus (Ticket 32), der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist (Ticket 33), Kopieren mit `Ctrl+C` und Einfügen mit `Ctrl+V` (Ticket 34). Am 2026-11-25: Abstand der Hinweise zur Eingabe und Lage in Claude-Tabs (Ticket 35), Tabs zu Gruppen zusammenfassen (Ticket 36). Am 2026-11-26: „arbeitet“, solange Hintergrund-Agenten rechnen (Ticket 37). Am 2026-11-27: Balken mit Modell, Verbrauch und Limits (Ticket 38). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
 
 > **Name:** Die App heisst **THub** (bis 2026-11-19 „TermHub“). Datenordner `%APPDATA%\THub`, in der Entwicklung `%APPDATA%\THub-dev`. Umsetzung des Namenswechsels: Ticket 20.
 
@@ -184,6 +184,13 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 102. Als Nutzer möchte ich am Gruppen-Tab den dringendsten Status seiner Tabs sehen, damit ich nichts übersehe, was in einer verborgenen Konsole wartet oder fertig ist.
 103. Als Nutzer möchte ich, dass Gruppen einen Neustart überleben und geschlossene Tabs beim Wiederöffnen in ihre Gruppe zurückkehren, damit meine Ordnung erhalten bleibt.
 104. Als Nutzer möchte ich Tabs in Gruppen auch über die Befehlspalette und die Hinweise erreichen, damit ich nicht erst die Liste öffnen muss.
+
+### Verbrauchsbalken
+
+106. Als Nutzer möchte ich in einem Claude-Tab ganz unten im Fenster sehen, welches Claude-Modell darin läuft, damit ich nicht nachfragen muss. In normalen Terminals soll kein Balken Platz wegnehmen.
+107. Als Nutzer möchte ich dort sehen, wie viel meines Session- und meines Wochenlimits verbraucht ist und wann beide zurückgesetzt werden, damit ich meine Arbeit danach einteilen kann.
+108. Als Nutzer möchte ich sehen, was die Session im angezeigten Tab über die API gekostet hätte, damit ich den Wert meines Abos einschätzen kann.
+109. Als Nutzer möchte ich, dass dieser Balken in THub Claudes eigene Statuszeile ersetzt, damit das Terminal mehr Platz hat und nichts doppelt steht.
 
 ## Implementierungsentscheidungen
 
@@ -734,6 +741,12 @@ Der gespeicherte Zustand wird auf Version 2 angehoben, mit automatischer Überna
 - **Status:** Der Gruppen-Tab zeigt den dringendsten Status seiner Tabs: wartet, fertig, arbeitet, Prozesse, pausiert; sonst gedämpft das Ordner-Symbol.
 - **Tastatur:** `Ctrl+Tab`, `Ctrl+PageDown`/`PageUp` und `Ctrl+1` … `Ctrl+9` zählen die Einträge der Leiste; eine Gruppe zählt als ihr gewählter Tab. Keine neuen Kürzel. Befehlspalette und Hinweise nennen Tabs in Gruppen als „Gruppenname › Tabname“ und zeigen sie direkt an.
 - **Verworfen:** aufklappbare Gruppe wie im Browser, Seitenleiste mit Ordnern, automatische Gruppen nach Ordner. Einzelheiten in Ticket 36.
+
+**Verbrauchsbalken (Ticket 38, vom Nutzer am 2026-11-27 gewählt):**
+- **Nur in Claude-Tabs:** Ist der angezeigte Tab ein Claude-Tab, steht ganz unten im Fenster eine Zeile mit dem Modell, dem Verbrauch der Session (5-Stunden-Fenster) samt Reset, den Kosten der Session zum Listenpreis der API und dem Wochenlimit samt Reset. Session und Woche haben je einen Mini-Balken, ein Reset steht als Uhrzeit da. In normalen Terminals gibt es keinen Balken.
+- **Daten:** aus dem JSON der Statuszeile von Claude Code. THub setzt dafür in seiner Hook-Datei einen eigenen Eintrag `statusLine`, der das JSON mit `curl.exe` an die lokale Schnittstelle weiterleitet und nichts ausgibt. Modell und Kosten gelten pro Tab. Die Limits gelten für das Konto, der neueste Stand aus allen Tabs gewinnt, und sie werden gespeichert.
+- **Ersetzt Claudes Statuszeile** in Sessions, die THub startet. Ist der Balken in den Einstellungen aus, setzt THub keinen Eintrag `statusLine`.
+- **Verworfen:** die Statuszeile des Nutzers durchreichen, umschaltbar machen, nur Zahlen, Restzeit statt Uhrzeit. Einzelheiten in Ticket 38.
 
 **Präzisierungen aus der Umsetzung (Ticket 36):**
 - **Regeln im Kern:** Gruppen anlegen, Tabs hinein- und herausschieben, umbenennen, verschieben, auflösen, schliessen und „Neues Terminal“ in der Gruppe sind Befehle des Kerns (`createGroup`, `moveTabToGroup`, `removeTabFromGroup`, `renameGroup`, `moveGroup`, `dissolveGroup`, `closeGroup`, `newTabInGroup`).

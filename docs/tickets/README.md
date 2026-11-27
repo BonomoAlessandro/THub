@@ -59,6 +59,7 @@ Die Tickets zerlegen die [Spezifikation](../specs/termhub-v2.md) in Abschnitte, 
 | 35 | [Hinweise: Abstand zur Eingabe und Lage in Claude-Tabs](35-abstand-und-claude-tabs.md) | AFK | – | erledigt |
 | 36 | [Tabs zu Gruppen zusammenfassen](36-tab-gruppen.md) | AFK | – | erledigt |
 | 37 | [„Arbeitet“, solange Hintergrund-Agenten rechnen](37-status-hintergrund-agenten.md) | AFK | – | offen |
+| 38 | [Balken mit Modell, Verbrauch und Limits](38-verbrauchsbalken.md) | AFK | – | offen |
 
 ```mermaid
 flowchart LR
