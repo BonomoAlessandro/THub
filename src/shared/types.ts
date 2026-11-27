@@ -120,11 +120,21 @@ export interface GroupSnapshot {
    */
   selectedTabId: string;
   /**
-   * Der dringendste Status ihrer Tabs, in der Reihenfolge wartet, fertig, arbeitet, Prozesse, pausiert; `idle`, wenn
-   * keiner davon zutrifft (der Gruppen-Tab zeigt dann gedämpft das Ordner-Symbol).
+   * Der Status des gewählten Tabs (Ticket 40; bis dahin der dringendste aller Tabs der Gruppe). Ruht er (`idle`), zeigt
+   * der Gruppen-Tab gedämpft das Ordner-Symbol.
    */
   status: TabStatus;
+  /** Der Punkt am Pfeil des Gruppen-Tabs (Ticket 40): ob ein anderer Tab der Gruppe auf dich wartet oder fertig ist. */
+  dot: GroupDot;
 }
+
+/**
+ * Punkt am Pfeil des Gruppen-Tabs (Ticket 40), nur für die anderen Tabs der Gruppe, nie für den gewählten:
+ * - `waiting`: mindestens einer wartet auf dich (orange); geht vor `finished`;
+ * - `finished`: mindestens einer ist fertig und noch nicht angeschaut (grün);
+ * - `none`: keiner davon; andere Zustände (arbeitet, Prozesse laufen, pausiert) ergeben keinen Punkt.
+ */
+export type GroupDot = 'waiting' | 'finished' | 'none';
 
 /**
  * Warum ein Tab vor dem Schliessen nachfragt, nach den eigentlichen Merkmalen, nicht nach dem angezeigten Symbol:

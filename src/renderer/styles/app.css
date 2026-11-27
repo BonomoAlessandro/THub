@@ -265,6 +265,7 @@ svg.i {
   color: var(--text-muted);
 }
 .grp-list {
+  position: relative;
   display: grid;
   place-items: center;
   width: 20px;
@@ -284,6 +285,26 @@ svg.i {
 .tab.group.open .grp-list {
   background: var(--hover-strong);
   color: var(--text);
+}
+/*
+ * Punkt am Pfeil (Ticket 40): Ein anderer Tab der Gruppe wartet auf dich (orange) oder ist fertig (grün), in den Farben
+ * der Status-Symbole. Klein, ruhig und ohne Animation, oben rechts im 20-px-Feld des Pfeils, mit gut einem Pixel Abstand
+ * zu dessen rechter Spitze. Er liegt absolut: Pfeil und Gruppen-Tab behalten Grösse und Lage.
+ */
+.grp-dot {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.grp-dot[data-s='waiting'] {
+  background: var(--st-waiting);
+}
+.grp-dot[data-s='finished'] {
+  background: var(--st-finished);
 }
 /* Umbenennen eines Tabs der Gruppe: Der Gruppenname bleibt gedämpft davor stehen. */
 .grp-prefix {

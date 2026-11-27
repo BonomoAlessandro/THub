@@ -536,7 +536,23 @@ describe('Hintergrund-Agenten (Ticket 37)', () => {
       ]);
     });
 
-    it('der Gruppen-Tab zeigt „arbeitet“, wenn ein Tab der Gruppe nur wegen eines Agenten arbeitet', async () => {
+    it('der Gruppen-Tab zeigt „arbeitet“, wenn sein gewählter Tab nur wegen eines Agenten arbeitet', async () => {
+      const c = await startClaude();
+      const group = c.h.workspace.createGroup(c.tabId);
+      c.h.workspace.moveTabToGroup(c.otherTabId, group);
+      // Der Claude-Tab ist der gewählte Tab der Gruppe; angezeigt wird ein dritter Tab ausserhalb der Gruppe.
+      c.h.workspace.activateTab(c.tabId);
+      c.h.workspace.activateTab(c.h.workspace.createTab());
+
+      await agentInBackground(c);
+
+      expect(groupOf(c.h, group)).toMatchObject({ selectedTabId: c.tabId, status: 'working', dot: 'none' });
+      await c.endAgent(A);
+      c.h.clock.advance(AGENT_REPORT_QUIET_MS);
+      expect(groupOf(c.h, group)).toMatchObject({ status: 'finished', dot: 'none' });
+    });
+
+    it('ist der Tab mit dem Agenten nicht gewählt, kommt der grüne Punkt am Pfeil erst am Schluss (Ticket 40)', async () => {
       const c = await startClaude();
       const group = c.h.workspace.createGroup(c.tabId);
       c.h.workspace.moveTabToGroup(c.otherTabId, group);
@@ -544,10 +560,12 @@ describe('Hintergrund-Agenten (Ticket 37)', () => {
 
       await agentInBackground(c);
 
-      expect(groupOf(c.h, group).status).toBe('working');
+      // Das Symbol zeigt den gewählten Tab; „arbeitet“ in einem anderen ergibt keinen Punkt.
+      expect(groupOf(c.h, group)).toMatchObject({ selectedTabId: c.otherTabId, status: 'idle', dot: 'none' });
       await c.endAgent(A);
+      expect(groupOf(c.h, group).dot).toBe('none');
       c.h.clock.advance(AGENT_REPORT_QUIET_MS);
-      expect(groupOf(c.h, group).status).toBe('finished');
+      expect(groupOf(c.h, group)).toMatchObject({ status: 'idle', dot: 'finished' });
     });
   });
 });

@@ -2,20 +2,27 @@
 // wieder öffnen), regelt der Kern in `workspace.ts`; hier stehen die Rechnungen, die er dafür braucht.
 
 import { barEntries, entryTabs } from '../../shared/barEntries';
-import type { TabStatus } from '../../shared/types';
+import type { GroupDot, TabStatus } from '../../shared/types';
+
+/** Was der Gruppen-Tab zeigt (Ticket 40): das Status-Symbol und den Punkt am Pfeil. */
+export interface GroupDisplay {
+  status: TabStatus;
+  dot: GroupDot;
+}
 
 /**
- * Reihenfolge, in der der Gruppen-Tab den Status seiner Tabs zeigt, dringendster zuerst: Wer auf dich wartet, geht vor
- * fertiger, noch nicht angeschauter Arbeit, die vor laufender, laufende Prozesse vor einer pausierten Session.
+ * Status und Punkt einer Gruppe (Ticket 40, ersetzt den dringendsten Status aus Ticket 36). Das Symbol zeigt genau den
+ * Status des gewählten Tabs, wie an einem Tab; ruht er, zeigt der Gruppen-Tab gedämpft das Ordner-Symbol. Den Punkt am
+ * Pfeil bestimmen nur die anderen Tabs: orange, wenn einer davon auf dich wartet, sonst grün, wenn einer fertig ist.
+ * Arbeitet, Prozesse laufen und pausiert ergeben keinen Punkt; eine Gruppe mit einem einzigen Tab hat nie einen.
+ * @param selected der angezeigte Status des gewählten Tabs
+ * @param others die angezeigten Status der übrigen Tabs der Gruppe, in beliebiger Reihenfolge
  */
-export const GROUP_STATUS_ORDER: readonly TabStatus[] = ['waiting', 'finished', 'working', 'processes', 'paused'];
-
-/**
- * Der Status einer Gruppe: der dringendste Status ihrer Tabs nach `GROUP_STATUS_ORDER`, sonst `idle` (der Gruppen-Tab
- * zeigt dann gedämpft das Ordner-Symbol).
- */
-export function groupStatus(statuses: readonly TabStatus[]): TabStatus {
-  return GROUP_STATUS_ORDER.find((status) => statuses.includes(status)) ?? 'idle';
+export function groupDisplay(selected: TabStatus, others: readonly TabStatus[]): GroupDisplay {
+  let dot: GroupDot = 'none';
+  if (others.includes('waiting')) dot = 'waiting';
+  else if (others.includes('finished')) dot = 'finished';
+  return { status: selected, dot };
 }
 
 /**

@@ -1,6 +1,7 @@
 import type { MouseEvent, PointerEvent } from 'react';
 import type { GroupSnapshot, TabSnapshot } from '../../shared/types';
 import { ChevronIcon } from '../icons';
+import { groupListLabel } from './groupLabels';
 import { RenameInput } from './Tab';
 import { GroupIcon } from './TabIcon';
 
@@ -11,6 +12,8 @@ interface GroupTabProps {
   group: GroupSnapshot;
   /** Der gewählte Tab der Gruppe; seinen Namen zeigt der Gruppen-Tab. */
   selected: TabSnapshot;
+  /** Die Tabs der Gruppe in ihrer Reihenfolge; die Beschriftung des Pfeils nennt, wie viele davon den Punkt ergeben. */
+  members: readonly TabSnapshot[];
   /** Der gewählte Tab ist der aktive: Der Gruppen-Tab sieht aus wie ein aktiver Tab. */
   active: boolean;
   renaming: GroupRenaming | null;
@@ -37,14 +40,17 @@ interface GroupTabProps {
 }
 
 /**
- * Gruppen-Tab (Ticket 36): ein einziger Eintrag in der Leiste, mit den Massen eines Tabs. Er zeigt den Status der Gruppe
- * (sonst gedämpft ein Ordner), „Gruppenname · gewählter Tab“, gekürzt mit „…“, gedämpft die Zahl der Tabs und einen
- * Pfeil, der die Liste der Tabs öffnet. Beim Umbenennen der Gruppe wird der Name zum Eingabefeld; beim Umbenennen eines
- * ihrer Tabs der Teil hinter dem Gruppennamen.
+ * Gruppen-Tab (Ticket 36): ein einziger Eintrag in der Leiste, mit den Massen eines Tabs. Er zeigt den Status des
+ * gewählten Tabs (Ticket 40; ruht er, gedämpft ein Ordner), „Gruppenname · gewählter Tab“, gekürzt mit „…“, gedämpft die
+ * Zahl der Tabs und einen Pfeil, der die Liste der Tabs öffnet. Wartet ein anderer Tab der Gruppe auf dich oder ist er
+ * fertig, trägt der Pfeil oben rechts einen kleinen Punkt (orange bzw. grün); Pfeil und Gruppen-Tab behalten dabei
+ * Grösse und Lage. Beim Umbenennen der Gruppe wird der Name zum Eingabefeld; beim Umbenennen eines ihrer Tabs der Teil
+ * hinter dem Gruppennamen.
  */
 export function GroupTab({
   group,
   selected,
+  members,
   active,
   renaming,
   dragging,
@@ -116,7 +122,7 @@ export function GroupTab({
           </span>
           <button
             className="grp-list"
-            aria-label="Tabs der Gruppe"
+            aria-label={groupListLabel(group, members)}
             aria-haspopup="menu"
             aria-expanded={listOpen}
             onClick={(e) => {
@@ -127,6 +133,7 @@ export function GroupTab({
             }}
           >
             <ChevronIcon />
+            {group.dot !== 'none' && <span className="grp-dot" data-s={group.dot} aria-hidden="true" />}
           </button>
         </>
       )}

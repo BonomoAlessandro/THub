@@ -1,40 +1,55 @@
 import { describe, expect, it } from 'vitest';
-import { entryBoundary, gatherGroups, GROUP_STATUS_ORDER, groupStatus } from '../../src/main/workspace/groups';
+import { entryBoundary, gatherGroups, groupDisplay } from '../../src/main/workspace/groups';
 import { barEntries } from '../../src/shared/barEntries';
 import type { TabStatus } from '../../src/shared/types';
 
-// Reine Regeln der Tab-Gruppen (Ticket 36): Status des Gruppen-Tabs, Einträge der Leiste und Stellen in der Liste.
+// Reine Regeln der Tab-Gruppen (Tickets 36 und 40): Status und Punkt des Gruppen-Tabs, Einträge der Leiste und Stellen
+// in der Liste.
 
-describe('Status einer Gruppe', () => {
-  it('ohne Tabs mit Status ruht sie: gedämpft das Ordner-Symbol', () => {
-    expect(groupStatus([])).toBe('idle');
-    expect(groupStatus(['idle', 'idle'])).toBe('idle');
-  });
+/** Alle Status, die ein Tab zeigen kann. */
+const ALL: readonly TabStatus[] = ['paused', 'waiting', 'working', 'finished', 'processes', 'idle'];
 
-  it('jeder Status eines einzelnen Tabs gilt auch für die Gruppe', () => {
-    for (const status of ['waiting', 'finished', 'working', 'processes', 'paused'] satisfies TabStatus[]) {
-      expect(groupStatus(['idle', status, 'idle'])).toBe(status);
+describe('Status und Punkt einer Gruppe (Ticket 40)', () => {
+  it('der Status ist genau der des gewählten Tabs, was auch immer die anderen zeigen', () => {
+    for (const selected of ALL) {
+      expect(groupDisplay(selected, []).status).toBe(selected);
+      expect(groupDisplay(selected, ['idle']).status).toBe(selected);
+      // Auch neben jedem anderen Status, also nie mehr der dringendste der Gruppe.
+      for (const other of ALL) expect(groupDisplay(selected, [other, 'idle']).status).toBe(selected);
     }
   });
 
-  it('der dringendste zählt, in der Reihenfolge wartet, fertig, arbeitet, Prozesse, pausiert', () => {
-    expect(GROUP_STATUS_ORDER).toEqual(['waiting', 'finished', 'working', 'processes', 'paused']);
-    // Jede Stufe schlägt alle, die nach ihr kommen, egal in welcher Reihenfolge die Tabs stehen.
-    for (const [rank, status] of GROUP_STATUS_ORDER.entries()) {
-      const lower = GROUP_STATUS_ORDER.slice(rank + 1);
-      expect(groupStatus([...lower, status, 'idle'])).toBe(status);
-      expect(groupStatus(['idle' as TabStatus, status, ...lower].reverse())).toBe(status);
-    }
+  it('der gewählte Tab ruht, ein anderer wartet: Status ruht (Ordner-Symbol), Punkt orange', () => {
+    expect(groupDisplay('idle', ['waiting'])).toEqual({ status: 'idle', dot: 'waiting' });
+    expect(groupDisplay('idle', ['idle', 'waiting', 'processes'])).toEqual({ status: 'idle', dot: 'waiting' });
   });
 
-  it('Beispiele aus dem Alltag', () => {
-    // Claude wartet in einem verborgenen Tab, in einem anderen ist es fertig: Das Warten geht vor.
-    expect(groupStatus(['finished', 'waiting'])).toBe('waiting');
-    // Fertige Arbeit geht vor laufender, damit sie nicht übersehen wird.
-    expect(groupStatus(['working', 'finished'])).toBe('finished');
-    expect(groupStatus(['processes', 'working'])).toBe('working');
-    expect(groupStatus(['paused', 'processes'])).toBe('processes');
-    expect(groupStatus(['paused', 'idle'])).toBe('paused');
+  it('ein anderer ist fertig: Punkt grün; einer wartet und einer ist fertig: orange', () => {
+    expect(groupDisplay('idle', ['finished'])).toEqual({ status: 'idle', dot: 'finished' });
+    expect(groupDisplay('working', ['idle', 'finished'])).toEqual({ status: 'working', dot: 'finished' });
+    // Orange geht vor, in welcher Reihenfolge die Tabs auch stehen.
+    expect(groupDisplay('idle', ['waiting', 'finished'])).toEqual({ status: 'idle', dot: 'waiting' });
+    expect(groupDisplay('idle', ['finished', 'waiting'])).toEqual({ status: 'idle', dot: 'waiting' });
+  });
+
+  it('der gewählte Tab wartet, ein anderer ist fertig: Status wartet, Punkt grün', () => {
+    expect(groupDisplay('waiting', ['finished'])).toEqual({ status: 'waiting', dot: 'finished' });
+  });
+
+  it('der Punkt gilt nur den anderen Tabs: Wartet oder ist nur der gewählte fertig, gibt es keinen', () => {
+    expect(groupDisplay('waiting', ['idle', 'working'])).toEqual({ status: 'waiting', dot: 'none' });
+    expect(groupDisplay('finished', ['idle'])).toEqual({ status: 'finished', dot: 'none' });
+  });
+
+  it('andere Tabs arbeiten, haben Prozesse oder sind pausiert: kein Punkt', () => {
+    for (const other of ['working', 'processes', 'paused', 'idle'] satisfies TabStatus[]) {
+      expect(groupDisplay('idle', [other]).dot).toBe('none');
+    }
+    expect(groupDisplay('finished', ['working', 'processes', 'paused', 'idle']).dot).toBe('none');
+  });
+
+  it('eine Gruppe mit einem einzigen Tab hat nie einen Punkt', () => {
+    for (const selected of ALL) expect(groupDisplay(selected, [])).toEqual({ status: selected, dot: 'none' });
   });
 });
 

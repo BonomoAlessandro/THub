@@ -41,6 +41,18 @@ function group(h: TestWorkspace, groupId: string): GroupSnapshot {
   return found;
 }
 
+/**
+ * Status und Punkt des Gruppen-Tabs, wie sie die Oberfläche zuletzt bekommen hat (Ereignis `tabs`); der Zustand des
+ * Kerns sagt dasselbe.
+ */
+function shownGroup(h: TestWorkspace, groupId: string): Pick<GroupSnapshot, 'status' | 'dot'> {
+  const sent = h.eventsOfType('tabs').at(-1)?.groups.find((g) => g.id === groupId);
+  if (!sent) throw new Error(`Keine Gruppe ${groupId} im letzten Ereignis`);
+  const { status, dot } = group(h, groupId);
+  expect({ status: sent.status, dot: sent.dot }).toEqual({ status, dot });
+  return { status, dot };
+}
+
 function ids(h: TestWorkspace): string[] {
   return h.tabs().map((t) => t.id);
 }
@@ -79,7 +91,7 @@ describe('Tab-Gruppen', () => {
       expect(bar(h)).toEqual(['anna', ['api', 'api'], 'notes']);
       expect(ids(h)).toEqual([anna, api, notes]);
       expect(h.snapshot().groups).toEqual([
-        { id: g, name: 'api', tabIds: [api], selectedTabId: api, status: 'idle' },
+        { id: g, name: 'api', tabIds: [api], selectedTabId: api, status: 'idle', dot: 'none' },
       ]);
       expect(h.tabs().find((t) => t.id === api)?.groupId).toBe(g);
       // Der aktive Tab bleibt; erst die Tabs, dann die Meldung für das Umbenennen.
@@ -408,7 +420,9 @@ describe('Tab-Gruppen', () => {
       ];
       await h.probe(tree);
       await h.probe(tree);
-      expect(group(h, g).status).toBe('processes');
+      expect(h.tabs().find((t) => t.id === api)?.status).toBe('processes');
+      // Der Gruppen-Tab zeigt den gewählten Tab db (er wird angezeigt); laufende Prozesse in api ergeben keinen Punkt.
+      expect(group(h, g)).toMatchObject({ selectedTabId: db, status: 'idle', dot: 'none' });
 
       h.workspace.closeGroup(g);
 
@@ -715,7 +729,7 @@ describe('Tab-Gruppen', () => {
         });
 
         expect(h.snapshot().groups).toEqual([
-          { id: 'g2', name: 'Zwei', tabIds: ['b', 'c'], selectedTabId: 'b', status: 'idle' },
+          { id: 'g2', name: 'Zwei', tabIds: ['b', 'c'], selectedTabId: 'b', status: 'idle', dot: 'none' },
         ]);
       });
 
@@ -788,7 +802,57 @@ describe('Tab-Gruppen', () => {
   });
 
   describe('Status und Hinweise', () => {
-    it('der Gruppen-Tab zeigt den dringendsten Status; ein Klick auf den Hinweis zeigt genau diesen Tab der Gruppe', async () => {
+    it('zwei Claude-Tabs: Das Symbol zeigt den gewählten Tab, der Punkt am Pfeil den anderen (Ticket 40)', async () => {
+      const h = await startWorkspaceWithApi({ homeDir: HOME, directories: [API, WEB] });
+      const apiId = h.workspace.createTab({ cwd: API });
+      const webId = h.workspace.createTab({ cwd: WEB });
+      const g = h.workspace.createGroup(apiId);
+      h.workspace.moveTabToGroup(webId, g);
+      h.workspace.activateTab(apiId);
+      h.showAllViews();
+      h.workspace.windowForeground(true);
+      h.workspace.windowVisible(true);
+      const api = await ClaudeTab.launch(h, apiId);
+      const web = await ClaudeTab.launch(h, webId);
+      expect(shownGroup(h, g)).toEqual({ status: 'idle', dot: 'none' });
+
+      // Im nicht gewählten Tab arbeitet Claude: Der Gruppen-Tab zeigt weiter den gewählten Tab, ohne Punkt.
+      await web.send('UserPromptSubmit');
+      expect(web.status()).toBe('working');
+      expect(shownGroup(h, g)).toEqual({ status: 'idle', dot: 'none' });
+
+      // Er fragt nach: Punkt orange, dazu wie bisher der Hinweis.
+      await web.send('PreToolUse-Bash');
+      await web.send('PermissionRequest-Bash');
+      expect(web.status()).toBe('waiting');
+      expect(shownGroup(h, g)).toEqual({ status: 'idle', dot: 'waiting' });
+      expect(web.toast()).toMatchObject({ kind: 'waiting', tabId: webId });
+
+      // Im gewählten Tab arbeitet Claude: Das Symbol folgt ihm, der Punkt bleibt.
+      await api.send('UserPromptSubmit');
+      expect(shownGroup(h, g)).toEqual({ status: 'working', dot: 'waiting' });
+
+      // Die Rückfrage ist beantwortet, und Claude wird im nicht sichtbaren Tab fertig: Punkt grün.
+      await web.send('PostToolUse-Bash');
+      await web.stop();
+      expect(web.status()).toBe('finished');
+      expect(shownGroup(h, g)).toEqual({ status: 'working', dot: 'finished' });
+      expect(web.toast()).toMatchObject({ kind: 'finished', tabId: webId });
+
+      // Den Tab anzeigen macht ihn zum gewählten: Der Punkt ist weg, das Symbol folgt ihm. Dass api arbeitet, ergibt
+      // keinen Punkt.
+      h.workspace.activateTab(webId);
+      expect(group(h, g).selectedTabId).toBe(webId);
+      expect(web.status()).toBe('idle');
+      expect(shownGroup(h, g)).toEqual({ status: 'idle', dot: 'none' });
+
+      // Jetzt ist api der andere Tab: Wird es dort fertig, trägt der Pfeil den grünen Punkt.
+      await api.stop();
+      expect(api.status()).toBe('finished');
+      expect(shownGroup(h, g)).toEqual({ status: 'idle', dot: 'finished' });
+    });
+
+    it('ein Klick auf den Hinweis zeigt genau diesen Tab der Gruppe; danach ist der Punkt weg', async () => {
       const h = await startWorkspaceWithApi({ homeDir: HOME, directories: [API, WEB] });
       const shown = h.activeTab()!.id;
       const api = h.workspace.createTab({ cwd: API });
@@ -803,10 +867,10 @@ describe('Tab-Gruppen', () => {
 
       // Die Gruppe ist aktiv (api wird angezeigt); das genügt nicht, damit web als angeschaut gilt.
       await claude.send('UserPromptSubmit');
-      expect(group(h, g).status).toBe('working');
+      expect(shownGroup(h, g)).toEqual({ status: 'idle', dot: 'none' });
       await claude.stop();
       expect(claude.status()).toBe('finished');
-      expect(group(h, g).status).toBe('finished');
+      expect(shownGroup(h, g)).toEqual({ status: 'idle', dot: 'finished' });
       const toast = claude.toast();
       expect(toast).toMatchObject({ kind: 'finished', tabId: web });
 
@@ -816,7 +880,7 @@ describe('Tab-Gruppen', () => {
       expect(active(h)).toBe(web);
       expect(group(h, g).selectedTabId).toBe(web);
       expect(claude.status()).toBe('idle');
-      expect(group(h, g).status).toBe('idle');
+      expect(shownGroup(h, g)).toEqual({ status: 'idle', dot: 'none' });
       expect(claude.toasts()).toEqual([]);
     });
 
@@ -837,7 +901,8 @@ describe('Tab-Gruppen', () => {
       h.showAllViews();
 
       expect(h.tabs().find((t) => t.id === web)).toMatchObject({ paused: true, groupId: g });
-      expect(group(h, g)).toMatchObject({ selectedTabId: api, status: 'paused' });
+      // Der Gruppen-Tab zeigt den gewählten Tab api; pausiert ergibt keinen Punkt (Ticket 40).
+      expect(group(h, g)).toMatchObject({ selectedTabId: api, status: 'idle', dot: 'none' });
       h.workspace.activateTab(api);
       expect(h.terminal.startsFor(web)).toEqual([]);
 
