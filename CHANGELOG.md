@@ -2,6 +2,12 @@
 
 Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in Klammern verweisen auf die Tickets in [docs/tickets](docs/tickets/README.md). Wie Versionen vergeben werden, steht in [docs/entwicklung.md](docs/entwicklung.md#version-und-installer). Welche Version installiert ist, zeigt THub unten in den Einstellungen.
 
+## Unveröffentlicht
+
+**Korrigiert**
+
+- Ein Claude-Tab zeigt „arbeitet“, solange darin noch ein Agent im Hintergrund rechnet, auch wenn Claude seine Antwort schon beendet hat. Grün und der Hinweis „fertig“ kommen erst, wenn alles fertig ist. Vorher stand der Tab dabei teils minutenlang auf „ruht“. Eine Claude-Session, die schon lief, erkennt die Agenten erst nach einem Neustart oder Fortsetzen von Claude. (37)
+
 ## 0.4.0 – 2026-11-26
 
 **Neu**
