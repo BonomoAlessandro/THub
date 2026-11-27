@@ -31,8 +31,8 @@ export function TabIcon({ kind, status }: TabIconProps) {
 }
 
 /**
- * Symbol-Platz am Gruppen-Tab (Ticket 36): der dringendste Status ihrer Tabs (der Kern rechnet ihn aus), mit denselben
- * Symbolen und Animationen wie am Tab; ruhen alle, gedämpft das Ordner-Symbol.
+ * Symbol-Platz am Gruppen-Tab (Ticket 36): der Status des gewählten Tabs (Ticket 40; der Kern schickt ihn mit der
+ * Gruppe), mit denselben Symbolen und Animationen wie am Tab; ruht er, gedämpft das Ordner-Symbol.
  */
 export function GroupIcon({ status }: { status: TabStatus }) {
   return (

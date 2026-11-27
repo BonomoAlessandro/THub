@@ -269,7 +269,7 @@ Eine Gruppe legst du über den Rechtsklick auf einen Tab an („Neue Gruppe“);
 
 - [ ] Eine Gruppe aus zwei, drei Tabs anlegen, umbenennen, per Liste zwischen ihnen wechseln. Die Leiste bleibt kurz, der Gruppen-Tab zeigt den gewählten Tab. (T36)
 - [ ] Einen Tab auf den Gruppen-Tab ziehen (der Gruppen-Tab ist dabei hervorgehoben); die Gruppe als Ganzes umsortieren. (T36)
-- [ ] **[Claude]** Claude in einem Tab der Gruppe, der gerade nicht gewählt ist: Der Gruppen-Tab zeigt „arbeitet“, dann „wartet“ oder „fertig“. Ein Klick auf den Hinweis („Gruppenname › Tabname“) zeigt genau diesen Tab. (T36)
+- [ ] **[Claude]** Claude in einem Tab der Gruppe, der gerade nicht gewählt ist: Das Symbol des Gruppen-Tabs bleibt beim Status des gewählten Tabs; wartet Claude dort oder wird fertig, trägt der Pfeil einen orangen bzw. grünen Punkt (seit Ticket 40; vorher zeigte das Symbol „arbeitet“, dann „wartet“ oder „fertig“). Ein Klick auf den Hinweis („Gruppenname › Tabname“) zeigt genau diesen Tab. (T36, T40)
 - [ ] „Gruppe schliessen“ mit einem laufenden Programm darin: eine Rückfrage. Danach holt `Ctrl+Shift+Z` die Gruppe Tab für Tab zurück, auch schnell hintereinander gedrückt, und jede Shell läuft wieder. (T36)
 - [ ] THub neu starten: Gruppen, Namen und gewählte Tabs sind wieder da. (T36)
 - [ ] Aussehen hell und dunkel, auch die offene Liste. (T36)
@@ -287,7 +287,16 @@ Mit echtem Claude Code, das nach dem Update in THub neu gestartet oder fortgeset
 - [ ] **[Claude]** Einen laufenden Agenten in der Aufgabenliste stoppen (`/tasks`, Taste `x`, Liste schliessen): Der Tab ruht danach bzw. wird grün und bleibt nicht violett hängen. (T37)
 - [ ] **[Claude]** `/clear`, während ein Agent läuft: Der Tab bleibt violett, bis der Agent fertig ist; nach einem Neustart von THub kommt die neue Session zurück. (T37)
 - [ ] **[Claude]** Im Modus mit Rückfragen fragt ein Agent nach einer Berechtigung: orange, im nicht sichtbaren Tab mit Hinweis „wartet“; nach der Antwort wieder violett. (T37)
-- [ ] **[Claude]** Tab schliessen, während nur noch ein Agent rechnet: Rückfrage „arbeitet“. Ein Tab in einer Gruppe, in dem nur ein Agent rechnet: Der Gruppen-Tab zeigt „arbeitet“. (T37)
+- [ ] **[Claude]** Tab schliessen, während nur noch ein Agent rechnet: Rückfrage „arbeitet“. Ist ein Tab, in dem nur ein Agent rechnet, der gewählte Tab seiner Gruppe, zeigt der Gruppen-Tab „arbeitet“; ist er es nicht, kommt am Schluss der grüne Punkt am Pfeil (seit Ticket 40). (T37, T40)
+
+## Gruppen-Tab zeigt den gewählten Tab (Ticket 40)
+
+Eine Gruppe aus zwei Claude-Tabs legst du an wie bei Ticket 36. Wie Symbol und Punkt am Pfeil sich verhalten, steht im [Handbuch](handbuch.md#gruppen).
+
+- [ ] **[Claude]** Eine Gruppe mit zwei Claude-Sessions; in der nicht gewählten arbeitet Claude. Der Gruppen-Tab zeigt den Status der gewählten Session, ohne Punkt am Pfeil. (T40)
+- [ ] **[Claude]** Die nicht gewählte Session fragt nach oder wird fertig: ein oranger bzw. grüner Punkt oben rechts am Pfeil, dazu wie bisher ein Hinweis. Fragt die eine nach und ist die andere fertig, bleibt der Punkt orange. Nach dem Wechsel auf diese Session (Liste, Hinweis oder Palette) ist der Punkt weg, und das Symbol zeigt ihren Status. (T40)
+- [ ] **[Claude]** Tooltip am Gruppen-Tab mit Punkt: Die Zeile „Status“ nennt den gewählten Tab, darunter „Andere“ mit dem wartenden bzw. fertigen Tab, etwa „web wartet auf dich“. (T40)
+- [ ] Aussehen hell und dunkel, Gruppe aktiv und nicht aktiv: Der Punkt ist gut zu sehen, aber ruhig; der Pfeil bleibt an seiner Stelle, und der Gruppen-Tab wird nicht breiter. (T40)
 
 ## App-Symbol (Ticket 29)
 

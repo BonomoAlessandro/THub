@@ -1,13 +1,23 @@
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MenuEntry } from '../../src/renderer/popup/Menu';
 import type { PaletteContext, PaletteGroup, PaletteItem } from '../../src/renderer/palette/paletteEntries';
 import type { TerminalView } from '../../src/renderer/terminal/TerminalView';
-import type { ClosedTabInfo, GroupSnapshot, TabSnapshot, THubApi, WorkspaceCommand } from '../../src/shared/types';
+import type {
+  ClosedTabInfo,
+  GroupSnapshot,
+  TabSnapshot,
+  TabStatus,
+  THubApi,
+  WorkspaceCommand,
+} from '../../src/shared/types';
 import { startWorkspace, type TestWorkspace } from '../support/harness';
 
 // Tab-Gruppen in der Oberfläche (Ticket 36): Einträge der Befehlspalette mit Gruppennamen und den Befehlen zu Gruppen,
-// das Rechtsklick-Menü am Tab und am Gruppen-Tab, die Liste der Gruppe und wie Hinweise einen Tab nennen. Alles ohne
-// Fenster: `window.thub` ist nachgemacht und zeichnet die Befehle an den Kern auf.
+// das Rechtsklick-Menü am Tab und am Gruppen-Tab, die Liste der Gruppe und wie Hinweise einen Tab nennen; dazu Tooltip,
+// Pfeil und Punkt am Gruppen-Tab (Ticket 40). Alles ohne Fenster: `window.thub` ist nachgemacht und zeichnet die Befehle
+// an den Kern auf.
 
 const sent: WorkspaceCommand[] = [];
 const fakeApi: Partial<THubApi> = {
@@ -22,6 +32,8 @@ const { closedGroups, rootGroups } = await import('../../src/renderer/palette/pa
 const { searchGroups } = await import('../../src/renderer/palette/search');
 const { tabMenuEntries } = await import('../../src/renderer/tabs/tabMenu');
 const { groupListEntries, groupMenuEntries } = await import('../../src/renderer/tabs/groupMenu');
+const { groupListLabel, groupTipRows } = await import('../../src/renderer/tabs/groupLabels');
+const { GroupTab } = await import('../../src/renderer/tabs/GroupTab');
 const { tabLabel } = await import('../../src/renderer/tabs/tabLabel');
 const { terminalViews } = await import('../../src/renderer/terminal/terminalViews');
 
@@ -48,8 +60,16 @@ const TABS = [
   tab('d', 'db', { groupId: 'g', status: 'processes' }),
   tab('n', 'notes'),
 ];
-const KUNDE: GroupSnapshot = { id: 'g', name: 'Kunde X', tabIds: ['a', 'w', 'd'], selectedTabId: 'a', status: 'waiting' };
-const PRIVAT: GroupSnapshot = { id: 'p', name: 'privat', tabIds: ['x'], selectedTabId: 'x', status: 'idle' };
+/** Wie der Kern sie schickt (Ticket 40): der Status des gewählten Tabs api, ein oranger Punkt, weil web wartet. */
+const KUNDE: GroupSnapshot = {
+  id: 'g',
+  name: 'Kunde X',
+  tabIds: ['a', 'w', 'd'],
+  selectedTabId: 'a',
+  status: 'idle',
+  dot: 'waiting',
+};
+const PRIVAT: GroupSnapshot = { id: 'p', name: 'privat', tabIds: ['x'], selectedTabId: 'x', status: 'idle', dot: 'none' };
 
 function palette(activeTabId: string | null, tabs = TABS, groups: GroupSnapshot[] = [KUNDE]) {
   const ui = { startRename: vi.fn(), startRenameGroup: vi.fn(), openSettings: vi.fn(), openShortcuts: vi.fn() };
@@ -303,6 +323,118 @@ describe('Gruppen-Tab: Menü und Liste', () => {
     menuItem(entries, 'web').context!({ x: 40, y: 80 });
     expect(onTabMenu).toHaveBeenCalledWith('w', { x: 40, y: 80 });
     expect(menuItem(entries, 'Neues Terminal').context).toBeUndefined();
+  });
+});
+
+describe('Gruppen-Tab: Tooltip, Pfeil und Punkt (Ticket 40)', () => {
+  /** Die Gruppe „Kunde X“ aus drei Claude-Tabs, api (gewählt), web und db, mit Status und Punkt, wie der Kern sie schickt. */
+  function kunde(
+    statuses: { a: TabStatus; w: TabStatus; d: TabStatus },
+    shown: Pick<GroupSnapshot, 'status' | 'dot'>,
+  ): { group: GroupSnapshot; tabs: TabSnapshot[] } {
+    const tabs = [
+      tab('a', 'api', { groupId: 'g', kind: 'claude', status: statuses.a }),
+      tab('w', 'web', { groupId: 'g', kind: 'claude', status: statuses.w }),
+      tab('d', 'db', { groupId: 'g', kind: 'claude', status: statuses.d }),
+    ];
+    return { group: { ...KUNDE, ...shown }, tabs };
+  }
+
+  /** Der Gruppen-Tab als HTML, wie ihn die Leiste zeichnet. */
+  function groupTabHtml(group: GroupSnapshot, tabs: TabSnapshot[]): string {
+    return renderToStaticMarkup(
+      createElement(GroupTab, {
+        group,
+        selected: tabs.find((t) => t.id === group.selectedTabId)!,
+        members: tabs,
+        active: false,
+        renaming: null,
+        dragging: false,
+        dropTarget: false,
+        listOpen: false,
+        onClick: vi.fn(),
+        onToggleList: vi.fn(),
+        onStartRename: vi.fn(),
+        onFinishRename: vi.fn(),
+        onHover: vi.fn(),
+        onPointerDown: vi.fn(),
+        onContextMenu: vi.fn(),
+      }),
+    );
+  }
+
+  /** Der Pfeil im HTML des Gruppen-Tabs, samt Inhalt. */
+  function arrow(html: string): string {
+    const match = /<button class="grp-list"[^>]*>.*?<\/button>/.exec(html);
+    if (!match) throw new Error('Kein Pfeil im Gruppen-Tab');
+    return match[0];
+  }
+
+  const BASE_ROWS = [
+    { label: 'Tabs', value: '3' },
+    { label: 'Gewählt', value: 'api' },
+    { label: 'Ordner', value: 'C:\\dev\\api', mono: true },
+    { label: 'Shell', value: 'PowerShell 7' },
+  ];
+
+  it('ohne Punkt: Der Tooltip endet mit dem Status des gewählten Tabs, der Pfeil heisst „Tabs der Gruppe“', () => {
+    // Die anderen arbeiten bzw. haben Prozesse: kein Punkt, und der Tooltip nennt sie nicht.
+    const { group, tabs } = kunde({ a: 'waiting', w: 'working', d: 'processes' }, { status: 'waiting', dot: 'none' });
+
+    expect(groupTipRows(group, tabs[0], tabs)).toEqual([...BASE_ROWS, { label: 'Status', value: 'Claude wartet auf dich' }]);
+    expect(groupListLabel(group, tabs)).toBe('Tabs der Gruppe');
+    const html = groupTabHtml(group, tabs);
+    expect(arrow(html)).toContain('aria-label="Tabs der Gruppe"');
+    expect(html).not.toContain('grp-dot');
+    // Das Symbol links zeigt den Status des gewählten Tabs.
+    expect(html).toMatch(/^<div class="tab group"[^>]*><span class="st" data-s="waiting"/);
+  });
+
+  it('oranger Punkt: darunter, welche anderen Tabs warten oder fertig sind; der Pfeil nennt den Grund', () => {
+    const { group, tabs } = kunde({ a: 'idle', w: 'finished', d: 'waiting' }, { status: 'idle', dot: 'waiting' });
+
+    // Wer wartet, steht vor dem, der fertig ist.
+    expect(groupTipRows(group, tabs[0], tabs)).toEqual([
+      ...BASE_ROWS,
+      { label: 'Status', value: 'Ruht' },
+      { label: 'Andere', value: 'db wartet auf dich' },
+      { label: '', value: 'web ist fertig' },
+    ]);
+    expect(groupListLabel(group, tabs)).toBe('Tabs der Gruppe, ein anderer Tab wartet auf dich');
+    const html = groupTabHtml(group, tabs);
+    const button = arrow(html);
+    expect(button).toContain('aria-label="Tabs der Gruppe, ein anderer Tab wartet auf dich"');
+    // Der Punkt liegt im Pfeil, nach dem Pfeil-Symbol, und ist für Bildschirmleser stumm. Sonst kommt nichts dazu.
+    expect(button).toMatch(/<\/svg><span class="grp-dot" data-s="waiting" aria-hidden="true"><\/span><\/button>$/);
+    expect(html.match(/grp-dot/g)).toHaveLength(1);
+    // Das Symbol links zeigt den gewählten Tab: Er ruht, also gedämpft der Ordner.
+    expect(html).toMatch(/^<div class="tab group"[^>]*><span class="st" data-s="idle"/);
+  });
+
+  it('grüner Punkt: Die Zeile darunter nennt den fertigen Tab; der gewählte Tab zählt nie mit', () => {
+    // api ist gewählt und wartet: Das zeigt das Symbol, nicht der Punkt.
+    const { group, tabs } = kunde({ a: 'waiting', w: 'idle', d: 'finished' }, { status: 'waiting', dot: 'finished' });
+
+    expect(groupTipRows(group, tabs[0], tabs)).toEqual([
+      ...BASE_ROWS,
+      { label: 'Status', value: 'Claude wartet auf dich' },
+      { label: 'Andere', value: 'db ist fertig' },
+    ]);
+    expect(groupListLabel(group, tabs)).toBe('Tabs der Gruppe, ein anderer Tab ist fertig');
+    expect(arrow(groupTabHtml(group, tabs))).toContain('<span class="grp-dot" data-s="finished" aria-hidden="true">');
+  });
+
+  it('mehrere andere Tabs: Der Pfeil nennt ihre Zahl, der Tooltip jeden mit Namen', () => {
+    const waiting = kunde({ a: 'working', w: 'waiting', d: 'waiting' }, { status: 'working', dot: 'waiting' });
+    expect(groupListLabel(waiting.group, waiting.tabs)).toBe('Tabs der Gruppe, 2 andere Tabs warten auf dich');
+    expect(groupTipRows(waiting.group, waiting.tabs[0], waiting.tabs).slice(-3)).toEqual([
+      { label: 'Status', value: 'Claude arbeitet' },
+      { label: 'Andere', value: 'web wartet auf dich' },
+      { label: '', value: 'db wartet auf dich' },
+    ]);
+
+    const finished = kunde({ a: 'idle', w: 'finished', d: 'finished' }, { status: 'idle', dot: 'finished' });
+    expect(groupListLabel(finished.group, finished.tabs)).toBe('Tabs der Gruppe, 2 andere Tabs sind fertig');
   });
 });
 

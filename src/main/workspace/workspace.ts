@@ -32,7 +32,7 @@ import {
 } from './claude';
 import { CwdReportScanner } from './cwdReport';
 import { folderName, rememberDir, uniqueName, type NamingContext } from './folders';
-import { entryBoundary, groupStatus } from './groups';
+import { entryBoundary, groupDisplay } from './groups';
 import { findOpenPoints, openPointsContext } from './openPoints';
 import {
   KeepAwakeError,
@@ -2117,19 +2117,25 @@ class WorkspaceCore implements Workspace {
     });
   }
 
-  /** Die Gruppen in der Reihenfolge der Leiste, mit dem dringendsten Status ihrer Tabs. */
+  /**
+   * Die Gruppen in der Reihenfolge der Leiste, mit dem Status ihres gewählten Tabs und dem Punkt für die anderen Tabs
+   * (Ticket 40).
+   */
   private groupSnapshots(): GroupSnapshot[] {
     const result: GroupSnapshot[] = [];
     for (const entry of barEntries(this.state.tabs)) {
       if (entry.kind !== 'group') continue;
       const group = this.findGroup(entry.groupId);
       if (!group) continue;
+      // Der gewählte Tab steht immer in der Gruppe (normalizeGroups, leaveGroup); sonst gilt wie beim Laden der erste.
+      const selected = entry.tabs.find((t) => t.id === group.selectedTabId) ?? entry.tabs[0];
+      const others = entry.tabs.filter((t) => t !== selected).map((t) => this.tabStatus(t));
       result.push({
         id: group.id,
         name: group.name,
         tabIds: entry.tabs.map((t) => t.id),
         selectedTabId: group.selectedTabId,
-        status: groupStatus(entry.tabs.map((t) => this.tabStatus(t))),
+        ...groupDisplay(this.tabStatus(selected), others),
       });
     }
     return result;

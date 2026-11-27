@@ -63,11 +63,13 @@ Rechtsklick auf einen Tab öffnet sein Menü an der Stelle des Klicks, ohne den 
 Mehrere Tabs lassen sich zu einer Gruppe zusammenfassen, etwa alle Konsolen eines Projekts. Eine Gruppe braucht in der Leiste nur den Platz eines Tabs; aus ihrer Liste wählst du die Konsole, die du sehen willst. Es ist immer genau ein Terminal zu sehen.
 
 ```
-[>_ termhub] [▤ Kunde X · api  3 ▾] [>_ notes]  +
+[>_ termhub] [▤ Kunde X · api  3 ▾•] [>_ notes]  +
 ```
 
-- **Gruppen-Tab:** Ordner-Symbol, „Gruppenname · gewählter Tab“ (zu Langes endet mit „…“), gedämpft die Zahl der Tabs und ein Pfeil. Der **gewählte Tab** ist der zuletzt angezeigte Tab der Gruppe. Wird er gerade angezeigt, ist die Gruppe aktiv und sieht aus wie ein aktiver Tab. Der Tooltip nennt Name und Zahl der Tabs, dazu Name, Ordner und Shell des gewählten Tabs und den Status der Gruppe.
-- **Status:** Das Symbol zeigt den dringendsten Status der Tabs der Gruppe, in dieser Reihenfolge: wartet, fertig, arbeitet, Prozesse laufen, pausiert. Ruhen alle, steht dort gedämpft der Ordner. „Fertig“ verschwindet erst, wenn genau dieser Tab angezeigt wird; dass seine Gruppe aktiv ist, genügt nicht.
+- **Gruppen-Tab:** Ordner-Symbol, „Gruppenname · gewählter Tab“ (zu Langes endet mit „…“), gedämpft die Zahl der Tabs und ein Pfeil. Der **gewählte Tab** ist der zuletzt angezeigte Tab der Gruppe. Wird er gerade angezeigt, ist die Gruppe aktiv und sieht aus wie ein aktiver Tab. Der Tooltip nennt Name und Zahl der Tabs, dazu Name, Ordner, Shell und als letzte Zeile den Status des gewählten Tabs. Trägt der Pfeil einen Punkt, nennen die Zeilen darunter („Andere“) die anderen Tabs, die auf dich warten oder fertig sind, etwa „web wartet auf dich“.
+- **Status:** Das Symbol zeigt den Status des gewählten Tabs, mit denselben Symbolen wie an einem Tab (siehe [Status am Tab](#status-am-tab)), auch wenn ein anderer Tab der Gruppe gerade mehr los hat. Ruht der gewählte Tab, steht dort gedämpft der Ordner.
+- **Punkt am Pfeil:** Wartet ein anderer Tab der Gruppe auf dich, trägt der Pfeil oben rechts einen kleinen orangen Punkt; ist einer fertig (noch nicht angeschaut), einen grünen. Wartet einer und ist ein anderer fertig, gilt orange. Arbeitet ein anderer Tab, laufen dort Prozesse oder ist er pausiert, gibt es keinen Punkt; der gewählte Tab zählt nie mit, sein Status steht ja links. Der Punkt ist ruhig, ohne Animation; der Pfeil bleibt, wo er ist. Er verschwindet, sobald kein anderer Tab mehr wartet oder fertig ist, etwa wenn du diesen Tab anzeigst. Die Liste zeigt, welcher Tab es ist, und wie bisher kommt für ihn ein Hinweis unten rechts.
+- „Fertig“ verschwindet erst, wenn genau dieser Tab angezeigt wird; dass seine Gruppe aktiv ist, genügt nicht.
 - **Klick** auf den Gruppen-Tab zeigt den gewählten Tab an. Ist die Gruppe schon aktiv, öffnet der Klick die Liste; der Pfeil öffnet sie immer.
 - **Liste:** die Tabs der Gruppe in ihrer Reihenfolge, mit Status- bzw. Typ-Symbol wie am Tab und einem Haken beim gewählten. Ein Klick zeigt den Tab an, er wird der gewählte. Ein Rechtsklick öffnet das Menü dieses Tabs. Unter dem Strich legt **Neues Terminal** einen Tab am Ende der Gruppe an und zeigt ihn: mit der Standard-Shell im aktuellen Ordner des gewählten Tabs, mit einem Namen nach dem Ordner. Bedienung auch mit Pfeiltasten, Enter und Escape.
 - **Anlegen:** Rechtsklick auf einen einzelnen Tab → „Neue Gruppe“. Die Gruppe steht an der Stelle des Tabs und heisst wie sein aktueller Ordner (bei Gleichstand mit einer anderen Gruppe mit „ 2“ usw.). Der Name ist gleich zum Ändern markiert: Enter übernimmt, Escape behält den Vorschlag. Gruppen in Gruppen gibt es nicht.
@@ -166,6 +168,7 @@ Links vom Tab-Namen zeigt ein Symbol, was im Tab los ist; der Tooltip nennt es a
 
 - Trifft mehreres zu, gilt: pausiert → wartet → arbeitet → fertig → Prozesse laufen → ruht.
 - Nicht sichtbar heisst: nicht der aktive Tab, oder das Fenster ist nicht im Vordergrund.
+- Ein Gruppen-Tab zeigt das Symbol seines gewählten Tabs; ob ein anderer Tab der Gruppe wartet oder fertig ist, zeigt ein Punkt am Pfeil (siehe [Gruppen](#gruppen)).
 - Bei reduzierter Bewegung (Windows-Einstellung) stehen die Animationen still; nur der Stern dreht sich langsam.
 - Wie THub die Zustände erkennt: [Status erkennen](#status-erkennen).
 

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
 import { barEntries } from '../../shared/barEntries';
 import type { GroupSnapshot, KeepAwakeMode, RecentDir, ShellOption, TabSnapshot } from '../../shared/types';
 import { setKeepAwake } from '../commands';
 import { ChevronIcon, GearIcon, PlusIcon } from '../icons';
 import { Menu, type MenuPoint } from '../popup/Menu';
 import { focusTerminal } from '../terminal/terminalViews';
+import { groupTipRows } from './groupLabels';
 import { groupListEntries, groupMenuEntries } from './groupMenu';
 import { GroupTab, type GroupRenaming } from './GroupTab';
 import { keepAwakeMenuEntries, KeepAwakeModeIcon, keepAwakeTooltip } from './keepAwakeMenu';
@@ -318,6 +319,7 @@ export function TabBar({
         key={group.id}
         group={group}
         selected={selected}
+        members={members}
         active={active}
         renaming={groupRenaming}
         dragging={group.id === draggingId}
@@ -506,16 +508,12 @@ export function TabBar({
         <Tooltip anchor={tip.anchor}>
           <b>{tipGroup.name}</b>
           <dl>
-            <dt>Tabs</dt>
-            <dd>{tipGroup.tabIds.length}</dd>
-            <dt>Gewählt</dt>
-            <dd>{tipSelected.name}</dd>
-            <dt>Ordner</dt>
-            <dd className="mono">{tipSelected.cwd}</dd>
-            <dt>Shell</dt>
-            <dd>{tipSelected.shellName}</dd>
-            <dt>Status</dt>
-            <dd>{STATUS_TEXT[tipGroup.status]}</dd>
+            {groupTipRows(tipGroup, tipSelected, tabs).map((row, i) => (
+              <Fragment key={i}>
+                <dt>{row.label}</dt>
+                <dd className={row.mono ? 'mono' : undefined}>{row.value}</dd>
+              </Fragment>
+            ))}
           </dl>
         </Tooltip>
       )}

@@ -1,6 +1,6 @@
 # 40 – Gruppen-Tab zeigt den Status des gewählten Tabs
 
-Status: `ready-for-agent` · Typ: AFK
+Status: `erledigt` (2026-11-27, Abnahme von Hand siehe `docs/abnahme.md`) · Typ: AFK
 Blockiert durch: 37 (beide ändern Status-Regeln; erst nach dem Zusammenführen von 37 beginnen)
 Herkunft: Wunsch des Nutzers am 2026-11-27. In einer Gruppe mit zwei oder mehr Claude-Sessions soll der angezeigte Status immer dem der gewählten Session der Gruppe entsprechen.
 Spezifikation: User Story 102 (geändert), „Oberfläche (Renderer)“ → „Tab-Gruppen (Ticket 36)“, Punkt „Status“ (geändert)
@@ -46,26 +46,26 @@ Verworfen: **nichts zusätzlich**, also nur Hinweise und die Liste der Gruppe.
 
 ## Akzeptanzkriterien
 
-- [ ] Tests der reinen Funktion:
+- [x] Tests der reinen Funktion:
   - Der Status ist für jeden möglichen Status des gewählten Tabs genau dieser;
   - der gewählte Tab ruht, ein anderer wartet → Status ruht, Punkt orange;
   - ein anderer fertig → Punkt grün; einer wartet und einer ist fertig → orange;
   - der gewählte Tab wartet und ein anderer ist fertig → Status wartet, Punkt grün;
   - andere Tabs arbeiten, haben Prozesse oder sind pausiert → kein Punkt;
   - eine Gruppe mit einem einzigen Tab hat nie einen Punkt.
-- [ ] Kern-Tests mit echten HTTP-Hook-Ereignissen, zwei Claude-Tabs in einer Gruppe:
+- [x] Kern-Tests mit echten HTTP-Hook-Ereignissen, zwei Claude-Tabs in einer Gruppe:
   - Der nicht gewählte Tab bekommt `UserPromptSubmit`: Der Gruppen-Tab zeigt den Status des gewählten Tabs, ohne Punkt.
   - Danach kommt `PermissionRequest`: Punkt orange.
   - Danach `Stop` im nicht sichtbaren Tab: Punkt grün.
   - Wird der Tab angezeigt (und damit gewählt), verschwindet der Punkt, und das Symbol folgt dem neu gewählten Tab.
-- [ ] Ein Test der Oberfläche (wie `test/renderer/groupEntries.test.ts`) deckt den Tooltip und die Beschriftung des Pfeils mit und ohne Punkt ab.
-- [ ] In der App im Testmodus über CDP auf der eigenen Seite:
+- [x] Ein Test der Oberfläche (wie `test/renderer/groupEntries.test.ts`) deckt den Tooltip und die Beschriftung des Pfeils mit und ohne Punkt ab.
+- [x] In der App im Testmodus über CDP auf der eigenen Seite:
   - Zwei Claude-Tabs in einer Gruppe, gesteuert über Meldungen an die Schnittstelle der Test-App wie in `docs/entwicklung.md` („Testmodus“).
   - Das Symbol folgt dem gewählten Tab, und der Punkt erscheint und verschwindet wie oben.
   - Bildschirmfotos hell und dunkel per `PrintWindow`: Gruppen-Tab mit orangem und mit grünem Punkt, aktiv und nicht aktiv.
-- [ ] Die bisherigen Tests laufen weiter. Tests, die den alten dringendsten Status erwarten, werden auf die neue Regel umgestellt.
-- [ ] Handbuch, Spezifikation und `docs/abnahme.md` beschreiben das Verhalten.
-- [ ] Typecheck, `npm test` und der Build sind grün.
+- [x] Die bisherigen Tests laufen weiter. Tests, die den alten dringendsten Status erwarten, werden auf die neue Regel umgestellt.
+- [x] Handbuch, Spezifikation und `docs/abnahme.md` beschreiben das Verhalten.
+- [x] Typecheck, `npm test` und der Build sind grün.
 
 ## Abnahme von Hand
 
@@ -82,3 +82,41 @@ Verworfen: **nichts zusätzlich**, also nur Hinweise und die Liste der Gruppe.
   - Vertrag: `src/shared/types.ts`;
   - Gruppen-Tab: `src/renderer/tabs/GroupTab.tsx`;
   - Tests: `test/workspace/groupStatus.test.ts` und `test/workspace/groups.test.ts`.
+
+## Hinweise aus der Umsetzung
+
+- **Kern:**
+  - Reine Regel in `src/main/workspace/groups.ts`: `groupDisplay(selected, others)` ersetzt `groupStatus` und `GROUP_STATUS_ORDER`. Ergebnis ist genau der Status des gewählten Tabs und der Punkt: `waiting`, wenn ein anderer Tab wartet, sonst `finished`, wenn einer fertig ist, sonst `none`.
+  - `src/main/workspace/workspace.ts` (`groupSnapshots`): der angezeigte Status des gewählten Tabs und der übrigen Tabs der Gruppe. Fehlte der gewählte Tab in der Gruppe, gälte wie beim Laden der erste; das kommt nach `normalizeGroups` und `leaveGroup` nicht vor.
+- **Vertrag** (`src/shared/types.ts`): `GroupSnapshot.dot` mit dem Typ `GroupDot` (`waiting`, `finished`, `none`); der Kommentar zu `status` nennt den gewählten Tab.
+- **Oberfläche:**
+  - `tabs/GroupTab.tsx` zeichnet den Punkt als `<span class="grp-dot" data-s="…">` im Pfeil (`.grp-list`), stumm für Bildschirmleser. Der Gruppen-Tab bekommt dafür die Tabs der Gruppe (`members`).
+  - Texte als reine Funktionen in `tabs/groupLabels.ts`: Zeilen des Tooltips (`groupTipRows`, `TabBar.tsx` zeichnet sie) und Beschriftung des Pfeils (`groupListLabel`).
+  - Kommentar zu `GroupIcon` in `tabs/TabIcon.tsx`.
+- **Aussehen des Punkts** (`styles/app.css`, `.grp-dot`):
+  - 6 × 6 CSS-Pixel, rund, bei 150 % also 9 Gerätepixel. Ohne Animation.
+  - Er liegt absolut oben rechts im 20-px-Feld des Pfeils, je 1 px vom oberen und vom rechten Rand, mit gut einem Pixel Abstand zur rechten Spitze des Pfeils. Die erste Fassung (2 px vom Rand) berührte die Spitze; nach den Bildschirmfotos um 1 px nach oben rechts verschoben.
+  - Farben der Status-Symbole: orange `--st-waiting` (hell `#ea580c`, dunkel `#fb923c`), grün `--st-finished` (hell `#16a34a`, dunkel `#4ade80`).
+- **Präzisierungen und Abweichungen:**
+  - **Beschriftung des Pfeils:** Der Grundtext bleibt „Tabs der Gruppe“ wie seit Ticket 36 (passend zur Liste „Tabs der Gruppe „…““). Mit Punkt kommt der Grund dazu: „Tabs der Gruppe, ein anderer Tab wartet auf dich“ bzw. „…, ein anderer Tab ist fertig“, bei mehreren „2 andere Tabs warten auf dich“ bzw. „… sind fertig“. Das Ticket nannte als Beispiel „Liste öffnen, …“.
+  - **Tooltip:** Die Zeilen unter „Andere“ kommen nur mit Punkt: zuerst die wartenden, dann die fertigen Tabs, je in der Reihenfolge der Gruppe, etwa „web wartet auf dich“ und „db ist fertig“.
+  - **Gewählter Tab:** Er ergibt nie einen Punkt, auch wenn er wartet oder fertig ist; das zeigt das Symbol.
+  - **Ticket 37:** Dessen Test „der Gruppen-Tab zeigt „arbeitet“, wenn ein Tab der Gruppe nur wegen eines Agenten arbeitet“ erwartete die alte Regel. Er prüft jetzt den gewählten Tab (angezeigt ist ein Tab ausserhalb der Gruppe). Dazu kam ein Test, dass bei einem nicht gewählten Tab der grüne Punkt erst nach der Frist kommt. Den Punkt aus Ticket 37 in `docs/abnahme.md` habe ich ebenfalls angepasst.
+  - Weitere umgestellte Tests: „Gruppe schliessen“ mit laufendem Programm (Prozesse in api, gewählt ist db: Ordner-Symbol, kein Punkt) und der pausierte Claude-Tab in einer Gruppe (pausiert ergibt keinen Punkt).
+- **In der App geprüft** (Testmodus, eigener Datenordner, Debug-Port zufällig, `--disable-features=CalculateNativeWinOcclusion`, CDP nur auf der eigenen Seite, Meldungen nur an die Schnittstelle der Test-App, Zeitgrenze 210 s mit Watchdog, Skalierung 150 %):
+  - Zwei cmd-Tabs „api“ und „web“ in der Gruppe „Kunde X“ (umbenannt über das Eingabefeld des Gruppen-Tabs), daneben „notes“. Beide über `/claude/launch` und `SessionStart` zu Claude-Tabs gemacht, danach Hooks aus `spikes/claude-hooks/samples/`.
+  - `UserPromptSubmit` in web: Symbol von api (ruht, Ordner), kein Punkt.
+  - `PreToolUse` und `PermissionRequest`: oranger Punkt, Beschriftung „Tabs der Gruppe, ein anderer Tab wartet auf dich“, Hinweis „wartet“ wie bisher.
+  - Pfeil und Gruppen-Tab mit und ohne Punkt gleich: Pfeil 20 × 20 px an derselben Stelle, Pfeil-Symbol 13 × 13 px, Gruppen-Tab 200 × 34 px. Keine Animation am Punkt.
+  - Tooltip über ein CDP-Mausereignis an die eigene Seite: „Status Ruht“, darunter „Andere: web wartet auf dich“.
+  - `PostToolUse` und `Stop`: grüner Punkt, ob die Gruppe aktiv ist oder nicht. `UserPromptSubmit` in api: Symbol „arbeitet“ mit grünem Punkt.
+  - web angezeigt: Gruppen-Tab „Kunde X · web“, Symbol ruht, kein Punkt. Weil das Testfenster nie den Fokus hat, meldete die Seite dem eigenen Kern vorher „im Vordergrund“ (`windowForeground`), damit web als angeschaut gilt wie beim Nutzer.
+  - Danach `Stop` in api, das jetzt nicht gewählt ist: grüner Punkt.
+  - Bildschirmfotos per `PrintWindow` hell und dunkel: ohne Punkt; oranger Punkt aktiv und nicht aktiv; Tooltip mit Punkt; grüner Punkt nicht aktiv und aktiv; „arbeitet“ mit grünem Punkt; nach dem Wechsel ohne Punkt. Dazu vergrösserte Ausschnitte über CDP. Die Skripte und Bilder liegen nicht im Repo.
+- **Tests:**
+  - `test/workspace/groupStatus.test.ts` (10): die reine Regel nach den Akzeptanzkriterien, dazu die bisherigen reinen Regeln.
+  - `test/workspace/groups.test.ts` (49): zwei Claude-Tabs über die echte Schnittstelle (Symbol, oranger und grüner Punkt, Wechsel), Hinweis-Klick mit Punkt; geprüft wird auch, dass das letzte Ereignis `tabs` an die Oberfläche dasselbe sagt.
+  - `test/workspace/agentStatus.test.ts` (29): Agenten im gewählten und im nicht gewählten Tab.
+  - `test/renderer/groupEntries.test.ts` (21): Tooltip und Beschriftung des Pfeils mit und ohne Punkt, mehrere andere Tabs, der Gruppen-Tab als HTML (`renderToStaticMarkup`) mit dem Punkt im Pfeil.
+  - Gegenprobe: Mit dem alten Verhalten (Punkt nie, Status vom wartenden Tab) schlagen 7 der neuen Tests in `test/workspace/` fehl.
+- Typecheck, `npm test` (60 Dateien, 1294 Tests) und der Build sind grün.
