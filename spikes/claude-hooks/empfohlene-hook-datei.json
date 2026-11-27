@@ -204,6 +204,44 @@
           }
         ]
       }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/SubagentStart",
+            "timeout": 2,
+            "headers": {
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
+            ]
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:<PORT>/hooks/SubagentStop",
+            "timeout": 2,
+            "headers": {
+              "X-THub-Tab": "$THUB_TAB_ID",
+              "X-THub-Token": "$THUB_TOKEN"
+            },
+            "allowedEnvVars": [
+              "THUB_TAB_ID",
+              "THUB_TOKEN"
+            ]
+          }
+        ]
+      }
     ]
   }
 }

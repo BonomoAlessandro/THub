@@ -1,0 +1,34 @@
+{
+  "szenario": "agenten-hintergrund",
+  "pfad": "/hooks/PostToolBatch",
+  "nutzdaten": {
+    "session_id": "2a93b28c-a732-40fc-a28c-3da1588c9549",
+    "transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-claude-f7d4677fe64f51e0-b027ab26-ac00-4ec5-8799-39a2bddeef6c-scratchpad-agenten-ws\\2a93b28c-a732-40fc-a28c-3da1588c9549.jsonl",
+    "cwd": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\f7d4677fe64f51e0\\b027ab26-ac00-4ec5-8799-39a2bddeef6c\\scratchpad\\agenten\\ws",
+    "scratchpad_dir": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\45be783a411e089c\\2a93b28c-a732-40fc-a28c-3da1588c9549\\scratchpad",
+    "prompt_id": "c78fa2b0-f74a-4afe-8a3b-55d8ed095439",
+    "permission_mode": "auto",
+    "effort": {
+      "level": "medium"
+    },
+    "hook_event_name": "PostToolBatch",
+    "tool_calls": [
+      {
+        "tool_name": "Agent",
+        "tool_input": {
+          "description": "Sleep 30 seconds",
+          "subagent_type": "general-purpose",
+          "run_in_background": "true",
+          "prompt": "Run exactly this Bash command: sleep 30 Then reply only with the word FERTIG."
+        },
+        "tool_use_id": "toolu_01HsvJL952CPxNEhNeqwDz9t",
+        "tool_response": [
+          {
+            "type": "text",
+            "text": "Async agent launched successfully. (This tool result is internal metadata — never quote or paste any part of it, including the agentId below, into a user-facing reply.)\nagentId: a56a3830eb09f52f0 (int… [+869 Zeichen]"
+          }
+        ]
+      }
+    ]
+  }
+}

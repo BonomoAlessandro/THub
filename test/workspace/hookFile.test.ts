@@ -5,7 +5,8 @@ import { HOOK_FILE_NAME, HTTP_HOOK_EVENTS, findCurl, hookSettings, writeHookFile
 import { startWorkspaceWithApi } from '../support/harness';
 import { makeTempDir } from '../support/tempDir';
 
-// Die im Spike mit dem echten Claude Code 2.1.328 geprüfte Vorlage; <PORT> steht für den Port der Schnittstelle.
+// Die im Spike mit dem echten Claude Code 2.1.328 geprüfte Vorlage, seit Ticket 37 mit SubagentStart und SubagentStop
+// (geprüft mit 2.1.332); <PORT> steht für den Port der Schnittstelle.
 const TEMPLATE = new URL('../../spikes/claude-hooks/empfohlene-hook-datei.json', import.meta.url);
 const CURL = 'C:\\Windows\\System32\\curl.exe';
 
@@ -32,6 +33,8 @@ describe('Hook-Datei', () => {
       'Stop',
       'StopFailure',
       'Notification',
+      'SubagentStart',
+      'SubagentStop',
     ]);
     for (const event of HTTP_HOOK_EVENTS) {
       expect(hooks[event]).toEqual([
@@ -60,6 +63,17 @@ describe('Hook-Datei', () => {
         ],
       },
     ]);
+  });
+
+  it('meldet Start und Ende der Agenten per HTTP, wie im Spike mit Claude Code 2.1.332 gemessen (Ticket 37)', () => {
+    const { hooks } = hookSettings('http://127.0.0.1:51234', CURL);
+
+    for (const event of ['SubagentStart', 'SubagentStop']) {
+      expect(HTTP_HOOK_EVENTS).toContain(event);
+      expect(hooks[event]).toEqual([
+        { hooks: [expect.objectContaining({ type: 'http', url: `http://127.0.0.1:51234/hooks/${event}` })] },
+      ]);
+    }
   });
 
   it('lässt SessionStart weg, wenn curl.exe fehlt; die HTTP-Hooks bleiben', () => {

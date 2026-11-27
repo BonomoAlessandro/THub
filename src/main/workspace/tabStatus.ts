@@ -1,6 +1,7 @@
 // Status am Tab (Ticket 13): die Status-Zeilen des Zustandsautomaten aus der Spezifikation („Claude-Status:
-// Zustandsautomat pro Tab“) und der angezeigte Status mit seinem Vorrang, als reine Regeln. Zeitgeber (Esc),
-// Sichtbarkeit, das Merkmal „fertig, noch nicht angeschaut“ und die Prozess-Sonde führt der Workspace-Kern.
+// Zustandsautomat pro Tab“) und der angezeigte Status mit seinem Vorrang, als reine Regeln. Dazu die Agenten, die in
+// einem Claude-Tab laufen (Ticket 37). Zeitgeber (Esc, Frist nach dem Ende der Agenten), Sichtbarkeit, das Merkmal
+// „fertig, noch nicht angeschaut“ und die Prozess-Sonde führt der Workspace-Kern.
 
 import type { TabStatus } from '../../shared/types';
 import type { HookFacts } from './claude';
@@ -9,6 +10,7 @@ import type { HookFacts } from './claude';
 export type ClaudeActivity = 'idle' | 'working' | 'waiting';
 
 export interface ClaudeStatus {
+  /** Was Claude selbst tut, ohne seine Agenten. Angezeigt wird `shownActivity`. */
   activity: ClaudeActivity;
   /**
    * Seit dem letzten `PreToolUse` kam weder `PermissionRequest` noch `PostToolUse`/`PostToolUseFailure`.
@@ -21,24 +23,86 @@ export interface ClaudeStatus {
    * stehen, weil der Claude-Prozess und seine Kinder dieselben bleiben.
    */
   promptAt?: number;
+  /**
+   * Die laufenden Agenten (`agent_id`), im Vorder- und im Hintergrund (Ticket 37): `SubagentStart` fügt einen hinzu,
+   * `SubagentStop` nimmt ihn weg, `Stop` gleicht mit `background_tasks` ab. Nicht gespeichert.
+   */
+  agents: readonly string[];
+  /**
+   * Hintergrund-Agenten, die geendet haben und über die Claude noch eine Meldung bekommen kann (`<task-notification>` mit
+   * ihrer Kennung), etwa wenn sie eigene Hintergrund-Arbeit hinterlassen. Damit arbeitet Claude von selbst weiter; so
+   * kommt „fertig“ nur einmal, nach dieser letzten Runde. Bleibt die Meldung aus, leert die Frist des Kerns die Liste
+   * (`statusAfterAgentReportsDue`).
+   */
+  reportsDue: readonly string[];
+  /** Ein Agent wartet mit einer Rückfrage auf dich (`PermissionRequest` aus dem Agenten): seine Kennung. */
+  askingAgent?: string;
+  /** `Stop` kam, während noch Agenten liefen: Grün und der Hinweis „fertig“ stehen noch aus. */
+  finishPending: boolean;
 }
 
-export const IDLE_CLAUDE: ClaudeStatus = { activity: 'idle', toolUnanswered: false };
+export const IDLE_CLAUDE: ClaudeStatus = {
+  activity: 'idle',
+  toolUnanswered: false,
+  agents: [],
+  reportsDue: [],
+  finishPending: false,
+};
 
 /** Ergebnis eines Hook-Ereignisses für den Status. */
 export interface ClaudeStatusStep {
   status: ClaudeStatus;
-  /** `Stop` oder `StopFailure`: Claude ist mit der Antwort fertig. */
+  /** Claude ist mit der Antwort fertig (`Stop`, `StopFailure`), und kein Agent läuft mehr: Jetzt kommt „fertig“. */
   stopped: boolean;
 }
 
 /** `Notification`-Arten, die eine offene Rückfrage melden (nur als Rückfallebene, siehe `statusAfterHook`). */
 const QUESTION_NOTIFICATIONS = new Set(['permission_prompt', 'elicitation_dialog']);
 
+/** Was der Tab zeigt: wartet, wenn Claude oder ein Agent fragt; arbeitet, wenn Claude oder ein Agent rechnet. */
+export function shownActivity(status: ClaudeStatus): ClaudeActivity {
+  if (status.activity === 'waiting' || status.askingAgent !== undefined) return 'waiting';
+  if (status.activity === 'working' || status.agents.length > 0 || status.reportsDue.length > 0) return 'working';
+  return 'idle';
+}
+
+/**
+ * Alle Agenten haben geendet, und Claude ruht, aber die Meldung über einen Hintergrund-Agenten steht noch aus: Der Kern
+ * wartet eine Frist lang darauf, dass Claude weiterarbeitet; bis dahin zeigt der Tab „arbeitet“.
+ */
+export function awaitsAgentReports(status: ClaudeStatus): boolean {
+  return (
+    status.activity === 'idle' &&
+    status.askingAgent === undefined &&
+    status.agents.length === 0 &&
+    status.reportsDue.length > 0
+  );
+}
+
+/**
+ * Die Frist nach dem Ende der Agenten ist um, ohne dass Claude weitergearbeitet hat: Der Tab ruht. Kam vorher `Stop`,
+ * ist jetzt alles fertig.
+ */
+export function statusAfterAgentReportsDue(status: ClaudeStatus): ClaudeStatusStep {
+  if (!awaitsAgentReports(status)) return { status, stopped: false };
+  return { status: { ...status, reportsDue: [], finishPending: false }, stopped: status.finishPending };
+}
+
+/**
+ * Der Status zu Beginn einer Session: Claude ruht. Die Agenten gehören zum Claude-Prozess, nicht zur Session: Nach
+ * `/clear` rechnen sie weiter und melden sich mit der Kennung der neuen Session (gemessen, Ticket 37). Nur ein neuer
+ * Start von Claude (`startup`) beginnt ohne Agenten; die Antwort der alten Session meldet kein „fertig“ mehr.
+ */
+function newSession(current: ClaudeStatus, hook: HookFacts): ClaudeStatus {
+  const started = hook.event === 'SessionStart' && hook.source === 'startup';
+  const agents: Partial<ClaudeStatus> = started ? { agents: [], reportsDue: [], askingAgent: undefined } : {};
+  return { ...current, ...agents, activity: 'idle', toolUnanswered: false, finishPending: false };
+}
+
 /**
  * Status nach einem Hook-Ereignis, in der Reihenfolge des Eintreffens angewendet.
  * @param sessionStarted das Ereignis beginnt eine Session (`SessionStart` oder Ersatz, siehe `startsSession`):
- *   zuerst „ruht“, danach wird das Ereignis selbst angewendet
+ *   zuerst „ruht“ (siehe `newSession`), danach wird das Ereignis selbst angewendet
  * @param now Zeitpunkt des Eintreffens (Uhr des Kerns)
  */
 export function statusAfterHook(
@@ -47,7 +111,8 @@ export function statusAfterHook(
   sessionStarted: boolean,
   now: number,
 ): ClaudeStatusStep {
-  const status: ClaudeStatus = sessionStarted ? { ...current, activity: 'idle', toolUnanswered: false } : current;
+  const status: ClaudeStatus = sessionStarted ? newSession(current, hook) : current;
+  if (hook.agentId !== undefined) return settle(statusAfterAgentHook(status, hook, hook.agentId));
   const next = (activity: ClaudeActivity, toolUnanswered: boolean): ClaudeStatus => ({
     ...status,
     activity,
@@ -55,9 +120,17 @@ export function statusAfterHook(
   });
 
   switch (hook.event) {
-    case 'UserPromptSubmit':
-      // Auch ohne Tippen, wenn eine Hintergrund-Aufgabe endet (Prompt beginnt mit <task-notification>).
-      return { status: { ...next('working', false), promptAt: now }, stopped: false };
+    case 'UserPromptSubmit': {
+      // Auch ohne Tippen, wenn eine Hintergrund-Aufgabe endet (Prompt beginnt mit <task-notification>). Eine neue Runde
+      // beginnt: Ihr Stop entscheidet über „fertig“. Die Meldung über einen Agenten zeigt, dass er fertig ist.
+      const done = hook.taskNotificationId;
+      const working: ClaudeStatus = { ...next('working', false), promptAt: now, finishPending: false };
+      if (done === undefined) return { status: working, stopped: false };
+      return {
+        status: { ...working, agents: without(status.agents, done), reportsDue: without(status.reportsDue, done) },
+        stopped: false,
+      };
+    }
     case 'PreToolUse':
       return { status: next('working', true), stopped: false };
     case 'PostToolUse':
@@ -80,12 +153,70 @@ export function statusAfterHook(
       }
       return { status, stopped: false };
     case 'Stop':
-    case 'StopFailure':
-      return { status: next('idle', false), stopped: true };
+    case 'StopFailure': {
+      // Claude ruht. `background_tasks` sagt, welche Agenten im Hintergrund noch laufen; ein Agent, den es dort nicht
+      // gibt, ist vorbei (etwa gestoppt, was ohne `SubagentStop` geschieht). Läuft noch einer, steht eine Meldung über
+      // einen aus oder fragt einer, kommt „fertig“ erst später.
+      const idle: ClaudeStatus = { ...next('idle', false), agents: hook.runningAgents ?? status.agents };
+      const done = shownActivity(idle) === 'idle';
+      return { status: { ...idle, finishPending: !done }, stopped: done };
+    }
     default:
-      // SessionStart (schon oben: ruht), SessionEnd und unbekannte Ereignisse ändern den Status nicht.
+      // SessionStart (schon oben: ruht), SessionEnd und unbekannte Ereignisse ändern den Status nicht. Bei `clear` und
+      // `resume` folgt eine neue Session, in der die Agenten weiterlaufen; bei jedem anderen Grund endet Claude, und mit
+      // der Claude-Zuordnung entfällt der ganze Status samt Agenten (Kern).
       return { status, stopped: false };
   }
+}
+
+/**
+ * Ereignisse aus einem Agenten ändern nicht, was Claude selbst tut; sonst bliebe der Tab nach dem Ende des letzten
+ * Agenten auf „arbeitet“ hängen. Sie führen die Liste der Agenten und ihre Rückfragen.
+ */
+function statusAfterAgentHook(status: ClaudeStatus, hook: HookFacts, agentId: string): ClaudeStatus {
+  // Jedes andere Ereignis des fragenden Agenten zeigt, dass seine Rückfrage beantwortet ist.
+  const askingAgent = status.askingAgent === agentId ? undefined : status.askingAgent;
+  switch (hook.event) {
+    case 'SubagentStart':
+      // Auch ein Agent, der wieder aufgenommen wird (etwa wenn seine eigene Hintergrund-Arbeit endet).
+      return {
+        ...status,
+        askingAgent,
+        agents: status.agents.includes(agentId) ? status.agents : [...status.agents, agentId],
+        reportsDue: without(status.reportsDue, agentId),
+      };
+    case 'SubagentStop': {
+      // Claude Code meldet auch eigene Helfer ohne SubagentStart (etwa die Vorschläge für den nächsten Prompt); sie zählen
+      // nicht. Ein Agent im Hintergrund steht dabei noch in `background_tasks`. Nach ihm kann Claude noch eine Meldung
+      // (`<task-notification>`) bekommen und damit weiterarbeiten; darauf wartet der Kern eine Frist lang.
+      if (!status.agents.includes(agentId)) return { ...status, askingAgent };
+      const background = hook.runningAgents?.includes(agentId) ?? false;
+      const due = background && !status.reportsDue.includes(agentId);
+      return {
+        ...status,
+        askingAgent,
+        agents: without(status.agents, agentId),
+        reportsDue: due ? [...status.reportsDue, agentId] : status.reportsDue,
+      };
+    }
+    case 'PermissionRequest':
+      // Die Rückfrage eines Agenten: Der Tab wartet auf dich. Die verspätete Notification dazu darf nicht mehr greifen.
+      return { ...status, askingAgent: agentId, toolUnanswered: false };
+    case 'Notification':
+      return status;
+    default:
+      return { ...status, askingAgent };
+  }
+}
+
+/** Ruht nach dem Ende eines Agenten alles, und kam vorher `Stop`, ist Claude jetzt fertig. */
+function settle(status: ClaudeStatus): ClaudeStatusStep {
+  if (!status.finishPending || shownActivity(status) !== 'idle') return { status, stopped: false };
+  return { status: { ...status, finishPending: false }, stopped: true };
+}
+
+function without(ids: readonly string[], id: string): readonly string[] {
+  return ids.includes(id) ? ids.filter((x) => x !== id) : ids;
 }
 
 /**

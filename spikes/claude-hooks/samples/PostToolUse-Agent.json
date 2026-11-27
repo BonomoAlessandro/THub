@@ -1,0 +1,25 @@
+{
+  "szenario": "agenten-hintergrund",
+  "pfad": "/hooks/PostToolUse",
+  "nutzdaten": {
+    "session_id": "2a93b28c-a732-40fc-a28c-3da1588c9549",
+    "transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-claude-f7d4677fe64f51e0-b027ab26-ac00-4ec5-8799-39a2bddeef6c-scratchpad-agenten-ws\\2a93b28c-a732-40fc-a28c-3da1588c9549.jsonl",
+    "cwd": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\f7d4677fe64f51e0\\b027ab26-ac00-4ec5-8799-39a2bddeef6c\\scratchpad\\agenten\\ws",
+    "scratchpad_dir": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\45be783a411e089c\\2a93b28c-a732-40fc-a28c-3da1588c9549\\scratchpad",
+    "prompt_id": "c78fa2b0-f74a-4afe-8a3b-55d8ed095439",
+    "permission_mode": "auto",
+    "effort": {
+      "level": "medium"
+    },
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Agent",
+    "tool_input": {
+      "description": "Sleep 30 seconds",
+      "prompt": "<redigiert>",
+      "subagent_type": "general-purpose"
+    },
+    "tool_response": "<gekuerzt, 432 Zeichen JSON>",
+    "tool_use_id": "toolu_01HsvJL952CPxNEhNeqwDz9t",
+    "duration_ms": 44
+  }
+}

@@ -369,7 +369,7 @@ Der Starter arbeitet in diesen Schritten:
 
 - Die **Hook-Datei** erzeugt THub bei jedem Start neu im eigenen Datenordner:
   - Hooks vom Typ `http` auf `/hooks/<Ereignis>`, mit den Kopfzeilen `X-THub-Tab: $THUB_TAB_ID` und `X-THub-Token: $THUB_TOKEN`. Beide Variablen stehen in `allowedEnvVars`. Timeout 2 Sekunden.
-  - Registrierte Ereignisse per HTTP: `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `Stop`, `StopFailure`, `Notification`.
+  - Registrierte Ereignisse per HTTP: `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `Stop`, `StopFailure`, `Notification`, seit Ticket 37 auch `SubagentStart` und `SubagentStop`.
   - **`SessionStart` unterstützt keine HTTP-Hooks** (Claude überspringt sie still). Dafür gibt es einen Befehls-Hook ohne Shell (Exec-Form), der die Nutzdaten mit dem `curl.exe` von Windows an `/hooks/SessionStart` weiterleitet. curl liest Tab-Kennung und Token selbst aus der Umgebung (`--variable %VAR` mit `--expand-header`), mit `--connect-timeout 1 -m 2` und Hook-Timeout 3 Sekunden. Die Ausgabe dieses Hooks liest Claude (curl gibt die Antwort unverändert aus); deshalb ist die Antwort leer, ausser THub gibt Claude bei eingeschalteter Einstellung die Anweisung für offene Punkte als JSON mit `additionalContext` mit. Fehlt `curl.exe`, entfällt der Eintrag; die Zuordnung läuft dann über die Ersatzregel „neue Kennung in einem anderen Ereignis“ (siehe Zustandsautomat).
   - Eine geprüfte Vorlage liegt in `spikes/claude-hooks/empfohlene-hook-datei.json`.
 - Relevante Felder der Nutzdaten:
@@ -379,6 +379,7 @@ Der Starter arbeitet in diesen Schritten:
   - `Notification.notification_type`: `permission_prompt` (kommt erst etwa 6 Sekunden nach der Rückfrage), `idle_prompt` (etwa 60 Sekunden nach `Stop`);
   - `PermissionRequest` kommt sofort, auch bei Rückfragen von `AskUserQuestion`;
   - `Stop.background_tasks` ist immer vorhanden. Endet eine Hintergrund-Aufgabe, schickt Claude ein `UserPromptSubmit` (Prompt beginnt mit `<task-notification>`) und danach wieder `Stop`.
+  - Agenten (Ticket 37, Claude Code 2.1.332): Alle Ereignisse aus einem Agenten tragen die `session_id` der Hauptsession, dazu `agent_id` und `agent_type`. `background_tasks` (bei `Stop` und `SubagentStop`) führt laufende Agenten als `type: "subagent"`, `status: "running"`, `id` gleich der `agent_id`. Den Bericht eines Agenten bekommt Claude als `UserPromptSubmit` mit `<agent-message from="<agent_id>">`, eine Meldung über ihn als `<task-notification>` mit `<task-id>` gleich der `agent_id` (`<status>` etwa `completed` oder `killed`).
   - Beispiel-Nutzdaten und alle Befunde: `docs/spikes/claude-hooks.md`, `spikes/claude-hooks/samples/`.
 - Der Empfänger antwortet **immer sofort mit einem leeren Erfolg** und gibt nie Entscheidungsfelder zurück. Einzige Ausnahme: Auf `SessionStart` liefert er bei eingeschalteter Einstellung die Anweisung für offene Punkte als zusätzlichen Kontext (siehe „Offene Punkte aus Claudes Antworten“). Darüber hinaus beeinflusst THub Claude nicht.
 - Ereignisse werden in der Reihenfolge ihres Eintreffens verarbeitet (`PreToolUse` kommt vor `PermissionRequest`).
@@ -452,6 +453,37 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 - Hintergrund-Befehle bleiben bei „Prozesse laufen“ (blau).
 - Grundlage sind die Hook-Ereignisse zu Agenten (`SubagentStart`, `SubagentStop`). Ereignisse aus einem Agenten ändern die Claude-Zuordnung nie. Die genauen Regeln und Fristen ergeben sich aus einer Messung in Ticket 37.
 - Verworfen: ein eigener Zustand für Hintergrund-Arbeit; der blaue Punkt mit grün nach der Antwort.
+
+**Präzisierungen aus der Umsetzung (Ticket 37)** (Messung mit Claude Code 2.1.332: `docs/spikes/claude-hooks.md`, „Agenten (Ticket 37)“):
+- **Was der Kern pro Claude-Tab führt,** neben dem Zustand von Claude selbst (ruht, arbeitet, wartet), nur zur Laufzeit und nie gespeichert:
+  - die laufenden Agenten (`agent_id`);
+  - beendete Agenten im Hintergrund, über die Claude noch eine Meldung bekommen kann;
+  - den Agenten mit einer offenen Rückfrage;
+  - „fertig steht aus“: `Stop` kam, während noch Agenten liefen.
+- **Angezeigt** wird „wartet“, wenn Claude oder ein Agent fragt; „arbeitet“, wenn Claude arbeitet, ein Agent läuft oder eine Meldung über einen Agenten aussteht; sonst wie bisher. Der Vorrang bleibt. Dasselbe gilt für die Rückfrage beim Schliessen eines Tabs und für den Status einer Gruppe.
+
+| Eingang | Wirkung |
+|---|---|
+| `SubagentStart` | Agent kommt in die Liste (auch ein wieder aufgenommener) |
+| `SubagentStop` eines Agenten aus der Liste | Agent fällt heraus. Steht er dabei in `background_tasks` (Hintergrund), steht noch eine Meldung über ihn aus |
+| `SubagentStop` ohne bekannten Agenten | keine Änderung. Claude Code meldet nach jedem `Stop` eigene Helfer ohne `SubagentStart` und mit leerem `agent_type` |
+| `PermissionRequest` aus einem Agenten | „wartet auf dich“ (Hinweis „wartet“ wie bisher); die verspätete `Notification` zur Rückfrage greift nicht mehr |
+| ein anderes Ereignis des fragenden Agenten; Enter oder Ziffer im Terminal | die Rückfrage des Agenten ist beantwortet |
+| andere Ereignisse mit `agent_id` (Werkzeuge, `Notification`) | keine Änderung an Claude selbst; sie beenden auch die Wartezeiten nach Esc und nach einer Antwort nicht |
+| `UserPromptSubmit` mit `<task-notification>` über einen Agenten | wie bisher „arbeitet“; der Agent ist vorbei (läuft nicht mehr, keine Meldung mehr ausstehend), auch nach dem Stoppen ohne `SubagentStop` |
+| `UserPromptSubmit` (jedes) | „fertig steht aus“ entfällt: Das nächste `Stop` entscheidet |
+| `Stop`, `StopFailure` | Claude ruht. Die laufenden Agenten sind genau die aus `background_tasks` (fehlt die Liste, bleiben sie). Läuft noch einer, steht eine Meldung aus oder fragt ein Agent: kein grün, kein Hinweis, „fertig steht aus“. Sonst wie bisher |
+| Claude ruht, kein Agent läuft oder fragt, aber eine Meldung über einen Agenten steht aus | Frist von 3 Sekunden (`AGENT_REPORT_QUIET_MS`), so lange „arbeitet“. Kommt bis dahin nichts, ruht der Tab; stand „fertig“ aus, wird er grün mit Hinweis, falls nicht sichtbar. Jedes Ereignis, mit dem Claude weiterarbeitet, beendet die Frist |
+| ein Agent-Ereignis lässt alles ruhen, und „fertig“ stand aus | jetzt fertig (grün und Hinweis, falls nicht sichtbar), etwa ohne `background_tasks` |
+| Esc | wie bisher nur für Claude selbst und für die Rückfrage eines Agenten; ruht Claude und fragt kein Agent, startet keine Wartezeit. Nach der Wartezeit entfällt auch „fertig steht aus“ |
+| `SessionStart` mit Quelle `startup` | ohne Agenten |
+| `SessionStart` mit anderer Quelle (etwa `/clear`), `SessionEnd` mit Grund `clear` oder `resume` | die Agenten bleiben: Sie rechnen weiter und melden sich in der neuen Session; „fertig steht aus“ entfällt |
+| Ende von Claude (`SessionEnd` mit anderem Grund, Ende-Meldung), Ende der Shell, neuer Start, Pausieren, Schliessen, Einfrieren | mit der Claude-Zuordnung bzw. dem Laufzeit-Zustand entfallen auch Agenten und Frist |
+
+- **Warum die Frist nach `Stop` und nicht nach `SubagentStop`:** Den Bericht eines Agenten bekommt Claude 0,4 bis 0,8 s **vor** dessen `SubagentStop`. Weitere Meldungen (ein wartender Bericht, eine Zwischenmeldung, wenn der Agent eigene Hintergrund-Arbeit hinterlässt) kamen 0,3 bis 0,6 s **nach** Claudes `Stop`. Ohne die Frist käme „fertig“ dann zweimal. Kommt `<task-notification>` über alle ausstehenden Agenten vor `Stop`, entfällt die Frist.
+- **Verzögerung:** Nach dem Ende eines Agenten im Hintergrund kommt grün in der Regel 3 Sekunden nach Claudes letztem `Stop`.
+- Agenten laufen in Claude Code 2.1.332 standardmässig im Hintergrund. Einen Agenten im Vordergrund gab es in der Messung nicht; er steht bei `SubagentStop` nach der Annahme nicht in `background_tasks` und hält den Tab dann wie bisher nur bis Claudes `Stop` violett.
+- **Bekannte Grenze:** Endet ein Agent ohne `SubagentStop` und ohne Meldung an Claude (ungeprüft: Esc während eines Agenten im Vordergrund), bleibt der Tab bis zum nächsten `Stop` violett.
 
 **Präzisierungen aus der Umsetzung (Ticket 13):**
 - Antworten des Terminals, die über denselben Weg wie Tasten kommen (Fokus-Meldungen, Maus, Cursor-Position, Geräteattribute, OSC- und DCS-Antworten), sind keine Eingabe des Nutzers; Claude Code schaltet etwa Fokus-Meldungen ein. Esc ist genau die Taste Esc allein; eine Antwort ist genau Enter oder eine einzelne Ziffer.

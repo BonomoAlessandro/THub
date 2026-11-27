@@ -2,6 +2,8 @@
 
 Stand: 2026-11-19 · Claude Code 2.1.328 · Windows 11 · Spike-Code unter `spikes/claude-hooks/`
 
+Nachtrag 2026-11-27 (Ticket 37): Hook-Ereignisse zu Agenten, gemessen mit Claude Code 2.1.332, im Abschnitt [Agenten (Ticket 37)](#agenten-ticket-37) am Ende.
+
 Dieser Spike prüft mit dem installierten Claude Code, ob die Annahmen der Spezifikation (`docs/specs/termhub-v2.md`, Abschnitte „Shell-Integration“ Punkt 2, „Hook-Empfänger und lokale Schnittstelle“, „Claude-Status: Zustandsautomat pro Tab“ und „Weitere Hinweise“) stimmen. Am Ende stehen konkrete Korrekturen für die Spezifikation.
 
 ## Kurzfassung
@@ -340,3 +342,167 @@ Unverändert bestätigt: Ende der Shell bzw. Schliessen des Pseudoterminals erze
 - In S1 schluckte die unerwartete Rückfrage für `Read` (Modus „manual“) den Text des dritten Prompts; das abschliessende Enter bestätigte das Lesen von `a.txt` im Temp-Ordner. Die Bash-Rückfrage mit Ablehnung wurde deshalb im Szenario interrupt sauber wiederholt. Das „Esc“ bei 243,6 s in S1 fiel in einen ruhenden Zustand und ist ohne Aussage.
 - Im ersten Esc-Versuch (interrupt A, esc) war die Antwort von Haiku schon fertig; esc 2000 zeigt die Unterbrechung während der Antwort.
 - Die Rückfragen wurden mit `--permission-mode manual` erzwungen. Im Standardmodus „auto“ des Nutzers erscheinen Rückfragen seltener; die Hook-Abfolge bleibt dieselbe.
+
+## Agenten (Ticket 37)
+
+Stand: 2026-11-27 · Claude Code 2.1.332 · Windows 11 · Skript `spikes/claude-hooks/agenten.mjs`, Zeitachsen aller Läufe in `spikes/claude-hooks/befunde-agenten.json`, redigierte Beispiele in `spikes/claude-hooks/samples/` (`SubagentStart`, `SubagentStop`, `SubagentStop-helfer`, `Stop-mit-agent`, `UserPromptSubmit-agent-message`, `UserPromptSubmit-task-notification-agent`, `UserPromptSubmit-task-notification-agent-killed`, `PreToolUse-Agent`, `PostToolUse-Agent`, `*-aus-agent`, `PostToolBatch`).
+
+Frage aus Ticket 37: Warum zeigt ein Claude-Tab „ruht“, obwohl darin noch ein Agent rechnet, und welche Hook-Ereignisse braucht THub, um „arbeitet“ bis zum Schluss zu zeigen?
+
+### Kurzfassung
+
+1. **`SubagentStart` und `SubagentStop` kommen per HTTP-Hook an.** HTTP-Hooks überspringt Claude Code nur bei `SessionStart` und `Setup` (im installierten Programm nachgesehen). Laut dessen Beschreibung kommt `SubagentStart`, wenn ein Agent (Werkzeug `Agent`) startet, mit `agent_id` und `agent_type`; `SubagentStop` kommt, kurz bevor er seine Antwort abschliesst, dazu mit `agent_transcript_path`.
+2. **Alle Ereignisse aus Agenten tragen die `session_id` der Hauptsession**, dazu `agent_id` und `agent_type`. Agenten haben keine eigene Session. Nach `/clear` tragen auch die Ereignisse der weiterlaufenden Agenten die Kennung der neuen Session.
+3. **Agenten laufen in 2.1.332 standardmässig im Hintergrund** (Beschreibung des Parameters: „Agents run in the background by default“). Haiku liess `run_in_background` in allen Läufen weg, auch auf die ausdrückliche Bitte um `false`. Einen Agenten im Vordergrund gab es in der Messung deshalb nicht.
+4. **Der vermutete Ablauf aus dem Ticket stimmt:** Claude startet den Agenten (`PreToolUse` mit `Agent`, `SubagentStart`, gleich danach `PostToolUse`) und endet mit `Stop`, während der Agent rechnet. Bisher stand der Tab dann auf „ruht“ bzw. grün und wurde erst mit dem nächsten `PreToolUse` des Agenten wieder violett.
+5. **`Stop.background_tasks` führt laufende Agenten:** `{ "id": <agent_id>, "type": "subagent", "status": "running", "description", "agent_type" }`, neben Befehlen im Hintergrund (`"type": "shell"`). Bei `SubagentStop` steht der endende Agent selbst noch als `running` darin.
+6. **Ende eines Agenten:** Er übergibt seinen Bericht mit dem Werkzeug `SubagentHandback`, und Claude bekommt ihn sofort als Prompt `<agent-message from="<agent_id>">` (`UserPromptSubmit`), 0,4 bis 0,8 s **vor** `SubagentStop`. Ohne Übergabe kommt 0,1 s nach `SubagentStop` eine Meldung `<task-notification>` mit `<task-id>` gleich der `agent_id`. In beiden Fällen arbeitet Claude von selbst weiter und endet wieder mit `Stop`.
+7. **Weitere Meldungen nach Claudes `Stop`:** Kommt ein Bericht, während Claude noch arbeitet, wartet er und kommt 0,3 s nach `Stop`. Hinterlässt ein Agent eigene Hintergrund-Arbeit, kommt nach `Stop` noch eine Zwischenmeldung (`<task-notification>`, „is waiting on its own background work“, 0,6 s nach `Stop`); endet die Arbeit, wird der Agent wieder aufgenommen (`SubagentStart` mit derselben `agent_id`). Ohne Frist hätte THub in beiden Fällen zweimal kurz hintereinander „fertig“ gemeldet.
+8. **Esc unterbricht nur Claude selbst:** Danach kommt kein Ereignis der Hauptsession mehr, der Agent rechnet weiter und endet normal (Bericht, `SubagentStop`, `Stop`). Esc im Ruhezustand ändert nichts.
+9. **Gestoppte Agenten melden kein `SubagentStop`**, weder über die Aufgabenliste (`/tasks`, Taste `x`) noch durch Claude (Werkzeug `TaskStop`). Claude bekommt eine `<task-notification>` mit `<status>killed</status>` (bei der Aufgabenliste erst, wenn sie wieder geschlossen ist), und im nächsten `Stop` fehlt der Agent in `background_tasks`.
+10. **`/clear` beendet laufende Agenten nicht.** Nach `SessionEnd` (`clear`) und `SessionStart` (`clear`) mit neuer Kennung rechnen sie weiter und melden Bericht, `SubagentStop` und Claudes `Stop` in der neuen Session.
+11. **`/exit` mit laufender Hintergrund-Arbeit** fragt: „Background work is running … 1. Exit and stop tasks, 2. Move to background and exit, 3. Stay“. Nach 1. kommt `SessionEnd` (`prompt_input_exit`) ohne `SubagentStop`.
+12. **Rückfrage aus einem Agenten** (Berechtigungsmodus „manual“): `PermissionRequest` mit `agent_id` und `agent_type`, sofort. Die Rückfrage steht in der Hauptansicht („Bash command · from the general-purpose agent“), auch wenn Claude schon ruht. Eine `Notification` dazu kam nicht. Nach der Antwort kommt `PostToolUse` des Agenten.
+13. **Hilfs-Agenten von Claude Code:** Nach jedem `Stop` (0,6 bis 1,5 s später) meldet Claude Code ein `SubagentStop` mit leerem `agent_type` und einer `agent_id`, zu der es nie ein `SubagentStart` gab. Im Eingabefeld erscheint dann ein Vorschlag für den nächsten Prompt; vermutlich ist das dieser Helfer. Diese Ereignisse gehören zu keinem Agenten des Nutzers.
+14. **Neu in 2.1.332:** `PostToolBatch` nach jedem Bündel von Werkzeugen, auch aus Agenten (THub braucht es nicht). `TaskCreated`, `TaskCompleted`, `TeammateIdle`, `PreCompact` und `PostCompact` waren registriert, kamen aber nicht vor.
+
+### Aufbau
+
+- Wie oben: Ein Node-Skript startet einen Empfänger auf `127.0.0.1`, schreibt eine Hook-Datei und startet das installierte `claude.exe` in node-pty in einem Arbeitsordner im Temp-Ordner, ohne die geerbten `CLAUDE*`- und `THUB_*`-Variablen, mit `--model haiku` und der Konfiguration des Nutzers (Modus „auto“; zwei Läufe mit `--permission-mode manual`). Kopfzeilen und Variablen heissen im Skript `X-Spike-Tab` bzw. `SPIKE_TAB_ID`, damit nichts mit einer laufenden THub verwechselt wird.
+- Die Hook-Datei registriert alle Ereignisse, die per HTTP ankommen können: `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PostToolBatch`, `PermissionRequest`, `PermissionDenied`, `Notification`, `Stop`, `StopFailure`, `SubagentStart`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `TeammateIdle`, `PreCompact`, `PostCompact`; dazu `SessionStart` über curl. Die Liste stammt aus dem installierten Programm.
+- Jeder Lauf hat eine harte Zeitgrenze von 240 s (danach `taskkill /T` auf die eigene Prozess-ID), von aussen zusätzlich `timeout 300`. Das Skript bringt einen kleinen Nachbau des Bildschirms mit; `@xterm/headless` ist nicht nötig.
+- Ein Agent wartet mit `ping -n <Sekunden+1> 127.0.0.1 > /dev/null`. `sleep 30` allein im Vordergrund blockiert Claude Code selbst („standalone sleep“); im ersten Lauf startete der Agent es deshalb im Hintergrund.
+- Im Vertrauensdialog ist in 2.1.332 „No, exit“ vorausgewählt. Der erste Versuch endete dort, ohne Prompt.
+- **Kosten:** 9 Prompts, die bei Claude ankamen. Bestätigt wurde nur das Schreiben von `hi.txt` im Arbeitsordner (Temp).
+
+| Szenario | Prompts | Was es prüft |
+|---|---|---|
+| `hintergrund` | 1 | ein Agent im Hintergrund; Claude endet, während er läuft. Der Agent legte sein `sleep 30` selbst in den Hintergrund und hinterliess es (Zwischenmeldung, Wiederaufnahme). Danach `/exit` mit laufendem Befehl im Hintergrund |
+| `zwei` | 1 | zwei Agenten (10 und 35 s), die nacheinander enden |
+| `esc` | 1 | Esc, während Claude selbst einen Befehl ausführt und ein Agent läuft (45 s); danach Esc im Ruhezustand |
+| `stoppen` | 2 | Agent durch Claude gestoppt (`TaskStop`). Der Versuch über die Aufgabenliste scheiterte: Bei einem einzigen Agenten öffnet `/tasks` gleich dessen Ansicht, und Enter schloss sie wieder |
+| `drei` | 1 | drei Agenten: einer über die Aufgabenliste gestoppt (`x`), dann `/clear`, während zwei weiterlaufen |
+| `exit` | 1 | `/exit`, während ein Agent läuft |
+| `rueckfrage` | 1 | Rückfrage aus einem Agenten (Modus „manual“). Der Agent lief im Hintergrund und fragte nach Claudes `Stop`. Ein zweiter getippter Prompt landete im Dialog; sein Enter bestätigte „Yes“ |
+| `vordergrund` | 1 | Agent ausdrücklich im Vordergrund verlangt; er lief trotzdem im Hintergrund. Rückfrage, mit `1` bestätigt |
+
+Reproduzieren: `npm ci` im Wurzelordner, dann in `spikes/claude-hooks/` zum Beispiel `node agenten.mjs zwei` und danach `node agenten.mjs samples`.
+
+### Zeitachsen
+
+Sekunden ab dem Start des Laufs; `S1`, `S2` sind Sessions, `A1`, `A2` Agenten, „Helfer“ ein `SubagentStop` ohne `SubagentStart`. `PostToolBatch` ist weggelassen. Alle Läufe vollständig in `befunde-agenten.json`.
+
+Zwei Agenten (`zwei`), der typische Ablauf mit Übergabe:
+
+```
+22.9  UserPromptSubmit                                   S1
+25.8  PreToolUse Agent, 26.2 PreToolUse Agent            S1
+26.9  SubagentStart A1, SubagentStart A2                 S1
+27.0  PostToolUse Agent (2x)                             S1
+28.2  Stop                 background_tasks [A1, A2]     S1   ← Claude ruht, zwei Agenten rechnen
+29.3  SubagentStop (Helfer)                              S1
+39.5  PostToolUse Bash                    aus A1         S1
+41.2  UserPromptSubmit <agent-message from A1>           S1   ← Bericht von A1
+42.0  SubagentStop A1      background_tasks [A1, A2]     S1
+43.7  Stop                 background_tasks [A2]         S1
+64.9  PostToolUse Bash                    aus A2         S1
+66.7  UserPromptSubmit <agent-message from A2>           S1
+67.2  SubagentStop A2      background_tasks [A2]         S1
+68.0  Stop                 background_tasks []           S1   ← alles fertig
+68.6  SubagentStop (Helfer)                              S1
+```
+
+Esc (`esc`):
+
+```
+21.3  UserPromptSubmit                                   S1
+25.8  SubagentStart A1                                   S1
+26.4  PreToolUse Bash     (Claude selbst)                S1
+28.1  PreToolUse Bash                     aus A1         S1
+29.4  Esc                                                     ← „Interrupted · What should Claude do instead?“
+47.4  Esc (Claude ruht, A1 rechnet)                           ← keine Wirkung
+74.0  PostToolUse Bash                    aus A1         S1
+75.8  UserPromptSubmit <agent-message from A1>           S1
+76.6  SubagentStop A1      background_tasks [A1]         S1
+78.9  Stop                 background_tasks []           S1
+```
+
+Stoppen über die Aufgabenliste und `/clear` (`drei`):
+
+```
+33.5  Stop                 background_tasks [A1, A2, A3] S1
+41.4  x in /tasks (A3)                                        ← „Background update waiting while this panel is open“
+52.4  Esc (Liste zu)
+52.6  UserPromptSubmit <task-notification A3 killed>     S1   ← kein SubagentStop für A3
+55.0  Stop                 background_tasks [A1, A2]     S1
+56.7  SessionEnd clear                                   S1
+57.2  SessionStart clear                                 S2
+80.0  PostToolUse Bash                    aus A1         S2   ← A1, A2 rechnen weiter, jetzt mit S2
+82.3  UserPromptSubmit <agent-message from A1>           S2
+82.8  SubagentStop A1      background_tasks [A1, A2]     S2
+83.2  SubagentStop A2      background_tasks [A2]         S2
+84.2  Stop                 background_tasks []           S2
+84.5  UserPromptSubmit <agent-message from A2>           S2   ← wartender Bericht, 0,3 s nach Stop
+86.1  Stop                 background_tasks []           S2
+```
+
+Agent mit eigener Hintergrund-Arbeit (`hintergrund`):
+
+```
+14.5  UserPromptSubmit                                   S1
+17.0  SubagentStart A1, PostToolUse Agent                S1
+18.1  Stop                 background_tasks [A1]         S1
+21.2  PreToolUse Bash (sleep 30 im Hintergrund)  aus A1  S1
+26.7  UserPromptSubmit <agent-message from A1>           S1
+27.1  SubagentStop A1      background_tasks [A1, Befehl] S1
+29.4  Stop                 background_tasks [Befehl]     S1
+30.0  UserPromptSubmit <task-notification A1 completed>  S1   ← „waiting on its own background work“, 0,6 s nach Stop
+31.4  Stop                 background_tasks [Befehl]     S1
+37.4  /exit                                                   ← Dialog „Background work is running“
+53.3  SubagentStart A1 (Wiederaufnahme, sleep fertig)    S1
+54.5  SubagentStop A1                                    S1
+58.1  SessionEnd prompt_input_exit (nach „Exit and stop tasks“)  S1
+```
+
+Rückfrage aus einem Agenten, ohne Übergabe (`vordergrund`):
+
+```
+19.2  UserPromptSubmit                                   S1
+21.1  SubagentStart A1, PostToolUse Agent                S1
+22.5  PreToolUse Bash                     aus A1         S1
+22.6  PermissionRequest Bash              aus A1         S1
+23.2  Taste 1 (Ja, hi.txt im Arbeitsordner)
+23.6  PostToolUse Bash                    aus A1         S1
+23.8  Stop                 background_tasks [A1]         S1
+24.8  SubagentStop A1      background_tasks [A1]         S1
+24.9  UserPromptSubmit <task-notification A1 completed>  S1   ← 0,1 s nach SubagentStop
+26.2  Stop                 background_tasks []           S1
+```
+
+### Gemessene Zeiten
+
+| Messung | Wert |
+|---|---|
+| `SubagentStart` nach `PreToolUse` (`Agent`) | 0,1 bis 1,2 s |
+| `PostToolUse` (`Agent`) nach `SubagentStart` (Hintergrund) | 0,05 bis 0,1 s |
+| Bericht (`<agent-message>`) vor `SubagentStop` | 0,4 bis 0,8 s (5 Fälle) |
+| `<task-notification>` nach `SubagentStop`, ohne Übergabe | 0,1 s (2 Fälle) |
+| wartende Meldung nach Claudes `Stop` | 0,3 s (Bericht), 0,6 s (Zwischenmeldung) |
+| `<task-notification>` mit `killed` nach dem Stoppen | 0,3 s nach `TaskStop`; über die Aufgabenliste 0,2 s nach dem Schliessen der Liste |
+| Helfer-`SubagentStop` nach `Stop` | 0,6 bis 1,5 s |
+
+### Folgen für THub
+
+- Die Hook-Datei bekommt `SubagentStart` und `SubagentStop` (HTTP, wie die übrigen), die Vorlage `empfohlene-hook-datei.json` ebenso.
+- Laufende Agenten führt der Kern pro Tab: `SubagentStart` fügt hinzu, `SubagentStop` nimmt weg, `Stop` gleicht mit `background_tasks` ab (das fängt gestoppte Agenten ohne `SubagentStop`), und eine `<task-notification>` über einen Agenten nimmt ihn ebenfalls weg. Ein `SubagentStop` ohne bekannten Agenten (Helfer) zählt nicht.
+- Der Bericht kommt vor `SubagentStop`, weitere Meldungen erst nach Claudes `Stop`. Deshalb wartet THub nach dem Ende eines Agenten im Hintergrund nach Claudes `Stop` noch eine Frist auf eine Meldung über ihn. Gewählt sind 3 s, rund das Fünffache der längsten gemessenen Verzögerung (0,6 s); so sind auch langsame `Stop`-Hooks des Nutzers abgedeckt, die Claude vor der nächsten Runde abwartet.
+- Ereignisse mit `agent_id` ändern die Claude-Zuordnung nie. In 2.1.332 wäre das nicht nötig (gleiche `session_id`), es schützt aber vor einem Umhängen, falls sich das ändert.
+- `/clear` leert die Liste der Agenten nicht, weil sie weiterrechnen.
+
+### Grenzen
+
+- Einen Agenten im Vordergrund liess Haiku nicht erzeugen. Dass ein solcher Agent bei `SubagentStop` nicht in `background_tasks` steht, ist eine Annahme; THub behandelt ihn dann wie bisher (violett bis Claudes `Stop`).
+- Was Esc mit einem Agenten im Vordergrund macht, ist ungeprüft.
+- „Move to background and exit“ im Dialog von `/exit` ist ungeprüft.
+- Agenten-Teams (eigene Sessions pro Mitglied) sind ausserhalb von Ticket 37 und nicht gemessen; die Variablen dafür wurden für die Messung entfernt.
+- Beim Start räumt Claude Code verwaiste Ordner unter `~/.claude/teams` auf (Debug-Log „cleanupSessionTeams“); das tut jeder Start, auch ausserhalb der Messung.

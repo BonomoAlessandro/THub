@@ -1,7 +1,8 @@
 // Hook-Datei für Claude Code (Ticket 10). THub schreibt sie bei jedem Start neu in seinen Datenordner;
 // der claude-Starter gibt sie Claude mit `--settings` mit. Der Aufbau folgt der im Spike geprüften Vorlage
 // spikes/claude-hooks/empfohlene-hook-datei.json (Befunde in docs/spikes/claude-hooks.md):
-// - alle Ereignisse ausser SessionStart als HTTP-Hook auf /hooks/<Ereignis>, Tab und Token aus der Umgebung;
+// - alle Ereignisse ausser SessionStart als HTTP-Hook auf /hooks/<Ereignis>, Tab und Token aus der Umgebung, dazu seit
+//   Ticket 37 SubagentStart und SubagentStop (Messung im Abschnitt „Agenten“ des Spikes);
 // - SessionStart kennt keine HTTP-Hooks: Ein Befehls-Hook ohne Shell leitet die Nutzdaten mit curl.exe weiter.
 // Lädt nie Electron.
 
@@ -10,7 +11,10 @@ import * as path from 'node:path';
 
 export const HOOK_FILE_NAME = 'claude-hooks.json';
 
-/** Ereignisse, die Claude per HTTP-Hook meldet, in der Reihenfolge der Vorlage. */
+/**
+ * Ereignisse, die Claude per HTTP-Hook meldet, in der Reihenfolge der Vorlage. `SubagentStart` und `SubagentStop`
+ * führen die laufenden Agenten (Ticket 37); eine laufende Claude-Session kennt sie erst nach einem neuen Start.
+ */
 export const HTTP_HOOK_EVENTS = [
   'SessionEnd',
   'UserPromptSubmit',
@@ -21,6 +25,8 @@ export const HTTP_HOOK_EVENTS = [
   'Stop',
   'StopFailure',
   'Notification',
+  'SubagentStart',
+  'SubagentStop',
 ] as const;
 
 /** Zeitlimit der HTTP-Hooks in Sekunden. Hängt der Empfänger, wartet Claude bei jedem Ereignis so lange. */

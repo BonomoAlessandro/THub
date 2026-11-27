@@ -1,0 +1,1587 @@
+{
+  "hintergrund": {
+    "prompts": 1,
+    "zeitachse": [
+      {
+        "t": 3.63,
+        "taste": "Pfeil runter"
+      },
+      {
+        "t": 4.04,
+        "taste": "Enter (Yes, I trust this folder)"
+      },
+      {
+        "t": 4.98,
+        "ereignis": "SessionStart",
+        "session": "S1",
+        "source": "startup"
+      },
+      {
+        "t": 9,
+        "taste": "tippe: <Prompt>"
+      },
+      {
+        "t": 13.91,
+        "taste": "Enter"
+      },
+      {
+        "t": 14.54,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1"
+      },
+      {
+        "t": 16.66,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 16.96,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 17.02,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 17.43,
+        "ereignis": "PostToolBatch",
+        "session": "S1"
+      },
+      {
+        "t": 18.07,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 18.54,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 18.76,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 21.2,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 23.1,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 23.39,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 26.38,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 26.63,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 26.68,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1",
+        "agent_message": "A1"
+      },
+      {
+        "t": 27.07,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 27.08,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "background_tasks": [
+          "A1:running",
+          "shell:running"
+        ]
+      },
+      {
+        "t": 29.42,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "shell:running"
+        ]
+      },
+      {
+        "t": 29.99,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1",
+        "task_notification": {
+          "task": "A1",
+          "status": "completed"
+        }
+      },
+      {
+        "t": 30.38,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A3",
+        "agent_type": "",
+        "background_tasks": [
+          "shell:running"
+        ]
+      },
+      {
+        "t": 31.41,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "shell:running"
+        ]
+      },
+      {
+        "t": 32.04,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A4",
+        "agent_type": "",
+        "background_tasks": [
+          "shell:running"
+        ]
+      },
+      {
+        "t": 37.44,
+        "taste": "tippe: /exit"
+      },
+      {
+        "t": 37.82,
+        "taste": "Enter"
+      },
+      {
+        "t": 53.34,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 54.47,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 57.83,
+        "taste": "Enter"
+      },
+      {
+        "t": 58.11,
+        "ereignis": "SessionEnd",
+        "session": "S1",
+        "reason": "prompt_input_exit"
+      },
+      {
+        "t": 59.52,
+        "ende": 0
+      }
+    ]
+  },
+  "zwei": {
+    "prompts": 1,
+    "zeitachse": [
+      {
+        "t": 2.37,
+        "ereignis": "SessionStart",
+        "session": "S1",
+        "source": "startup"
+      },
+      {
+        "t": 12.44,
+        "taste": "tippe: <Prompt>"
+      },
+      {
+        "t": 22.44,
+        "taste": "Enter"
+      },
+      {
+        "t": 22.93,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1"
+      },
+      {
+        "t": 25.75,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 26.2,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 26.86,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 26.95,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 27.01,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 27.01,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 27.59,
+        "ereignis": "PostToolBatch",
+        "session": "S1"
+      },
+      {
+        "t": 28.23,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "A1:running",
+          "A2:running"
+        ]
+      },
+      {
+        "t": 28.85,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 29,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 29.29,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A3",
+        "agent_type": "",
+        "background_tasks": [
+          "A1:running",
+          "A2:running"
+        ]
+      },
+      {
+        "t": 39.5,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 39.9,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 40.6,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 41.17,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 41.24,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1",
+        "agent_message": "A1"
+      },
+      {
+        "t": 42,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 42.03,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "background_tasks": [
+          "A1:running",
+          "A2:running"
+        ]
+      },
+      {
+        "t": 43.67,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "A2:running"
+        ]
+      },
+      {
+        "t": 44.3,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A4",
+        "agent_type": "",
+        "background_tasks": [
+          "A2:running"
+        ]
+      },
+      {
+        "t": 64.89,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 65.38,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 66.08,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 66.59,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 66.65,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1",
+        "agent_message": "A2"
+      },
+      {
+        "t": 67.08,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 67.15,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "general-purpose",
+        "background_tasks": [
+          "A2:running"
+        ]
+      },
+      {
+        "t": 68.02,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": []
+      },
+      {
+        "t": 68.64,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A5",
+        "agent_type": "",
+        "background_tasks": []
+      },
+      {
+        "t": 119.17,
+        "taste": "tippe: /exit"
+      },
+      {
+        "t": 119.57,
+        "taste": "Enter"
+      },
+      {
+        "t": 120.17,
+        "ereignis": "SessionEnd",
+        "session": "S1",
+        "reason": "prompt_input_exit"
+      },
+      {
+        "t": 121.77,
+        "ende": 0
+      }
+    ]
+  },
+  "esc": {
+    "prompts": 1,
+    "zeitachse": [
+      {
+        "t": 3.09,
+        "ereignis": "SessionStart",
+        "session": "S1",
+        "source": "startup"
+      },
+      {
+        "t": 12.84,
+        "taste": "tippe: <Prompt>"
+      },
+      {
+        "t": 21.18,
+        "taste": "Enter"
+      },
+      {
+        "t": 21.34,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1"
+      },
+      {
+        "t": 25.2,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 25.82,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 25.89,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 26.4,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 28.09,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 29.42,
+        "taste": "Esc (Claude selbst unterbrechen)"
+      },
+      {
+        "t": 47.44,
+        "taste": "Esc (Ruhezustand, Agent läuft)"
+      },
+      {
+        "t": 73.96,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 74.33,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 75.01,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 75.75,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 75.8,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1",
+        "agent_message": "A1"
+      },
+      {
+        "t": 76.55,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 76.57,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 78.86,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": []
+      },
+      {
+        "t": 80.14,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "",
+        "background_tasks": []
+      },
+      {
+        "t": 116.59,
+        "taste": "tippe: /exit"
+      },
+      {
+        "t": 116.98,
+        "taste": "Enter"
+      },
+      {
+        "t": 117.42,
+        "ereignis": "SessionEnd",
+        "session": "S1",
+        "reason": "prompt_input_exit"
+      },
+      {
+        "t": 118.81,
+        "ende": 0
+      }
+    ]
+  },
+  "stoppen": {
+    "prompts": 2,
+    "zeitachse": [
+      {
+        "t": 3.96,
+        "ereignis": "SessionStart",
+        "session": "S1",
+        "source": "startup"
+      },
+      {
+        "t": 12.88,
+        "taste": "tippe: <Prompt>"
+      },
+      {
+        "t": 19.45,
+        "taste": "Enter"
+      },
+      {
+        "t": 19.7,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1"
+      },
+      {
+        "t": 22.27,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 22.79,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 22.86,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 23.72,
+        "ereignis": "PostToolBatch",
+        "session": "S1"
+      },
+      {
+        "t": 24.36,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 24.66,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 25.39,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 27.37,
+        "taste": "tippe: /tasks"
+      },
+      {
+        "t": 27.77,
+        "taste": "Enter"
+      },
+      {
+        "t": 30.29,
+        "taste": "Enter (Aufgabe öffnen)"
+      },
+      {
+        "t": 32.3,
+        "taste": "x (stoppen)"
+      },
+      {
+        "t": 39.82,
+        "taste": "Esc (Dialog schliessen)"
+      },
+      {
+        "t": 55.65,
+        "taste": "tippe: <Prompt>"
+      },
+      {
+        "t": 57.34,
+        "taste": "Enter"
+      },
+      {
+        "t": 57.44,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1"
+      },
+      {
+        "t": 59.04,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "ToolSearch"
+      },
+      {
+        "t": 59.09,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "ToolSearch"
+      },
+      {
+        "t": 59.48,
+        "ereignis": "PostToolBatch",
+        "session": "S1"
+      },
+      {
+        "t": 60.21,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "TaskStop"
+      },
+      {
+        "t": 60.28,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "TaskStop"
+      },
+      {
+        "t": 60.54,
+        "ereignis": "PostToolBatch",
+        "session": "S1"
+      },
+      {
+        "t": 60.56,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1",
+        "task_notification": {
+          "task": "A1",
+          "status": "killed"
+        }
+      },
+      {
+        "t": 61.37,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": []
+      },
+      {
+        "t": 62.22,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A3",
+        "agent_type": "",
+        "background_tasks": []
+      },
+      {
+        "t": 76.38,
+        "taste": "tippe: /exit"
+      },
+      {
+        "t": 76.77,
+        "taste": "Enter"
+      },
+      {
+        "t": 77.2,
+        "ereignis": "SessionEnd",
+        "session": "S1",
+        "reason": "prompt_input_exit"
+      },
+      {
+        "t": 78.58,
+        "ende": 0
+      }
+    ]
+  },
+  "drei": {
+    "prompts": 1,
+    "zeitachse": [
+      {
+        "t": 3.72,
+        "ereignis": "SessionStart",
+        "session": "S1",
+        "source": "startup"
+      },
+      {
+        "t": 13.44,
+        "taste": "tippe: <Prompt>"
+      },
+      {
+        "t": 26.6,
+        "taste": "Enter"
+      },
+      {
+        "t": 26.74,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1"
+      },
+      {
+        "t": 29.36,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 29.9,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 30.43,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 31.55,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 31.8,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 31.8,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A3",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 31.9,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 31.91,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 31.91,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 32.78,
+        "ereignis": "PostToolBatch",
+        "session": "S1"
+      },
+      {
+        "t": 33.4,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 33.48,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "A1:running",
+          "A2:running",
+          "A3:running"
+        ]
+      },
+      {
+        "t": 34.46,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 34.57,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A3",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 34.95,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A4",
+        "agent_type": "",
+        "background_tasks": [
+          "A1:running",
+          "A2:running",
+          "A3:running"
+        ]
+      },
+      {
+        "t": 36.49,
+        "taste": "tippe: /tasks"
+      },
+      {
+        "t": 36.9,
+        "taste": "Enter"
+      },
+      {
+        "t": 39.41,
+        "taste": "Enter (erste Aufgabe öffnen)"
+      },
+      {
+        "t": 41.42,
+        "taste": "x (stoppen)"
+      },
+      {
+        "t": 52.43,
+        "taste": "Esc (Dialog schliessen)"
+      },
+      {
+        "t": 52.6,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1",
+        "task_notification": {
+          "task": "A3",
+          "status": "killed"
+        }
+      },
+      {
+        "t": 55.02,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "A1:running",
+          "A2:running"
+        ]
+      },
+      {
+        "t": 55.61,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A5",
+        "agent_type": "",
+        "background_tasks": [
+          "A1:running",
+          "A2:running"
+        ]
+      },
+      {
+        "t": 56.25,
+        "taste": "tippe: /clear"
+      },
+      {
+        "t": 56.65,
+        "taste": "Enter"
+      },
+      {
+        "t": 56.69,
+        "ereignis": "SessionEnd",
+        "session": "S1",
+        "reason": "clear"
+      },
+      {
+        "t": 57.17,
+        "ereignis": "SessionStart",
+        "session": "S2",
+        "source": "clear"
+      },
+      {
+        "t": 80,
+        "ereignis": "PostToolUse",
+        "session": "S2",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 80.46,
+        "ereignis": "PostToolBatch",
+        "session": "S2",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 80.81,
+        "ereignis": "PostToolUse",
+        "session": "S2",
+        "agent": "A2",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 81.46,
+        "ereignis": "PostToolBatch",
+        "session": "S2",
+        "agent": "A2",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 81.85,
+        "ereignis": "PreToolUse",
+        "session": "S2",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 82.23,
+        "ereignis": "PostToolUse",
+        "session": "S2",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 82.3,
+        "ereignis": "UserPromptSubmit",
+        "session": "S2",
+        "agent_message": "A1"
+      },
+      {
+        "t": 82.44,
+        "ereignis": "PreToolUse",
+        "session": "S2",
+        "agent": "A2",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 82.72,
+        "ereignis": "PostToolBatch",
+        "session": "S2",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 82.8,
+        "ereignis": "SubagentStop",
+        "session": "S2",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "background_tasks": [
+          "A1:running",
+          "A2:running"
+        ]
+      },
+      {
+        "t": 82.84,
+        "ereignis": "PostToolUse",
+        "session": "S2",
+        "agent": "A2",
+        "agent_type": "general-purpose",
+        "tool_name": "SubagentHandback"
+      },
+      {
+        "t": 83.13,
+        "ereignis": "PostToolBatch",
+        "session": "S2",
+        "agent": "A2",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 83.18,
+        "ereignis": "SubagentStop",
+        "session": "S2",
+        "agent": "A2",
+        "agent_type": "general-purpose",
+        "background_tasks": [
+          "A2:running"
+        ]
+      },
+      {
+        "t": 84.23,
+        "ereignis": "Stop",
+        "session": "S2",
+        "background_tasks": []
+      },
+      {
+        "t": 84.54,
+        "ereignis": "UserPromptSubmit",
+        "session": "S2",
+        "agent_message": "A2"
+      },
+      {
+        "t": 84.85,
+        "ereignis": "SubagentStop",
+        "session": "S2",
+        "agent": "A6",
+        "agent_type": "",
+        "background_tasks": []
+      },
+      {
+        "t": 86.09,
+        "ereignis": "Stop",
+        "session": "S2",
+        "background_tasks": []
+      },
+      {
+        "t": 86.69,
+        "ereignis": "SubagentStop",
+        "session": "S2",
+        "agent": "A7",
+        "agent_type": "",
+        "background_tasks": []
+      },
+      {
+        "t": 94.81,
+        "taste": "tippe: /exit"
+      },
+      {
+        "t": 95.21,
+        "taste": "Enter"
+      },
+      {
+        "t": 95.6,
+        "ereignis": "SessionEnd",
+        "session": "S2",
+        "reason": "prompt_input_exit"
+      },
+      {
+        "t": 96.95,
+        "ende": 0
+      }
+    ]
+  },
+  "exit": {
+    "prompts": 1,
+    "zeitachse": [
+      {
+        "t": 2.57,
+        "ereignis": "SessionStart",
+        "session": "S1",
+        "source": "startup"
+      },
+      {
+        "t": 12.49,
+        "taste": "tippe: <Prompt>"
+      },
+      {
+        "t": 18.91,
+        "taste": "Enter"
+      },
+      {
+        "t": 19.15,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1"
+      },
+      {
+        "t": 22,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 22.34,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 22.42,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 23.05,
+        "ereignis": "PostToolBatch",
+        "session": "S1"
+      },
+      {
+        "t": 23.83,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 24.41,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 25.12,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 26.85,
+        "taste": "tippe: /exit"
+      },
+      {
+        "t": 27.24,
+        "taste": "Enter"
+      },
+      {
+        "t": 33.25,
+        "taste": "Enter"
+      },
+      {
+        "t": 34.83,
+        "ereignis": "SessionEnd",
+        "session": "S1",
+        "reason": "prompt_input_exit"
+      },
+      {
+        "t": 36.22,
+        "ende": 0
+      }
+    ]
+  },
+  "rueckfrage": {
+    "prompts": 1,
+    "zeitachse": [
+      {
+        "t": 1.68,
+        "ereignis": "SessionStart",
+        "session": "S1",
+        "source": "startup"
+      },
+      {
+        "t": 12.32,
+        "taste": "tippe: <Prompt>"
+      },
+      {
+        "t": 16.85,
+        "taste": "Enter"
+      },
+      {
+        "t": 17.19,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1"
+      },
+      {
+        "t": 19.84,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 20.06,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 20.22,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 21.44,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 21.55,
+        "ereignis": "PostToolBatch",
+        "session": "S1"
+      },
+      {
+        "t": 21.7,
+        "ereignis": "PermissionRequest",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 23.22,
+        "taste": "Enter (Ja, schreibt im Temp-Ordner)"
+      },
+      {
+        "t": 23.5,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 24.51,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 27.52,
+        "taste": "tippe: <Prompt>"
+      },
+      {
+        "t": 32.79,
+        "taste": "Enter"
+      },
+      {
+        "t": 33.57,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 34.02,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 34.56,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 34.7,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1",
+        "task_notification": {
+          "task": "A1",
+          "status": "completed"
+        }
+      },
+      {
+        "t": 35.53,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": []
+      },
+      {
+        "t": 36.06,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A3",
+        "agent_type": "",
+        "background_tasks": []
+      },
+      {
+        "t": 83.57,
+        "taste": "tippe: /exit"
+      },
+      {
+        "t": 83.97,
+        "taste": "Enter"
+      },
+      {
+        "t": 84.53,
+        "ereignis": "SessionEnd",
+        "session": "S1",
+        "reason": "prompt_input_exit"
+      },
+      {
+        "t": 86,
+        "ende": 0
+      }
+    ]
+  },
+  "vordergrund": {
+    "prompts": 1,
+    "zeitachse": [
+      {
+        "t": 1.84,
+        "ereignis": "SessionStart",
+        "session": "S1",
+        "source": "startup"
+      },
+      {
+        "t": 12.4,
+        "taste": "tippe: <Prompt>"
+      },
+      {
+        "t": 19.05,
+        "taste": "Enter"
+      },
+      {
+        "t": 19.18,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1"
+      },
+      {
+        "t": 21.05,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 21.15,
+        "ereignis": "SubagentStart",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 21.24,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "tool_name": "Agent"
+      },
+      {
+        "t": 21.78,
+        "ereignis": "PostToolBatch",
+        "session": "S1"
+      },
+      {
+        "t": 22.47,
+        "ereignis": "PreToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 22.58,
+        "ereignis": "PermissionRequest",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 23.2,
+        "taste": "1 (Ja, schreibt nur hi.txt im Temp-Ordner)"
+      },
+      {
+        "t": 23.59,
+        "ereignis": "PostToolUse",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "tool_name": "Bash"
+      },
+      {
+        "t": 23.82,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 24.2,
+        "ereignis": "PostToolBatch",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose"
+      },
+      {
+        "t": 24.79,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A1",
+        "agent_type": "general-purpose",
+        "background_tasks": [
+          "A1:running"
+        ]
+      },
+      {
+        "t": 24.92,
+        "ereignis": "UserPromptSubmit",
+        "session": "S1",
+        "task_notification": {
+          "task": "A1",
+          "status": "completed"
+        }
+      },
+      {
+        "t": 25.18,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A2",
+        "agent_type": "",
+        "background_tasks": []
+      },
+      {
+        "t": 26.22,
+        "ereignis": "Stop",
+        "session": "S1",
+        "background_tasks": []
+      },
+      {
+        "t": 27.23,
+        "ereignis": "SubagentStop",
+        "session": "S1",
+        "agent": "A3",
+        "agent_type": "",
+        "background_tasks": []
+      },
+      {
+        "t": 36.23,
+        "taste": "tippe: /exit"
+      },
+      {
+        "t": 36.61,
+        "taste": "Enter"
+      },
+      {
+        "t": 37,
+        "ereignis": "SessionEnd",
+        "session": "S1",
+        "reason": "prompt_input_exit"
+      },
+      {
+        "t": 38.38,
+        "ende": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "szenario": "agenten-rueckfrage",
+  "pfad": "/hooks/PermissionRequest",
+  "nutzdaten": {
+    "session_id": "b365f54c-86cc-49e0-b10d-eb0f85900932",
+    "transcript_path": "C:\\Users\\<user>\\.claude\\projects\\C--Users-<USER-1>-AppData-Local-Temp-claude-f7d4677fe64f51e0-b027ab26-ac00-4ec5-8799-39a2bddeef6c-scratchpad-agenten-ws\\b365f54c-86cc-49e0-b10d-eb0f85900932.jsonl",
+    "cwd": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\f7d4677fe64f51e0\\b027ab26-ac00-4ec5-8799-39a2bddeef6c\\scratchpad\\agenten\\ws",
+    "scratchpad_dir": "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\45be783a411e089c\\b365f54c-86cc-49e0-b10d-eb0f85900932\\scratchpad",
+    "prompt_id": "49d03955-a030-48f8-ace4-e9b1f8394fd9",
+    "permission_mode": "default",
+    "agent_id": "a1e764411811c026a",
+    "agent_type": "general-purpose",
+    "effort": {
+      "level": "medium"
+    },
+    "hook_event_name": "PermissionRequest",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "echo hi > hi.txt",
+      "description": "Write \"hi\" into hi.txt in the current directory"
+    },
+    "permission_suggestions": [
+      {
+        "type": "addDirectories",
+        "directories": [
+          "C:\\Users\\<USER~1>\\AppData\\Local\\Temp\\claude\\f7d4677fe64f51e0\\b027ab26-ac00-4ec5-8799-39a2bddeef6c\\scratchpad\\agenten\\ws"
+        ],
+        "destination": "session"
+      }
+    ]
+  }
+}
