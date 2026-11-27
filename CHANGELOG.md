@@ -2,7 +2,7 @@
 
 Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in Klammern verweisen auf die Tickets in [docs/tickets](docs/tickets/README.md). Wie Versionen vergeben werden, steht in [docs/entwicklung.md](docs/entwicklung.md#version-und-installer). Welche Version installiert ist, zeigt THub unten in den Einstellungen.
 
-## Unveröffentlicht
+## 0.5.0 – 2026-11-27
 
 **Neu**
 
@@ -11,7 +11,6 @@ Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in
 **Geändert**
 
 - Claude zeigt in THub-Tabs keine eigene Statuszeile mehr; ihre Angaben stehen im Verbrauchsbalken. Ausserhalb von THub und bei ausgeschaltetem Balken zeigt Claude seine Statuszeile wie bisher. Eine laufende Claude-Session übernimmt das erst nach einem neuen Start von Claude. (38)
-
 - Der Gruppen-Tab zeigt den Status des gewählten Tabs, nicht mehr den dringendsten aller Tabs der Gruppe. Wartet ein anderer Tab der Gruppe auf dich oder ist er fertig, trägt der Pfeil einen kleinen orangen bzw. grünen Punkt; der Tooltip nennt die Tabs. (40)
 
 **Korrigiert**
