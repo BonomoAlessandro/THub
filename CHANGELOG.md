@@ -4,6 +4,10 @@ Was sich in jeder Version von THub geändert hat, neueste zuerst. Die Nummern in
 
 ## Unveröffentlicht
 
+**Geändert**
+
+- Der Gruppen-Tab zeigt den Status des gewählten Tabs, nicht mehr den dringendsten aller Tabs der Gruppe. Wartet ein anderer Tab der Gruppe auf dich oder ist er fertig, trägt der Pfeil einen kleinen orangen bzw. grünen Punkt; der Tooltip nennt die Tabs. (40)
+
 **Korrigiert**
 
 - Ein Claude-Tab zeigt „arbeitet“, solange darin noch ein Agent im Hintergrund rechnet, auch wenn Claude seine Antwort schon beendet hat. Grün und der Hinweis „fertig“ kommen erst, wenn alles fertig ist. Vorher stand der Tab dabei teils minutenlang auf „ruht“. Eine Claude-Session, die schon lief, erkennt die Agenten erst nach einem Neustart oder Fortsetzen von Claude. (37)
