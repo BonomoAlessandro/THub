@@ -1,7 +1,7 @@
 # THub 2: Tabs, Claude-Sessions, die einen Neustart überleben, und neuer Look
 
 > Status: `ready-for-agent`
-> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Am 2026-11-23: Hinweise weichen der Eingabe aus (Ticket 32), der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist (Ticket 33), Kopieren mit `Ctrl+C` und Einfügen mit `Ctrl+V` (Ticket 34). Am 2026-11-25: Abstand der Hinweise zur Eingabe und Lage in Claude-Tabs (Ticket 35), Tabs zu Gruppen zusammenfassen (Ticket 36). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
+> Entstanden aus einer Befragung am 2026-11-19, danach durch ein Review präzisiert (siehe „Präzisierungen nach dem Review“ am Ende). Am 2026-11-21 um „Rechner wach halten“ erweitert (Ticket 28), am 2026-11-22 um „App-Symbol“ (Ticket 29) und „Versionsnummer“ (Ticket 30); Fehler beim Wachhalten werden angezeigt (Ticket 31). Am 2026-11-23: Hinweise weichen der Eingabe aus (Ticket 32), der Countdown von „fertig“ läuft, solange das Fenster sichtbar ist (Ticket 33), Kopieren mit `Ctrl+C` und Einfügen mit `Ctrl+V` (Ticket 34). Am 2026-11-25: Abstand der Hinweise zur Eingabe und Lage in Claude-Tabs (Ticket 35), Tabs zu Gruppen zusammenfassen (Ticket 36). Am 2026-11-26: „arbeitet“, solange Hintergrund-Agenten rechnen (Ticket 37). Grundlage ist das bestehende Electron-Grundgerüst (Stand 0.1.0). Umsetzung in Tickets: [docs/tickets](../tickets/README.md).
 
 > **Name:** Die App heisst **THub** (bis 2026-11-19 „TermHub“). Datenordner `%APPDATA%\THub`, in der Entwicklung `%APPDATA%\THub-dev`. Umsetzung des Namenswechsels: Ticket 20.
 
@@ -97,6 +97,7 @@ THub wird zu einem modernen Terminal-Fenster mit Tabs, das Claude-Code-Sessions 
 46. Als Nutzer möchte ich an einem grauen Pause-Symbol sehen, dass eine Claude-Session nach dem Neustart noch nicht fortgesetzt wurde, damit ich weiss, warum dort noch nichts läuft.
 47. Als Nutzer möchte ich, dass ein ruhender Tab ohne laufende Prozesse kein Symbol zeigt, damit die Tab-Leiste ruhig bleibt.
 48. Als Nutzer möchte ich, dass auch normale Tabs einen blauen Punkt zeigen, solange darin ein Programm läuft (Build, `npm run dev`), damit ich vor dem Schliessen sehe, wo noch etwas läuft.
+105. Als Nutzer möchte ich, dass ein Claude-Tab „arbeitet“ zeigt, solange darin noch Agenten im Hintergrund rechnen, und erst danach „fertig“ meldet, damit ich nicht glaube, die Arbeit sei schon erledigt.
 
 ### Hinweise im Fenster
 
@@ -438,6 +439,12 @@ Dazu kommt das Merkmal „fertig, noch nicht angeschaut“. Ein Tab mit Claude-Z
 4. fertig, noch nicht angeschaut (grün)
 5. Prozesse laufen (blau)
 6. nichts
+
+**Hintergrund-Agenten (Ticket 37, vom Nutzer am 2026-11-26 gewählt):**
+- Solange in einem Claude-Tab noch ein Agent rechnet, zeigt der Tab „arbeitet“, auch wenn Claude selbst seine Antwort mit `Stop` beendet hat. Grün und der Hinweis „fertig“ kommen erst, wenn alles fertig ist.
+- Hintergrund-Befehle bleiben bei „Prozesse laufen“ (blau).
+- Grundlage sind die Hook-Ereignisse zu Agenten (`SubagentStart`, `SubagentStop`). Ereignisse aus einem Agenten ändern die Claude-Zuordnung nie. Die genauen Regeln und Fristen ergeben sich aus einer Messung in Ticket 37.
+- Verworfen: ein eigener Zustand für Hintergrund-Arbeit; der blaue Punkt mit grün nach der Antwort.
 
 **Präzisierungen aus der Umsetzung (Ticket 13):**
 - Antworten des Terminals, die über denselben Weg wie Tasten kommen (Fokus-Meldungen, Maus, Cursor-Position, Geräteattribute, OSC- und DCS-Antworten), sind keine Eingabe des Nutzers; Claude Code schaltet etwa Fokus-Meldungen ein. Esc ist genau die Taste Esc allein; eine Antwort ist genau Enter oder eine einzelne Ziffer.
